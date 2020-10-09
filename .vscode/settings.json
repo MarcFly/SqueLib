@@ -1,3 +1,6 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/Temp_Engine"
+    "cmake.sourceDirectory": "${workspaceFolder}/Temp_Engine",
+    "files.associations": {
+        "thread": "cpp"
+    }
 }

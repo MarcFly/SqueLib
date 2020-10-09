@@ -3,6 +3,7 @@
 #include <chrono>
 #include <fstream>
 #include <algorithm>
+#include <mutex>
 
 #include "LogHandler.h"
 
@@ -10,6 +11,8 @@
 #include <Windows.h>
 #elif __linux__
 #endif // OS Check
+
+std::mutex _mtx;
 
 void LOGGER::LH_INIT()
 {
@@ -25,6 +28,8 @@ void LOGGER::LH_CLOSE(bool dumpdata)
 
 void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ...)
 {
+	std::lock_guard<std::mutex> lk(_mtx);
+
 	Log push;
 	push.lt = lt;
 	std::string sttr(strrchr(file, '\\'));

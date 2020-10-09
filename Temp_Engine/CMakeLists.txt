@@ -7,13 +7,15 @@ else()
     cmake_policy(VERSION 3.18)
 endif()
 
-#Setup Project
-project(Temp_Engine VERSION 2020.1
-                    DESCRIPTION "Multiplatform C++ Engine"
-                    LANGUAGES CXX)
+#Main Global Variables
+set(PROJ_NAME Temp_Engine)
 
-#Base Include Directory
-#target_include_directories(Temp_Engine PUBLIC "./EngineCode")
+#Setup Project
+
+
+project(${PROJ_NAME}    VERSION 2020.1
+                        DESCRIPTION "Multiplatform C++ Engine"
+                        LANGUAGES CXX)
 
 #Adding subfile Directories
 set(HELPER_DIR "./EngineCode/helpers")
@@ -32,8 +34,8 @@ file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp" "${HELPER_DIR}/*.h")
 #target_compile_features(ImGui PUBLIC cxx_std_11)
 
 #Add an executable entry point
-add_executable(Temp_Engine "./EngineCode/main.cpp")
-target_sources(Temp_Engine PUBLIC ${HELPERS})
+add_executable(${PROJ_NAME} "./EngineCode/main.cpp")
+target_sources(${PROJ_NAME} PUBLIC ${HELPERS})
 
 source_group("helpers" FILES ${HELPERS})
 
