@@ -18,8 +18,8 @@ const char* id = "LogHandler_Temp_Engine";
 namespace LH
 {
 	static std::mutex _mtx;
-	static std::map<std::string, int> Push_LogKeys;
-	static std::map<int, std::string*> Get_LogKeys;
+	static std::unordered_map<std::string, int> Push_LogKeys;
+	static std::unordered_map<int, std::string*> Get_LogKeys;
 	static std::vector<PairLOG> logs;
 	static bool DUMPDATA = true;
 }

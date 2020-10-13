@@ -2,7 +2,7 @@
 #define _LogStruct_H_
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <string>
 
 // Don't look please

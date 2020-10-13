@@ -10,7 +10,6 @@
 // -- Globals for External Tools --
 #include "LogHandler.h"
 #include "LWTimer.h"
-#include "SimpleProfiler.h"
 #include "SimpleTasker.h"
 
 
