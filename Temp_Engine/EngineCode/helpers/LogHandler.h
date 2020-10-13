@@ -28,16 +28,10 @@ struct Log // Size of 4096 including any other info than log
 
 typedef std::pair<int, Log> PairLOG;
 
-// Var Define
-static std::map<std::string, int> Push_LogKeys;
-static std::map<int, std::string*> Get_LogKeys;
-static std::vector<PairLOG> logs;
-static bool DUMPDATA = true;
-
 namespace LOGGER
 {
-	void LH_INIT();
-	void LH_CLOSE(bool dumpdata); // Allow Dumping of Data into a text file on close or not
+	void INIT();
+	void CLOSE(bool dumpdata); // Allow Dumping of Data into a text file on close or not
 
 	void LOG(LogType lt, const char file[], int line, const char* format, ...);
 	void DumpData();

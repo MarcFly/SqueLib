@@ -17,24 +17,13 @@ struct Scope
 	LW_Timer timer;
 };
 
-// Define Variables
-static std::map<std::string, int> SCOPES_INPUT;
-static std::map<int, std::string*> SCOPES_READ;
-
-static std::vector<Scope*> scopes;
-static std::vector<LW_Timer> active_timers;
-
-static Scope* LastScope = nullptr;
-
-static bool active = false;
-
 // Define Functions
 
 namespace SProf
 {
-	void Profiler_Close();
+	void CLOSE();
 
-	void Profiler_Init(bool init);
+	void INIT(bool init);
 
 	bool GetActive();
 

@@ -1,6 +1,7 @@
 {
     "cmake.sourceDirectory": "${workspaceFolder}/Temp_Engine",
     "files.associations": {
-        "thread": "cpp"
+        "thread": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -10,20 +10,40 @@
 #ifdef _WIN32
 #include <Windows.h>
 #elif __linux__
+#include <syslog.h>
+const char* id = "LogHandler_Temp_Engine";
 #endif // OS Check
 
-std::mutex _mtx;
-
-void LOGGER::LH_INIT()
+// Var Define
+namespace LH
 {
+	static std::mutex _mtx;
+	static std::map<std::string, int> Push_LogKeys;
+	static std::map<int, std::string*> Get_LogKeys;
+	static std::vector<PairLOG> logs;
+	static bool DUMPDATA = true;
 }
 
-void LOGGER::LH_CLOSE(bool dumpdata)
+using namespace LH;
+
+void LOGGER::INIT()
+{
+#if __linux__
+	openlog(id, LOG_NDELAY|| LOG_PID, LOG_DEBUG);
+#endif
+}
+
+void LOGGER::CLOSE(bool dumpdata)
 {
 	DumpData();
 
 	Push_LogKeys.clear();
 	Get_LogKeys.clear();
+	logs.clear();
+
+#if __linux__
+	closelog();
+#endif
 }
 
 void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ...)
@@ -51,7 +71,9 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 #ifdef _WIN32
 	OutputDebugString(push.log);
+	OutputDebugString("\n");
 #elif __linux__
+	syslog(0, push.log);
 #endif
 }
 

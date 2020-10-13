@@ -2,6 +2,9 @@
 #define _LW_TIMER_H_
 
 #include <chrono>
+#include <atomic>
+
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> high_res_clock;
 
 class LW_Timer
 {
@@ -11,9 +14,9 @@ public:		// Constructors - Destructors
 
 
 private:	// Private Vars
-	std::chrono::time_point<std::chrono::high_resolution_clock> start_at;
-	std::chrono::time_point<std::chrono::high_resolution_clock> stop_at;
-	bool is_stopped;
+	high_res_clock start_at;
+	high_res_clock stop_at;
+	std::atomic<bool> is_stopped;
 
 protected:	// Protected Vars
 
@@ -23,8 +26,9 @@ public:		// CPP Defined Functions
 	void Start();
 	void Stop();
 
-	int Read_uS();
 	int Read_mS();
+	int Read_uS();
+	int Read_nS();
 
 public:		// Header Defined Functions - <5 lines
 	bool IsStopped() const {

@@ -11,13 +11,23 @@ void LW_Timer::Stop()
 }
 int LW_Timer::Read_uS()
 {
+	high_res_clock now = std::chrono::high_resolution_clock::now();
 	if (is_stopped)
 		return std::chrono::duration_cast<std::chrono::microseconds>(stop_at - start_at).count();
-	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_at).count();
+	return std::chrono::duration_cast<std::chrono::microseconds>(now - start_at).count();
 }
 int LW_Timer::Read_mS()
 {
+	high_res_clock now = std::chrono::high_resolution_clock::now();
 	if (is_stopped)
 		return std::chrono::duration_cast<std::chrono::milliseconds>(stop_at - start_at).count();
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_at).count();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start_at).count();
+}
+
+int LW_Timer::Read_nS()
+{
+	high_res_clock now = std::chrono::high_resolution_clock::now();
+	if (is_stopped)
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(stop_at - start_at).count();
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_at).count();
 }
