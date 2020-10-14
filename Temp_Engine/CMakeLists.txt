@@ -19,15 +19,21 @@ project(${PROJ_NAME}    VERSION 2020.1
 
 #Adding subfile Directories
 set(HELPER_DIR "./EngineCode/helpers")
+set(APP_DIR "./EngineCode/application")
+set(MODULE_DIR "./EngineCode/modules")
 
 #Include the directories for code to use
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(HELPER_DIR)
+include_directories(APP_DIR)
+include_directories(MODULE_DIR)
 
 #set(HELPERS "${HELPER_DIR}/LogHandler.cpp" "${HELPER_DIR}/LWTimer.cpp" "${HELPER_DIR}/SimpleProfiler.cpp")
 
 #Instead of hard coding the filenames, traverse the directory for the files
 file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp" "${HELPER_DIR}/*.h")
+file(GLOB_RECURSE APP_SOURCE "${APP_DIR}/*.cpp" "${APP_DIR}/*.h")
+file(GLOB_RECURSE MODULES "${MODULE_DIR}/*.cpp" "${MODULE_DIR}/*.h")
 
 #Set Features for compilation of libraries
 #target_compile_features(SDL2 PUBLIC cxx_std_11)
@@ -35,8 +41,12 @@ file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp" "${HELPER_DIR}/*.h")
 
 #Add an executable entry point
 add_executable(${PROJ_NAME} "./EngineCode/main.cpp")
-target_sources(${PROJ_NAME} PUBLIC ${HELPERS})
+#Target Sources for Own Engine things
+target_sources(${PROJ_NAME} PUBLIC ${HELPERS} ${MODULES} ${APP_SOURCE})
+
 
 source_group("helpers" FILES ${HELPERS})
+source_group("application" FILES ${APP_SOURCE})
+source_group("modules" FILES ${MODULES})
 
 #Link Libraries to target executable

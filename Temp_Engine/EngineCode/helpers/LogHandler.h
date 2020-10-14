@@ -1,5 +1,5 @@
-#ifndef _LogStruct_H_
-#define _LogStruct_H_
+#ifndef _LogHandler_H_
+#define _LogHandler_H_
 
 #include <vector>
 #include <unordered_map>
@@ -15,7 +15,7 @@ enum LogType
 {
 	LT_CRITICAL = -1,
 	LT_INFO,
-	LT_WARN
+	LT_WARNING
 	
 };
 

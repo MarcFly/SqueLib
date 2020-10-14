@@ -1,3 +1,6 @@
+#ifndef _SimpleTasker_H_
+#define _SimpleTasker_H_
+
 #include <queue>
 #include <vector>
 #include <thread>
@@ -19,3 +22,5 @@ namespace SimpleTasker
 
     void SetExitFlag();
 }
+
+#endif //_SimpleTasker_H_

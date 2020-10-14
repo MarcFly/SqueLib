@@ -1,8 +1,8 @@
 #include <iostream>;
 #include <conio.h>
 
-#include "./test.h"
 #include "helpers/Globals.h"
+#include "application/Application.h"
 
 enum main_states
 {
@@ -12,49 +12,56 @@ enum main_states
 	MAIN_EXIT
 };
 
-
-int v;
-
-struct LogTask : public Task
-{
-
-    int logN;
-
-    LogTask(int n) : logN(n) {};
-
-    void run()
-    {
-        LOGGER::ILOG("Task Doing Log Number %d", logN);
-    }
-};
-
 int main(int argc, char* argv[])
 {
-    LOGGER::INIT();
-    LOGGER::ILOG("Starting Engine...");
-    SimpleTasker::INIT();
-
+    app = new Application();
     main_states state = MAIN_CREATION;
+    bool app_rets = false;
 
-    LOGGER::ILOG("Creating Engine...");    
+    // Helpers Initialization
+    {
+        SimpleTasker::INIT();
+        LOGGER::INIT();
+    }
 
-    state = MAIN_UPDATE;
+    // Engine Initialization
+    {
+        LOGGER::ILOG("Initializing Engine...");
+        app_rets = app->Init();
+
+        state = (app_rets) ? MAIN_UPDATE : MAIN_EXIT;
+
+        if (app_rets) { LOGGER::ILOG("Entering Update Loop..."); }
+        else LOGGER::WLOG("Error Initializing Engine...");
+    }
+
+    // Update Loop
     while(state == MAIN_UPDATE)
     {
+        app->Update();
         state = MAIN_FINISH;
     }
 
-    LOGGER::ILOG("Cleaning Up Engine...");
+    //  Engine CleanUp
+    {
+        LOGGER::ILOG("Cleaning Up Engine...");
 
-    LOGGER::ILOG("Closing Simple Profiler Subsystem...")
+        app_rets = app->CleanUp();
 
-    LOGGER::ILOG("Closing Simple Tasker Subsystem...")
-    SimpleTasker::CLOSE();
-    SimpleTasker::CLOSE();
+        if (app_rets) { LOGGER::ILOG("Application Cleanup Performed Successfully..."); }
+        else LOGGER::WLOG("Application Cleanup with errors...");
 
-    LOGGER::ILOG("Finishing Executing Engine...")
+        delete app;
+    }
 
-    LOGGER::CLOSE(true);
+    // Helpers CleanUp
+    {
+        LOGGER::ILOG("Closing Helpers...")
+            SimpleTasker::CLOSE();
+
+        LOGGER::ILOG("Finishing Executing Engine...");
+        LOGGER::CLOSE(true);
+    }
 
     getch();
     return 0;
