@@ -3,9 +3,10 @@
 
 #include<vector>
 #include<atomic>
-#include "../helpers/Globals.h"
+#include "EngineCode/helpers/Globals.h"
+#include "EngineCode/modules/Module.h"
 
-class Module;
+class ModuleTime;
 
 class Application{
 
@@ -16,6 +17,9 @@ public:
     bool Init();
     bool Update();
     bool CleanUp();
+
+public:
+    ModuleTime* time = nullptr;
 
 private:
     std::vector<Module*> modules;

@@ -2,6 +2,8 @@
 #define _Module_H_
 
 #include <vector>
+#include <atomic>
+#include <mutex>
 
 enum EVENT_TYPES {
 	
@@ -18,11 +20,15 @@ public:
 	virtual bool Update(float engine_dt, float game_dt) { return true; };
 	virtual bool CleanUp() { return true; };
 
+	virtual bool LoadConfig(/* Config Type file*/) { return true; };
+	virtual bool SaveConfig(/* Config Type file*/) { return true; };
+
 public:
 	const char* name = "";
 
 private:
 	std::vector<EVENT_TYPES> subscribed;
+	std::mutex _mtx;
 	
 };
 
