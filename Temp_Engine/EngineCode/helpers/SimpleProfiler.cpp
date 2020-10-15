@@ -1,6 +1,7 @@
 #include "SimpleProfiler.h"
 #include <mutex>
 #include <atomic>
+#include <cstring>
 
 // Define Variables
 namespace SP

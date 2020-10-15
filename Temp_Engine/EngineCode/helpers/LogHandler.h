@@ -36,9 +36,9 @@ namespace LOGGER
 	void LOG(LogType lt, const char file[], int line, const char* format, ...);
 	void DumpData();
 
-	#define ILOG(format,...) LOG(LT_INFO,__FILE__,__LINE__, format, __VA_ARGS__);
-	#define CLOG(format,...) LOG(LT_CRITICAL,__FILE__,__LINE__, format, __VA_ARGS__);
-	#define WLOG(format,...) LOG(LT_WARNING,__FILE__,__LINE__, format, __VA_ARGS__);
+	#define ILOG(format,...) LOG(LT_INFO,__FILE__,__LINE__, format, ##__VA_ARGS__)
+	#define CLOG(format,...) LOG(LT_CRITICAL,__FILE__,__LINE__, format, ##__VA_ARGS__)
+	#define WLOG(format,...) LOG(LT_WARNING,__FILE__,__LINE__, format, ##__VA_ARGS__)
 }
 
 #endif

@@ -46,7 +46,7 @@ float ModuleTime::CalcDT()
     float last_frame = 1000*timer.Read_mS();
     timer.Start();
 
-    engine_dt = (last_frame < max_dt) ? last_frame : max_dt;
+    engine_dt = (last_frame < max_dt) ? last_frame : (float)max_dt;
     game_dt = engine_dt * control_timings[control];
 
     return engine_dt;

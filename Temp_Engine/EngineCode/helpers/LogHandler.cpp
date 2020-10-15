@@ -4,15 +4,21 @@
 #include <fstream>
 #include <algorithm>
 #include <mutex>
-#include <filesystem>
+
+#include <cstring>
 
 #include "LogHandler.h"
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <filesystem>
+namespace stdfs = std::filesystem;
 #elif __linux__
 #include <syslog.h>
 const char* id = "LogHandler_Temp_Engine";
+
+#include <experimental/filesystem>
+namespace stdfs = std::experimental::filesystem;
 #endif // OS Check
 
 // Var Define
@@ -61,9 +67,9 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 	static va_list ap;
 
-	char tmp[LOGSIZE];
+	char tmp[LOGSIZE-6];
 	va_start(ap, format);
-	vsprintf_s(tmp, LOGSIZE, format, ap);
+	vsnprintf(tmp, LOGSIZE, format, ap);
 	va_end(ap);
 
 	sprintf(push.log, "%s(%d): %s", file, line, tmp);
@@ -80,7 +86,7 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 void LOGGER::DumpData()
 {
-	std::filesystem::create_directory("Logs");
+	stdfs::create_directory("Logs");
 
 	std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 

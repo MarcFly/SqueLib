@@ -17,6 +17,8 @@ project(${PROJ_NAME}    VERSION 2020.1
                         DESCRIPTION "Multiplatform C++ Engine"
                         LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 #Adding subfile Directories
 set(HELPER_DIR "./EngineCode/helpers")
@@ -42,6 +44,7 @@ file(GLOB_RECURSE MODULES "${MODULE_DIR}/*.cpp" "${MODULE_DIR}/*.h")
 
 #Add an executable entry point
 add_executable(${PROJ_NAME} "./EngineCode/main.cpp")
+
 #Target Sources for Own Engine things
 target_sources(${PROJ_NAME} PUBLIC ${HELPERS} ${MODULES} ${APP_SOURCE})
 

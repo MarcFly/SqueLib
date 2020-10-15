@@ -1,8 +1,7 @@
-#include <iostream>;
-#include <conio.h>
-
-#include "helpers/Globals.h"
-#include "application/Application.h"
+#include <iostream>
+//#include <conio.h>
+#include "./helpers/Globals.h"
+#include "./application/Application.h"
 
 enum main_states
 {
@@ -56,13 +55,13 @@ int main(int argc, char* argv[])
 
     // Helpers CleanUp
     {
-        LOGGER::ILOG("Closing Helpers...")
-            SimpleTasker::CLOSE();
+        LOGGER::ILOG("Closing Helpers...");
+        SimpleTasker::CLOSE();
 
         LOGGER::ILOG("Finishing Executing Engine...");
         LOGGER::CLOSE(true);
     }
 
-    getch();
+    //getch();
     return 0;
 }
