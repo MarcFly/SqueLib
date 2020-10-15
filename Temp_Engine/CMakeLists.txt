@@ -16,6 +16,7 @@ set(PROJ_NAME Temp_Engine)
 project(${PROJ_NAME}    VERSION 2020.1
                         DESCRIPTION "Multiplatform C++ Engine"
                         LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
 
 #Adding subfile Directories
 set(HELPER_DIR "./EngineCode/helpers")

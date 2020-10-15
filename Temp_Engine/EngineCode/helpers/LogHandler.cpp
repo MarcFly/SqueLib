@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <mutex>
+#include <filesystem>
 
 #include "LogHandler.h"
 
@@ -79,8 +80,7 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 void LOGGER::DumpData()
 {
-
-	CreateDirectory("Logs", NULL);
+	std::filesystem::create_directory("Logs");
 
 	std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
