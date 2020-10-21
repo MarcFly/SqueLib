@@ -14,7 +14,9 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#define FOLDER_ENDING '\\'
 #elif __linux__
+#define FOLDER_ENDING '/'
 #endif // OS Check
 
 // Var Define
@@ -49,12 +51,12 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 	Log push;
 	push.lt = lt;
-	const char* test = strrchr(file, '\\');
+	const char* test = strrchr(file, FOLDER_ENDING);
 	std::cout << test << std::endl;
 	std::string sttr;
 	if(test != nullptr)
 		sttr = std::string(test);
-	(strrchr(file, '\\'));
+
 	auto it_push = Push_LogKeys.insert(std::pair<std::string, int>(sttr, Push_LogKeys.size()));
 	Get_LogKeys.insert(std::pair<int, std::string*>(it_push.first->second, (std::string*)&it_push.first->first));
 	

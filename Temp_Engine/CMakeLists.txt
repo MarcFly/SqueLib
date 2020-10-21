@@ -18,8 +18,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+#UNIX Things
+if(UNIX)
 #C++ STD Library Linkings
 link_libraries(stdc++fs pthread)
+endif(UNIX)
 
 #Adding subfile Directories
 set(HELPER_DIR "./EngineCode/helpers")
