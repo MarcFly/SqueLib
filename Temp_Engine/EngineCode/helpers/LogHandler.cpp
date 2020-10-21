@@ -10,11 +10,11 @@
 
 #include "LogHandler.h"
 
+#include <iostream>
+
 #ifdef _WIN32
 #include <Windows.h>
 #elif __linux__
-#include <syslog.h>
-const char* id = "LogHandler_Temp_Engine";
 #endif // OS Check
 
 // Var Define
@@ -31,9 +31,7 @@ using namespace LH;
 
 void LOGGER::INIT()
 {
-#if __linux__
-	openlog(id, LOG_NDELAY|| LOG_PID, LOG_DEBUG);
-#endif
+
 }
 
 void LOGGER::CLOSE(bool dumpdata)
@@ -43,10 +41,6 @@ void LOGGER::CLOSE(bool dumpdata)
 	Push_LogKeys.clear();
 	Get_LogKeys.clear();
 	logs.clear();
-
-#if __linux__
-	closelog();
-#endif
 }
 
 void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ...)
@@ -72,11 +66,11 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 	logs.push_back(PairLOG(push.type, push));
 
+	std::cout << push.log << std::endl;
+
 #ifdef _WIN32
 	OutputDebugString(push.log);
 	OutputDebugString("\n");
-#elif __linux__
-	syslog(0, push.log);
 #endif
 }
 
