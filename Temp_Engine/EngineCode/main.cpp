@@ -1,7 +1,6 @@
 #include <iostream>
-//#include <conio.h>
-#include "./helpers/Globals.h"
-#include "./application/Application.h"
+#include "EngineCode/helpers/Globals.h"
+#include "EngineCode/application/Application.h"
 
 enum main_states
 {
@@ -62,6 +61,5 @@ int main(int argc, char* argv[])
         LOGGER::CLOSE(true);
     }
 
-    //getch();
     return 0;
 }

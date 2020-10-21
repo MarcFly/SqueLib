@@ -23,8 +23,8 @@ public:
 
 private:
     std::vector<Module*> modules;
-    std::atomic<uint32> engine_time = 1/60.f;
-    std::atomic<uint32> game_time = 1/60.f;
+    std::atomic<float> engine_time;
+    std::atomic<float> game_time;
 
 };
 

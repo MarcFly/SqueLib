@@ -6,19 +6,15 @@
 #include <mutex>
 
 #include <cstring>
+#include <filesystem>
 
 #include "LogHandler.h"
 
 #ifdef _WIN32
 #include <Windows.h>
-#include <filesystem>
-namespace stdfs = std::filesystem;
 #elif __linux__
 #include <syslog.h>
 const char* id = "LogHandler_Temp_Engine";
-
-#include <experimental/filesystem>
-namespace stdfs = std::experimental::filesystem;
 #endif // OS Check
 
 // Var Define
@@ -86,7 +82,7 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 void LOGGER::DumpData()
 {
-	stdfs::create_directory("Logs");
+	std::filesystem::create_directory("Logs");
 
 	std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
@@ -105,7 +101,7 @@ void LOGGER::DumpData()
 	char* data = new char[buf_size];
 	char* cursor = data;
 
-	std::string header;
+	std::string header("");
 	for (int i = 0; i < logs.size(); ++i)
 	{
 		memcpy(cursor, logs[i].second.log, LOGSIZE);

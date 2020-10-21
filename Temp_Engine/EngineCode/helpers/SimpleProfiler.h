@@ -1,9 +1,9 @@
 #ifndef _SIMPLE_PROFILER_
 #define _SIMPLE_PROFILER_
 
-#include<map>
-#include<string>
-#include<vector>
+#include <map>
+#include <string>
+#include <vector>
 #include "LWTimer.h"
 
 struct Scope

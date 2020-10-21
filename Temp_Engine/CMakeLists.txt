@@ -11,14 +11,15 @@ endif()
 set(PROJ_NAME Temp_Engine)
 
 #Setup Project
-
-
 project(${PROJ_NAME}    VERSION 2020.1
                         DESCRIPTION "Multiplatform C++ Engine"
                         LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+
+#C++ STD Library Linkings
+link_libraries(stdc++fs pthread)
 
 #Adding subfile Directories
 set(HELPER_DIR "./EngineCode/helpers")
@@ -30,8 +31,6 @@ include_directories(${CMAKE_SOURCE_DIR})
 include_directories(HELPER_DIR)
 include_directories(APP_DIR)
 include_directories(MODULE_DIR)
-
-#set(HELPERS "${HELPER_DIR}/LogHandler.cpp" "${HELPER_DIR}/LWTimer.cpp" "${HELPER_DIR}/SimpleProfiler.cpp")
 
 #Instead of hard coding the filenames, traverse the directory for the files
 file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp" "${HELPER_DIR}/*.h")
@@ -48,7 +47,7 @@ add_executable(${PROJ_NAME} "./EngineCode/main.cpp")
 #Target Sources for Own Engine things
 target_sources(${PROJ_NAME} PUBLIC ${HELPERS} ${MODULES} ${APP_SOURCE})
 
-
+#Make Folders inside IDEs
 source_group("helpers" FILES ${HELPERS})
 source_group("application" FILES ${APP_SOURCE})
 source_group("modules" FILES ${MODULES})
