@@ -1,19 +1,22 @@
 # Android App Naming
+set(APPNAME ${PROJ_NAME})
 set(ORG_NAME "MarcTorresJimenez")
-set(LABEL ${PROJ_NAME})
-set(APKFILE "${PROJ_NAME}.apk")
-set(PACKAGENAME "org.${ORG_NAME}.${PROJ_NAME}")
-set(ANDROID_GLUE "./Android Specific/android_native_app_glue")
+set(LABEL ${APPNAME})
+set(APKFILE "${APPNAME}.apk")
+set(PACKAGENAME "org.${ORG_NAME}.${APPNAME}")
+set(ANDROID_GLUE "${.}/Android Specific/android_native_app_glue.c")
 
 # Prepare Android build/compile/link commands
 set(ANDROIDVERSION 22)
 set(ANDROIDTARGET ${ANDROIDVERSION})
-list(APPEND ${CMAKE_EXE_LINKER_FLAGS} -Wl --gc-sections -s)
-list(APPEND ${COMPILE_FLAGS} -ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden)
+set(CFLAGS)
+set(LDFLAGS)
+list(APPEND LDFLAGS "-Wl,--gc-sections" -s)
+list(APPEND CFLAGS -ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden)
 set(ANDROID_FULLSCREEN y)
 set(ADB adb)
 set(UNAME $ENV{USER})
-#set(ANDROIDSRCS)
+set(SRCS "${ENGINE_SOURCES}")
 
 
 # Set Route to find SDKs
@@ -71,27 +74,32 @@ message(STATUS)
 
 # Compiler Flags
 message(STATUS "Setting Compile Flags for Android")
-list(APPEND ${COMPILE_FLAGS} -Os -DAPPNAME=\"${PROJ_NAME}\")
-list(APPEND ${COMPILE_FLAGS} -DANDROID_FULLSCREEN=y)
-list(APPEND ${COMPILE_FLAGS} -I${NDK}/sysroot/usr/include -I${NDK}/sysroot/usr/include/android -fPIC -DANDROIDVERSION=$(ANDROIDVERSION))
+list(APPEND CFLAGS -Os -DAPPNAME=\"${APPNAME}\")
+list(APPEND CFLAGS -DANDROID_FULLSCREEN=y)
+list(APPEND CFLAGS -I${NDK}/sysroot/usr/include -I${NDK}/sysroot/usr/include/android -fPIC -DANDROIDVERSION=${ANDROIDVERSION})
 message(STATUS)
 
 # Linker Flags
 message(STATUS "Setting linker flags for android")
-list(APPEND ${CMAKE_EXE_LINKER_FLAGS} -lm -landroid -llog)
-list(APPEND ${CMAKE_EXE_LINKER_FLAGS} -shared -uANativeActivity_onCreate)
+list(APPEND LDFLAGS -lm -llibEGL.so -llibandroid.so -lliblog.so)
+list(APPEND LDFLAGS -shared -uANativeActivity_onCreate)
 message(STATUS)
 
 # Processor things, don't understand
 message(STATUS "Setting Processor Architecture VarPaths")
-set(CC_ARM64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/aarch64-linux-android${ANDROIDVERSION}-clang)
-    set(CC_ARM32 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/armv7a-linux-androideabi${ANDROIDVERSION}-clang)
-set(CC_x86 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang)
-set(CC_x86_64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang)
-message(STATUS)
+set(CC_ARM64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/aarch64-linux-android${ANDROIDVERSION}-clang++)
+set(CC_ARM32 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/armv7a-linux-androideabi${ANDROIDVERSION}-clang++)
+set(CC_x86 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang++)
+set(CC_x86_64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang++)
 
-# Set Targets for makecapk to work
-set(TARGETS makecapk/lib/arm64-v8a/lib${PROJ_NAME}.so makecapk/lib/armeabi-v7a/lib${PROJ_NAME}.so)
+subdirlist(FF ${BUILD_TOOLS})
+first_exists(FE "${FF}")
+set(AAPT ${FE}/aapt)
+
+# Set Targets for makecapk creation to work
+set(TARGETS makecapk/lib/arm64-v8a/lib${APPNAME}.so makecapk/lib/armeabi-v7a/lib${APPNAME}.so)
+#TARGETS += makecapk/lib/x86/lib$(APPNAME).so
+#TARGETS += makecapk/lib/x86_64/lib$(APPNAME).so
 set(CFLAGS_ARM64 -m64)
 set(CFLAGS_ARM32 -mfloat-ai=softfp -m32)
 set(CFLAGS_x86 -march=i686 -mtune=intel -mssse3 -mfpmath=sse -m32)
@@ -110,3 +118,95 @@ set(KEYSTOREFILE "./my-release-key.keystore")
 
 # This is currently set to generate a new keyfile everytime
 execute_process(COMMAND keytool -genkey -v -keystore ${KEYSTOREFILE} -alias ${ALIASNAME} -keyalg RSA -keysize 2048 -validity 10000 -storepass ${STOREPASS} -keypass ${STOREPASS} -dname ${DNAME})
+# Ideally this could be passed as a Target to Makefile and have a target keystore that executes that, instead of here
+
+# GENERATE CUSTOM TARGETS/CUSTOM COMMANDS FOR PROCESSOR ARCHITECTURES
+# missing ARM64, ARM32, x86
+# testing trying to get make to work with X64
+
+# Make Sure all flags are setup properly
+
+message(STATUS "CFLAGS: " "${CFLAGS}")
+message(STATUS "X86 Compiler Flags: " "${CC_X86}")
+message(STATUS "CFLAGS_X86: " "${CFLAGS_X86}")
+
+add_custom_target( x86lib${APPNAME}.so ALL
+    SOURCES ${SRCS} ${ANDROID_GLUE}
+    COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
+    COMMAND @echo "Creating Directory for x86 lib"
+    COMMAND mkdir -p makecapk/lib/x86_64
+    COMMAND @echo "Building x86 so file"
+    # In Make, g++ is invoked directly by make with the rules
+    COMMAND g++ ${CC_X86}
+        ${CFLAGS} 
+        ${CFLAGS_X86}
+        -o $@ $^ # Don't know what this does really
+        -L${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib/i686-linux-android/${ANDROIDVERSION}/
+        -v
+        ${LDFLAGS}
+    #COMMANDS TO RENAME FILE AND COPY IT TO ITS REQUIRED FOLDER
+)
+
+add_custom_target(PROCESSOR_LIBS ALL
+    DEPENDS 
+        x86lib${APPNAME}.so
+        # Add other architectures (copypaste really)
+)
+
+add_custom_target( AndroidManifest.xml ALL
+    COMMAND @echo "Creating Manifest"
+    COMMAND rm -rf AndroidManifest.xml
+    COMMAND PACKAGENAME=${PACKAGENAME}
+    COMMAND ANDROIDVERSION=${ANDROIDVERSION}
+    COMMAND ANDROIDTARGET=${ANDROIDTARGET}
+    COMMAND APPNAME=${APPNAME}
+    COMMAND LABEL=${LABEL} 
+    COMMAND envsubst '${ANDROIDTARGET} ${ANDROIDVERSION} ${APPNAME} ${PACKAGENAME} ${LABEL}'
+    COMMAND @echo "Label Pass"
+    COMMAND < AndroidManifest.xml.template > AndroidManifest.xml            
+    COMMAND @echo "Finished Manifest"
+)
+
+add_custom_target( manifest BYPRODUCTS COMMAND AndroidManifest.xml)
+
+add_custom_target( makecapk.apk ALL
+    COMMAND ${PROCESSOR_LIBS}
+    COMMAND ${ASSETS} 
+    COMMAND AndroidManifest.xml
+    COMMAND mkdir -p makecapk/assets
+    #COMMAND cp -r 
+    # Somewhere in the package commands/flags, we require addition of -S [dir] for the asset sources original place
+    #[RAWDRAW] We're really cutting corners.  You should probably use resource files.. Replace android:label="@string/app_name" and add a resource file.
+    #[RAWDRAW] Then do this -S Sources/res on the aapt line.
+    #[RAWDRAW] For icon support, add -S makecapk/res to the aapt line.  also,  android:icon="@mipmap/icon" to your application line in the manifest.
+    #[RAWDRAW] If you want to strip out about 800 bytes of data you can remove the icon and strings.
+
+    COMMAND ${AAPT} package -f -F temp.apk -I ${ANDROIDSDK}/platforms/android-${ANDROIDVERSION}/android.jar -M AndroidManifest.xml -A makecapk/assets -v --target-sdk-version ${ANDROIDTARGET}
+    COMMAND cd makecapk & zip -D0r ../makecapk.apk
+    COMMAND jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verose -keystore ${KEYSTOREFILE} -storepass ${STOREPASS} makecapk.apk ${ALIASNAME}
+    COMMAND rm -rf ${APKFILE}
+    COMMAND ${BUILD_TOOLS}/zipalign -v 4 makecapk.apk ${APKFILE}
+    COMMAND rm -rg temp.apk
+    COMMAND rm -rf makecapk.apk
+    COMMAND @ls -l ${APKFILE}    
+)
+
+add_custom_target( uninstall
+    COMMAND (${ADB} uninstall ${PACKAGENAME})||true 
+)
+
+add_custom_target( push
+    COMMAND makecapk.apk
+    COMMAND @echo "Installing " ${PACKAGENAME}
+    COMMAND ${ADB} install -r ${APKFILE}
+)
+
+
+#add_custom_target( run
+#    COMMAND push
+#    COMMAND $(eval ACTIVITYNAME:=$(shell ))
+#)
+
+#add_custom_target( clean
+#    COMMAND rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
+#)

@@ -4,7 +4,7 @@
 
 enum main_states
 {
-	MAIN_CREATION,
+	MAIN_CREATION = 0,
 	MAIN_UPDATE,
 	MAIN_FINISH,
 	MAIN_EXIT

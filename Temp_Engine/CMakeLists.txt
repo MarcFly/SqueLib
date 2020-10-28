@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.1...3.18) #require a minimum cmake version to build
 
+set(. ${CMAKE_SOURCE_DIR})
+
 # Helper Modules
-include("./cmake_modules/Helpers.cmake")
+include("${.}/cmake_modules/Helpers.cmake")
 
 
 # If the version is less than tested, make a warning about it, else try to use 3.18
@@ -31,9 +33,9 @@ endif(UNIX)
 
 
 #Adding subfile Directories
-set(HELPER_DIR "./EngineCode/helpers")
-set(APP_DIR "./EngineCode/application")
-set(MODULE_DIR "./EngineCode/modules")
+set(HELPER_DIR "${.}/EngineCode/helpers")
+set(APP_DIR "${.}/EngineCode/application")
+set(MODULE_DIR "${.}/EngineCode/modules")
 
 #Include the directories for code to use
 include_directories(${CMAKE_SOURCE_DIR})
@@ -42,16 +44,20 @@ include_directories(APP_DIR)
 include_directories(MODULE_DIR)
 
 #Instead of hard coding the filenames, traverse the directory for the files
+set(MAIN "${.}/EngineCode/main.cpp")
 file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp" "${HELPER_DIR}/*.h")
 file(GLOB_RECURSE APP_SOURCE "${APP_DIR}/*.cpp" "${APP_DIR}/*.h")
 file(GLOB_RECURSE MODULES "${MODULE_DIR}/*.cpp" "${MODULE_DIR}/*.h")
 
+#ENGINE SOURCES, for usage in other compile directives easily
+set(ENGINE_SOURCES ${MAIN} "${HELPERS}" "${APP_SOURCE}" "${MODULES}")
+
 if(ANDROID)
-    include("./cmake_modules/Android.cmake")
+    include("${.}/cmake_modules/Android.cmake")
 endif(ANDROID)
 
 #Add an executable entry point
-add_executable(${PROJ_NAME} "./EngineCode/main.cpp")
+add_executable(${PROJ_NAME} ${MAIN})
 
 #Target Sources for Own Engine things
 target_sources(${PROJ_NAME} PUBLIC ${HELPERS} ${MODULES} ${APP_SOURCE})
