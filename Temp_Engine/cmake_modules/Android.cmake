@@ -7,7 +7,7 @@ set(PACKAGENAME "org.${ORG_NAME}.${APPNAME}")
 set(ANDROID_GLUE "${.}/Android Specific/android_native_app_glue.c")
 
 # Prepare Android build/compile/link commands
-set(ANDROIDVERSION 22)
+set(ANDROIDVERSION 24)
 set(ANDROIDTARGET ${ANDROIDVERSION})
 set(CFLAGS)
 set(LDFLAGS)
@@ -50,7 +50,9 @@ elseif($ENV{ANDROID_NDK_HOME})
     set(NDK $ENV{ANDROID_NDK_HOME})
 else()
     set(NDK_DIRS ${ANDROIDSDK}/ndk ${ANDROIDSDK}/ndk-bundle)
-    first_exists(NDK "${NDK_DIRS}")
+    first_exists(NDK_G "${NDK_DIRS}")
+    subdirlist(NDK_L ${NDK_G})
+    first_exists(NDK "${NDK_L}")
 endif()
 
 # Search for Build Tools inside SDK
@@ -81,7 +83,7 @@ message(STATUS)
 
 # Linker Flags
 message(STATUS "Setting linker flags for android")
-list(APPEND LDFLAGS -lm -llibEGL.so -llibandroid.so -lliblog.so)
+list(APPEND LDFLAGS -lm) # -lEGL -landroid -llog)
 list(APPEND LDFLAGS -shared -uANativeActivity_onCreate)
 message(STATUS)
 
@@ -101,7 +103,7 @@ set(TARGETS makecapk/lib/arm64-v8a/lib${APPNAME}.so makecapk/lib/armeabi-v7a/lib
 #TARGETS += makecapk/lib/x86/lib$(APPNAME).so
 #TARGETS += makecapk/lib/x86_64/lib$(APPNAME).so
 set(CFLAGS_ARM64 -m64)
-set(CFLAGS_ARM32 -mfloat-ai=softfp -m32)
+set(CFLAGS_ARM32 -m32) #-mfloat-abi=softfp  / default in arm32 is softp and it can't be found when compiling, sooooooo
 set(CFLAGS_x86 -march=i686 -mtune=intel -mssse3 -mfpmath=sse -m32)
 set(CFLAGS_x86_64 -march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel)
 
@@ -130,27 +132,81 @@ message(STATUS "CFLAGS: " "${CFLAGS}")
 message(STATUS "X86 Compiler Flags: " "${CC_X86}")
 message(STATUS "CFLAGS_X86: " "${CFLAGS_X86}")
 
+set(HARD_LINK_1 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib)
+set(x86Link i686-linux-android/${ANDROIDVERSION})
+set(x86_64Link x86_64-linux-android/${ANDROIDVERSION})
+set(arm32Link arm-linux-androideabi/${ANDROIDVERSION})
+set(arm64Link aarch64-linux-android/${ANDROIDVERSION})
+
 add_custom_target( x86lib${APPNAME}.so ALL
     SOURCES ${SRCS} ${ANDROID_GLUE}
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for x86 lib"
-    COMMAND mkdir -p makecapk/lib/x86_64
+    COMMAND mkdir -p makecapk/lib/x86
     COMMAND @echo "Building x86 so file"
     # In Make, g++ is invoked directly by make with the rules
     COMMAND g++ ${CC_X86}
         ${CFLAGS} 
         ${CFLAGS_X86}
         -o $@ $^ # Don't know what this does really
-        -L${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib/i686-linux-android/${ANDROIDVERSION}/
-        -v
+        -L${HARD_LINK1}/${x86Link}
+        -L${HARD_LINK1}/${x86Link}/libandroid.so
+        -L${HARD_LINK1}/${x86Link}/liblog.so
+        -L${HARD_LINK1}/${x86Link}/libEGL.so
         ${LDFLAGS}
-    #COMMANDS TO RENAME FILE AND COPY IT TO ITS REQUIRED FOLDER
+)
+
+add_custom_target( x86_64lib${APPNAME}.so ALL
+    SOURCES ${SRCS} ${ANDROID_GLUE}
+    COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
+    COMMAND @echo "Creating Directory for x86_64 lib"
+    COMMAND mkdir -p makecapk/lib/x86_64
+    COMMAND @echo "Building x86 so file"
+    # In Make, g++ is invoked directly by make with the rules
+    COMMAND g++ ${CC_X86_64}
+        ${CFLAGS} 
+        ${CFLAGS_X86_64}
+        -o $@ $^ # Don't know what this does really
+        -L${HARD_LINK1}/${x86_64Link}
+        -L${HARD_LINK1}/${x86_64Link}/libandroid.so
+        -L${HARD_LINK1}/${x86_64Link}/liblog.so
+        -L${HARD_LINK1}/${x86_64Link}/libEGL.so
+        ${LDFLAGS}
+)
+
+add_custom_target( arm32lib${APPNAME}.so ALL
+    SOURCES ${SRCS} ${ANDROID_GLUE}
+    COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
+    COMMAND @echo "Creating Directory for ARM32 lib"
+    COMMAND mkdir -p makecapk/lib/armeabi-v7a
+    COMMAND @echo "Building ARM32 so file"
+    # In Make, g++ is invoked directly by make with the rules
+    COMMAND @echo ${NDK}
+    COMMAND arm-none-eabi-g++ ${CC_ARM32}
+        ${CFLAGS} 
+        ${CFLAGS_ARM32}
+        -o $@ $^ # Don't know what this does really
+        -L${HARD_LINK1}/${arm32Link}
+        -L${HARD_LINK1}/${arm32Link}/libandroid.so
+        -L${HARD_LINK1}/${arm32Link}/liblog.so
+        -L${HARD_LINK1}/${arm32Link}/libEGL.so
+        ${LDFLAGS}
 )
 
 add_custom_target(PROCESSOR_LIBS ALL
     DEPENDS 
         x86lib${APPNAME}.so
+        x86_64lib${APPNAME}.so
+        arm32lib${APPNAME}.so
         # Add other architectures (copypaste really)
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/x86lib${APPNAME}.so lib${APPNAME}.so
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/x86
+
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/x86_64lib${APPNAME}.so lib${APPNAME}.so
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/x86_64
+
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/arm32lib${APPNAME}.so lib${APPNAME}.so
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/armeabi-v7a
 )
 
 add_custom_target( AndroidManifest.xml ALL
