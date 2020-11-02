@@ -1,10 +1,10 @@
 # Android App Naming
 set(APPNAME ${PROJ_NAME})
 set(ORG_NAME "MarcTorresJimenez")
-set(LABEL ${APPNAME})
+set(LABEL ${PROJ_NAME})
 set(APKFILE "${APPNAME}.apk")
 set(PACKAGENAME "org.${ORG_NAME}.${APPNAME}")
-set(ANDROID_GLUE "${.}/Android Specific/android_native_app_glue.c")
+set(ANDROID_GLUE "${.}/AndroidSpecific/android_native_app_glue.c")
 
 # Prepare Android build/compile/link commands
 set(ANDROIDVERSION 24)
@@ -12,7 +12,7 @@ set(ANDROIDTARGET ${ANDROIDVERSION})
 set(CFLAGS)
 set(LDFLAGS)
 list(APPEND LDFLAGS "-Wl,--gc-sections" -s)
-list(APPEND CFLAGS -ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden)
+list(APPEND CFLAGS -ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden) # Added verbosity to get more info on compilation (issues on files and so)
 set(ANDROID_FULLSCREEN y)
 set(ADB adb)
 set(UNAME $ENV{USER})
@@ -56,7 +56,13 @@ else()
 endif()
 
 # Search for Build Tools inside SDK
-first_exists(BUILD_TOOLS ${ANDROIDSDK}/build-tools)
+first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
+if(NOT EXISTS ${BT_EXISTS})
+    message(FATAL_ERROR "Build tools folder not found")
+endif()
+
+subdirlist(BT_Vrs ${BT_EXISTS})
+first_exists(BUILD_TOOLS "${BT_Vrs}")
 
 # Check that everything was found
 if(NOT EXISTS ${ANDROIDSDK})
@@ -83,7 +89,7 @@ message(STATUS)
 
 # Linker Flags
 message(STATUS "Setting linker flags for android")
-list(APPEND LDFLAGS -lm) # -lEGL -landroid -llog)
+list(APPEND LDFLAGS -lm) # -lEGL -landroid -llog) # Libraries are currently hard linked to the version found, instead of added from link path which does not seem to work
 list(APPEND LDFLAGS -shared -uANativeActivity_onCreate)
 message(STATUS)
 
@@ -94,27 +100,28 @@ set(CC_ARM32 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/armv7a-linux-android
 set(CC_x86 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang++)
 set(CC_x86_64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang++)
 
-subdirlist(FF ${BUILD_TOOLS})
-first_exists(FE "${FF}")
-set(AAPT ${FE}/aapt)
+set(AAPT ${BUILD_TOOLS}/aapt)
 
 # Set Targets for makecapk creation to work
 set(TARGETS makecapk/lib/arm64-v8a/lib${APPNAME}.so makecapk/lib/armeabi-v7a/lib${APPNAME}.so)
 #TARGETS += makecapk/lib/x86/lib$(APPNAME).so
 #TARGETS += makecapk/lib/x86_64/lib$(APPNAME).so
-set(CFLAGS_ARM64 -m64)
-set(CFLAGS_ARM32 -m32) #-mfloat-abi=softfp  / default in arm32 is softp and it can't be found when compiling, sooooooo
+set(CFLAGS_ARM64 -march=armv8-a -m64)
+set(CFLAGS_ARM32  -march=armv7-a -mfloat-abi=softfp) #-m32) #  / default in arm32 is softp and it can't be found when compiling, sooooooo
 set(CFLAGS_x86 -march=i686 -mtune=intel -mssse3 -mfpmath=sse -m32)
 set(CFLAGS_x86_64 -march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel)
 
 # Setup for creating the keystore file
-if(NOT ${STOREPASS})
+if(NOT ALIASNAME)
+    message(STATUS "Setting up aliasname")
+    set(ALIASNAME standkey)
+endif()
+if(STOREPASS)
     message(FATAL_ERROR "Password/Storepass for key not passed")
 endif()
 set(DNAME "CN=marcfly.github.io, OU=ID, O=Example?, L=Torres, S=Marc, C=ES")
-set(ALIASNAME standkey)
-if(NOT ${STOREPASS})
-    set(STOREPASS standkey)
+if(NOT STOREPASS)
+    set(STOREPASS ${ALIASNAME})
 endif()
 set(KEYSTOREFILE "./my-release-key.keystore")
 
@@ -138,25 +145,24 @@ set(x86_64Link x86_64-linux-android/${ANDROIDVERSION})
 set(arm32Link arm-linux-androideabi/${ANDROIDVERSION})
 set(arm64Link aarch64-linux-android/${ANDROIDVERSION})
 
-add_custom_target( x86lib${APPNAME}.so ALL
+add_custom_target( x86lib${APPNAME}.so
     SOURCES ${SRCS} ${ANDROID_GLUE}
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for x86 lib"
     COMMAND mkdir -p makecapk/lib/x86
     COMMAND @echo "Building x86 so file"
     # In Make, g++ is invoked directly by make with the rules
-    COMMAND g++ ${CC_X86}
+    COMMAND g++${CC_X86}
         ${CFLAGS} 
         ${CFLAGS_X86}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${x86Link}
         -L${HARD_LINK1}/${x86Link}/libandroid.so
         -L${HARD_LINK1}/${x86Link}/liblog.so
         -L${HARD_LINK1}/${x86Link}/libEGL.so
         ${LDFLAGS}
 )
 
-add_custom_target( x86_64lib${APPNAME}.so ALL
+add_custom_target( x86_64lib${APPNAME}.so
     SOURCES ${SRCS} ${ANDROID_GLUE}
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for x86_64 lib"
@@ -167,38 +173,58 @@ add_custom_target( x86_64lib${APPNAME}.so ALL
         ${CFLAGS} 
         ${CFLAGS_X86_64}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${x86_64Link}
         -L${HARD_LINK1}/${x86_64Link}/libandroid.so
         -L${HARD_LINK1}/${x86_64Link}/liblog.so
         -L${HARD_LINK1}/${x86_64Link}/libEGL.so
         ${LDFLAGS}
 )
 
-add_custom_target( arm32lib${APPNAME}.so ALL
+add_custom_target( arm32lib${APPNAME}.so
     SOURCES ${SRCS} ${ANDROID_GLUE}
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for ARM32 lib"
     COMMAND mkdir -p makecapk/lib/armeabi-v7a
     COMMAND @echo "Building ARM32 so file"
     # In Make, g++ is invoked directly by make with the rules
-    COMMAND @echo ${NDK}
-    COMMAND arm-none-eabi-g++ ${CC_ARM32}
+    # I don't know why but for linux base g++ will compile SO file with binaries
+    # for arm I have to call the clan++ executable/file as one and will call a crosscompiler instead
+    COMMAND ${CC_ARM32}
         ${CFLAGS} 
         ${CFLAGS_ARM32}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${arm32Link}
         -L${HARD_LINK1}/${arm32Link}/libandroid.so
         -L${HARD_LINK1}/${arm32Link}/liblog.so
         -L${HARD_LINK1}/${arm32Link}/libEGL.so
         ${LDFLAGS}
+    COMMAND -ls
 )
 
+add_custom_target( arm64lib${APPNAME}.so
+    SOURCES ${SRCS} ${ANDROID_GLUE}
+    COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
+    COMMAND @echo "Creating Directory for ARM32 lib"
+    COMMAND mkdir -p makecapk/lib/arm64-v8a
+    COMMAND @echo "Building ARM32 so file"
+    COMMAND ${CC_ARM64}
+        ${CFLAGS} 
+        ${CFLAGS_ARM64}
+        -o $@ $^ # Don't know what this does really
+        -L${HARD_LINK1}/${arm64Link}/libandroid.so
+        -L${HARD_LINK1}/${arm64Link}/liblog.so
+        -L${HARD_LINK1}/${arm64Link}/libEGL.so
+        ${LDFLAGS}
+    COMMAND -ls
+)
+
+
 add_custom_target(PROCESSOR_LIBS ALL
-    DEPENDS 
+    DEPENDS # Make sure the so files are compiled
         x86lib${APPNAME}.so
         x86_64lib${APPNAME}.so
         arm32lib${APPNAME}.so
-        # Add other architectures (copypaste really)
+        arm64lib${APPNAME}.so
+
+    # Rename and move the files into the lib folders in makecapk.apk
     COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/x86lib${APPNAME}.so lib${APPNAME}.so
     COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/x86
 
@@ -207,29 +233,40 @@ add_custom_target(PROCESSOR_LIBS ALL
 
     COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/arm32lib${APPNAME}.so lib${APPNAME}.so
     COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/armeabi-v7a
+
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/arm64lib${APPNAME}.so lib${APPNAME}.so
+    COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/arm64-v8a
 )
 
 add_custom_target( AndroidManifest.xml ALL
     COMMAND @echo "Creating Manifest"
     COMMAND rm -rf AndroidManifest.xml
-    COMMAND PACKAGENAME=${PACKAGENAME}
-    COMMAND ANDROIDVERSION=${ANDROIDVERSION}
-    COMMAND ANDROIDTARGET=${ANDROIDTARGET}
-    COMMAND APPNAME=${APPNAME}
-    COMMAND LABEL=${LABEL} 
-    COMMAND envsubst '${ANDROIDTARGET} ${ANDROIDVERSION} ${APPNAME} ${PACKAGENAME} ${LABEL}'
-    COMMAND @echo "Label Pass"
-    COMMAND < AndroidManifest.xml.template > AndroidManifest.xml            
+    COMMAND @echo "Setting up vars"
+    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/AndroidSpecific/AndroidManifest.xml.template ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND PACKAGENAME=${PACKAGENAME} 
+            ANDROIDVERSION=${ANDROIDVERSION} 
+            ANDROIDTARGET=${ANDROIDTARGET} 
+            APPNAME=${APPNAME} 
+            LABEL=${LABEL} 
+            envsubst '$$ANDROIDTARGET $$ANDROIDVERSION $$APPNAME $$PACKAGENAME $$LABEL' 
+            < AndroidManifest.xml.template 
+            > AndroidManifest.xml 
+    
+    
+               
     COMMAND @echo "Finished Manifest"
 )
 
-add_custom_target( manifest BYPRODUCTS COMMAND AndroidManifest.xml)
+add_custom_target( manifest DEPENDS AndroidManifest.xml)
 
 add_custom_target( makecapk.apk ALL
+    DEPENDS
+        AndroidManifest.xml
     COMMAND ${PROCESSOR_LIBS}
     COMMAND ${ASSETS} 
-    COMMAND AndroidManifest.xml
     COMMAND mkdir -p makecapk/assets
+    COMMAND mkdir -p makecapk/res
+    COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/EngineResources/* ${CMAKE_CURRENT_BINARY_DIR}/makecapk/res
     #COMMAND cp -r 
     # Somewhere in the package commands/flags, we require addition of -S [dir] for the asset sources original place
     #[RAWDRAW] We're really cutting corners.  You should probably use resource files.. Replace android:label="@string/app_name" and add a resource file.
@@ -237,12 +274,15 @@ add_custom_target( makecapk.apk ALL
     #[RAWDRAW] For icon support, add -S makecapk/res to the aapt line.  also,  android:icon="@mipmap/icon" to your application line in the manifest.
     #[RAWDRAW] If you want to strip out about 800 bytes of data you can remove the icon and strings.
 
-    COMMAND ${AAPT} package -f -F temp.apk -I ${ANDROIDSDK}/platforms/android-${ANDROIDVERSION}/android.jar -M AndroidManifest.xml -A makecapk/assets -v --target-sdk-version ${ANDROIDTARGET}
-    COMMAND cd makecapk & zip -D0r ../makecapk.apk
-    COMMAND jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verose -keystore ${KEYSTOREFILE} -storepass ${STOREPASS} makecapk.apk ${ALIASNAME}
+    COMMAND ${AAPT} package -f -F temp.apk -I ${ANDROIDSDK}/platforms/android-${ANDROIDVERSION}/android.jar -M AndroidManifest.xml -S makecapk/res -A makecapk/assets -v --target-sdk-version ${ANDROIDTARGET}
+    COMMAND unzip -o temp.apk -d makecapk
+    COMMAND rm -rf makecapk.apk
+    COMMAND @echo "Now zipping and compressing into apk"
+    COMMAND zip -D9r makecapk.apk makecapk/
+    COMMAND jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verbose -keystore ${KEYSTOREFILE} -storepass ${STOREPASS} makecapk.apk ${ALIASNAME}
     COMMAND rm -rf ${APKFILE}
     COMMAND ${BUILD_TOOLS}/zipalign -v 4 makecapk.apk ${APKFILE}
-    COMMAND rm -rg temp.apk
+    COMMAND rm -rf temp.apk
     COMMAND rm -rf makecapk.apk
     COMMAND @ls -l ${APKFILE}    
 )
