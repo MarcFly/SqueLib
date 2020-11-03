@@ -14,7 +14,7 @@ else()
 endif()
 
 #Main Global Variables
-set(PROJ_NAME "Temp_Engine")
+set(PROJ_NAME "TempEngine")
 
 #Setup Project
 project(${PROJ_NAME}    VERSION 2020.1

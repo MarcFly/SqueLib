@@ -7,7 +7,7 @@ set(PACKAGENAME "org.${ORG_NAME}.${APPNAME}")
 set(ANDROID_GLUE "${.}/AndroidSpecific/android_native_app_glue.c")
 
 # Prepare Android build/compile/link commands
-set(ANDROIDVERSION 24)
+set(ANDROIDVERSION 29)
 set(ANDROIDTARGET ${ANDROIDVERSION})
 set(CFLAGS)
 set(LDFLAGS)
@@ -257,12 +257,12 @@ add_custom_target( AndroidManifest.xml ALL
     COMMAND @echo "Finished Manifest"
 )
 
-add_custom_target( manifest DEPENDS AndroidManifest.xml)
+add_custom_command( OUTPUT manifest DEPENDS AndroidManifest.xml)
 
 add_custom_target( makecapk.apk ALL
     DEPENDS
-        AndroidManifest.xml
-    COMMAND ${PROCESSOR_LIBS}
+        PROCESSOR_LIBS
+        manifest
     COMMAND ${ASSETS} 
     COMMAND mkdir -p makecapk/assets
     COMMAND mkdir -p makecapk/res
@@ -278,7 +278,7 @@ add_custom_target( makecapk.apk ALL
     COMMAND unzip -o temp.apk -d makecapk
     COMMAND rm -rf makecapk.apk
     COMMAND @echo "Now zipping and compressing into apk"
-    COMMAND zip -D9r makecapk.apk makecapk/
+    COMMAND cd makecapk && zip -D9r ../makecapk.apk   .
     COMMAND jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verbose -keystore ${KEYSTOREFILE} -storepass ${STOREPASS} makecapk.apk ${ALIASNAME}
     COMMAND rm -rf ${APKFILE}
     COMMAND ${BUILD_TOOLS}/zipalign -v 4 makecapk.apk ${APKFILE}
@@ -287,22 +287,22 @@ add_custom_target( makecapk.apk ALL
     COMMAND @ls -l ${APKFILE}    
 )
 
-add_custom_target( uninstall
-    COMMAND (${ADB} uninstall ${PACKAGENAME})||true 
-)
+#add_custom_target( uninstall
+#    COMMAND (${ADB} uninstall ${PACKAGENAME})||true 
+#)
 
-add_custom_target( push
-    COMMAND makecapk.apk
+add_custom_target(push
+    DEPENDS
+        makecapk.apk
     COMMAND @echo "Installing " ${PACKAGENAME}
     COMMAND ${ADB} install -r ${APKFILE}
 )
 
+add_custom_target(run
+    COMMAND push    $(eval ACTIVITYNAME:=$(shell ${AAPT} dump badging ${APKFILE} | grep "launchable-activity" | cut -f 2 -d"'"))
+                    ${ADB} shell am start -n ${PACKAGENAME}/${ACTIVITYNAME}
+)
 
-#add_custom_target( run
-#    COMMAND push
-#    COMMAND $(eval ACTIVITYNAME:=$(shell ))
-#)
-
-#add_custom_target( clean
-#    COMMAND rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
-#)
+add_custom_target( cleanup
+    COMMAND rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
+)
