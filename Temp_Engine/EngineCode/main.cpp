@@ -1,6 +1,15 @@
 #include <iostream>
 #include "EngineCode/helpers/Globals.h"
+
+#ifdef ANDROID
+#include "EngineCode/android/application/Application.h"
+#include <android_native_app_glue.h>
+//app_dummy();
+extern struct android_app* gapp;
+#else
 #include "EngineCode/application/Application.h"
+#endif
+
 
 enum main_states
 {
@@ -10,8 +19,18 @@ enum main_states
 	MAIN_EXIT
 };
 
-int main(int argc, char* argv[])
+void HandleResume()
+{}
+
+void HandleSuspend()
+{}
+
+int main()
 {
+#ifdef ANDROID
+    //app_dummy();
+#endif
+
     app = new Application();
     main_states state = MAIN_CREATION;
     bool app_rets = false;

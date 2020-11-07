@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.1...3.18) #require a minimum cmake version to b
 set(. ${CMAKE_SOURCE_DIR})
 
 # Helper Modules
-include("${.}/cmake_modules/Helpers.cmake")
+set(CMAKE_MODULE_PATH ${.}/cmake_modules)
+include(Helpers)
 
 
 # If the version is less than tested, make a warning about it, else try to use 3.18
@@ -24,18 +25,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-#UNIX Things
-if(UNIX)
-    #C++ STD Library Linkings
-    link_libraries(stdc++fs pthread)    
-endif(UNIX)
-
-
-
 #Adding subfile Directories
 set(HELPER_DIR "${.}/EngineCode/helpers")
 set(APP_DIR "${.}/EngineCode/application")
 set(MODULE_DIR "${.}/EngineCode/modules")
+
+#Instead of hard coding the filenames, traverse the directory for the files
+set(MAIN "${.}/EngineCode/main.cpp")
+file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp")
+file(GLOB_RECURSE APP_SOURCE "${APP_DIR}/*.cpp")
+file(GLOB_RECURSE MODULES "${MODULE_DIR}/*.cpp")
+
+#ENGINE SOURCES, for usage in other compile directives easily
+set(ENGINE_SOURCES ${MAIN} "${HELPERS}" "${APP_SOURCE}" "${MODULES}")
 
 #Include the directories for code to use
 include_directories(${CMAKE_SOURCE_DIR})
@@ -43,28 +45,15 @@ include_directories(HELPER_DIR)
 include_directories(APP_DIR)
 include_directories(MODULE_DIR)
 
-#Instead of hard coding the filenames, traverse the directory for the files
-set(MAIN "${.}/EngineCode/main.cpp")
-file(GLOB_RECURSE HELPERS "${HELPER_DIR}/*.cpp" "${HELPER_DIR}/*.h")
-file(GLOB_RECURSE APP_SOURCE "${APP_DIR}/*.cpp" "${APP_DIR}/*.h")
-file(GLOB_RECURSE MODULES "${MODULE_DIR}/*.cpp" "${MODULE_DIR}/*.h")
+#UNIX Things
+if(UNIX)
+    if(NOT ANDROID)
+        include(Linux)
+    else()
+        include(ACmake)
+    endif()
 
-#ENGINE SOURCES, for usage in other compile directives easily
-set(ENGINE_SOURCES ${MAIN} "${HELPERS}" "${APP_SOURCE}" "${MODULES}")
+elseif(WINDOWS)
+    include(Windows)
+endif()
 
-if(ANDROID)
-    include("${.}/cmake_modules/Android.cmake")
-endif(ANDROID)
-
-#Add an executable entry point
-add_executable(${PROJ_NAME} ${MAIN})
-
-#Target Sources for Own Engine things
-target_sources(${PROJ_NAME} PUBLIC ${HELPERS} ${MODULES} ${APP_SOURCE})
-
-#Make Folders inside IDEs
-source_group("helpers" FILES ${HELPERS})
-source_group("application" FILES ${APP_SOURCE})
-source_group("modules" FILES ${MODULES})
-
-#Link Libraries to target executable

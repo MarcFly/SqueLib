@@ -1,14 +1,18 @@
+add_compile_definitions(ANDROID)
+
 # Android App Naming
 set(APPNAME ${PROJ_NAME})
 set(ORG_NAME "MarcTorresJimenez")
 set(LABEL ${PROJ_NAME})
 set(APKFILE "${APPNAME}.apk")
 set(PACKAGENAME "org.${ORG_NAME}.${APPNAME}")
-set(ANDROID_GLUE "${.}/AndroidSpecific/android_native_app_glue.c")
+
+set(GLUE_DIR "${.}/EngineCode/android/glue")
+include_directories(${GLUE_DIR})
+file(GLOB_RECURSE ANDROID_GLUE "${GLUE_DIR}/*.c" "${GLUE_DIR}/.h")
 
 # Prepare Android build/compile/link commands
-set(ANDROIDVERSION 29)
-set(ANDROIDTARGET ${ANDROIDVERSION})
+
 set(CFLAGS)
 set(LDFLAGS)
 list(APPEND LDFLAGS "-Wl,--gc-sections" -s)
@@ -16,7 +20,7 @@ list(APPEND CFLAGS -ffunction-sections -Os -fdata-sections -Wall -fvisibility=hi
 set(ANDROID_FULLSCREEN y)
 set(ADB adb)
 set(UNAME $ENV{USER})
-set(SRCS "${ENGINE_SOURCES}")
+set(SRCS ${.}/EngineCode/test.cpp)# "${ENGINE_SOURCES}")
 
 
 # Set Route to find SDKs
@@ -32,37 +36,7 @@ endif(Darwin)
 
 message(STATUS "Building from " ${OS_NAME})
 
-# Check that Environment Variable for SDK Exists, else define it
-if(NOT ANDROIDSDK)
-    set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk)
-    first_exists(ANDROIDSDK "${SDK_DIRS}")
-endif()
 
-# Search for NDK inside SDK
-if(NDK)
-    message(STATUS "NDK already defined at ${NDK}")
-    set(NDK $ENV{NDK})
-elseif($ENV{ANDROID_NDK})
-    message(STATUS "NDK already defined at $ENV{ANDROID_NDK}")
-    set(NDK $ENV{ANDROID_NDK})
-elseif($ENV{ANDROID_NDK_HOME})
-    message(STATUS "NDK already defined at $ENV{ANDROID_NDK_HOME}")
-    set(NDK $ENV{ANDROID_NDK_HOME})
-else()
-    set(NDK_DIRS ${ANDROIDSDK}/ndk ${ANDROIDSDK}/ndk-bundle)
-    first_exists(NDK_G "${NDK_DIRS}")
-    subdirlist(NDK_L ${NDK_G})
-    first_exists(NDK "${NDK_L}")
-endif()
-
-# Search for Build Tools inside SDK
-first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
-if(NOT EXISTS ${BT_EXISTS})
-    message(FATAL_ERROR "Build tools folder not found")
-endif()
-
-subdirlist(BT_Vrs ${BT_EXISTS})
-first_exists(BUILD_TOOLS "${BT_Vrs}")
 
 # Check that everything was found
 if(NOT EXISTS ${ANDROIDSDK})
@@ -106,8 +80,9 @@ set(AAPT ${BUILD_TOOLS}/aapt)
 set(TARGETS makecapk/lib/arm64-v8a/lib${APPNAME}.so makecapk/lib/armeabi-v7a/lib${APPNAME}.so)
 #TARGETS += makecapk/lib/x86/lib$(APPNAME).so
 #TARGETS += makecapk/lib/x86_64/lib$(APPNAME).so
+
 set(CFLAGS_ARM64 -march=armv8-a -m64)
-set(CFLAGS_ARM32  -march=armv7-a -mfloat-abi=softfp) #-m32) #  / default in arm32 is softp and it can't be found when compiling, sooooooo
+set(CFLAGS_ARM32  -march=armv7-a -mfloat-abi=softfp -m32)
 set(CFLAGS_x86 -march=i686 -mtune=intel -mssse3 -mfpmath=sse -m32)
 set(CFLAGS_x86_64 -march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel)
 
@@ -139,14 +114,14 @@ message(STATUS "CFLAGS: " "${CFLAGS}")
 message(STATUS "X86 Compiler Flags: " "${CC_X86}")
 message(STATUS "CFLAGS_X86: " "${CFLAGS_X86}")
 
-set(HARD_LINK_1 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib)
-set(x86Link i686-linux-android/${ANDROIDVERSION})
-set(x86_64Link x86_64-linux-android/${ANDROIDVERSION})
-set(arm32Link arm-linux-androideabi/${ANDROIDVERSION})
-set(arm64Link aarch64-linux-android/${ANDROIDVERSION})
+set(PROC_LIBS ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib)
+set(x86 i686-linux-android)
+set(x64 x86_64-linux-android)
+set(arm32 arm-linux-androideabi)
+set(arm64 aarch64-linux-android)
 
 add_custom_target( x86lib${APPNAME}.so
-    SOURCES ${SRCS} ${ANDROID_GLUE}
+    SOURCES "${SRCS}" "${ANDROID_GLUE}"
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for x86 lib"
     COMMAND mkdir -p makecapk/lib/x86
@@ -156,14 +131,14 @@ add_custom_target( x86lib${APPNAME}.so
         ${CFLAGS} 
         ${CFLAGS_X86}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${x86Link}/libandroid.so
-        -L${HARD_LINK1}/${x86Link}/liblog.so
-        -L${HARD_LINK1}/${x86Link}/libEGL.so
+        -L${PROC_LIBS}/${x86}/${ANDROIDVERSION}/libandroid.so
+        -L${PROC_LIBS}/${x86}/${ANDROIDVERSION}/liblog.so
+        -L${PROC_LIBS}/${x86}/${ANDROIDVERSION}/libEGL.so
         ${LDFLAGS}
 )
 
 add_custom_target( x86_64lib${APPNAME}.so
-    SOURCES ${SRCS} ${ANDROID_GLUE}
+    SOURCES "${SRCS}" "${ANDROID_GLUE}"
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for x86_64 lib"
     COMMAND mkdir -p makecapk/lib/x86_64
@@ -173,14 +148,14 @@ add_custom_target( x86_64lib${APPNAME}.so
         ${CFLAGS} 
         ${CFLAGS_X86_64}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${x86_64Link}/libandroid.so
-        -L${HARD_LINK1}/${x86_64Link}/liblog.so
-        -L${HARD_LINK1}/${x86_64Link}/libEGL.so
+        -L${PROC_LIBS}/${x64}/${ANDROIDVERSION}/libandroid.so
+        -L${PROC_LIBS}/${x64}/${ANDROIDVERSION}/liblog.so
+        -L${PROC_LIBS}/${x64s}/${ANDROIDVERSION}/libEGL.so
         ${LDFLAGS}
 )
 
 add_custom_target( arm32lib${APPNAME}.so
-    SOURCES ${SRCS} ${ANDROID_GLUE}
+    SOURCES "${SRCS}" "${ANDROID_GLUE}"
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for ARM32 lib"
     COMMAND mkdir -p makecapk/lib/armeabi-v7a
@@ -192,15 +167,15 @@ add_custom_target( arm32lib${APPNAME}.so
         ${CFLAGS} 
         ${CFLAGS_ARM32}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${arm32Link}/libandroid.so
-        -L${HARD_LINK1}/${arm32Link}/liblog.so
-        -L${HARD_LINK1}/${arm32Link}/libEGL.so
+        -L${PROC_LIBS}/${arm32}/${ANDROIDVERSION}/libandroid.so
+        -L${PROC_LIBS}/${arm32}/${ANDROIDVERSION}/liblog.so
+        -L${PROC_LIBS}/${arm32}/${ANDROIDVERSION}/libEGL.so
         ${LDFLAGS}
     COMMAND -ls
 )
 
 add_custom_target( arm64lib${APPNAME}.so
-    SOURCES ${SRCS} ${ANDROID_GLUE}
+    SOURCES "${SRCS}" "${ANDROID_GLUE}"
     COMMAND chmod 755 -R ${CMAKE_SOURCE_DIR}
     COMMAND @echo "Creating Directory for ARM32 lib"
     COMMAND mkdir -p makecapk/lib/arm64-v8a
@@ -209,12 +184,14 @@ add_custom_target( arm64lib${APPNAME}.so
         ${CFLAGS} 
         ${CFLAGS_ARM64}
         -o $@ $^ # Don't know what this does really
-        -L${HARD_LINK1}/${arm64Link}/libandroid.so
-        -L${HARD_LINK1}/${arm64Link}/liblog.so
-        -L${HARD_LINK1}/${arm64Link}/libEGL.so
+        -L${PROC_LIBS}/${arm64}/${ANDROIDVERSION}/libandroid.so
+        -L${PROC_LIBS}/${arm64}/${ANDROIDVERSION}/liblog.so
+        -L${PROC_LIBS}/${arm64}/${ANDROIDVERSION}/libEGL.so
         ${LDFLAGS}
     COMMAND -ls
 )
+
+SET(LLVM_LIBC++ ${NDK}/sources/cxx-stl/llvm-libc++/libs)
 
 
 add_custom_target(PROCESSOR_LIBS ALL
@@ -236,6 +213,12 @@ add_custom_target(PROCESSOR_LIBS ALL
 
     COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/arm64lib${APPNAME}.so lib${APPNAME}.so
     COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/lib${APPNAME}.so ./makecapk/lib/arm64-v8a
+
+    # As of C++17 (which I use to <filesystem>) it is required to bundle the shared library with processor library
+    COMMAND cp ${LLVM_LIBC++}/x86/libc++_shared.so ./makecapk/lib/x86
+    COMMAND cp ${LLVM_LIBC++}/x86_64/libc++_shared.so ./makecapk/lib/x86_64
+    COMMAND cp ${LLVM_LIBC++}/armeabi-v7a/libc++_shared.so ./makecapk/lib/armeabi-v7a
+    COMMAND cp ${LLVM_LIBC++}/arm64-v8a/libc++_shared.so ./makecapk/lib/arm64-v8a
 )
 
 add_custom_target( AndroidManifest.xml ALL
@@ -287,9 +270,9 @@ add_custom_target( makecapk.apk ALL
     COMMAND @ls -l ${APKFILE}    
 )
 
-#add_custom_target( uninstall
-#    COMMAND (${ADB} uninstall ${PACKAGENAME})||true 
-#)
+add_custom_target( uninstall
+    COMMAND -${ADB} uninstall ${PACKAGENAME} 
+)
 
 add_custom_target(push
     DEPENDS
@@ -304,5 +287,5 @@ add_custom_target(run
 )
 
 add_custom_target( cleanup
-    COMMAND rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
+    COMMAND -rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
 )
