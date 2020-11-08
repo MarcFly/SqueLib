@@ -6,8 +6,9 @@
 #include <mutex>
 
 #include <cstring>
+#ifndef ANDROID
 #include <filesystem>
-
+#endif
 #include "LogHandler.h"
 
 #include <iostream>
@@ -80,8 +81,9 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 void LOGGER::DumpData()
 {
-	std::filesystem::create_directory("Logs");
-
+	#ifndef ANDROID
+		std::filesystem::create_directory("Logs");
+	#endif
 	std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
 	std::string filename("./Logs/");

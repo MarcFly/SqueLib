@@ -11,7 +11,7 @@ set(ANDROIDTARGET ${ANDROIDVERSION})
 set(UNAME $ENV{USER})
 
 set(APP_PLATFORM ANDROIDVERSION)
-
+set(ADB adb)
 #=========================================================================
 
 # Set Route to find SDKs
@@ -58,6 +58,10 @@ endif()
 
 subdirlist(BT_Vrs ${BT_EXISTS})
 first_exists(BUILD_TOOLS "${BT_Vrs}")
+set(AAPT ${BUILD_TOOLS}/aapt)
+
+subdirlist(BT_Vrs ${BT_EXISTS})
+first_exists(BUILD_TOOLS "${BT_Vrs}")
 
 # Check that everything was found
 if(NOT EXISTS ${ANDROIDSDK})
@@ -83,7 +87,7 @@ message(STATUS "Setting Compile Flags for ANDROID")
 set(ANDROID_COMPILE_FLAGS "-ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden")
 set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -Os -DANDROID -DAPPNAME=\"${APPNAME}\" -DANDROID_FULLSCREEN -DANDROIDVERSION=${ANDROIDVERSION}")
 set(CFLAGS_ARM64 "-m64")
-set(CFLAGS_ARM32 "-march=armv7-a -mfloat-abi=softfp -m32")
+set(CFLAGS_ARM32 "-mfloat-abi=softfp -m32")
 set(CFLAGS_x86 "-march=i686 -mtune=intel -mssse3 -mfpmath=sse -m32")
 set(CFLAGS_x86_64 "-march=x86-64 -msse4.2 -mpopcnt -m64 -mtune=intel")
 
@@ -92,7 +96,7 @@ message(STATUS)
 message(STATUS "Setting Link Flags for ANDROID")
 set(ANDROID_LINK_FLAGS "-Wl --gc-sections -s")
 set(ANDROID_LINK_FLAGS "${ANDROID_LINK_FLAGS} -lm -lEGL -landroid -llog")
-set(ANDROID_LINK_FLAGS "${ANDROID_LINK_FLAGS} -shared -uANativeActivity_onCreate")
+set(ANDROID_LINK_FLAGS "${ANDROID_LINK_FLAGS} -shared -uANativeActivity_onCreate") #Currently nativeactivity is being stripped on compile
 message(STATUS)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ANDROID_COMPILE_FLAGS} -fPIC")
@@ -128,40 +132,126 @@ set(PROC_LIBS ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib)
 
 set(CXX_ARM64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/aarch64-linux-android${ANDROIDVERSION}-clang++)
 set(CXX_ARM32 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/armv7a-linux-androideabi${ANDROIDVERSION}-clang++)
-set(CXX_x86 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang++)
+set(CXX_x86 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/i686-linux-android${ANDROIDVERSION}-clang++)
 set(CXX_x86_64 ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang++)
 
-
+# It is possible that folder names have to be arm64 and arm32 instead of full name
+set(Larm64 makecapk/lib/arm64-v8a) #arm64-v8a
+set(Larm32 makecapk/lib/armeabi-v7a) #armeabi-v7a
 if(ARM64)
-    execute_process(COMMAND mkdir -p makecapk/lib/arm64-v8a)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./makecapk/lib/arm64-v8a)
-    execute_process(COMMAND cp ${LLVM_LIBC++}/arm64-v8a/libc++_shared.so ./makecapk/lib/arm64-v8a)
+    execute_process(COMMAND mkdir -p ${Larm64})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./${Larm64})
+    execute_process(COMMAND cp ${LLVM_LIBC++}/arm64-v8a/libc++_shared.so ./${Larm64})
     set(CMAKE_CXX_COMPILER ${CXX_ARM64})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS_ARM64} -L${PROC_LIBS}/aarch64-linux-android/${ANDROIDVERSION}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v ${CFLAGS_ARM64} -L${PROC_LIBS}/aarch64-linux-android/${ANDROIDVERSION}")
 elseif(ARM32)
-    execute_process(COMMAND mkdir -p makecapk/lib/armeabi-v7a)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./makecapk/lib/armeabi-v7a)
-    execute_process(COMMAND cp ${LLVM_LIBC++}/armeabi-v7a/libc++_shared.so ./makecapk/lib/armeabi-v7a)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS_ARM64} -L${PROC_LIBS}/aarch64-linux-android/${ANDROIDVERSION}/")
-elseif(X86)
-    execute_process(COMMAND mkdir -p makecapk/lib/x86)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./makecapk/lib/x86)
-    execute_process(COMMAND cp ${LLVM_LIBC++}/x86/libc++_shared.so ./makecapk/lib/x86)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS_ARM64} -L${PROC_LIBS}/aarch64-linux-android/${ANDROIDVERSION}/")
-elseif(X64)
-    execute_process(COMMAND mkdir -p makecapk/lib/x86_64)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./makecapk/lib/x86_64)
-    execute_process(COMMAND cp ${LLVM_LIBC++}/x86_64/libc++_shared.so ./makecapk/lib/x86_64)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS_ARM64} -L${PROC_LIBS}/aarch64-linux-android/${ANDROIDVERSION}/")
+    execute_process(COMMAND mkdir -p ${Larm32})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./${Larm32})
+    execute_process(COMMAND cp ${LLVM_LIBC++}/armeabi-v7a/libc++_shared.so ./${Larm32})
+    set(CMAKE_CXX_COMPILER ${CXX_ARM32})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v ${CFLAGS_ARM32} -L${PROC_LIBS}/arm-linux-androideabi/${ANDROIDVERSION}/")
+
+# Compiler ahs issues linking/including <android>, using same steps, so not looking into it (1.7% market share)
+#elseif(X86)
+#    execute_process(COMMAND mkdir -p makecapk/lib/x86)
+#    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./makecapk/lib/x86)
+#    execute_process(COMMAND cp ${LLVM_LIBC++}/x86/libc++_shared.so ./makecapk/lib/x86)
+#    set(CMAKE_CXX_COMPILER ${CXX_X86})
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS_X86} -L${PROC_LIBS}/i686-linux-android/${ANDROIDVERSION}/")
+#elseif(X64)
+#    execute_process(COMMAND mkdir -p makecapk/lib/x86_64)
+#    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./makecapk/lib/x86_64)
+#    execute_process(COMMAND cp ${LLVM_LIBC++}/x86_64/libc++_shared.so ./makecapk/lib/x86_64)
+#    set(CMAKE_CXX_COMPILER ${CXX_X86_64})
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS_X86_64} -L${PROC_LIBS}/x86_64-linux-android/${ANDROIDVERSION}/")
+
 endif()
 
-add_library(app_glue STATIC "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
-target_include_directories(app_glue PUBLIC ${NDK}/sources/android/native_app_glue)
-set_target_properties(app_glue PROPERTIES LINKER_LANGUAGE CXX)
+#add_library(app_glue STATIC "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+#target_include_directories(app_glue PUBLIC ${NDK}/sources/android/native_app_glue)
+#set_target_properties(app_glue PROPERTIES LINKER_LANGUAGE CXX)
 
 add_library(TempEngine SHARED "${ENGINE_SOURCES}")
 target_include_directories(TempEngine PUBLIC ${NDK}/sysroot/usr/include/android)
 
-#-I$(NDK)/sysroot/usr/include -I$(NDK)/sysroot/usr/include/android -fPIC
+#Testing direct include for native glue to project instead of linking it
+set(GLUE_DIR ${NDK}/sources/android/native_app_glue)
+target_sources(${PROJ_NAME} PUBLIC ${GLUE_DIR}/android_native_app_glue.c ${GLUE_DIR}/android_native_app_glue.h)
+target_include_directories(TempEngine PUBLIC ${NDK}/sources/android/native_app_glue)
 
-target_link_libraries(TempEngine app_glue)
+# C++17 support is negligible and I don't know how to add some of it (<experimental> / <filesystem> / ...)
+# For now, android will not use it and not be compiled with such parts of the code
+
+#target_link_libraries(TempEngine app_glue)
+
+#=========================================================================
+# Helper Targets to generate the apk
+# Requires to call make [target] on the uild directory after building the SO files
+
+add_custom_target( AndroidManifest.xml
+    COMMAND @echo "Creating Manifest"
+    COMMAND rm -rf AndroidManifest.xml
+    COMMAND @echo "Setting up vars"
+    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/AndroidSpecific/AndroidManifest.xml.template ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND PACKAGENAME=${PACKAGENAME} 
+            ANDROIDVERSION=${ANDROIDVERSION} 
+            ANDROIDTARGET=${ANDROIDTARGET} 
+            APPNAME=${APPNAME} 
+            LABEL=${LABEL} 
+            envsubst '$$ANDROIDTARGET $$ANDROIDVERSION $$APPNAME $$PACKAGENAME $$LABEL' 
+            < AndroidManifest.xml.template 
+            > AndroidManifest.xml 
+    
+    
+               
+    COMMAND @echo "Finished Manifest"
+)
+
+add_custom_target( makecapk.apk
+    DEPENDS
+        AndroidManifest.xml
+    COMMAND ${ASSETS} 
+    COMMAND mkdir -p makecapk/assets
+    COMMAND mkdir -p makecapk/res
+    COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/libapp_glue.a ${Larm64}
+    COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/libapp_glue.a ${Larm32}
+    COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/EngineResources/* ${CMAKE_CURRENT_BINARY_DIR}/makecapk/res
+    #COMMAND cp -r 
+    # Somewhere in the package commands/flags, we require addition of -S [dir] for the asset sources original place
+    #[RAWDRAW] We're really cutting corners.  You should probably use resource files.. Replace android:label="@string/app_name" and add a resource file.
+    #[RAWDRAW] Then do this -S Sources/res on the aapt line.
+    #[RAWDRAW] For icon support, add -S makecapk/res to the aapt line.  also,  android:icon="@mipmap/icon" to your application line in the manifest.
+    #[RAWDRAW] If you want to strip out about 800 bytes of data you can remove the icon and strings.
+
+    COMMAND ${AAPT} package -f -F temp.apk -I ${ANDROIDSDK}/platforms/android-${ANDROIDVERSION}/android.jar -M AndroidManifest.xml -S makecapk/res -A makecapk/assets -v --target-sdk-version ${ANDROIDTARGET}
+    COMMAND unzip -o temp.apk -d makecapk
+    COMMAND rm -rf makecapk.apk
+    COMMAND @echo "Now zipping and compressing into apk"
+    COMMAND cd makecapk && zip -D9r ../makecapk.apk   .
+    COMMAND jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verbose -keystore ${KEYSTOREFILE} -storepass ${STOREPASS} makecapk.apk ${ALIASNAME}
+    COMMAND rm -rf ${APKFILE}
+    COMMAND ${BUILD_TOOLS}/zipalign -v 4 makecapk.apk ${APKFILE}
+    COMMAND rm -rf temp.apk
+    COMMAND rm -rf makecapk.apk
+    COMMAND @ls -l ${APKFILE}    
+)
+
+add_custom_target( uninstall
+    COMMAND -${ADB} uninstall ${PACKAGENAME} 
+)
+
+add_custom_target(push
+    DEPENDS
+        makecapk.apk
+    COMMAND @echo "Installing " ${PACKAGENAME}
+    COMMAND ${ADB} install -r ${APKFILE}
+)
+
+add_custom_target(run
+    COMMAND push    $(eval ACTIVITYNAME:=$(shell ${AAPT} dump badging ${APKFILE} | grep "launchable-activity" | cut -f 2 -d"'"))
+                    ${ADB} shell am start -n ${PACKAGENAME}/${ACTIVITYNAME}
+)
+
+add_custom_target( cleanup
+    COMMAND -rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
+)
