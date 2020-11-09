@@ -12,4 +12,4 @@ konsole --noclose -e cmake --build . | tee -a BuildLog.txt
 konsole --noclose -e cmake ../../ -DANDROID=1 -DCMAKE_BUILD_TYPE=Release -UARM64 -DARM32=1 | tee -a BuildLog.txt
 konsole --noclose -e cmake --build . | tee -a BuildLog.txt
 
-konsole --noclose -e make makecapk.apk uninstall push 
+konsole --noclose -e make uninstall push 

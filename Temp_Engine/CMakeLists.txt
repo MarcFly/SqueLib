@@ -20,7 +20,7 @@ set(PROJ_NAME "TempEngine")
 #Setup Project
 project(${PROJ_NAME}    VERSION 2020.1
                         DESCRIPTION "Multiplatform C++ Engine"
-                        LANGUAGES CXX)
+                        LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
@@ -41,9 +41,9 @@ set(ENGINE_SOURCES ${MAIN} "${HELPERS}" "${APP_SOURCE}" "${MODULES}")
 
 #Include the directories for code to use
 include_directories(${CMAKE_SOURCE_DIR})
-include_directories(HELPER_DIR)
-include_directories(APP_DIR)
-include_directories(MODULE_DIR)
+include_directories(${HELPER_DIR})
+include_directories(${APP_DIR})
+include_directories(${MODULE_DIR})
 
 #UNIX Things
 if(UNIX)
