@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${default}",
+                "/home/marcfly/Android/Sdk/ndk/21.3.6528147/sysroot/usr/include",
+                "/home/marcfly/Android/Sdk/ndk/21.3.6528147/sysroot/usr/include/android",
+                "/home/marcfly/Android/Sdk/ndk/21.3.6528147/sources/android/native_app_glue"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

@@ -2,7 +2,6 @@
 #define _LogHandler_H_
 
 #include <vector>
-#include <unordered_map>
 #include <string>
 
 // Don't look please

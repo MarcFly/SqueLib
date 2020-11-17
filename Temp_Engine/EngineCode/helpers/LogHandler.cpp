@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <mutex>
+#include <unordered_map>
 
 #include <cstring>
 #ifndef ANDROID
@@ -19,6 +20,7 @@
 #elif __linux__
 #define FOLDER_ENDING '/'
 #endif // OS Check
+
 
 // Var Define
 namespace LH
