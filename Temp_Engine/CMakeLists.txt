@@ -50,10 +50,9 @@ if(UNIX)
     if(NOT ANDROID)
         include(Linux)
     else()
-        include(ACmake)
+        include(Android)
     endif()
 
 elseif(WINDOWS)
     include(Windows)
 endif()
-
