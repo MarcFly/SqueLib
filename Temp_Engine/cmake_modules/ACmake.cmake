@@ -1,4 +1,5 @@
 add_compile_definitions(ANDROID)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Android App Naming
 set(APPNAME '"${PROJ_NAME}"')
@@ -140,24 +141,25 @@ if(ARM64)
     execute_process(COMMAND mkdir -p ${Larm64})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./${Larm64})
     execute_process(COMMAND cp ${LLVM_LIBC++}/aarch64-linux-android/libc++_shared.so ./${Larm64})
-    set(LLVM_LIBC++ ./${Larm64}/libc++_shared.so)
+    set(LLVM_LIBC++ ${CMAKE_BINARY_DIR}/${Larm64}/libc++_shared.so)
     set(CMAKE_C_COMPILER ${CC_ARM64})
     set(CMAKE_CXX_COMPILER ${CCXX_ARM64})
     set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -v ${CFLAGS_ARM64} ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v ${CFLAGS_ARM64} ")
     set(LIBLINK ${PROC_LIBS}/aarch64-linux-android/${ANDROIDVERSION})
-
+    set(INCL_PLATFORM aarch64-linux-android)
 elseif(ARM32)
     set(Larm32 makecapk/lib/armeabi-v7a)
     execute_process(COMMAND mkdir -p ${Larm32})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./${Larm32})
     execute_process(COMMAND cp ${LLVM_LIBC++}/arm-linux-androideabi/libc++_shared.so ./${Larm32})
-    set(LLVM_LIBC++ ./${Larm32}/libc++_shared.so)
+    set(LLVM_LIBC++ ${CMAKE_BINARY_DIR}/${Larm32}/libc++_shared.so)
     set(CMAKE_C_COMPILER ${CC_ARM32})
     set(CMAKE_CXX_COMPILER ${CCXX_ARM32})
     set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -v ${CFLAGS_ARM32} ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v ${CFLAGS_ARM32} ")
     set(LIBLINK ${PROC_LIBS}/arm-linux-androideabi/${ANDROIDVERSION})
+    set(INCL_PLATFORM arm-linux-androideabi)
 endif()
 
 set(ANDROID_DIR ${CMAKE_SOURCE_DIR}/EngineCode/android)
@@ -170,9 +172,12 @@ add_library(${PROJ_NAME} SHARED
     ${ENGINE_SOURCES}) # Engine Code
 
 # Link to necessary NDK Directories
+set(NDKINCLUDE ${NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include)
+
 target_include_directories(${PROJ_NAME} PUBLIC 
-    ${NDK}/sysroot/usr/include 
-    ${NDK}/sysroot/usr/include/android 
+    ${NDKINCLUDE} 
+    ${NDKINCLUDE}/android
+    ${NDKINCLUDE}/${INCL_PLATFORM}
     ${NDK}/sources/android/native_app_glue)
 
 set_target_properties(${PROJ_NAME} PROPERTIES LINKER_LANGUAGE CXX)
@@ -188,10 +193,11 @@ target_link_libraries(${PROJ_NAME} PUBLIC
     ${LIBLINK}/libm.so
     ${LIBLINK}/libandroid.so 
     ${LIBLINK}/libm.so
-    ${LIBLINK}/libGLESv3
     ${LIBLINK}/libEGL.so
     ${LIBLINK}/liblog.so
-    ${LLVM_LIBC++})
+    ${LLVM_LIBC++}
+    atomic
+)
 
 
 #=========================================================================

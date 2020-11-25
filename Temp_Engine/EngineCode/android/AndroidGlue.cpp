@@ -1,4 +1,5 @@
 #include <android_native_app_glue.h>
+#include <unordered_map>
 
 void handle_android_cmd(struct android_app* app, int32_t cmd)
 {
