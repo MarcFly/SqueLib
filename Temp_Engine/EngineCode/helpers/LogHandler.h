@@ -1,8 +1,7 @@
-#ifndef _LogStruct_H_
-#define _LogStruct_H_
+#ifndef _LogHandler_H_
+#define _LogHandler_H_
 
 #include <vector>
-#include <map>
 #include <string>
 
 // Don't look please
@@ -15,7 +14,7 @@ enum LogType
 {
 	LT_CRITICAL = -1,
 	LT_INFO,
-	LT_WARN
+	LT_WARNING
 	
 };
 
@@ -28,23 +27,17 @@ struct Log // Size of 4096 including any other info than log
 
 typedef std::pair<int, Log> PairLOG;
 
-// Var Define
-static std::map<std::string, int> Push_LogKeys;
-static std::map<int, std::string*> Get_LogKeys;
-static std::vector<PairLOG> logs;
-static bool DUMPDATA = true;
-
 namespace LOGGER
 {
-	void LH_INIT();
-	void LH_CLOSE(bool dumpdata); // Allow Dumping of Data into a text file on close or not
+	void INIT();
+	void CLOSE(bool dumpdata); // Allow Dumping of Data into a text file on close or not
 
 	void LOG(LogType lt, const char file[], int line, const char* format, ...);
 	void DumpData();
 
-	#define ILOG(format,...) LOG(LT_INFO,__FILE__,__LINE__, format, __VA_ARGS__);
-	#define CLOG(format,...) LOG(LT_CRITICAL,__FILE__,__LINE__, format, __VA_ARGS__);
-	#define WLOG(format,...) LOG(LT_WARNING,__FILE__,__LINE__, format, __VA_ARGS__);
+	#define ILOG(format,...) LOG(LT_INFO,__FILE__,__LINE__, format, ##__VA_ARGS__)
+	#define CLOG(format,...) LOG(LT_CRITICAL,__FILE__,__LINE__, format, ##__VA_ARGS__)
+	#define WLOG(format,...) LOG(LT_WARNING,__FILE__,__LINE__, format, ##__VA_ARGS__)
 }
 
 #endif

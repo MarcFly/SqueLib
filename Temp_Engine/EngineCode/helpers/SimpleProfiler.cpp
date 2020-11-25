@@ -1,9 +1,31 @@
 #include "SimpleProfiler.h"
+#include <mutex>
+#include <atomic>
+#include <cstring>
 
-void SProf::Profiler_Close()
+// Define Variables
+namespace SP
 {
-	if (LastScope != nullptr)
-		LastScope = nullptr;
+	std::mutex _mtx;
+
+	static std::map<std::string, int> SCOPES_INPUT;
+	static std::map<int, std::string*> SCOPES_READ;
+
+	static std::vector<Scope*> scopes;
+	static std::vector<LW_Timer> active_timers;
+
+	static std::vector<Scope*> open_scopes;
+
+	static std::atomic<bool> active = false;
+}
+
+using namespace SP;
+
+void SProf::CLOSE()
+{
+	std::unique_lock<std::mutex> _lk(_mtx);
+	if (open_scopes.size() > 0)
+		open_scopes.clear();
 
 	for (int i = 0; i < scopes.size(); ++i)
 		delete scopes[i];
@@ -12,7 +34,7 @@ void SProf::Profiler_Close()
 
 }
 
-void SProf::Profiler_Init(bool init)
+void SProf::INIT(bool init)
 {
 	active = init;
 }
@@ -27,37 +49,44 @@ void SProf::PUSH_SCOPE(const char file[], int line)
 	{
 		if (GetActive())
 		{
-			Scope* newscope = nullptr;
+			Scope* new_scope = nullptr;
 			std::string sttr(strrchr(file, '\\') + std::string(": ") + std::to_string(line));
 
+
+			std::unique_lock<std::mutex> _lk(_mtx);
+			Scope* last_scope = (open_scopes.size() > 0) ? open_scopes[open_scopes.size()-1] : nullptr;
 
 			if (SCOPES_INPUT.count(sttr) == 0)
 			{
 				// Initialize Scope and add it to last one, if it does not exist
-				newscope = new Scope();
+				new_scope = new Scope();
 
-				newscope->temp_id = SCOPES_INPUT.size();
-				if (LastScope != nullptr) LastScope->subscopes.insert(std::pair<int, Scope*>(newscope->temp_id, newscope));
-				newscope->prev = LastScope;
-				LastScope = newscope;
-				scopes.push_back(newscope);
+				new_scope->temp_id = SCOPES_INPUT.size();
+				if (last_scope != nullptr) last_scope->subscopes.insert(std::pair<int, Scope*>(new_scope->temp_id, new_scope));
+				new_scope->prev = last_scope;
+				last_scope = new_scope;
+				scopes.push_back(new_scope);
 			}
 
 			auto it_push = SCOPES_INPUT.insert(std::pair<std::string, int>(sttr, SCOPES_INPUT.size()));
 			SCOPES_READ.insert(std::pair<int, std::string*>(it_push.first->second, (std::string*) & it_push.first->first));
 
-			newscope = scopes[it_push.first->second];
-			newscope->timer.Start();
+			new_scope = scopes[it_push.first->second];
+			new_scope->timer.Start();
 		}
 	}
 }
 
 void SProf::CLOSE_SCOPE()
 {
-	if (LastScope != nullptr)
+	std::unique_lock<std::mutex> _lk(_mtx);
+	Scope* last_scope = (open_scopes.size() > 0) ? open_scopes[open_scopes.size()-1] : nullptr;
+	if (last_scope != nullptr)
 	{
-		LastScope->framedata.push_back(std::pair<int, unsigned int>(LastScope->framedata.size(), LastScope->timer.Read_uS()));
-		LastScope = LastScope->prev;
+		last_scope->framedata.push_back(std::pair<int, unsigned int>(last_scope->framedata.size(), last_scope->timer.Read_uS()));
+		last_scope = last_scope->prev;
+
+		open_scopes.pop_back();
 	}
 }
 

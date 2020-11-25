@@ -4,13 +4,14 @@
 // Warning disabled ---
 #pragma warning( disable : 4577 ) // Warning that exceptions are disabled
 #pragma warning( disable : 4530 ) // Warning that exceptions are disabled
+
 // -- Global Headers? --
 #include <stdio.h>
 
 // -- Globals for External Tools --
 #include "LogHandler.h"
 #include "LWTimer.h"
-#include "SimpleProfiler.h""
+#include "SimpleTasker.h"
 
 
 // -- Global Defines --
@@ -20,6 +21,7 @@
 #define RADTODEG 57.295779513082320876f
 
 // -- Global TypeDefs --
-typedef unsigned int uint;
+typedef uint32_t uint32;
+typedef uint16_t uint16;
 
 #endif 

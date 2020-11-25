@@ -3,31 +3,60 @@
 #include <chrono>
 #include <fstream>
 #include <algorithm>
+#include <mutex>
+#include <unordered_map>
 
+#include <cstring>
+#ifndef ANDROID
+#include <filesystem>
+#endif
 #include "LogHandler.h"
+
+#include <iostream>
 
 #ifdef _WIN32
 #include <Windows.h>
+#define FOLDER_ENDING '\\'
 #elif __linux__
+#define FOLDER_ENDING '/'
 #endif // OS Check
 
-void LOGGER::LH_INIT()
+
+// Var Define
+namespace LH
 {
+	static std::mutex _mtx;
+	static std::unordered_map<std::string, int> Push_LogKeys;
+	static std::unordered_map<int, std::string*> Get_LogKeys;
+	static std::vector<PairLOG> logs;
+	static bool DUMPDATA = true;
 }
 
-void LOGGER::LH_CLOSE(bool dumpdata)
+using namespace LH;
+
+void LOGGER::INIT()
+{
+
+}
+
+void LOGGER::CLOSE(bool dumpdata)
 {
 	DumpData();
 
 	Push_LogKeys.clear();
 	Get_LogKeys.clear();
+	logs.clear();
 }
 
 void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ...)
 {
+	std::lock_guard<std::mutex> lk(_mtx);
+
 	Log push;
 	push.lt = lt;
-	std::string sttr(strrchr(file, '\\'));
+	
+	std::string sttr(strrchr(file, FOLDER_ENDING));
+
 	auto it_push = Push_LogKeys.insert(std::pair<std::string, int>(sttr, Push_LogKeys.size()));
 	Get_LogKeys.insert(std::pair<int, std::string*>(it_push.first->second, (std::string*)&it_push.first->first));
 	
@@ -35,26 +64,28 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 
 	static va_list ap;
 
-	char tmp[LOGSIZE];
+	char tmp[LOGSIZE-6];
 	va_start(ap, format);
-	vsprintf_s(tmp, LOGSIZE, format, ap);
+	vsnprintf(tmp, LOGSIZE, format, ap);
 	va_end(ap);
 
 	sprintf(push.log, "%s(%d): %s", file, line, tmp);
 
 	logs.push_back(PairLOG(push.type, push));
 
+	std::cout << push.log << std::endl;
+
 #ifdef _WIN32
 	OutputDebugString(push.log);
-#elif __linux__
+	OutputDebugString("\n");
 #endif
 }
 
 void LOGGER::DumpData()
 {
-
-	CreateDirectory("Logs", NULL);
-
+	#ifndef ANDROID
+		std::filesystem::create_directory("Logs");
+	#endif
 	std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
 	std::string filename("./Logs/");
@@ -72,7 +103,7 @@ void LOGGER::DumpData()
 	char* data = new char[buf_size];
 	char* cursor = data;
 
-	std::string header;
+	std::string header("");
 	for (int i = 0; i < logs.size(); ++i)
 	{
 		memcpy(cursor, logs[i].second.log, LOGSIZE);
