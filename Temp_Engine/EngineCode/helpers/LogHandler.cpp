@@ -10,6 +10,12 @@
 #ifndef ANDROID
 #include <filesystem>
 #endif
+
+#ifdef ANDROID
+#include <android/log.h>
+#include <android/asset_manager.h>
+#endif
+
 #include "LogHandler.h"
 
 #include <iostream>
@@ -17,7 +23,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #define FOLDER_ENDING '\\'
-#elif __linux__
+#else
 #define FOLDER_ENDING '/'
 #endif // OS Check
 
@@ -78,6 +84,8 @@ void LOGGER::LOG(LogType lt, const char file[], int line, const char* format, ..
 #ifdef _WIN32
 	OutputDebugString(push.log);
 	OutputDebugString("\n");
+#elif ANDROID
+	__android_log_print((int)lt, "TempEngine", push.log);
 #endif
 }
 
@@ -85,6 +93,8 @@ void LOGGER::DumpData()
 {
 	#ifndef ANDROID
 		std::filesystem::create_directory("Logs");
+	#else
+
 	#endif
 	std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 

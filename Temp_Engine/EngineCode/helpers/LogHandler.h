@@ -12,9 +12,10 @@
 
 enum LogType
 {
-	LT_CRITICAL = -1,
-	LT_INFO,
-	LT_WARNING
+	LT_INFO = 4,
+	LT_WARNING,
+	LT_ERROR,
+	LT_CRITICAL
 	
 };
 

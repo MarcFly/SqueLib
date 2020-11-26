@@ -178,7 +178,9 @@ target_include_directories(${PROJ_NAME} PUBLIC
     ${NDKINCLUDE} 
     ${NDKINCLUDE}/android
     ${NDKINCLUDE}/${INCL_PLATFORM}
-    ${NDK}/sources/android/native_app_glue)
+    ${NDK}/sources/android/native_app_glue
+    ${NDK}/sources/android/cpufeatures
+)
 
 set_target_properties(${PROJ_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -192,8 +194,7 @@ set_target_properties(${PROJ_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(${PROJ_NAME} PUBLIC 
     ${LIBLINK}/libm.so
     ${LIBLINK}/libandroid.so 
-    ${LIBLINK}/libm.so
-    ${LIBLINK}/libEGL.so
+    ${LIBLINK}/libvulkan.so
     ${LIBLINK}/liblog.so
     ${LLVM_LIBC++}
     atomic

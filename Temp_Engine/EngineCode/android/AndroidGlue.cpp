@@ -16,11 +16,15 @@ int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
     return 0;
 }
 
+extern int main();
+
 void android_main(struct android_app* app)
 {
 
     app->onAppCmd = handle_android_cmd;
     app->onInputEvent = handle_android_input;
+
+    main();
 
     app->destroyRequested = 0;
 }
