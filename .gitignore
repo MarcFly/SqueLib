@@ -3,7 +3,13 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudio,xcode,androidstudio,cmake
 
 ### Temp_Engine ###
-Temp_Engine/builds/
+builds/
+build/
+bin/
+release/
+game/
+debug/
+cmake_bloat/
 
 ### CMake ###
 CMakeLists.txt.user

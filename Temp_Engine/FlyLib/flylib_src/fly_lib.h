@@ -19,12 +19,12 @@
 #   endif
 #endif
 
-#define FL_VERSION_MAJOR 0
+#define FL_VERSION_MAJOR 2020
 #define FL_VERSION_MINOR 1
 #define FL_VERSION ((FL_VERSION_MAJOR << 16) | FL_VERSION_MINOR)
 
-unsigned int fl_get_version(void);
-int fl_is_compatible_dll(void);
+unsigned int FLGetVersion(void);
+int FLIsCompatibleDLL(void);
 
 FL_API bool FLYLIB_INIT(/* flags */);
 FL_API bool FLYLIB_CLOSE(/* flags */);
@@ -34,25 +34,25 @@ FL_API bool FLYLIB_CLOSE(/* flags */);
 #include <cstdarg>
 
 #define LOGSIZE 512
-FL_API enum FlyLogType
+typedef enum FlyLogType
 {
 	LT_INFO = 4,
 	LT_WARNING,
 	LT_ERROR,
 	LT_CRITICAL
 	
-};
-FL_API struct FlyLog
+} FlyLogType;
+typedef struct FlyLog
 {
 	int type = -1;
 	FlyLogType lt = LT_INFO;
 	char log[LOGSIZE] = {0};
-};
+} FlyLog;
 FL_API void FlyPrintLog (const char* log, int lt);
 FL_API void FLYLOGGER_DumpData();
 bool FLYLOGGER_INIT(bool dumpdata);
 void FLYLOGGER_CLOSE();
-void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...);
+FL_API void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...);
 #define FLYLOG(LogType,format,...) FLYLOGGER_LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +62,7 @@ void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* forma
 #include <stdint.h>
 #include <atomic>
 
-FL_API struct FlyTimer
+typedef struct FlyTimer
 {
 	FlyTimer();
 	~FlyTimer();
@@ -84,7 +84,7 @@ private:
 	uint16_t stop_at_ms;
 
 	std::atomic<bool> is_stopped;
-};
+} FlyTimer;
 
 namespace FLYWINDOW
 {

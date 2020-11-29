@@ -3,7 +3,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ANDROIDVERSION 29)
 
-include(External/FindSDKVars) # Sets up AAPT, BUILD_TOOLS, SDK, NDK, ADB, UNAME
+include(${FlyLib_Modules}/External/FindSDKVars.cmake) # Sets up AAPT, BUILD_TOOLS, SDK, NDK, ADB, UNAME
 
 #=========================================================================
 
@@ -47,12 +47,11 @@ set(ANDROID_DIR ${CMAKE_SOURCE_DIR}/EngineCode/android)
 set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 
 # NDK App Glue added directly to project to compile
-set(LTA_FLYLIB "${PROJECT_NAME}_LTA") # Specifying name for avoiding name clashing when multiple builds 
-add_library(${LTA_FLYLIB} SHARED 
+add_library(FlyLib SHARED 
     ${app_glue}  # NDK Native App Glue
     ${FLYLIB_SOURCE}) # Lib Sources
 
-set_target_properties(${LTA_FLYLIB}
+set_target_properties(FlyLib
     PROPERTIES 
         ARCHIVE_OUTPUT_DIRECTORY "${Larm64}"
         LIBRARY_OUTPUT_DIRECTORY "${Larm64}"
@@ -63,7 +62,7 @@ set_target_properties(${LTA_FLYLIB}
 set(NDKINCLUDE ${NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include)
 
 # Set Required includes from Android NDK
-target_include_directories(${LTA_FLYLIB} PUBLIC 
+target_include_directories(FlyLib PUBLIC 
     ${NDKINCLUDE} 
     ${NDKINCLUDE}/android
     ${NDKINCLUDE}/${INCL_PLATFORM}
@@ -78,7 +77,7 @@ target_include_directories(${LTA_FLYLIB} PUBLIC
 # Link to the built/prebuilt external libraries
 
 # Link to Android Prebuilt Libraries
-target_link_libraries(${LTA_FLYLIB} PUBLIC 
+target_link_libraries(FlyLib 
     ${LIBLINK}/libm.so
     ${LIBLINK}/libandroid.so 
     ${LIBLINK}/libEGL.so

@@ -7,7 +7,7 @@
                 "/home/marcfly/Android/Sdk/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include",
                 "/home/marcfly/Android/Sdk/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android",
                 "/home/marcfly/Android/Sdk/ndk/22.0.6917172/sources/android/native_app_glue",
-                "${workspaceFolder}/FlyLib"
+                "${workspaceFolder}/FlyLib/flylib_src"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

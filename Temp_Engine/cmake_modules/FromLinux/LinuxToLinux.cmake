@@ -1,13 +1,11 @@
-set(CMAKE_C_FLAGS "-v -fvisibility=hidden")
-set(CMAKE_CXX_FLAGS "-v -fvisibility=hidden")
+set(CMAKE_C_FLAGS "-v ")
+set(CMAKE_CXX_FLAGS "-v ")
 
-add_library(FlyLib SHARED 
-    "${FLYLIB_SOURCE}") # Lib Sources
+add_executable(TempEngine "${ENGINE_SRC}")
 
 set(BLinux "${CMAKE_BINARY_DIR}/LinuxX64")
-execute_process(COMMAND mkdir -p ${BLinux})
 
-set_target_properties(FlyLib
+set_target_properties(TempEngine
     PROPERTIES 
         ARCHIVE_OUTPUT_DIRECTORY "${BLinux}"
         LIBRARY_OUTPUT_DIRECTORY "${BLinux}"
@@ -24,9 +22,10 @@ set_target_properties(FlyLib
 # Link to the built/prebuilt external libraries
 
 # Link to Android Prebuilt Libraries
-target_link_libraries(FlyLib PUBLIC 
-    stdc++fs 
-    pthread
+set(CMAKE_CXX_FLAGS "-L${BLinux}/libFlyLib.so ${CMAKE_CXX_FLAGS} -lFlyLib")
+
+target_link_directories(TempEngine PUBLIC
+    ${BLinux}
 )
 
 #Link Libraries to target executable
