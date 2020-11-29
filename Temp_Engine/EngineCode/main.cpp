@@ -1,14 +1,6 @@
 #include <iostream>
-#include "EngineCode/helpers/Globals.h"
-#include "EngineCode/application/Application.h"
 
-#ifdef ANDROID
-#include <android_native_app_glue.h>
-extern struct android_app* gapp;
-#else
-
-#endif
-
+#include <fly_lib.h>
 
 enum main_states
 {
@@ -20,53 +12,51 @@ enum main_states
 
 int main()
 {
-    app = new Application();
     main_states state = MAIN_CREATION;
-    bool app_rets = false;
+    bool ret = false;
 
     // Helpers Initialization
     {
-        SimpleTasker::INIT();
-        LOGGER::INIT();
+        ret = FLYLIB_INIT();
     }
 
     // Engine Initialization
     {
-        LOGGER::ILOG("Initializing Engine...");
-        app_rets = app->Init();
+        FLYLOG(FlyLogType::LT_INFO, "Initializing Engine...");
+        // Initialize all modules in required order
 
-        state = (app_rets) ? MAIN_UPDATE : MAIN_EXIT;
+        state = (ret) ? MAIN_UPDATE : MAIN_EXIT;
 
-        if (app_rets) { LOGGER::ILOG("Entering Update Loop..."); }
-        else LOGGER::WLOG("Error Initializing Engine...");
+        if (ret) { FLYLOG(FlyLogType::LT_INFO, "Entering Update Loop..."); }
+        else FLYLOG(FlyLogType::LT_WARNING, "Error Initializing Engine...");
     }
 
     // Update Loop
     while(state == MAIN_UPDATE)
     {
-        app->Update();
+        // Update all modules in specific order
         state = MAIN_FINISH;
     }
 
     //  Engine CleanUp
     {
-        LOGGER::ILOG("Cleaning Up Engine...");
+        FLYLOG(FlyLogType::LT_INFO, "Cleaning Up Engine...");
 
-        app_rets = app->CleanUp();
+        // perform the CleanUp of all modules in reverse init order preferably
 
-        if (app_rets) { LOGGER::ILOG("Application Cleanup Performed Successfully..."); }
-        else LOGGER::WLOG("Application Cleanup with errors...");
+        if (ret) { FLYLOG(FlyLogType::LT_INFO, "Application Cleanup Performed Successfully..."); }
+        else FLYLOG(FlyLogType::LT_WARNING, "Application Cleanup with errors...");
 
-        delete app;
+        // Delete memory bound modules
     }
 
     // Helpers CleanUp
     {
-        LOGGER::ILOG("Closing Helpers...");
-        SimpleTasker::CLOSE();
+        FLYLOG(FlyLogType::LT_INFO, "Finishing Executing Engine...");
+        // Close something that is not part of the engine as a module
 
-        LOGGER::ILOG("Finishing Executing Engine...");
-        LOGGER::CLOSE(true);
+        FLYLOG(FlyLogType::LT_INFO, "Closing Helpers...");
+        FLYLIB_CLOSE(/* flags */);
     }
 
     return 0;
