@@ -98,12 +98,16 @@ void DumpData()
     
 }
 
-void INIT(bool dumpdata)
+bool FLYLOGGER_INIT(bool dumpdata)
 {
+    bool ret = true;
+
     DUMPDATA = dumpdata; 
+
+    return ret;
 }
 
-void CLOSE()
+void FLYLOGGER_CLOSE()
 {
     if(DUMPDATA) DumpData();
 
@@ -117,10 +121,10 @@ void CLOSE()
 #ifdef ANDROID
 #   include <android/log.h>
 #elif _WIN32
-#   include <Windows.h>
+//#   include <Windows.h>
 #endif
 
-void LOG(FlyLogType lt, const char file[], int line, const char* format, ...)
+void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...)
 {
     std::lock_guard<std::mutex> lk(_mtx);
 

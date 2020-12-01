@@ -7,8 +7,7 @@ else()
     cmake_policy(VERSION 3.18)
 endif()
 
-set(FlyLib FlyLib)
-project(${FlyLib}   VERSION 2020.1
+project(FlyLib  VERSION 2020.1
                     DESCRIPTION "Multiplatform C++ Library for making games"
                     LANGUAGES CXX)
 set(FlyLib_Modules ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
@@ -36,15 +35,18 @@ file(GLOB_RECURSE FLYLIB_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp")
 # I prefer it this way over having one Gigantic File that is unreadable
 # Should allow to Generate multible builds at once
 
+message(STATUS "Checking origin OS:")
 if(UNIX)
-    if(ToAndroid)
+    message(STATUS "Creating Project from Linux")
+    if(ToAndroid)   
         include(${FlyLib_Modules}/FromLinux/LinuxToAndroid.cmake)
     elseif(ToWindows)
         include(${FlyLib_Modules}/FromLinux/LinuxToWindows.cmake)
     elseif(ToLinux)
         include(${FlyLib_Modules}/FromLinux/LinuxToLinux.cmake)
     endif()
-elseif(WINDOWS)
+elseif(WIN32)
+    message(STATUS "Creating Project from Windows")
     if(ToAndroid)
         include(${FlyLib_Modules}/FromWin/WinToAndroid.cmake)
     elseif(ToLinux)

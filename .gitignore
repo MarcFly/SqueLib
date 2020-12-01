@@ -9,7 +9,7 @@ bin/
 release/
 game/
 debug/
-cmake_bloat/
+cmake_bloat*/
 
 ### CMake ###
 CMakeLists.txt.user
