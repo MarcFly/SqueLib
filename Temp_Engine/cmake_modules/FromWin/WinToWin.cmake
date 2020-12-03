@@ -4,13 +4,10 @@
 set(CMAKE_C_FLAGS "-v ")
 set(CMAKE_CXX_FLAGS "-v ")
 #------------------------------------------------------------------------------------------------
-# SETUP PROJECT BINARY OUTPUT
+# SETUP PROJECT OUTPUT
 #------------------------------------------------------------------------------------------------
 add_executable(TempEngine "${ENGINE_SRC}")
 
-#------------------------------------------------------------------------------------------------
-# SETTING PROJECT OUTPUT PATHS
-#------------------------------------------------------------------------------------------------
 set(TE_OutputFolder "${CMAKE_BINARY_DIR}/${CMAKE_HOST_SYSTEM_NAME}")
 set_target_properties(TempEngine
     PROPERTIES 
