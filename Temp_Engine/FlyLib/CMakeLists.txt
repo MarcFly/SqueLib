@@ -11,29 +11,7 @@ endif()
 # Instead of Using CMAKE_MODULE_PATH, generate a variable to go into it and use .cmake extension
 # That way we don't overwrite other projects' CMAKE_MODULE_PATH and keep it cleaner to read
 set(FL_cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
-include(${FL_cmake}/External/Helpers.cmake)
-#------------------------------------------------------------------------------------------------
-# ADD SUBPROJECTS
-#------------------------------------------------------------------------------------------------
-set(FL_EXTERNAL_DEPENDENCIES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
-execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
-include(FetchContent)
-
-message(STATUS "Pulling Dependencies to build along")
-if(ToWindows OR ToLinux) # Pull desktop dependencies
-    # GLFW
-    FetchContent_Declare(glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.3.2
-        CMAKE_ARGS "-DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_DOCS=OFF")
-    FetchContent_GetProperties(glfw)
-    string(TOLOWER "glfw" lcName)
-    if(NOT ${lcName}_POPULATED)
-        FetchContent_Populate(${lcName})
-        add_subdirectory(${${lcName}_SOURCE_DIR} ${${lcName}_BINARY_DIR})
-    endif()
-endif()
-
+include(${FL_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
@@ -57,6 +35,37 @@ file(GLOB_RECURSE FLYLIB_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp")
 #------------------------------------------------------------------------------------------------
 execute_process(COMMAND mkdir -p ${CMAKE_SOURCE_DIR}/builds)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/builds)
+#------------------------------------------------------------------------------------------------
+# ADD SUBPROJECTS
+#------------------------------------------------------------------------------------------------
+set(FL_EXTERNAL_DEPENDENCIES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
+execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
+include(FetchContent)
+
+message(STATUS "Pulling Dependencies to build along")
+if(ToWindows OR ToLinux) # Pull desktop dependencies
+    # GLFW---------------------------------------------------------------------------------------
+    option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+    option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
+    option(GLFW_BUILD_TESTS "Build the GLFW test programs" OFF)
+    option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
+    option(GLFW_INSTALL "Generate installation target" OFF)
+    option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" OFF)
+    FetchContent_Declare(glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.3.2
+    )
+    FetchContent_GetProperties(glfw glfw_SOURCE_DIR glfw_src glfw_BINARY_DIR glfw_bin)
+    set(glfw_include ${glfw_src}/include)
+    set(glfw_lib_path ${glfw_bin}/src/${CMAKE_BUILD_TYPE})
+    # -------------------------------------------------------------------------------------------
+
+    # MAKEAVAILABLE------------------------------------------------------------------------------
+    FetchContent_MakeAvailable(glfw)
+    # All MakeAvailable together, first we declare so that they can start populating i belive
+    # MakeAvailable should check completion/availability and finish/start downloading
+    # -------------------------------------------------------------------------------------------
+endif()
 #------------------------------------------------------------------------------------------------
 # CUSTOM BUILD MODULES PER PLATFORM
 #------------------------------------------------------------------------------------------------
@@ -89,6 +98,11 @@ set_target_properties(FlyLib PROPERTIES
     PUBLIC_HEADER "fly_lib.h"
 )
 
-if(ToWindows OR ToLinux) # Pull desktop dependencies
-target_link_libraries(FlyLib glfw)
+if(ToWindows OR ToLinux) # Link/Include desktop dependencies
+    target_link_libraries(FlyLib 
+        glfw)
+    target_include_directories(FlyLib PUBLIC
+        ${glfw_include})
+elseif(ToAndroid) # Link/Include Android Dependencies
+    #target_link_libraries(FlyLib)
 endif()
