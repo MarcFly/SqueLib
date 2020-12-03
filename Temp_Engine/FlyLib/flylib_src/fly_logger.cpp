@@ -2,7 +2,6 @@
 
 #ifdef LOGGER_SOLO
 #   include "fly_logger.h"
-    using namespace FLYLOGGER;
 #else
 #   include "fly_lib.h"
 #endif
@@ -140,7 +139,7 @@ void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* forma
 
     static va_list ap;
 
-    char tmp[LOGSIZE-6];
+    char tmp[LOGSIZE];
     va_start(ap, format);
     vsnprintf(tmp, LOGSIZE, format, ap);
     va_end(ap);

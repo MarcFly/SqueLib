@@ -50,10 +50,10 @@ typedef struct FlyLog
 } FlyLog;
 FL_API void FlyPrintLog (const char* log, int lt);
 FL_API void FLYLOGGER_DumpData();
-bool FLYLOGGER_INIT(bool dumpdata);
-void FLYLOGGER_CLOSE();
+FL_API bool FLYLOGGER_INIT(bool dumpdata);
+FL_API void FLYLOGGER_CLOSE();
 FL_API void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...);
-#define FLYLOG(LogType,format,...) FLYLOGGER_LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
+#define FLYLOG(LogType,format,...) FL_API FLYLOGGER_LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TIMER /////////////////////////////////////////////////////////////////////////////////////////////////

@@ -2,7 +2,7 @@ set(ANDROIDVERSION 29) # Only one I can test at home
 # Will only support arm64, going forward it won't be needed to support x32
 
 # Sets up AAPT, BUILD_TOOLS, SDK, NDK, ADB, UNAME
-include(${FlyLib_Modules}/FindAndroidSDKVars.cmake) 
+include(${FL_cmake}/FindAndroidSDKVars.cmake) 
 #------------------------------------------------------------------------------------------------
 # SETUP ANDROID SPECIFIC COMPILE OPTIONS + PROCESSES
 #------------------------------------------------------------------------------------------------
@@ -12,8 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 message(STATUS "Setting Compile Flags for ANDROID")
 set(ANDROID_COMPILE_FLAGS "-ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden ")
-set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -Os -DANDROID -DAPPNAME=${APPNAME} 
-                            -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
+set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -Os -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
 set(CFLAGS_ARM64 "-m64 ")
 message(STATUS)
 
@@ -30,7 +29,7 @@ set(ANDROID_PLATFORM aarch64-linux-android)
 set(CC_ARM64 ${ANDROID_PREBUILT}/bin/aarch64-linux-android${ANDROIDVERSION}-clang)
 set(CCXX_ARM64 ${CC_ARM64}++)
 
-set(FL_OutputFolder ${CMAKE_BINARY_DIR}/lib/arm64-v8a)
+set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
 execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
 execute_process(COMMAND cp ${ARM_LIBS}/${ANDROID_PLATFORM}/libc++_shared.so ${FL_OutputFolder})
 set(LLVM_LIBC++ ${FL_OutputFolder}/libc++_shared.so)
@@ -59,7 +58,7 @@ set_target_properties(FlyLib
 #------------------------------------------------------------------------------------------------
 # ANDROID NDK Includes
 set(NDKINCLUDE ${NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include)
-target_include_directories(FlyLib PUBLIC 
+target_include_directories(FlyLib PRIVATE 
     ${NDKINCLUDE} 
     ${NDKINCLUDE}/android
     ${NDKINCLUDE}/${ANDROID_PLATFORM}
@@ -67,7 +66,7 @@ target_include_directories(FlyLib PUBLIC
     ${NDK}/sources/android/cpufeatures
 )
 # ANDROID Native/Prebuilt Libraries
-target_link_libraries(FlyLib 
+target_link_libraries(FlyLib PRIVATE
     ${LIBLINK}/libm.so
     ${LIBLINK}/libandroid.so 
     ${LIBLINK}/libEGL.so

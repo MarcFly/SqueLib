@@ -10,12 +10,12 @@ endif()
 #------------------------------------------------------------------------------------------------
 # Instead of Using CMAKE_MODULE_PATH, generate a variable to go into it and use .cmake extension
 # That way we don't overwrite other projects' CMAKE_MODULE_PATH and keep it cleaner to read
-set(FL_cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
+set(FL_cmake  ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 include(${FL_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
-project(FlyLib  VERSION 2020.1
+project(FlyLib_  VERSION 2020.1
                     DESCRIPTION "Multiplatform C++ Library for making apps and games easily"
                     LANGUAGES CXX)
 
@@ -99,9 +99,9 @@ set_target_properties(FlyLib PROPERTIES
 )
 
 if(ToWindows OR ToLinux) # Link/Include desktop dependencies
-    target_link_libraries(FlyLib 
+    target_link_libraries(FlyLib PRIVATE
         glfw)
-    target_include_directories(FlyLib PUBLIC
+    target_include_directories(FlyLib PRIVATE
         ${glfw_include})
 elseif(ToAndroid) # Link/Include Android Dependencies
     #target_link_libraries(FlyLib)
