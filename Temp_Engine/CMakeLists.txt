@@ -19,17 +19,14 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/FlyLib)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
-project(Temp_Engine     VERSION 2020.1
+project(TempEngine     VERSION 2020.1
                         DESCRIPTION "Multiplatform C++ Engine"
-                        LANGUAGES CXX)
+                        LANGUAGES C CXX)
 # C/CXX Requirements
 set(CMAKE_CXX_STANDARD 17) # Currently using <filesystem> for easy output and folder creation
 # Probably I can downgrade to C++11 because most new things I don't really use with thought into it
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but it should)
-
-# Include directories shared by all build types
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/EngineCode)
 
 # The Engine will be provided as is, no options initally to select
 # Maybe in future yes for installing submodules of the engine
@@ -45,19 +42,38 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 message(STATUS "Checking origin OS:")
 if(UNIX)
     message(STATUS "Creating Project from Linux")
-    if(ToAndroid)   
-        include(${TE_cmake}/FromLinux/LinuxToAndroid.cmake)
+    if(ToAndroid) 
+        include(${TE_cmake}/FindAndroidSDKVars.cmake)  
+        
+        set(TE_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
+        execute_process(COMMAND mkdir -p ${TE_OutputFolder})
+        add_library(TempEngine SHARED "${ENGINE_SRC}")
+        set_target_properties(TempEngine
+            PROPERTIES
+                ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+                LIBRARY_OUTPUT_DIRECTORY "${TE_OutputFolder}"
+                RUNTIME_OUTPUT_DIRECTORY "${TE_OutputFolder}")
+
+        include(${TE_cmake}/SetupAndroidEnv.cmake)
+        set_app_properties(TempEngine MarcTorresJimenez 29)
+        set_android_compile_flags()
+        set_android_link_flags()
+        set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
+        link_android_libc(TempEngine ${NDK} ${OS_NAME} ${ANDROIDVERSION})
+        
+        include(${TE_cmake}/AndroidInstallTargets.cmake)
+        #include(${CMAKE_CURRENT_SOURCE_DIR}/FlyLib/FlyLib.cmake)
     elseif(ToWindows)
-        include(${TE_cmake}/FromLinux/LinuxToWindows.cmake)
+        # Windows from Linux
     elseif(ToLinux)
         include(${TE_cmake}/FromLinux/LinuxToLinux.cmake)
     endif()
 elseif(WIN32)
     message(STATUS "Creating Project from Windows")
     if(ToAndroid)
-        include(${TE_cmake}/FromWin/WinToAndroid.cmake)
+        # Android from Windows (not WSL)
     elseif(ToLinux)
-        include(${TE_cmake}/FromWin/WinToLinux.cmake)
+        # Linux from Windows (not WSL)
     elseif(ToWindows)
         include(${TE_cmake}/FromWin/WinToWin.cmake)
     endif()
@@ -67,5 +83,11 @@ endif()
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
 # INCLUDE AND LINK TO FLYLIB
-target_link_libraries(TempEngine PUBLIC FlyLib)
-target_include_directories(TempEngine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/FlyLib/flylib_src)
+target_link_libraries(TempEngine 
+    PUBLIC 
+        FlyLib)
+
+target_include_directories(TempEngine 
+    PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyLib/flylib_src
+        ${CMAKE_CURRENT_SOURCE_DIR}/EngineCode)

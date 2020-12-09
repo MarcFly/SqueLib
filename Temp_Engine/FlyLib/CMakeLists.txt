@@ -17,7 +17,7 @@ include(${FL_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 project(FlyLib_  VERSION 2020.1
                     DESCRIPTION "Multiplatform C++ Library for making apps and games easily"
-                    LANGUAGES CXX)
+                    LANGUAGES C CXX)
 
 # C/CXX Requirements
 set(CMAKE_CXX_STANDARD 17) # Currently using <filesystem> for easy output and folder creation

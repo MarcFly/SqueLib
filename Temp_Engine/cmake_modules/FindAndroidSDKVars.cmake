@@ -1,7 +1,7 @@
 # Set Route to find SDKs
 set(OS_NAME linux-x86_64)
 
-if(Windows)
+if(WIN32)
     set(OS_NAME windows-x86_64)
 endif(Windows)
 

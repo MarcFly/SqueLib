@@ -11,13 +11,12 @@ add_compile_definitions(ANDROID)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 message(STATUS "Setting Compile Flags for ANDROID")
-set(ANDROID_COMPILE_FLAGS "-ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden ")
-set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -Os -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
+set(ANDROID_COMPILE_FLAGS "-ffunction-sections -Os -fdata-sections -Wall ")
 set(CFLAGS_ARM64 "-m64 ")
 message(STATUS)
 
 message(STATUS "Setting Link Flags for ANDROID")
-set(ANDROID_LINK_FLAGS "-Wl --gc-sections -s ") 
+set(ANDROID_LINK_FLAGS " -s ") 
 set(ANDROID_LINK_FLAGS "${ANDROID_LINK_FLAGS} -shared -uANativeActivity_onCreate ")
 message(STATUS)
 
@@ -45,7 +44,7 @@ set(LIBLINK ${ARM_LIBS}/${ANDROID_PLATFORM}/${ANDROIDVERSION})
 set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 add_library(FlyLib SHARED 
     ${app_glue}  # NDK Native App Glue
-    ${FLYLIB_SOURCE}) # Lib Sources
+    "${FLYLIB_SOURCE}") # Lib Sources
 
 set_target_properties(FlyLib
     PROPERTIES 
@@ -53,6 +52,7 @@ set_target_properties(FlyLib
         LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
 )
+target_link_options(FlyLib PUBLIC -s -uANativeActivity_onCreate -shared)
 #------------------------------------------------------------------------------------------------
 # PLATFORM SPECIFIC INCLUDE/LINKS
 #------------------------------------------------------------------------------------------------
