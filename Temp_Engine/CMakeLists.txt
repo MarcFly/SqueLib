@@ -39,49 +39,61 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 #------------------------------------------------------------------------------------------------
 # CUSTOM BUILD MODULES PER PLATFORM
 #------------------------------------------------------------------------------------------------
-message(STATUS "Checking origin OS:")
-if(UNIX)
-    message(STATUS "Creating Project from Linux")
-    if(ToAndroid) 
-        include(${TE_cmake}/FindAndroidSDKVars.cmake)  
-        
-        set(TE_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
-        execute_process(COMMAND mkdir -p ${TE_OutputFolder})
-        add_library(TempEngine SHARED "${ENGINE_SRC}")
-        set_target_properties(TempEngine
-            PROPERTIES
-                ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-                LIBRARY_OUTPUT_DIRECTORY "${TE_OutputFolder}"
-                RUNTIME_OUTPUT_DIRECTORY "${TE_OutputFolder}")
+if(ToAndroid) 
+    #------------------------------------------------------------------------------------------------
+    # SETUP PROJECT OUTPUT
+    #------------------------------------------------------------------------------------------------
+    set(TE_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
+    execute_process(COMMAND mkdir -p ${TE_OutputFolder})
+    add_library(TempEngine SHARED "${ENGINE_SRC}")
+    #------------------------------------------------------------------------------------------------
+    # PLATFORM SPECIFIC INCLUDE/LINKS
+    #------------------------------------------------------------------------------------------------
+    include(${TE_cmake}/FindAndroidSDKVars.cmake)  
+    include(${TE_cmake}/SetupAndroidEnv.cmake)
+    set_app_properties(TempEngine MarcTorresJimenez 29)
+    set_android_compile_flags()
+    set_android_link_flags()
+    set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
+    link_android_libc(TempEngine ${NDK} ${OS_NAME} ${ANDROIDVERSION})
+    #------------------------------------------------------------------------------------------------
+    # PLATFORM INSTALL TARGETS
+    #------------------------------------------------------------------------------------------------
+    include(${TE_cmake}/AndroidInstallTargets.cmake)
 
-        include(${TE_cmake}/SetupAndroidEnv.cmake)
-        set_app_properties(TempEngine MarcTorresJimenez 29)
-        set_android_compile_flags()
-        set_android_link_flags()
-        set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
-        link_android_libc(TempEngine ${NDK} ${OS_NAME} ${ANDROIDVERSION})
-        
-        include(${TE_cmake}/AndroidInstallTargets.cmake)
-        #include(${CMAKE_CURRENT_SOURCE_DIR}/FlyLib/FlyLib.cmake)
-    elseif(ToWindows)
-        # Windows from Linux
-    elseif(ToLinux)
-        include(${TE_cmake}/FromLinux/LinuxToLinux.cmake)
-    endif()
-elseif(WIN32)
-    message(STATUS "Creating Project from Windows")
-    if(ToAndroid)
-        # Android from Windows (not WSL)
-    elseif(ToLinux)
-        # Linux from Windows (not WSL)
-    elseif(ToWindows)
-        include(${TE_cmake}/FromWin/WinToWin.cmake)
-    endif()
+#------------------------------------------------------------------------------------------------
+# DESKTOP PLATFORMS
+#------------------------------------------------------------------------------------------------
+elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
+    #------------------------------------------------------------------------------------------------
+    # SET MINIMAL C/CXX FLAGS
+    #------------------------------------------------------------------------------------------------
+    set(CMAKE_C_FLAGS "-v ")
+    set(CMAKE_CXX_FLAGS "-v ")
+    #------------------------------------------------------------------------------------------------
+    # CROSS-COMPILING Windows-Linux
+    #------------------------------------------------------------------------------------------------
+    set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
+    # Change System Name to desired, then setup compiler and linkers and whatever is needed for crosscompiling
+    set(TE_OutputFolder "${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME}")
+    #------------------------------------------------------------------------------------------------
+    # SETUP PROJECT OUTPUT
+    #------------------------------------------------------------------------------------------------
+    add_executable(TempEngine "${ENGINE_SRC}")
+    #------------------------------------------------------------------------------------------------
+    # PLATFORM SPECIFIC INCLUDE/LINKS
+    #------------------------------------------------------------------------------------------------
 endif()
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
+set_target_properties(TempEngine
+    PROPERTIES 
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        LIBRARY_OUTPUT_DIRECTORY "${TE_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${TE_OutputFolder}"
+)
 # INCLUDE AND LINK TO FLYLIB
 target_link_libraries(TempEngine 
     PUBLIC 

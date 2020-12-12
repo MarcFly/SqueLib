@@ -1,13 +1,13 @@
 # Set Route to find SDKs
 set(OS_NAME linux-x86_64)
 
-if(WIN32)
+if(Windows)
     set(OS_NAME windows-x86_64)
-endif(Windows)
+endif()
 
 if(Darwin)
     set(OS_NAME darwin-x86-64)
-endif(Darwin)
+endif()
 
 message(STATUS "Building from " ${OS_NAME})
 

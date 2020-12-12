@@ -29,7 +29,8 @@ set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/flylib_src)
 
 # Get all shared source files
-file(GLOB_RECURSE FLYLIB_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp")
+file(GLOB_RECURSE FLYLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp")
+add_library(FlyLib SHARED "${FLYLIB_SRC}")
 #------------------------------------------------------------------------------------------------
 # SETUP BUILD PATHS
 #------------------------------------------------------------------------------------------------
@@ -43,7 +44,7 @@ execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
 include(FetchContent)
 
 message(STATUS "Pulling Dependencies to build along")
-if(ToWindows OR ToLinux) # Pull desktop dependencies
+if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) # Pull desktop dependencies
     # GLFW---------------------------------------------------------------------------------------
     option(BUILD_SHARED_LIBS "Build shared libraries" ON)
     option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
@@ -69,40 +70,61 @@ endif()
 #------------------------------------------------------------------------------------------------
 # CUSTOM BUILD MODULES PER PLATFORM
 #------------------------------------------------------------------------------------------------
-message(STATUS "Checking origin OS:")
-if(UNIX)
-    message(STATUS "Creating Project from Linux")
-    if(ToAndroid)   
-        include(${FL_cmake}/FromLinux/LinuxToAndroid.cmake)
+set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
+if(ToAndroid)
+    include(${FL_cmake}/FindAndroidSDKVars.cmake)
+    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
+    execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
+
+    set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+    target_source(FlyLib PUBLIC ${app_glue}) # Add Android Files required 
+
+    include(${FL_cmake}/SetupAndroidEnv.cmake)
+    set_android_link_flags()
+    set_android_compile_flags()
+    set_android_compiler(${NDK} ${OS_NAME})
+    link_android_all_libs(FlyLib ${NDK} ${OS_NAME} 29)
+    include_android(FlyLib ${NDK})
+
+elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
+    #------------------------------------------------------------------------------------------------
+    # SET MINIMAL C/CXX FLAGS
+    #------------------------------------------------------------------------------------------------
+    set(CMAKE_C_FLAGS "-v ")
+    set(CMAKE_CXX_FLAGS "-v ")
+    #------------------------------------------------------------------------------------------------
+    # CROSS-COMPILING Windows-Linux
+    #------------------------------------------------------------------------------------------------
+    set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
+    # Change System Name to desired, then setup compiler and linkers and whatever is needed for crosscompiling
+    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
+    #------------------------------------------------------------------------------------------------
+    # DESKTOP INCLUDES/LINKS
+    #------------------------------------------------------------------------------------------------
+    target_link_libraries(FlyLib PRIVATE
+        glfw)
+    target_include_directories(FlyLib PRIVATE
+        ${glfw_include})
+    #------------------------------------------------------------------------------------------------
+    # PLATFORM SPECIFIC INCLUDE/LINKS
+    #------------------------------------------------------------------------------------------------
+    if(ToLinux)
+        #target_link_libraries(FlyLib PRIVATE
+            #stdc++fs 
+            #pthread
+        #)
     elseif(ToWindows)
-        include(${FL_cmake}/FromLinux/LinuxToWindows.cmake)
-    elseif(ToLinux)
-        include(${FL_cmake}/FromLinux/LinuxToLinux.cmake)
-    endif()
-elseif(WIN32)
-    message(STATUS "Creating Project from Windows")
-    if(ToAndroid)
-        include(${FL_cmake}/FromWin/WinToAndroid.cmake)
-    elseif(ToLinux)
-        include(${FL_cmake}/FromWin/WinToLinux.cmake)
-    elseif(ToWindows)
-        include(${FL_cmake}/FromWin/WinToWin.cmake)
     endif()
 endif()
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
-set_property(TARGET FlyLib PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-set_target_properties(FlyLib PROPERTIES
-    PUBLIC_HEADER "fly_lib.h"
+set_target_properties(FlyLib
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        POSITION_INDEPENDENT_CODE ON
+        PUBLIC_HEADER "fly_lib.h"
 )
-
-if(ToWindows OR ToLinux) # Link/Include desktop dependencies
-    target_link_libraries(FlyLib PRIVATE
-        glfw)
-    target_include_directories(FlyLib PRIVATE
-        ${glfw_include})
-elseif(ToAndroid) # Link/Include Android Dependencies
-    #target_link_libraries(FlyLib)
-endif()
