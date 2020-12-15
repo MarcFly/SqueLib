@@ -19,6 +19,12 @@
 #   endif
 #endif
 
+#ifdef _MSC_VER
+#	define FL_MACRO
+#else 
+#	define FL_MACRO FL_API
+#endif
+
 #define FL_VERSION_MAJOR 2020
 #define FL_VERSION_MINOR 1
 #define FL_VERSION ((FL_VERSION_MAJOR << 16) | FL_VERSION_MINOR)
@@ -53,7 +59,7 @@ FL_API void FLYLOGGER_DumpData();
 FL_API bool FLYLOGGER_INIT(bool dumpdata);
 FL_API void FLYLOGGER_CLOSE();
 FL_API void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...);
-#define FLYLOG(LogType,format,...) FLYLOGGER_LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
+#define FLYLOG(LogType,format,...) FL_MACRO FLYLOGGER_LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TIMER /////////////////////////////////////////////////////////////////////////////////////////////////

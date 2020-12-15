@@ -53,8 +53,8 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) # Pull desktop depe
     option(GLFW_INSTALL "Generate installation target" OFF)
     option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" OFF)
     FetchContent_Declare(glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.3.2
+        GIT_REPOSITORY "https://github.com/glfw/glfw.git"
+        GIT_TAG "1adfbde4d7fb862bb36d4a20e05d16bf712170f3"
     )
     FetchContent_GetProperties(glfw glfw_SOURCE_DIR glfw_src glfw_BINARY_DIR glfw_bin)
     set(glfw_include ${glfw_src}/include)
@@ -77,13 +77,16 @@ if(ToAndroid)
     execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
 
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
-    target_source(FlyLib PUBLIC ${app_glue}) # Add Android Files required 
+    target_sources(FlyLib PUBLIC ${app_glue}) # Add Android Files required 
 
     include(${FL_cmake}/SetupAndroidEnv.cmake)
     set_android_link_flags()
     set_android_compile_flags()
-    set_android_compiler(${NDK} ${OS_NAME})
-    link_android_all_libs(FlyLib ${NDK} ${OS_NAME} 29)
+    if(NOT ANDROIDVERSION)
+        set(ANDROIDVERSIOn 29)
+    endif()
+    set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
+    link_android_all_libs(FlyLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
     include_android(FlyLib ${NDK})
 
 elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
