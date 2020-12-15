@@ -39,14 +39,16 @@ first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
 if(NOT EXISTS ${BT_EXISTS})
     message(FATAL_ERROR "Build tools folder not found")
 endif()
-
-subdirlist(BT_Vrs ${BT_EXISTS})
-first_exists(BUILD_TOOLS "${BT_Vrs}")
-set(AAPT ${BUILD_TOOLS}/aapt)
-
 subdirlist(BT_Vrs ${BT_EXISTS})
 first_exists(BUILD_TOOLS "${BT_Vrs}")
 
+if(NOT AAPT)
+    set(AAPT ${BUILD_TOOLS}/aapt)
+endif()
+
+if(NOT ADB)
+    set(ADB ${ANDROIDSDK}/platform-tools/adb)
+endif()
 # Check that everything was found
 if(NOT EXISTS ${ANDROIDSDK})
     message(FATAL_ERROR "ANDROID SDK NOT FOUND")

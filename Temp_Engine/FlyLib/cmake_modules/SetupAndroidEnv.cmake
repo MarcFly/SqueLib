@@ -4,10 +4,9 @@ macro(set_app_properties AppName OrgName AndroidVersion)
     set(ORG_NAME "${OrgName}")
     set(LABEL ${AppName})
     set(APKFILE "${AppName}.apk")
-    set(PACKAGENAME "org.${OrgName}.AppName")
+    set(PACKAGENAME "org.${OrgName}.${AppName}")
     set(ANDROIDVERSION ${AndroidVersion})
     set(ANDROIDTARGET ${AndroidVersion})
-    set(ADB adb)
 endmacro()
 #------------------------------------------------------------------------------------------------
 # SETUP ANDROID SPECIFIC COMPILE OPTIONS + PROCESSES

@@ -10,7 +10,7 @@ endif()
 #------------------------------------------------------------------------------------------------
 # Instead of Using CMAKE_MODULE_PATH, generate a variable to go into it and use .cmake extension
 # That way we don't overwrite other projects' CMAKE_MODULE_PATH and keep it cleaner to read
-set(TE_cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
+set(TE_cmake ${CMAKE_CURRENT_SOURCE_DIR}/FlyLib/cmake_modules)
 include(${TE_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # ADD SUBPROJECTS
