@@ -55,7 +55,8 @@ macro(link_android_all_libs target NDK_PATH OS_USED ANDR_V)
     target_link_libraries(${target} PUBLIC 
         ${LIBLINK}/../libc++_shared.so
         ${LIBLINK}/libm.so
-        ${LIBLINK}/libandroid.so 
+        ${LIBLINK}/libandroid.so
+        ${LIBLINK}/libnativewindow.so
         ${LIBLINK}/libEGL.so
         ${LIBLINK}/libGLESv3.so
         ${LIBLINK}/liblog.so

@@ -40,7 +40,7 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/builds)
 # ADD SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 set(FL_EXTERNAL_DEPENDENCIES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
-execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
+#execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
 include(FetchContent)
 
 message(STATUS "Pulling Dependencies to build along")
