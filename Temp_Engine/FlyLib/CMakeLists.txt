@@ -87,7 +87,7 @@ if(ToAndroid)
     endif()
     set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
     link_android_all_libs(FlyLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
-    include_android(FlyLib ${NDK})
+    include_android(FlyLib ${NDK} ${OS_NAME})
 
 elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #------------------------------------------------------------------------------------------------

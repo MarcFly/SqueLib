@@ -19,7 +19,7 @@ macro(set_android_link_flags)
 endmacro()
 
 macro(set_android_compile_flags)
-    set(ANDROID_COMPILE_FLAGS "-ffunction-sections -Os -fdata-sections -Wall ")
+    set(ANDROID_COMPILE_FLAGS "-ffunction-sections -Os -fdata-sections ")
     set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
     set(CFLAGS_ARM64 "-m64 ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ANDROID_COMPILE_FLAGS} -fPIC ${CFLAGS_ARM64} ${ARGN} ")
@@ -31,6 +31,11 @@ endmacro()
 macro(set_android_compiler NDK_PATH OS_USED ANDR_V)
     set(CMAKE_C_COMPILER "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/bin/aarch64-linux-android${ANDR_V}-clang")
     set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}++")
+    if(WIN32)
+        set(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}.cmd")
+        set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}.cmd")
+    endif()
+    
 endmacro()
 
 macro(link_android_libc target NDK_PATH OS_USED ANDR_V)
@@ -58,12 +63,12 @@ macro(link_android_all_libs target NDK_PATH OS_USED ANDR_V)
     )
 endmacro()
 
-macro(include_android target NDK_PATH)
-    set(NDKINCLUDE ${NDK_PATH}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include)
+macro(include_android target NDK_PATH OS_USED)
+    set(NDKINCLUDE ${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/include)
     target_include_directories(${target} PUBLIC 
         ${NDKINCLUDE} 
         ${NDKINCLUDE}/android
-        ${NDKINCLUDE}/${ANDROID_PLATFORM}
+        ${NDKINCLUDE}/aarch64-linux-android
         ${NDK_PATH}/sources/android/native_app_glue
         ${NDK_PATH}/sources/android/cpufeatures
     )

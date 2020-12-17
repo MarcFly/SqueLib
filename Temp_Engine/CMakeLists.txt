@@ -56,6 +56,9 @@ if(ToAndroid)
     set_android_link_flags()
     set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
     link_android_libc(TempEngine ${NDK} ${OS_NAME} ${ANDROIDVERSION})
+    if(WIN32)
+        #include_android(TempEngine ${NDK} ${OS_NAME})
+    endif()
     #------------------------------------------------------------------------------------------------
     # PLATFORM INSTALL TARGETS
     #------------------------------------------------------------------------------------------------

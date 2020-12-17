@@ -1,7 +1,7 @@
 # Set Route to find SDKs
 set(OS_NAME linux-x86_64)
 
-if(Windows)
+if(WIN32)
     set(OS_NAME windows-x86_64)
 endif()
 
@@ -13,7 +13,7 @@ message(STATUS "Building from " ${OS_NAME})
 
 # Check that Environment Variable for SDK Exists, else define it
 if(NOT ANDROIDSDK)
-    set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk)
+    set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK)
     first_exists(ANDROIDSDK "${SDK_DIRS}")
 endif()
 
