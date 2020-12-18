@@ -9,8 +9,7 @@
 #ifdef ANDROID
 #   define USE_EGL
     extern int OGLESStarted;
-#   include <native_activity.h>
-#   include <jni.h>
+#   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
     struct android_app* app;   
 #endif
@@ -87,12 +86,6 @@ bool FLYDISPLAY_Init(const char* title, int w, int h /*, flags*/)
         struct android_poll_source* source;
         if(ALooper_pollAll(0,0,&events, (void**)&source) >= 0)
             if(source != NULL) source->process(app, source);
-    }
-
-    if(w>=1 && h >=1)
-    {
-        egl_window.width = w;
-        egl_window.height = h;
     }
 #endif
 

@@ -37,7 +37,7 @@ int FLIsCompatibleDLL(void)
 #include <android_native_app_glue.h>
 
 //extern void handle_android_cmd(struct android_app* app, int32_t cmd);
-extern int OGLESStarted;
+int OGLESStarted;
 void handle_android_cmd(struct android_app* app, int32_t cmd)
 {
     switch(cmd)
