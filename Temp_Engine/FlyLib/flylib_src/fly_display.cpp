@@ -11,12 +11,14 @@
     extern int OGLESStarted;
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
-    struct android_app* app;   
+    struct android_app* app;
+#elif defined _WIN32
+#   define USE_GLFW
 #endif
 
 // Include the Necessary Backend for the chosen API
+// Default Status for the initialization
 #ifdef USE_EGL
-#   define EGL_ZBITS 16
 #   include <EGL/egl.h>
     EGLNativeWindowType egl_window;
     EGLDisplay egl_display;
@@ -27,14 +29,9 @@
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
         EGL_BUFFER_SIZE, 32,
-        EGL_STENCIL_SIZE, 0, // ???
-        EGL_DEPTH_SIZE, EGL_ZBITS,
-#ifdef ANDROID
+        EGL_STENCIL_SIZE, 8,
+        EGL_DEPTH_SIZE, 24,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-#else // ????????
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PIXMAP_BIT,
-#endif 
         EGL_NONE
     };
 
@@ -47,7 +44,17 @@
         EGL_NONE
     };
 
-#   include <GLES3/gl32.h>
+    typedef void FLY_window;
+#elif defined USE_GLFW
+#   include <GLFW/glfw3.h>
+#   include <vector>
+    void GLFW_ErrorCallback(int error_code, const char* description)
+    {
+        FLYLOG(FlyLogType::LT_ERROR, "GLFW_ERROR-%d: %s", error_code, description);
+    }
+    int monitor_count;
+    GLFWmonitor** glfw_monitors;
+    std::vector<GLFWwindow*> glfw_windows;
 #endif
 
 // Platfrom Agnostic Includes and Variables
@@ -72,13 +79,18 @@ bool FLYDISPLAY_Init(const char* title, int w, int h /*, flags*/)
 {
     bool ret = true;
 
+// PreInitialization of the Window/Context Backend
 #ifdef USE_EGL
     EGLint egl_major, egl_minor;
     EGLConfig config;
     EGLint num_config;
     EGLContext egl_context;
+#elif defined USE_GLFW
+    int glfw_major, glfw_minor, glfw_revision;
+    glfwSetErrorCallback(GLFW_ErrorCallback);
 #endif
 
+// Platform Specifics PreInitialization
 #ifdef ANDROID
     int events;
     while(!OGLESStarted)
@@ -89,6 +101,7 @@ bool FLYDISPLAY_Init(const char* title, int w, int h /*, flags*/)
     }
 #endif
 
+// Backend Initialization
 #ifdef USE_EGL
     egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if(egl_display == EGL_NO_DISPLAY)
@@ -96,12 +109,14 @@ bool FLYDISPLAY_Init(const char* title, int w, int h /*, flags*/)
         FLYLOG(FlyLogType::LT_ERROR, "EGL Found no Display!");
         return false;
     }
+    FLYLOG(FlyLogType::LT_INFO, "Found main display with EGL!");
 
     if(!eglInitialize(egl_display, &egl_major, &egl_minor))
     {
         FLYLOG(FlyLogType::LT_ERROR, "EGL failed to Initialize!");
         return false;
     }
+    FLYLOG(FlyLogType::LT_INFO, "Successfully Initialized EGL!");
 
     FLYLOG(FlyLogType::LT_INFO, "EGL_VERSION: \"%s\" \nEGL_VENDOR: \"%s\"\nEGL_EXTENSIONS: \"%s\"",
         eglQueryString(egl_display, EGL_VERSION), 
@@ -153,7 +168,19 @@ bool FLYDISPLAY_Init(const char* title, int w, int h /*, flags*/)
         FLYLOG(FlyLogType::LT_ERROR, "Failed to attach Context to Surface (eglMakeCurrent())!");
         return false;
     }
+#elif defined USE_GLFW
+// If SetErrorCallback is correct, no need to do flylogs
 
+// GLFW Hints - Before calling glfwInit(), setup behaviour.
+    glfwInitHint(GLFW_JOYSTICK_HAT_BUTTONS, GLFW_TRUE); // It is default value but for test and check
+    if(!glfwInit()) return false;
+    FLYLOG(FlyLogType::LT_INFO, "Successfully Initialized GLFW!");
+
+    glfw_monitors = glfwGetMonitors(&monitor_count); // Main Monitor is always 0
+    //glfwSetMonitorCallback( _send_monitor_change_event_ );
+
+    if(!FLYDISPLAY_OpenWindow(width, height, title)) return false;
+    FLYLOG(FlyLogType::LT_INFO, "Opened main GLFW window!");
 #endif
 
 
@@ -166,7 +193,14 @@ bool FLYDISPLAY_Init(const char* title, int w, int h /*, flags*/)
 bool FLYDISPLAY_Close()
 {
     bool ret = true;
+#ifdef USE_EGL
+#elif defined USE_GLFW
 
+    for (int i = 0; i < glfw_windows.size(); ++i)
+        glfwDestroyWindow(glfw_windows[i]);
+    glfw_windows.clear();
+    glfwTerminate();
+#endif
     return ret;
 }
 
@@ -198,4 +232,56 @@ void FLYDISPLAY_GetSize(int* x, int* y)
     *y = height;
 
     if(*x != last_size_x || *y != last_size_y) FLYDISPLAY_Resize(*x, *y);
-}   
+}
+
+void FLYDISPLAY_CloseWindow(int window)
+{
+#ifdef USE_EGL
+#elif defined USE_GLFW
+    int size = glfw_windows.size();
+    if (window < size)
+    {
+        FLYLOG(FlyLogType::LT_INFO, "Closing window n*%d", window);
+        glfwSetWindowShouldClose(glfw_windows[window], GLFW_TRUE);
+        glfw_windows[window] = glfw_windows[size - 1];
+        glfw_windows.pop_back();
+    }
+    else
+    {
+        FLYLOG(FlyLogType::LT_WARNING, "Window n*%d not available!");
+    }
+#endif
+}
+
+void FLYDISPLAY_DestroyWindow(int window)
+{
+#ifdef USE_EGL
+#elif defined USE_GLFW
+    glfwDestroyWindow(glfw_windows[window]);
+    glfw_windows[window] = glfw_windows[glfw_windows.size() -1];
+    glfw_windows.pop_back();
+
+#endif
+}
+
+bool FLYDISPLAY_OpenWindow(int width, int height, const char* title, int monitor)
+{
+    // Set to monitor[0] for fullscreen at 4th parameter
+    int x=0,y=0,w=0,h=0;
+#ifdef USE_EGL
+    w = width;
+    h = height;
+#elif defined USE_GLFW
+    glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
+    w = (width != 0) ? width : 7 * w / 10;
+    h = (height != 0) ? height : 7 * h / 10;
+#endif
+    
+#ifdef USE_EGL
+#elif defined USE_GLFW
+    GLFWwindow* first_window = glfwCreateWindow(w, h, title, NULL, NULL);
+    if(!first_window) return false;
+    glfw_windows.push_back(first_window);
+#endif
+    return true;
+}

@@ -17,7 +17,7 @@ int main()
 
     // Helpers Initialization
     {
-        ret = FLYLIB_INIT();
+        ret = FLYLIB_Init(/*flags*/);
     }
 
     // Engine Initialization
@@ -56,7 +56,7 @@ int main()
         // Close something that is not part of the engine as a module
 
         FLYLOG(FlyLogType::LT_INFO, "Closing Helpers...");
-        FLYLIB_CLOSE(/* flags */);
+        FLYLIB_Close();
     }
 
     return 0;

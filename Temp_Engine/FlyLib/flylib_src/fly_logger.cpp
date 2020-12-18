@@ -97,7 +97,7 @@ void DumpData()
     
 }
 
-bool FLYLOGGER_INIT(bool dumpdata)
+bool FLYLOGGER_Init(bool dumpdata)
 {
     bool ret = true;
 
@@ -106,7 +106,7 @@ bool FLYLOGGER_INIT(bool dumpdata)
     return ret;
 }
 
-void FLYLOGGER_CLOSE()
+void FLYLOGGER_Close()
 {
     if(DUMPDATA) DumpData();
 
@@ -123,7 +123,7 @@ void FLYLOGGER_CLOSE()
 //#   include <Windows.h>
 #endif
 
-void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...)
+void FLYLOGGER_Log(FlyLogType lt, const char file[], int line, const char* format, ...)
 {
     std::lock_guard<std::mutex> lk(_mtx);
 

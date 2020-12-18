@@ -94,7 +94,7 @@ endif()
 set_target_properties(TempEngine
     PROPERTIES 
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${TE_OutputFolder}"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         RUNTIME_OUTPUT_DIRECTORY "${TE_OutputFolder}"
 )
 # INCLUDE AND LINK TO FLYLIB

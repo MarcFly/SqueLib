@@ -32,8 +32,8 @@
 unsigned int FLGetVersion(void);
 int FLIsCompatibleDLL(void);
 
-FL_API bool FLYLIB_INIT(/* flags */);
-FL_API bool FLYLIB_CLOSE(/* flags */);
+FL_API bool FLYLIB_Init(/* flags */);
+FL_API bool FLYLIB_Close(/* flags */);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,10 +56,10 @@ typedef struct FlyLog
 } FlyLog;
 FL_API void FlyPrintLog (const char* log, int lt);
 FL_API void FLYLOGGER_DumpData();
-FL_API bool FLYLOGGER_INIT(bool dumpdata);
-FL_API void FLYLOGGER_CLOSE();
-FL_API void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...);
-#define FLYLOG(LogType,format,...) FL_MACRO FLYLOGGER_LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
+FL_API bool FLYLOGGER_Init(bool dumpdata);
+FL_API void FLYLOGGER_Close();
+FL_API void FLYLOGGER_Log(FlyLogType lt, const char file[], int line, const char* format, ...);
+#define FLYLOG(LogType,format,...) FL_MACRO FLYLOGGER_Log(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TIMER /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,5 +98,12 @@ private:
 
 FL_API bool FLYDISPLAY_Init(const char* title = "", int w = 0, int h = 0 /*,flags*/);
 FL_API bool FLYDISPLAY_Close();
-
+FL_API void FLYDISPLAY_SetVSYN(int vsync_val);
+FL_API void FLYDISPLAY_Clean();
+FL_API void FLYDISPLAY_SwapBuffers();
+FL_API void FLYDISPLAY_Resize(int w, int h);
+FL_API void FLYDISPLAY_GetSize(int* w, int* h);
+FL_API void FLYDISPLAY_CloseWindowCallback(int window);
+FL_API void FLYDISPLAY_DestroyWindow(int window);
+FL_API bool FLYDISPLAY_OpenWindow(int width, int height, const char* title, int monitor = 0);
 #endif // _FLY_LIB_

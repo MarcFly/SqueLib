@@ -1,5 +1,5 @@
-#ifndef _LogHandler_H_
-#define _LogHandler_H_
+#ifndef _FLY_LOGGER_
+#define _FLY_LOGGER_
 
 #include <cstdarg>
 
@@ -20,7 +20,9 @@ struct FlyLog
 };
 void FlyPrintLog (const char* log, int lt);
 void DumpData();
-void FLYLOGGER_INIT(bool dumpdata);
-void FLYLOGGER_CLOSE();
-void FLYLOGGER_LOG(FlyLogType lt, const char file[], int line, const char* format, ...);
+void FLYLOGGER_Init(bool dumpdata);
+void FLYLOGGER_Close();
+void FLYLOGGER_Log(FlyLogType lt, const char file[], int line, const char* format, ...);
 #define FLYLOG(LogType,format,...) LOG(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
+
+#endif // _FLY_LOGGER_

@@ -126,7 +126,7 @@ endif()
 set_target_properties(FlyLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         POSITION_INDEPENDENT_CODE ON
         PUBLIC_HEADER "fly_lib.h"

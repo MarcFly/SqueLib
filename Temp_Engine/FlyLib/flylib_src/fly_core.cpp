@@ -1,21 +1,23 @@
 #include "fly_lib.h"
 
-bool FLYLIB_INIT(/* flags */)
+bool FLYLIB_Init(/* flags */)
 {
     bool ret = true;
 
     // Call Init for all loaded modules and with required flags
-    FLYLOGGER_INIT(/*pass flag true or false*/ true);
+    FLYLOGGER_Init(/*pass flag true or false*/ true);
+    FLYDISPLAY_Init();
 
     return ret;
 }
 
-bool FLYLIB_CLOSE(/* flags */)
+bool FLYLIB_Close(/* flags */)
 {
     bool ret = true;
 
     // Call close for all required modules for FlyLib
-    FLYLOGGER_CLOSE();
+    FLYDISPLAY_Close();
+    FLYLOGGER_Close();
 
     return ret;
 }
