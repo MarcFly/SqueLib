@@ -14,5 +14,5 @@ void FLYDISPLAY_Clean();
 void FLYDISPLAY_SwapBuffers();
 void FLYDISPLAY_Resize(int w, int h);
 void FLYDISPLAY_GetSize(int* w, int* h);
-void FLYDISPLAY_CloseWindow(FLY_window* window)
+void FLYDISPLAY_CloseWindow(int window)
 #endif //_FLY_DISPLAY_H_

@@ -16,7 +16,7 @@ struct FlyLog
 {
 	int type = -1;
 	FlyLogType lt = LT_INFO;
-	char log[LOGSIZE] = {0};
+	char log[LOGSIZE] = {\0};
 };
 void FlyPrintLog (const char* log, int lt);
 void DumpData();

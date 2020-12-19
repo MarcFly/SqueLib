@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <vector>
 
-typedef std::pair<int, FlyLog> PairLOG;
+typedef std::pair<int, FLY_Log> PairLOG;
 static std::mutex _mtx;
 static std::unordered_map<std::string, int> Push_LogKeys;
 static std::unordered_map<int, std::string*> Get_LogKeys;
@@ -42,7 +42,7 @@ static bool DUMPDATA = true;
 #include <cstring>
 
 
-void FlyPrintLog (const char* log, int lt)
+void FLYLOGGER_Print(const char* log, int lt)
 {
 #ifdef _WIN32
     OutputDebugString(log);
@@ -79,15 +79,17 @@ void DumpData()
     write_file.open(filename.c_str(), std::fstream::out | std::fstream::binary);
 
 
-    int buf_size = (LOGSIZE)* logs.size();
+    int buf_size = (LOGSIZE+1)* logs.size();
     char* data = new char[buf_size];
     char* cursor = data;
 
     std::string header("");
     for (int i = 0; i < logs.size(); ++i)
     {
-        memcpy(cursor, logs[i].second.log, LOGSIZE);
+        memcpy(cursor, logs[i].second.log, LOGSIZE+1);
         cursor += LOGSIZE;
+        memcpy(cursor, "\n", 1);
+        cursor += 1;
     }
 
     write_file.write(data, buf_size);
@@ -123,11 +125,11 @@ void FLYLOGGER_Close()
 //#   include <Windows.h>
 #endif
 
-void FLYLOGGER_Log(FlyLogType lt, const char file[], int line, const char* format, ...)
+void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...)
 {
     std::lock_guard<std::mutex> lk(_mtx);
 
-    FlyLog push;
+    FLY_Log push;
     push.lt = lt;
     
     std::string sttr(strrchr(file, FOLDER_ENDING));
@@ -148,5 +150,5 @@ void FLYLOGGER_Log(FlyLogType lt, const char file[], int line, const char* forma
 
     logs.push_back(PairLOG(push.type, push));
 
-    FlyPrintLog(&push.log[0], (int)lt);	
+    FLYLOGGER_Print(&push.log[0], (int)lt);	
 }

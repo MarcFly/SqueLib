@@ -6,7 +6,7 @@ bool FLYLIB_Init(/* flags */)
 
     // Call Init for all loaded modules and with required flags
     FLYLOGGER_Init(/*pass flag true or false*/ true);
-    FLYDISPLAY_Init();
+    FLYDISPLAY_Init(NULL, "FlyLib Test Window", 100, 100);
 
     return ret;
 }
@@ -56,7 +56,7 @@ extern int main();
 void android_main(struct android_app* app)
 {
     #ifndef FLYLOGGER_OUT
-    FlyPrintLog("Android Flylib Start", FlyLogType::LT_INFO);
+    FlyPrintLog("Android Flylib Start", FLY_LogType::LT_INFO);
     #endif
 
     app->onAppCmd = handle_android_cmd;
