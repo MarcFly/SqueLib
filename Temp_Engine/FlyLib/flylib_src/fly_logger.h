@@ -6,7 +6,7 @@
 #define LOGSIZE 512
 enum FlyLogType
 {
-	LT_INFO = 4,
+	LT_INFO = 4, // Matching Android LOG Classifier Order
 	LT_WARNING,
 	LT_ERROR,
 	LT_CRITICAL
@@ -16,7 +16,7 @@ struct FlyLog
 {
 	int type = -1;
 	FlyLogType lt = LT_INFO;
-	char log[LOGSIZE] = {\0};
+	char log[LOGSIZE] = {'\0'};
 };
 void FlyPrintLog (const char* log, int lt);
 void DumpData();

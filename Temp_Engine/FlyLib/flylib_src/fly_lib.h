@@ -55,8 +55,11 @@ enum FLY_BitFlags{
 	
 };
 
+typedef short int16;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,14 +127,15 @@ private:
 typedef uint16_t FLY_WindowFlags; // -> enum FLY_WindowFlags_
 enum FLY_WindowFlags_
 {
-	FLYWINDOW_RESIZABLE = BITSET1,
-	FLYWINDOW_DECORATED = BITSET2,
+	FLYWINDOW_NOT_RESIZABLE = BITSET1,
+	FLYWINDOW_NOT_DECORATED = BITSET2,
 	FLYWINDOW_ALWAYS_TOP = BITSET3,
 	FLYWINDOW_MAXIMIZED = BITSET4
 };
 
 
-typedef struct FLY_Window{
+typedef struct FLY_Window
+{
 	const char* title = "";
 	uint16 width=0, height=0;
 	FLY_WindowFlags flags;
@@ -140,8 +144,7 @@ typedef struct FLY_Window{
 // Initialization / Global State
 FL_API bool FLYDISPLAY_Init(uint16 flags, const char* title = "", uint16 w = 0, uint16 h = 0);
 FL_API bool FLYDISPLAY_Close();
-FL_API void FLYDISPLAY_SetVSYNC(uint16 vsync_val);
-
+FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);
 // Control Specific Windows
 FL_API void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h);
 FL_API void FLYDISPLAY_GetSize(uint16 window, uint16* w, uint16* h);
@@ -154,5 +157,83 @@ FL_API bool FLYDISPLAY_OpenWindow(FLY_Window* window = NULL, uint16 monitor = 0)
 FL_API void FLYDISPLAY_Clean();
 FL_API void FLYDISPLAY_SwapBuffers();
 FL_API void FLYDISPLAY_MakeContextMain(uint16 window);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// INPUT /////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum FLY_InputState
+{
+	FLY_UNKNOWN = -1,
+	FLY_RELEASED,
+	FLY_PRESSED,
+	FLY_HELD
+};
+
+enum FLY_KeyboardKeys
+{
+	FLY_KEY_UNKNWON = -1,
+	// 1 Initial key
+	// MAIN PRINTABLE ASCII CHARACTERS
+	FLY_KEY_SPACE			= 32,	FLY_KEY_SINGLE_QUOTE	= 39,	FLY_KEY_ASTERISK		= 42,	FLY_KEY_PLUS			= 43,
+	FLY_KEY_COMMA			= 44,	FLY_KEY_DASH			= 45,	FLY_KEY_DOT				= 46,	FLY_KEY_FORW_SLASH		= 47,
+	FLY_KEY_ZERO_0			= 48,	FLY_KEY_ONE_1			= 49,	FLY_KEY_TWO_2			= 50,	FLY_KEY_THREE_3			= 51,
+	FLY_KEY_FOUR_4			= 52,	FLY_KEY_FIVE_5			= 53,	FLY_KEY_SIX_6			= 54,	FLY_KEY_SEVEN_7			= 55,
+	FLY_KEY_EIGHT_8			= 56,	FLY_KEY_NINE_9			= 57,	FLY_KEY_COLON			= 58,	FLY_KEY_SEMI_COLON		= 59,
+	FLY_KEY_EQUALS			= 61,	FLY_KEY_GREATER_THAN	= 62,	FLY_KEY_END_QUESTION	= 63,	FLY_KEY_AT				= 64,
+	FLY_KEY_UPPER_A			= 65,	FLY_KEY_UPPER_B			= 66,	FLY_KEY_UPPER_C			= 67,	FLY_KEY_UPPER_D			= 68,
+	FLY_KEY_UPPER_E			= 69,	FLY_KEY_UPPER_F			= 70,	FLY_KEY_UPPER_G			= 71,	FLY_KEY_UPPER_H			= 72,	
+	FLY_KEY_UPPER_I			= 73,	FLY_KEY_UPPER_J			= 74,	FLY_KEY_UPPER_K			= 75,	FLY_KEY_UPPER_L			= 76,
+	FLY_KEY_UPPER_M			= 77,	FLY_KEY_UPPER_N			= 78,	FLY_KEY_UPPER_O			= 79,	FLY_KEY_UPPER_P			= 80,
+	FLY_KEY_UPPER_Q			= 81,	FLY_KEY_UPPER_R			= 82,	FLY_KEY_UPPER_S			= 83,	FLY_KEY_UPPER_T			= 84,
+	FLY_KEY_UPPER_U			= 85,	FLY_KEY_UPPER_V			= 86,	FLY_KEY_UPPER_W			= 87,	FLY_KEY_UPPER_X			= 88,
+	FLY_KEY_UPPER_Y			= 89,	FLY_KEY_UPPER_Z			= 90,	FLY_KEY_OPEN_BRACKET	= 91,	FLY_KEY_BACK_SLASH		= 92,	
+	FLY_KEY_CLOSE_BRACKET	= 93, 	FLY_KEY_OPEN_ACCENT		= 96,
+	
+	// 54 keys here
+
+	// MAIN USAGE CHARACTERS
+	FLY_KEY_WORLD_1			= 161,	FLY_KEY_WORLD_2		= 162,	FLY_KEY_ESCAPE			= 256,	FLY_KEY_ENTER				= 257,
+	FLY_KEY_TAB				= 258,	FLY_KEY_BACKSPACE	= 259,	FLY_KEY_INSERT			= 260,	FLY_KEY_DELETE				= 261,
+	FLY_KEY_ARROW_RIGHT		= 262,	FLY_KEY_ARROW_LEFT	= 263,	FLY_KEY_ARROW_DOWN		= 264,	FLY_KEY_ARROW_UP			= 265,
+	FLY_KEY_PAGE_UP			= 266,	FLY_KEY_PAGE_DOWN	= 267,	FLY_KEY_HOME			= 268,	FLY_KEY_END					= 269,
+	FLY_KEY_CAPS_LOCK		= 281,	FLY_KEY_SCROLL_LOCK	= 281,	FLY_KEY_NUM_LOCK		= 282,	FLY_KEY_PRINT_SCREEN		= 283,
+	FLY_KEY_PAUSE			= 284,	FLY_KEY_F1			= 290,	FLY_KEY_F2				= 291,	FLY_KEY_F3					= 292,
+	FLY_KEY_F4				= 293,	FLY_KEY_F5			= 294,	FLY_KEY_F6				= 295,	FLY_KEY_F7					= 296,
+	FLY_KEY_F8				= 297,	FLY_KEY_F9			= 298,	FLY_KEY_F10				= 299,	FLY_KEY_F11					= 300,
+	FLY_KEY_F12				= 301,	FLY_KEY_F13			= 302,	FLY_KEY_F14				= 303,	FLY_KEY_F15					= 304,
+	FLY_KEY_F16				= 305,	FLY_KEY_F17			= 306,	FLY_KEY_F18				= 307,	FLY_KEY_F19					= 308,
+	FLY_KEY_F20				= 309,	FLY_KEY_F21			= 310,	FLY_KEY_F22				= 311,	FLY_KEY_F23					= 312,
+	FLY_KEY_F24				= 313,	FLY_KEY_F25			= 314,	FLY_KEY_KEYPAD_1		= 320,	FLY_KEY_KEYPAD_2			= 321,
+	FLY_KEY_KEYPAD_3		= 322,	FLY_KEY_KEYPAD_4	= 323,	FLY_KEY_KEYPAD_5		= 324,	FLY_KEY_KEYPAD_6			= 325,
+	FLY_KEY_KEYPAD_7		= 326,	FLY_KEY_KEYPAD_8	= 327,	FLY_KEY_KEYPAD_9		= 328,	FLY_KEY_KEYPAD_DECIMAL		= 329,
+	FLY_KEY_KEYPAD_DIVIDE	= 331,	FLY_KEY_KEYPAD_MULT	= 332,	FLY_KEY_KEYPAD_SUBTRACT	= 333,	FLY_KEY_KEYPAD_ADD			= 334,
+	FLY_KEY_KEYPAD_ENTER	= 335,	FLY_KEY_KEYPAD_EQUAL= 336,	FLY_KEY_LEFT_SHIFT		= 340,	FLY_KEY_LEFT_CTRL			= 341,
+	FLY_KEY_LEFT_ALT		= 342,	FLY_KEY_LEFT_SUPER	= 343,	FLY_KEY_RIGHT_SHIFT		= 344,	FLY_KEY_RIGHT_CTRL			= 345,
+	FLY_KEY_RIGHT_ALT		= 347,	FLY_KEY_RIGHT_SUPER	= 348,
+	// 66 keys here
+	// EXTENDED ASCII CHARACTERS
+
+	// END
+	FLY_KEY_MAX 
+};
+#define NUM_KEYS 121
+
+
+enum FLY_INPUT_ACTIONS
+{
+	FLY_ACTION_UNKNOWN = -1,
+	// Touch Controls
+
+	// Gameplay Actions
+
+	// 
+};
+
+FL_API void FLYINPUT_Process(uint16 window);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #endif // _FLY_LIB_

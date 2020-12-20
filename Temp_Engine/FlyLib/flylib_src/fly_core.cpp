@@ -6,7 +6,7 @@ bool FLYLIB_Init(/* flags */)
 
     // Call Init for all loaded modules and with required flags
     FLYLOGGER_Init(/*pass flag true or false*/ true);
-    FLYDISPLAY_Init(NULL, "FlyLib Test Window", 100, 100);
+    FLYDISPLAY_Init(FLYWINDOW_MAXIMIZED, "FlyLib Test Window", 400, 100);
 
     return ret;
 }
@@ -38,21 +38,9 @@ int FLIsCompatibleDLL(void)
 // android you acquire a native_app as if it were the window to act upon.
 #include <android_native_app_glue.h>
 
-//extern void handle_android_cmd(struct android_app* app, int32_t cmd);
-int OGLESStarted;
-void handle_android_cmd(struct android_app* app, int32_t cmd)
-{
-    switch(cmd)
-    {
-        case APP_CMD_INIT_WINDOW:
-            if(!OGLESStarted) OGLESStarted = 1;
-    }
-}
-
-//extern int32_t handle_android_input(struct android_app* app, AInputEvent* ev);
-int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
-{return 0;}
-extern int main();
+extern void handle_android_cmd(struct android_app* app, int32_t cmd);
+extern int32_t handle_android_input(struct android_app* app, AInputEvent* ev);
+extern int main(int argc, char** argv);
 void android_main(struct android_app* app)
 {
     #ifndef FLYLOGGER_OUT
@@ -61,7 +49,7 @@ void android_main(struct android_app* app)
 
     app->onAppCmd = handle_android_cmd;
     app->onInputEvent = handle_android_input;
-    main();
+    main(1, {"AppMain"});
     app->destroyRequested = 0;
 }
 #endif

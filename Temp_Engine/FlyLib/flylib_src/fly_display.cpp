@@ -12,7 +12,7 @@
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
     struct android_app* app;
-#elif defined _WIN32
+#elif defined _WIN32 || defined __linux__
 #   define USE_GLFW
 #endif
 
@@ -219,7 +219,7 @@ bool FLYDISPLAY_Close()
     return ret;
 }
 
-void FLYDISPLAY_SetVSYNC(uint16 vsync_val)
+void FLYDISPLAY_SetVSYNC(int16_t vsync_val)
 {
     if (main_window_context == UINT16_MAX)
     {
@@ -326,10 +326,18 @@ void FLYDISPLAY_NextWindowOptions(uint16 flags)
 {
 #ifdef USE_EGL
 #elif defined USE_GLFW
-    (flags & FLYWINDOW_RESIZABLE) ? glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE) : glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    (flags & FLYWINDOW_DECORATED) ? glfwWindowHint(GLFW_DECORATED, GLFW_TRUE) : glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    (flags & FLYWINDOW_NOT_RESIZABLE) ? glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE) : glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    (flags & FLYWINDOW_NOT_DECORATED) ? glfwWindowHint(GLFW_DECORATED, GLFW_FALSE) : glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     (flags & FLYWINDOW_ALWAYS_TOP) ? glfwWindowHint(GLFW_FLOATING, GLFW_TRUE) : glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
     (flags & FLYWINDOW_MAXIMIZED) ? glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE) : glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
+
+
+    // Private Options
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, );
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, );
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_REVISION, );
 #endif
 }
 
@@ -372,9 +380,24 @@ void FLYDISPLAY_Clean()
 
 }
 
+void FLYDISPLAY_SwapAllBuffers()
+{
+    for(int i = 0; i < fly_windows.size(); ++i)
+    {
+#ifdef USE_EGL
+
+#elif defined USE_GLFW
+        glfwSwapBuffers(glfw_windows[i]);
+#endif
+    }
+}
+
 void FLYDISPLAY_SwapBuffers(uint16 window)
 {
-
+#ifdef USE_EGL
+#elif defined USE_GLFW
+    glfwSwapBuffers(glfw_windows[window]);
+#endif
 }
 
 void FLYDISPLAY_MakeContextMain(uint16 window)

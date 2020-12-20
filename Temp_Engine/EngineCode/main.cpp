@@ -10,7 +10,7 @@ enum main_states
 	MAIN_EXIT
 };
 
-int main()
+int main(int argc, char **argv)
 {
     main_states state = MAIN_CREATION;
     bool ret = false;
