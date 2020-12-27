@@ -105,7 +105,7 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     # DESKTOP INCLUDES/LINKS
     #------------------------------------------------------------------------------------------------
     target_link_libraries(FlyLib PRIVATE
-        glfw)
+        glfw ${GLFW_LIBRARIES})
     target_include_directories(FlyLib PRIVATE
         ${glfw_include})
     #------------------------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ endif()
 set_target_properties(FlyLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         POSITION_INDEPENDENT_CODE ON
         PUBLIC_HEADER "fly_lib.h"

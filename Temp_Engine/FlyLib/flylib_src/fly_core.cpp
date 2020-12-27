@@ -43,19 +43,24 @@ int FLIsCompatibleDLL(void)
 // android you acquire a native_app as if it were the window to act upon.
 #include <android_native_app_glue.h>
 
-void handle_android_cmd(struct android_app* app, int32_t cmd);
-int32_t handle_android_input(struct android_app* app, AInputEvent* ev);
-extern int main(int argc, char** argv);
-void android_main(struct android_app* app)
+extern void handle_android_cmd(struct android_app* app, int32_t cmd);
+extern int32_t handle_android_input(struct android_app* app, AInputEvent* ev);
+extern int main();
+struct android_app* app;
+void android_main(struct android_app* gapp)
 {
+    app = gapp;
     #ifndef FLYLOGGER_OUT
-    FlyPrintLog("Android Flylib Start", FLY_LogType::LT_INFO);
+    FLYLOGGER_Print("Android Flylib Start", FLY_LogType::LT_INFO);
     #endif
 
     app->onAppCmd = handle_android_cmd;
     app->onInputEvent = handle_android_input;
-    main(1, {"AppMain"});
-    app->destroyRequested = 0;
+    //char *argv[] = {"AppMain", 0};
+    FLYLOGGER_Print("CALLING MAIN", FLY_LogType::LT_INFO);
+    main();
+    //app->destroyRequested = 0;
+    FLYLOGGER_Print("FINISHED MAIN?", FLY_LogType::LT_INFO);
 }
 #endif
 
@@ -67,13 +72,19 @@ void android_main(struct android_app* app)
 // Define which API Backend to USE
 #ifdef ANDROID
 #   define USE_EGL
-    int OGLESStarted;
+    extern int OGLESStarted;
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
-    struct android_app* app;
 #elif defined _WIN32 || defined __linux__
 #   define USE_GLFW
 #endif
+
+// Platfrom Agnostic Includes and Variables
+#include <vector>
+#include <mutex>
+static std::mutex display_mtx;
+static std::vector<FLY_Window*> fly_windows;
+static uint16 main_window_context = UINT16_MAX;
 
 // Include the Necessary Backend for the chosen API
 // Default Status for the initialization
@@ -103,24 +114,26 @@ void android_main(struct android_app* app)
         EGL_NONE
     };
 
-    typedef void FLY_window;
 #elif defined USE_GLFW
 #   include <GLFW/glfw3.h>
-#   include <vector>
     void GLFW_ErrorCallback(int error_code, const char* description)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "GLFW_ERROR-%d: %s", error_code, description);
     }
+
     int monitor_count;
     GLFWmonitor** glfw_monitors;
     std::vector<GLFWwindow*> glfw_windows;
+
+
+    void GLFW_CloseCallback(GLFWwindow* window)
+    {
+        for(int i = 0; i < glfw_windows.size(); ++i)
+            if(glfw_windows[i] == window) FLYDISPLAY_SetWindowClose(i);
+    }
 #endif
 
-// Platfrom Agnostic Includes and Variables
-#include <mutex>
-static std::mutex display_mtx;
-static std::vector<FLY_Window*> fly_windows;
-static uint16 main_window_context = UINT16_MAX;
+
 
 // I want to call it a display better that window
 // Display will show whatever you throw it, a window 
@@ -139,6 +152,7 @@ static uint16 main_window_context = UINT16_MAX;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
 {
+    FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
     bool ret = true;
 
     FLY_Window* init_window = new FLY_Window();
@@ -148,6 +162,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
     init_window->flags |= flags;
     fly_windows.push_back(init_window);
 
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
 // PreInitialization of the Window/Context Backend
 #ifdef USE_EGL
     EGLint egl_major, egl_minor;
@@ -159,6 +174,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
     glfwSetErrorCallback(GLFW_ErrorCallback);
 #endif
 
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
 // Platform Specifics PreInitialization
 #ifdef ANDROID
     int events;
@@ -166,10 +182,21 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
     {  
         struct android_poll_source* source;
         if(ALooper_pollAll(0,0,&events, (void**)&source) >= 0)
-            if(source != NULL) source->process(app, source);
+        {
+            FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+            if(source != NULL)
+            {
+                FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+                FLYLOG(LT_INFO, "Source %d, App %d, Source2 %d", source, app, source);
+                source->process(app, source);
+                FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+            }
+        }
+             
     }
 #endif
 
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
 // Backend Initialization
 #ifdef USE_EGL
     egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -192,6 +219,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
         eglQueryString(egl_display, EGL_VENDOR), 
         eglQueryString(egl_display, EGL_EXTENSIONS));
     
+    FLYLOG(FLY_LogType::LT_INFO, "Preparing Config...");
     eglChooseConfig(egl_display, config_attribute_list, &config, 1, &num_config);
     FLYLOG(FLY_LogType::LT_INFO, "Using EGL Config %d", num_config);
 
@@ -203,7 +231,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
         return false;
     }
     FLYLOG(FLY_LogType::LT_INFO, "Created EGL Context!");
-
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
 #ifdef ANDROID
     if( egl_window && !app->window)
     {
@@ -211,20 +239,20 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
         exit(0);
     }
 #endif
-
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
     FLYLOG(FLY_LogType::LT_INFO, "Getting EGL Surface..");
     if(!egl_window)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "Could not get EGL_Window!");
         return false;
     }
-
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
 #ifdef ANDROID
     init_window->width = ANativeWindow_getWidth(egl_window);
     init_window->height= ANativeWindow_getHeight(egl_window);
     egl_surface = eglCreateWindowSurface(egl_display, config, app->window, window_attribute_list);
 #endif
-
+FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
     if(egl_surface == EGL_NO_SURFACE)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "Failed to create EGL Surface!");
@@ -316,13 +344,17 @@ void FLYDISPLAY_GetAmountWindows(uint16* windows)
     *windows = fly_windows.size();
 }
 
+void FLYDISPLAY_SetWindowClose(uint16 window)
+{
+    if(window < fly_windows.size())
+        fly_windows[window]->flags |= FLYWINDOW_TO_CLOSE;
+}
+
 bool FLYDISPLAY_ShouldWindowClose(uint16 window)
 {
-#ifdef USE_EGL
-#elif defined USE_GLFW
-     //glfwPollEvents();
-    return glfwWindowShouldClose(glfw_windows[window]);
-#endif
+    FLYLOG(LT_INFO, "Test Printing Log");
+    if(window < fly_windows.size())
+        return (fly_windows[window]->flags & FLYWINDOW_TO_CLOSE) > 0;
     return false;
 }
 
@@ -409,24 +441,33 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     }
 
     int x=0,y=0,w=0,h=0;
+
 #ifdef USE_EGL
     w = window->width;
     h = window->height;
+
 #elif defined USE_GLFW
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
     w = (window->width != 0) ? window->width : 7 * w / 10;
     h = (window->height != 0) ? window->height : 7 * h / 10;
+
 #endif
+
     FLYDISPLAY_NextWindowOptions(window->flags);
+
 #ifdef USE_EGL
+
 #elif defined USE_GLFW
     GLFWwindow* first_window = glfwCreateWindow(w, h, window->title, NULL, NULL);
     if(!first_window) return false;
     glfw_windows.push_back(first_window);
+    glfwSetWindowCloseCallback(first_window, GLFW_CloseCallback);
+
 #endif
+
     FLYLOG(FLY_LogType::LT_INFO, "Window \"%s\" opened correctly", window->title);
 
-    FLYINPUT_Init(glfw_windows.size() - 1);
+    FLYINPUT_Init(fly_windows.size() - 1);
     return true;
 }
 
@@ -503,31 +544,13 @@ typedef struct FLY_Mouse
 FLY_Mouse mouse;
 FLY_Key keyboard[512];
 
+
 #ifdef ANDROID
-
-#include <android_native_app_glue.h>
-
-int OGLESStarted;
-
-void handle_android_cmd(struct android_app* app, int32_t cmd)
-{
-    switch(cmd)
-    {
-        case APP_CMD_INIT_WINDOW:
-            if(!OGLESStarted) OGLESStarted = 1;
-    } 
-}
-
-int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
-{
-
-    return 0;
-}
 
 #elif defined _WIN32 || defined __linux__
 #   define USE_GLFW
 #   include <GLFW/glfw3.h>
-    static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    static void GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
         keyboard[key].prev_state = keyboard[key].state;
         keyboard[key].state = action;
@@ -535,7 +558,7 @@ int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
         printf("Keyboard Key %i: %i\n", key, action);
     }
 
-    static void glfw_mouse_enterleave_callback(GLFWwindow* window, int entered)
+    static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)
     {
         for(int i = 0; i < glfw_windows.size(); ++i)
             if (glfw_windows[i] == window)
@@ -546,7 +569,7 @@ int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
             }
     }
 
-    static void glfw_mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
+    static void GLFW_MousePosCallback(GLFWwindow* window, double xpos, double ypos)
     {
         mouse.prev_delta_x = mouse.x - mouse.prev_x;
         mouse.prev_delta_y = mouse.y - mouse.prev_y;
@@ -557,7 +580,7 @@ int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
 
         printf("Mouse Position: %f %f\n", xpos, ypos);
     }
-    static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+    static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
     {
         mouse.mbuttons[button].prev_state = mouse.mbuttons[button].state;
         mouse.mbuttons[button].state = action;
@@ -565,7 +588,7 @@ int32_t handle_android_input(struct android_app* app, AInputEvent* ev)
         printf("Mouse Button %i: %i\n", button, action);
     }
 
-    static void glfw_mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+    static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     {
         mouse.prev_scrollx = mouse.scrollx;
         mouse.prev_scrolly = mouse.scrolly;
@@ -580,11 +603,11 @@ void FLYINPUT_Init(uint16 window)
 {
 #ifdef ANDROID
 #elif defined USE_GLFW
-    glfwSetKeyCallback(glfw_windows[window], glfw_key_callback);
-    glfwSetCursorEnterCallback(glfw_windows[window], glfw_mouse_enterleave_callback);
-    glfwSetCursorPosCallback(glfw_windows[window], glfw_mouse_position_callback);
-    glfwSetMouseButtonCallback(glfw_windows[window], glfw_mouse_button_callback);
-    glfwSetScrollCallback(glfw_windows[window], glfw_mouse_scroll_callback);
+    glfwSetKeyCallback(glfw_windows[window], GLFW_KeyCallback);
+    glfwSetCursorEnterCallback(glfw_windows[window], GLFW_MouseEnterLeaveCallback);
+    glfwSetCursorPosCallback(glfw_windows[window], GLFW_MousePosCallback);
+    glfwSetMouseButtonCallback(glfw_windows[window], GLFW_MouseButtonCallback);
+    glfwSetScrollCallback(glfw_windows[window], GLFW_MouseScrollCallback);
 #endif
 }
 

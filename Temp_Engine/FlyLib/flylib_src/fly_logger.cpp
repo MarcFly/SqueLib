@@ -41,15 +41,21 @@ static bool DUMPDATA = true;
 #include <algorithm>
 #include <cstring>
 
+// Log Output Functions
+#ifdef ANDROID
+#   include <android/log.h>
+#elif _WIN32
+//#   include <Windows.h>
+#endif
 
 void FLYLOGGER_Print(const char* log, int lt)
 {
 #ifdef _WIN32
     OutputDebugString(log);
     OutputDebugString("\n");
-#elif ANDROID
+#elif defined ANDROID
     __android_log_print(lt, "TempEngine", log);
-#elif LINUX
+#elif defined LINUX
 
 #endif
 }
@@ -118,12 +124,7 @@ void FLYLOGGER_Close()
 }
 
 
-// Log Output Functions
-#ifdef ANDROID
-#   include <android/log.h>
-#elif _WIN32
-//#   include <Windows.h>
-#endif
+
 
 void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...)
 {
@@ -141,10 +142,14 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
 
     static va_list ap;
 
-    char tmp[LOGSIZE];
+    int sizeminus = sizeof(file) + 2 + 4;
+    char tmp[LOGSIZE-sizeminus];
     va_start(ap, format);
-    vsnprintf(tmp, LOGSIZE, format, ap);
+    int len = vsnprintf(tmp, LOGSIZE-sizeminus, format, ap);
     va_end(ap);
+
+    // For now let's just not take care of logs with bigger total size than 512
+    if(len > (LOGSIZE-sizeminus)) return;
 
     sprintf(push.log, "%s(%d): %s", file, line, tmp);
 

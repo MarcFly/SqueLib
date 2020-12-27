@@ -10,7 +10,7 @@ enum main_states
 	MAIN_EXIT
 };
 
-int main(int argc, char **argv)
+int main()
 {
     main_states state = MAIN_CREATION;
     bool ret = false;
@@ -34,13 +34,16 @@ int main(int argc, char **argv)
     // Update Loop
     while(state == MAIN_UPDATE)
     {
+        FLYLOG(FLY_LogType::LT_INFO, "Inside Update Loop");
         // Update all modules in specific order
         
         // Check for main window for closure, if main window is set to close, close everything
         if(FLYDISPLAY_ShouldWindowClose(0))
+        {
+            FLYLOG(FLY_LogType::LT_INFO, "Checked Window to Close");
             state = MAIN_FINISH;
-        FLYINPUT_Process(0);
-        
+        }
+        FLYINPUT_Process(0);        
     }
 
     //  Engine CleanUp
