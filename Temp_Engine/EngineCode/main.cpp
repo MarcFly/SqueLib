@@ -39,7 +39,7 @@ int main(int argc, char **argv)
         // Check for main window for closure, if main window is set to close, close everything
         if(FLYDISPLAY_ShouldWindowClose(0))
             state = MAIN_FINISH;
-
+        FLYINPUT_Process(0);
         
     }
 

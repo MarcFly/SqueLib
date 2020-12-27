@@ -139,6 +139,7 @@ typedef struct FLY_Window
 	const char* title = "";
 	uint16 width=0, height=0;
 	FLY_WindowFlags flags;
+	int mouse_in = -1;
 } FLY_Window;
 
 // Initialization / Global State
@@ -223,13 +224,21 @@ enum FLY_KeyboardKeys
 enum FLY_INPUT_ACTIONS
 {
 	FLY_ACTION_UNKNOWN = -1,
+	// Button States
+	FLY_ACTION_RELESAE,
+	FLY_ACTION_PRESS,
+	FLY_ACTION_REPEAT,
+	
 	// Touch Controls
 
 	// Gameplay Actions
 
 	// 
+	FLY_ACTION_MAX
 };
 
+FL_API void FLYINPUT_Init(uint16 window);
+FL_API void FLYINPUT_ProcessAllWindows();
 FL_API void FLYINPUT_Process(uint16 window);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
