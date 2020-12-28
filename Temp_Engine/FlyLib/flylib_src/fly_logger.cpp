@@ -143,13 +143,14 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
     static va_list ap;
 
     int sizeminus = sizeof(file) + 2 + 4;
-    char tmp[LOGSIZE-sizeminus];
+    int calc_logsize = LOGSIZE - sizeminus;
+    char* tmp = new char[calc_logsize];
     va_start(ap, format);
-    int len = vsnprintf(tmp, LOGSIZE-sizeminus, format, ap);
+    int len = vsnprintf(tmp, calc_logsize, format, ap);
     va_end(ap);
 
     // For now let's just not take care of logs with bigger total size than 512
-    if(len > (LOGSIZE-sizeminus)) return;
+    if(len > (calc_logsize)) return;
 
     sprintf(push.log, "%s(%d): %s", file, line, tmp);
 

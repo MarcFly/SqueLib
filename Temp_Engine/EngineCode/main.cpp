@@ -34,7 +34,7 @@ int main()
     // Update Loop
     while(state == MAIN_UPDATE)
     {
-        FLYLOG(FLY_LogType::LT_INFO, "Inside Update Loop");
+
         // Update all modules in specific order
         
         // Check for main window for closure, if main window is set to close, close everything

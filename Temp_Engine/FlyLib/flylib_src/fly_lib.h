@@ -60,6 +60,7 @@ enum FLY_BitFlags
 typedef short int16;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
+typedef int int32;
 
 
 
@@ -224,7 +225,9 @@ enum FLY_KeyboardKeys
 	FLY_KEY_MAX 
 };
 #define NUM_KEYS 121
-
+#define MAX_POINTERS 10
+#define GESTURE_REFRESH 0.5f // in ms
+#define MAX_MIDPOINTS 10
 
 enum FLY_INPUT_ACTIONS
 {
@@ -243,7 +246,6 @@ enum FLY_INPUT_ACTIONS
 };
 
 FL_API void FLYINPUT_Init(uint16 window);
-FL_API void FLYINPUT_ProcessAllWindows();
 FL_API void FLYINPUT_Process(uint16 window);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
