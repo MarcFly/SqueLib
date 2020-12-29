@@ -292,7 +292,6 @@ void FLYDISPLAY_SetWindowClose(uint16 window)
 
 bool FLYDISPLAY_ShouldWindowClose(uint16 window)
 {
-    FLYLOG(LT_INFO, "Test Printing Log");
     if(window < fly_windows.size())
         return (fly_windows[window]->flags & FLYWINDOW_TO_CLOSE) > 0;
     return false;

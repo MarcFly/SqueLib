@@ -37,14 +37,52 @@ add_library(FlyLib SHARED "${FLYLIB_SRC}")
 execute_process(COMMAND mkdir -p ${CMAKE_SOURCE_DIR}/builds)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/builds)
 #------------------------------------------------------------------------------------------------
-# ADD SUBPROJECTS
+# FIND SYSTEM LIBRARIES
 #------------------------------------------------------------------------------------------------
-set(FL_EXTERNAL_DEPENDENCIES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
-#execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
-include(FetchContent)
+if(ToLinux OR ToWindows)
+    find_package(OpenGL REQUIRED) # Defines OPEN_gl_LIBRARY
+    
+    if(ToLinux)
+        find_package(Threads REQUIRED) # Defines CMAKE_THREAD_LIBS_INIT
+        find_package(X11 REQUIRED)  # Defines X11_LIBRARIES
+    endif()
 
+endif()
+#------------------------------------------------------------------------------------------------
+# ADD NON-FETCHABLE SUBPROJECTS
+#------------------------------------------------------------------------------------------------
+include(ExternalProject)
+if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
+    # GLAD---------------------------------------------------------------------------------------
+    add_library(glad STATIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
+    set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
+    target_include_directories(glad PUBLIC ${glad_include})
+endif()
+#------------------------------------------------------------------------------------------------
+# FETCH SUBPROJECTS
+#------------------------------------------------------------------------------------------------
+#set(FL_EXTERNAL_DEPENDENCIES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
+#execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
+
+include(FetchContent)
 message(STATUS "Pulling Dependencies to build along")
+
+# DearIMGUI--------------------------------------------------------------------------------------
+set(imgui_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui")
+execute_process(COMMAND mkdir -p ${imgui_DIR})
+FetchContent_Declare(imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG "v1.79")
+FetchContent_GetProperties(imgui imgui_SOURCE_DIR imgui_src imgui_BINARY_DIR imgui_bin)
+set(imgui_include ${imgui_src})
+# ImGUI does not build, it has to be added to the project
+file(GLOB IMGUI_SRC ${imgui_src})
+
+# MAKEAVAILABLE----------------------------------------------------------------------------------
+FetchContent_MakeAvailable(imgui)
+
 if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) # Pull desktop dependencies
+    message(STATUS "Pulling DESKTOP Dependencies")
     # GLFW---------------------------------------------------------------------------------------
     option(BUILD_SHARED_LIBS "Build shared libraries" ON)
     option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
@@ -60,7 +98,7 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) # Pull desktop depe
     set(glfw_include ${glfw_src}/include)
     set(glfw_lib_path ${glfw_bin}/src/${CMAKE_BUILD_TYPE})
     # -------------------------------------------------------------------------------------------
-
+    
     # MAKEAVAILABLE------------------------------------------------------------------------------
     FetchContent_MakeAvailable(glfw)
     # All MakeAvailable together, first we declare so that they can start populating i belive
@@ -90,33 +128,44 @@ if(ToAndroid)
     include_android(FlyLib ${NDK} ${OS_NAME})
 
 elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     # SET MINIMAL C/CXX FLAGS
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     set(CMAKE_C_FLAGS "-v ")
     set(CMAKE_CXX_FLAGS "-v ")
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     # CROSS-COMPILING Windows-Linux
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
-    # Change System Name to desired, then setup compiler and linkers and whatever is needed for crosscompiling
+    # Change System Name to desired, 
+    #then setup compiler and linkers and whatever is needed for crosscompiling
     set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     # DESKTOP INCLUDES/LINKS
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     target_link_libraries(FlyLib PRIVATE
-        glfw ${GLFW_LIBRARIES})
+        ${OPEN_gl_LIBRARY}
+        glfw ${GLFW_LIBRARIES}
+        glad)
     target_include_directories(FlyLib PRIVATE
-        ${glfw_include})
-    #------------------------------------------------------------------------------------------------
+        ${glfw_include}
+        ${glad_include})
+    #---------------------------------------------------------------------------------------------
     # PLATFORM SPECIFIC INCLUDE/LINKS
-    #------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
     if(ToLinux)
-        #target_link_libraries(FlyLib PRIVATE
-            #stdc++fs 
-            #pthread
-        #)
+        target_link_libraries(FlyLib PUBLIC
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${X11_LIBRARIES}
+            ${CMAKE_DL_LIBS}
+        )
     elseif(ToWindows)
+    elseif(ToDarawin OR ToMacOS)
+        target_link_libraries(FlyLib PUBLIC
+            "-framework Cocoa"
+            "-framework IOKit"
+            "-framework CoreVideo"
+        )
     endif()
 endif()
 #------------------------------------------------------------------------------------------------

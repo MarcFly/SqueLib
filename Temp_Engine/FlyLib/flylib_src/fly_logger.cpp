@@ -50,6 +50,7 @@ static bool DUMPDATA = true;
 
 void FLYLOGGER_Print(const char* log, int lt)
 {
+    printf("FLY_LogType-%d: %s", lt, log);
 #ifdef _WIN32
     OutputDebugString(log);
     OutputDebugString("\n");

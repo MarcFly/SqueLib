@@ -153,7 +153,10 @@ static void ResetPointers()
         g.end_y = 0;
         g.refresh_bucket = 0;
         for (int j = 0; j < MAX_MIDPOINTS; ++j)
-            g.midpoints[j] = (0,0);
+        {
+            g.midpoints[j][0] = 0;
+            g.midpoints[j][1] = 0;
+        }
     }
 }
 
@@ -185,6 +188,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     }
     int num_pointers = AMotionEvent_getPointerCount(ev);
     if (num_pointers > MAX_POIONTERS) return -1;
+
+    bool motion_ended = true;
     for (int i = 0; i < num_pointers; ++i)
     {
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
@@ -197,6 +202,15 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             p.start_y = AMotionEvent_getX(ev, i);
             break;
         case AMOTION_EVENT_MOVE:
+            p.refresh_bucket += p.timer.ReadMilliSec();
+            if(refresh_bucket >= GESTURE_REFRESH)
+            {
+                refres_bucket -= GESTURE_REFRES);
+                // Add point to be tracket;
+                int x,y;
+                x = AMotionEvent_getX(ev, i);
+                y = AMotionEvent_getY(ev, i);
+            }
             break;
         case AMOTION_EVENT_ACTION_UP:
             p.active = false;
@@ -204,8 +218,10 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             p.end_y = AMotionEvent_getX(ev, i);
             break;
         }
-
+        if(motion_ended != false) motion_ended = !p.active;
     }
+
+    //if(motion_ended) FLY_EvalMotionEvent();
 }
 
 #elif defined _WIN32 || defined __linux__

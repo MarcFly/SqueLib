@@ -102,7 +102,7 @@ FL_API void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const cha
 typedef struct FLY_Timer
 {
 	FLY_Timer();
-	~FLY_Timer();
+	~FLY_Timer() {};
 
 	void Start();
 	void Stop();
@@ -238,7 +238,12 @@ enum FLY_INPUT_ACTIONS
 	FLY_ACTION_REPEAT,
 	
 	// Touch Controls
-
+	FLY_ACTION_CLICK,
+	FLY_ACTION_DOUBLE_CLICK,
+	FLY_ACTION_SWIPE_UP,
+	FLY_ACTION_SWIPE_DOWN,
+	FLY_ACTION_SWIPE_LEFT,
+	FLY_ACTION_SWIPE_RIGHT,
 	// Gameplay Actions
 
 	// 
