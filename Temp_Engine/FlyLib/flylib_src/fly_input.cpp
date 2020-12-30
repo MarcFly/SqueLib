@@ -9,7 +9,7 @@
 #include <android_native_app_glue.h>
 
 int OGLESStarted = 0;
-
+extern struct android_app* app;
 void HandleAndroidCMD(struct android_app* app, int32_t cmd)
 {
     switch(cmd)
@@ -70,7 +70,7 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 {
     int32 evtype = AInputEvent_getType(ev);
 
-    switch(evtype):
+    switch(evtype)
     {
         case AINPUT_EVENT_TYPE_FOCUS:
             break;
@@ -82,7 +82,7 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
     }
 
 
-    int32 action = AInputEvent_getAction(ev);
+    //int32 action = AInputEvent_getAction(ev);
     return 0;
 }
 
@@ -187,25 +187,26 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         return -1;
     }
     int num_pointers = AMotionEvent_getPointerCount(ev);
-    if (num_pointers > MAX_POIONTERS) return -1;
+    if (num_pointers > MAX_POINTERS) return -1;
 
     bool motion_ended = true;
     for (int i = 0; i < num_pointers; ++i)
     {
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
         FLY_Pointer& p = fly_pointers[pointer];
+        FLY_Gesture& g = p.gesture;
         switch (action)
         {
         case AMOTION_EVENT_ACTION_DOWN:
             p.active = true;
-            p.start_x = AMotionEvent_getX(ev, i);
-            p.start_y = AMotionEvent_getX(ev, i);
+            g.start_x = AMotionEvent_getX(ev, i);
+            g.start_y = AMotionEvent_getX(ev, i);
             break;
-        case AMOTION_EVENT_MOVE:
-            p.refresh_bucket += p.timer.ReadMilliSec();
-            if(refresh_bucket >= GESTURE_REFRESH)
+        case AMOTION_EVENT_ACTION_MOVE:
+            g.refresh_bucket += g.timer.ReadMilliSec();
+            if(g.refresh_bucket >= GESTURE_REFRESH)
             {
-                refres_bucket -= GESTURE_REFRES);
+                g.refresh_bucket -= GESTURE_REFRESH;
                 // Add point to be tracket;
                 int x,y;
                 x = AMotionEvent_getX(ev, i);
@@ -214,11 +215,11 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             break;
         case AMOTION_EVENT_ACTION_UP:
             p.active = false;
-            p.end_x = AMotionEvent_getX(ev, i);
-            p.end_y = AMotionEvent_getX(ev, i);
+            g.end_x = AMotionEvent_getX(ev, i);
+            g.end_y = AMotionEvent_getX(ev, i);
             break;
         }
-        if(motion_ended != false) motion_ended = !p.active;
+        motion_ended = (motion_ended != false) ? !p.active : motion_ended;
     }
 
     //if(motion_ended) FLY_EvalMotionEvent();
@@ -235,7 +236,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         keyboard[key].prev_state = keyboard[key].state;
         keyboard[key].state = action;
         keyboard[key].key_callback(keyboard[key].prev_state, keyboard[key].state);
-        printf("Keyboard Key %i: %i\n", key, action);
+        //printf("Keyboard Key %i: %i\n", key, action);
     }
 
     static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)
@@ -244,7 +245,6 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             if (glfw_windows[i] == window)
             {
                 fly_windows[i]->mouse_in = entered;
-                printf("Mouse int window %i : %i\n", i, entered);
                 break;
             }
     }
@@ -257,15 +257,12 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         mouse.prev_y = mouse.y;
         mouse.x = xpos;
         mouse.y = ypos;
-
-        printf("Mouse Position: %f %f\n", xpos, ypos);
     }
     static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
     {
         mouse.mbuttons[button].prev_state = mouse.mbuttons[button].state;
         mouse.mbuttons[button].state = action;
         mouse.mbuttons[button].key_callback(mouse.mbuttons[button].prev_state, mouse.mbuttons[button].state);
-        printf("Mouse Button %i: %i\n", button, action);
     }
 
     static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -274,7 +271,6 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         mouse.prev_scrolly = mouse.scrolly;
         mouse.scrollx = xoffset;
         mouse.scrolly = yoffset;
-        printf("Mouse Scroll: %f %f\n", mouse.scrollx, mouse.scrolly);
     }
 
 #endif
@@ -299,6 +295,15 @@ void FLYINPUT_Init(uint16 window)
 void FLYINPUT_Process(uint16 window)
 {
 #ifdef ANDROID
+    int events;
+    struct android_poll_source* source;
+    while( ALooper_pollAll(0,0, &events, (void**)&source) >= 0)
+    {
+        if(source!=NULL)
+        {
+            source->process(app, source);
+        }
+    }
 #elif defined USE_GLFW
     glfwPollEvents();
 #endif

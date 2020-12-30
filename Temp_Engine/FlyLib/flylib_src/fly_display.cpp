@@ -13,6 +13,7 @@
 #ifdef ANDROID
 #   define USE_EGL
     extern int OGLESStarted;
+    extern struct android_app* app;
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
 #elif defined _WIN32 || defined __linux__
@@ -92,7 +93,7 @@ static uint16 main_window_context = UINT16_MAX;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
 {
-    FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+    FLYLOG(LT_INFO, "Initializing Main Display...");
     bool ret = true;
 
     FLY_Window* init_window = new FLY_Window();
@@ -102,7 +103,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
     init_window->flags |= flags;
     fly_windows.push_back(init_window);
 
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
 // PreInitialization of the Window/Context Backend
 #ifdef USE_EGL
     EGLint egl_major, egl_minor;
@@ -114,29 +115,27 @@ FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
     glfwSetErrorCallback(GLFW_ErrorCallback);
 #endif
 
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+    FLYLOG(LT_INFO, "Performing Platform Specific PreInitialization...");
 // Platform Specifics PreInitialization
 #ifdef ANDROID
+    FLYLOG(LT_INFO, "ANDROID - Waiting of OpenGLES Initialization...")
     int events;
     while(!OGLESStarted)
     {  
         struct android_poll_source* source;
         if(ALooper_pollAll(0,0,&events, (void**)&source) >= 0)
         {
-            FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
             if(source != NULL)
             {
-                FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
-                FLYLOG(LT_INFO, "Source %d, App %d, Source2 %d", source, app, source);
+                FLYLOG(LT_INFO, "Processing Init Inputs: Source %d, App %d", source, app);
                 source->process(app, source);
-                FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
             }
         }
              
     }
 #endif
 
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+    FLYLOG(LT_INFO, "Initializing Display Backend...");
 // Backend Initialization
 #ifdef USE_EGL
     egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -171,7 +170,7 @@ FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
         return false;
     }
     FLYLOG(FLY_LogType::LT_INFO, "Created EGL Context!");
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+
 #ifdef ANDROID
     if( egl_window && !app->window)
     {
@@ -179,20 +178,20 @@ FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
         exit(0);
     }
 #endif
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
     FLYLOG(FLY_LogType::LT_INFO, "Getting EGL Surface..");
     if(!egl_window)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "Could not get EGL_Window!");
         return false;
     }
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+
 #ifdef ANDROID
     init_window->width = ANativeWindow_getWidth(egl_window);
     init_window->height= ANativeWindow_getHeight(egl_window);
     egl_surface = eglCreateWindowSurface(egl_display, config, app->window, window_attribute_list);
+    FLYLOG(FLY_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", init_window->width, init_window->height);
 #endif
-FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
+
     if(egl_surface == EGL_NO_SURFACE)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "Failed to create EGL Surface!");
@@ -206,8 +205,6 @@ FLYLOG(LT_INFO, "TESTING DISPLAY INIT CRASH");
         return false;
     }
 #elif defined USE_GLFW
-// If SetErrorCallback is correct, no need to do flylogs
-
     FLYLOG(FLY_LogType::LT_INFO, "Compiled with GLFW Version: %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION);
     glfwGetVersion(&glfw_major, &glfw_minor, &glfw_revision);
     FLYLOG(FLY_LogType::LT_INFO, "Using GLFW Version: %d.%d.%d", glfw_major, glfw_minor, glfw_revision);
