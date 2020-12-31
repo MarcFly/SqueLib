@@ -62,7 +62,9 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef int int32;
 
-
+typedef struct float4 { float x, y, z, w;} float4;
+typedef struct float3 { float x, y, z;} float3;
+typedef struct float2 { float x, y;} float2;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +164,7 @@ FL_API void FLYDISPLAY_DestroyWindow(uint16 window);
 FL_API bool FLYDISPLAY_OpenWindow(FLY_Window* window = NULL, uint16 monitor = 0);
 // Controlling Contexts
 FL_API void FLYDISPLAY_Clean();
-FL_API void FLYDISPLAY_SwapBuffers();
+FL_API void FLYDISPLAY_SwapAllBuffers();
 FL_API void FLYDISPLAY_MakeContextMain(uint16 window);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,5 +258,13 @@ FL_API void FLYINPUT_Process(uint16 window);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct ColorRGBA {
+	ColorRGBA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
+	float r, g, b, a;
+} ColorRGBA;
+
+FL_API bool FLYRENDER_Init();
+FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);
 
 #endif // _FLY_LIB_

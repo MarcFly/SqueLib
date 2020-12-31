@@ -1,6 +1,6 @@
 #include <iostream>
-
 #include <fly_lib.h>
+#include <imgui.h>
 
 enum main_states
 {
@@ -13,13 +13,18 @@ enum main_states
 int main()
 {
     main_states state = MAIN_CREATION;
-    bool ret = false;
+    bool ret = true;
+    
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Helpers Initialization
     {
         ret = FLYLIB_Init(/*flags*/);
     }
-
+    
+    //ImGui::ShowDemoWindow(&ret);    
     // Engine Initialization
     {
         FLYLOG(FLY_LogType::LT_INFO, "Initializing Engine...");
@@ -43,7 +48,11 @@ int main()
             FLYLOG(FLY_LogType::LT_INFO, "Checked Window to Close");
             state = MAIN_FINISH;
         }
-        FLYINPUT_Process(0);        
+        ColorRGBA col = ColorRGBA(.1,.3,.1,1.);
+        FLYDISPLAY_SwapAllBuffers();
+        FLYRENDER_Clear(NULL, &col);
+        FLYINPUT_Process(0);      
+        ImGui::NewFrame();  
     }
 
     //  Engine CleanUp

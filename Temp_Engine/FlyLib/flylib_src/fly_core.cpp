@@ -12,7 +12,7 @@ bool FLYLIB_Init(/* flags */)
     // Call Init for all loaded modules and with required flags
     FLYLOGGER_Init(/*pass flag true or false*/ true);
     FLYDISPLAY_Init(FLYWINDOW_MAXIMIZED, "FlyLib Test Window", 400, 100);
-
+    FLYRENDER_Init();
     return ret;
 }
 

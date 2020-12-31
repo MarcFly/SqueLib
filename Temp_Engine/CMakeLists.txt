@@ -17,6 +17,14 @@ include(${TE_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/FlyLib)
 #------------------------------------------------------------------------------------------------
+# FETCH SUBPROJECTS
+#------------------------------------------------------------------------------------------------
+include(FetchContent)
+set(EXTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/external/TempEngine_deps)
+set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
+execute_process(COMMAND mkdir -p ${EXTERNAL})
+
+#------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
 project(TempEngine     VERSION 2020.1
@@ -106,3 +114,5 @@ target_include_directories(TempEngine
     PUBLIC 
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyLib/flylib_src
         ${CMAKE_CURRENT_SOURCE_DIR}/EngineCode)
+
+# INCLUDE AND LINK TO OTHER SUBPROJECTS

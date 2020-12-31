@@ -5,6 +5,13 @@
 #   include "fly_lib.h"
 #endif
 
+#ifdef USE_IMGUI
+#   include <imgui_impl_opengl3.h>
+#   if defined _WIN32 || defined __linux__
+#       include <imgui_impl_glfw.h>
+#   endif
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DISPLAY / WINDOW MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,16 +64,39 @@ static uint16 main_window_context = UINT16_MAX;
 
 #elif defined USE_GLFW
 #   include <GLFW/glfw3.h>
+
+    int monitor_count;
+    GLFWmonitor** glfw_monitors;
+    std::vector<GLFWwindow*> glfw_windows;
+    
     void GLFW_ErrorCallback(int error_code, const char* description)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "GLFW_ERROR-%d: %s", error_code, description);
     }
 
-    int monitor_count;
-    GLFWmonitor** glfw_monitors;
-    std::vector<GLFWwindow*> glfw_windows;
+    FLY_Window* GetFLY_WindowFromGLFWwindow(GLFWwindow* window)
+    {
+        FLY_Window* ret = nullptr;
+        for(int i = 0; i < fly_windows.size(); ++i)
+        {
+            if(glfw_windows[i] == window)
+                return fly_windows[i];
+        }
+        return nullptr;
+    }
 
+    void GLFW_FramebufferResizeCallback(GLFWwindow* window, int width, int height)
+    {
+        FLY_Window* win = GetFLY_WindowFromGLFWwindow(window);
+        if(win == nullptr) FLYLOG(FLY_LogType::LT_WARNING, "Did not find FLY_Window attached to GLFWwindow...");
 
+        win->width = width;
+        win->height = height;
+        // TODO: Create and Call render Resize Viewport
+        FLYLOG(FLY_LogType::LT_INFO, "Resized Window \"%s\": %d %d", width, height);
+    
+    }
+    
     void GLFW_CloseCallback(GLFWwindow* window)
     {
         for(int i = 0; i < glfw_windows.size(); ++i)
@@ -230,8 +260,8 @@ bool FLYDISPLAY_Close()
     bool ret = true;
     FLYLOG(FLY_LogType::LT_INFO, "Closing FLY_Displays...");
 #ifdef USE_EGL
-#elif defined USE_GLFW
 
+#elif defined USE_GLFW
     for (int i = 0; i < glfw_windows.size(); ++i)
         glfwDestroyWindow(glfw_windows[i]);
     glfw_windows.clear();
@@ -390,29 +420,50 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
 #endif
 
     FLYDISPLAY_NextWindowOptions(window->flags);
+    // hardcoded window setup for working with opengl or opengles
+#ifdef USE_GLFW
+    glfwWindowHint(
+        GLFW_OPENGL_PROFILE,
+        GLFW_OPENGL_CORE_PROFILE
+        );
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+#elif defined USE_EGL
+#endif
 
 #ifdef USE_EGL
 
 #elif defined USE_GLFW
-    GLFWwindow* first_window = glfwCreateWindow(w, h, window->title, NULL, NULL);
-    if(!first_window) return false;
-    glfw_windows.push_back(first_window);
-    glfwSetWindowCloseCallback(first_window, GLFW_CloseCallback);
-
+    GLFWwindow* glfw_window = glfwCreateWindow(w, h, window->title, NULL, NULL);
+    if(!glfw_window) return false;
+    glfw_windows.push_back(glfw_window);
+    glfwSetWindowCloseCallback(glfw_window, GLFW_CloseCallback);
+    FLYLOG(FLY_LogType::LT_INFO, "GLFW Window Created!");
 #endif
+    FLYLOG(FLY_LogType::LT_INFO, "FLY_Window Created!");
+    
+
 
     FLYLOG(FLY_LogType::LT_INFO, "Window \"%s\" opened correctly", window->title);
 
+    FLYDISPLAY_MakeContextMain(fly_windows.size()-1);
     FLYINPUT_Init(fly_windows.size() - 1);
+
+#ifdef USE_IMGUI
+#ifdef USE_GLFW
+    ImGui_ImplGlfw_InitForOpenGL(glfw_window, false);
+#endif
+#endif
+
     return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONTROLLING CONTEXTS //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void FLYDISPLAY_Clean()
+void FLYDISPLAY_CleanAll()
 {
-
+    
 }
 
 void FLYDISPLAY_SwapAllBuffers()
@@ -425,6 +476,10 @@ void FLYDISPLAY_SwapAllBuffers()
         glfwSwapBuffers(glfw_windows[i]);
 #endif
     }
+
+#ifdef USE_IMGUI
+        ImGui_ImplGlfw_NewFrame();
+#endif
 }
 
 void FLYDISPLAY_SwapBuffers(uint16 window)

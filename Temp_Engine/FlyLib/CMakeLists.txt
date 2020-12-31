@@ -51,37 +51,52 @@ endif()
 #------------------------------------------------------------------------------------------------
 # ADD NON-FETCHABLE SUBPROJECTS
 #------------------------------------------------------------------------------------------------
-include(ExternalProject)
 if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     # GLAD---------------------------------------------------------------------------------------
-    add_library(glad STATIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
+    add_library(glad SHARED "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
     set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
     target_include_directories(glad PUBLIC ${glad_include})
+    set_target_properties(glad
+        PROPERTIES
+            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+            LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+            RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+    )
 endif()
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
-#set(FL_EXTERNAL_DEPENDENCIES ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
-#execute_process(COMMAND mkdir -p ${FL_EXTERNAL_DEPENDENCIES})
-
 include(FetchContent)
+set(EXTERNAL ${CMAKE_SOURCE_DIR}/external/FlyLib_deps)
+set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
-
-# DearIMGUI--------------------------------------------------------------------------------------
-set(imgui_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui")
-execute_process(COMMAND mkdir -p ${imgui_DIR})
-FetchContent_Declare(imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG "v1.79")
-FetchContent_GetProperties(imgui imgui_SOURCE_DIR imgui_src imgui_BINARY_DIR imgui_bin)
-set(imgui_include ${imgui_src})
-# ImGUI does not build, it has to be added to the project
-file(GLOB IMGUI_SRC ${imgui_src})
-
+if(USE_IMGUI)
+    add_compile_definitions(USE_IMGUI)
+    # DearIMGUI--------------------------------------------------------------------------------------
+    FetchContent_Declare(imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG "v1.79"
+    )
+    FetchContent_GetProperties(imgui imgui_SOURCE_DIR imgui_include) # Generates imgui_SOURCE_DIR and imgui_BINARY_DIR
+    FetchContent_MakeAvailable(imgui)   
+    set(imgui_include ${imgui_SOURCE_DIR})
+    set(imgui_src
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_include}/imgui_draw.cpp
+        ${imgui_include}/imgui_widgets.cpp
+        ${imgui_include}/imgui.cpp
+        # Implementation Files
+        ${imgui_include}/examples/imgui_impl_opengl3.cpp
+    )
+    if(ToWindows OR ToLinux OR ToDarwing OR ToMacOS OR ToDesktop)
+        list(APPEND imgui_src ${imgui_include}/examples/imgui_impl_glfw.cpp)
+    endif()
+    
+endif(USE_IMGUI)
 # MAKEAVAILABLE----------------------------------------------------------------------------------
-FetchContent_MakeAvailable(imgui)
 
-if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) # Pull desktop dependencies
+# DESKTOP DEPENDENCIES---------------------------------------------------------------------------
+if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) 
     message(STATUS "Pulling DESKTOP Dependencies")
     # GLFW---------------------------------------------------------------------------------------
     option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -94,11 +109,11 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) # Pull desktop depe
         GIT_REPOSITORY "https://github.com/glfw/glfw.git"
         GIT_TAG "1adfbde4d7fb862bb36d4a20e05d16bf712170f3"
     )
-    FetchContent_GetProperties(glfw glfw_SOURCE_DIR glfw_src glfw_BINARY_DIR glfw_bin)
-    set(glfw_include ${glfw_src}/include)
-    set(glfw_lib_path ${glfw_bin}/src/${CMAKE_BUILD_TYPE})
+    FetchContent_GetProperties(glfw) # Generates glfw_SOURCE_DIR and glfw_BINARY_DIR
+    set(glfw_include ${glfw_SOURCE_DIR}/include)
+    set(glfw_lib_path ${glfw_BINARY_DIR}/src/${CMAKE_BUILD_TYPE})
     # -------------------------------------------------------------------------------------------
-    
+
     # MAKEAVAILABLE------------------------------------------------------------------------------
     FetchContent_MakeAvailable(glfw)
     # All MakeAvailable together, first we declare so that they can start populating i belive
@@ -143,11 +158,11 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # DESKTOP INCLUDES/LINKS
     #---------------------------------------------------------------------------------------------
-    target_link_libraries(FlyLib PRIVATE
+    target_link_libraries(FlyLib PUBLIC
         ${OPEN_gl_LIBRARY}
         glfw ${GLFW_LIBRARIES}
         glad)
-    target_include_directories(FlyLib PRIVATE
+    target_include_directories(FlyLib PUBLIC
         ${glfw_include}
         ${glad_include})
     #---------------------------------------------------------------------------------------------
@@ -169,9 +184,18 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     endif()
 endif()
 #------------------------------------------------------------------------------------------------
+# LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
+#------------------------------------------------------------------------------------------------
+target_sources(FlyLib PUBLIC
+    "${imgui_src}"
+)
+target_include_directories(FlyLib PUBLIC
+    ${imgui_include} ${imgui_include}/examples
+)
+
+#------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
-
 set_target_properties(FlyLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
@@ -179,4 +203,7 @@ set_target_properties(FlyLib
         RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         POSITION_INDEPENDENT_CODE ON
         PUBLIC_HEADER "fly_lib.h"
+)
+target_compile_options(glad PUBLIC
+    -fPIC
 )
