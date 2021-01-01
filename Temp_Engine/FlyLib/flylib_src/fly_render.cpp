@@ -6,10 +6,6 @@
 
 #include <glad/glad.h>
 
-#ifdef USE_IMGUI
-#include <imgui_impl_opengl3.h>
-#endif
-
 #ifdef ANDROID
 #   define USE_EGL
 #elif defined _WIN32 || defined __linux__
@@ -36,16 +32,14 @@ bool FLYRENDER_Init()
         FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
         return false;
     }
+    gladLoadGL();
+
 #endif
     FLYLOG(FLY_LogType::LT_INFO, "GLAD Initialized!");
     FLYLOG(FLY_LogType::LT_INFO, "OpenGL Version: %d.%d", GLVersion.major, GLVersion.minor);
     // Generate Viewport with window size
     glViewport(0,0,100,100);
 
-#ifdef USE_IMGUI
-    const char* str = "#version 450";
-    ImGui_ImplOpenGL3_Init(str);
-#endif
     return ret;
 }
 
@@ -53,7 +47,14 @@ void FLYRENDER_Clear(int clear_flags, ColorRGBA* color)
 {
     if(color != NULL) glClearColor(color->r, color->g, color->b, color->a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#ifdef USE_IMGUI
-    ImGui_ImplOpenGL3_NewFrame();
-#endif
+}
+
+const char* FLYRENDER_GetGLSLVer()
+{
+    return "#version 150";
+}
+
+void ForceLoadGL()
+{
+    gladLoadGL();
 }

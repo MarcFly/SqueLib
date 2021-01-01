@@ -23,7 +23,29 @@ include(FetchContent)
 set(EXTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/external/TempEngine_deps)
 set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 execute_process(COMMAND mkdir -p ${EXTERNAL})
-
+if(USE_IMGUI)
+    add_compile_definitions(USE_IMGUI)
+    # DearIMGUI--------------------------------------------------------------------------------------
+    FetchContent_Declare(imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG "v1.79"
+    )
+    FetchContent_GetProperties(imgui imgui_SOURCE_DIR imgui_include) # Generates imgui_SOURCE_DIR and imgui_BINARY_DIR
+    FetchContent_MakeAvailable(imgui)   
+    set(imgui_include ${imgui_SOURCE_DIR})
+    set(imgui_src
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_include}/imgui_draw.cpp
+        ${imgui_include}/imgui_widgets.cpp
+        ${imgui_include}/imgui.cpp
+        # Implementation Files
+        ${imgui_include}/examples/imgui_impl_opengl3.cpp
+    )
+    if(ToWindows OR ToLinux OR ToDarwing OR ToMacOS OR ToDesktop)
+        list(APPEND imgui_src ${imgui_include}/examples/imgui_impl_glfw.cpp)
+    endif()
+    
+endif(USE_IMGUI)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
@@ -116,3 +138,9 @@ target_include_directories(TempEngine
         ${CMAKE_CURRENT_SOURCE_DIR}/EngineCode)
 
 # INCLUDE AND LINK TO OTHER SUBPROJECTS
+target_sources(FlyLib PUBLIC
+    "${imgui_src}"
+)
+target_include_directories(FlyLib PUBLIC
+    ${imgui_include} ${imgui_include}/examples
+)

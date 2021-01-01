@@ -1,7 +1,9 @@
 #include <iostream>
 #include <fly_lib.h>
 #include <imgui.h>
-
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <glad/glad.h>
 enum main_states
 {
 	MAIN_CREATION = 0,
@@ -24,7 +26,13 @@ int main()
         ret = FLYLIB_Init(/*flags*/);
     }
     
-    //ImGui::ShowDemoWindow(&ret);    
+
+    ImGui_ImplGlfw_InitForOpenGL(FLYDISPLAY_RetrieveMainGLFWwindow(), true);
+    const char* glsl = "#version 150";
+    gladLoadGL();
+    ImGui_ImplOpenGL3_Init(FLYRENDER_GetGLSLVer());
+    ImGui::StyleColorsDark();
+    
     // Engine Initialization
     {
         FLYLOG(FLY_LogType::LT_INFO, "Initializing Engine...");
@@ -37,9 +45,13 @@ int main()
     }
 
     // Update Loop
+    
     while(state == MAIN_UPDATE)
     {
-
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();        
+        ImGui::NewFrame();
+        if(ret)ImGui::ShowDemoWindow(&ret);
         // Update all modules in specific order
         
         // Check for main window for closure, if main window is set to close, close everything
@@ -49,10 +61,15 @@ int main()
             state = MAIN_FINISH;
         }
         ColorRGBA col = ColorRGBA(.1,.3,.1,1.);
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         FLYDISPLAY_SwapAllBuffers();
         FLYRENDER_Clear(NULL, &col);
         FLYINPUT_Process(0);      
-        ImGui::NewFrame();  
+        
+        
     }
 
     //  Engine CleanUp

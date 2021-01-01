@@ -5,13 +5,6 @@
 #   include "fly_lib.h"
 #endif
 
-#ifdef USE_IMGUI
-#   include <imgui_impl_opengl3.h>
-#   if defined _WIN32 || defined __linux__
-#       include <imgui_impl_glfw.h>
-#   endif
-#endif
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DISPLAY / WINDOW MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,6 +242,8 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
 
     if(!FLYDISPLAY_OpenWindow(init_window)) return false;
     FLYLOG(FLY_LogType::LT_INFO, "Opened main GLFW window!");
+
+    FLYDISPLAY_SetVSYNC(1); // Swap Interval
 #endif
     
     return ret;
@@ -395,6 +390,10 @@ void FLYDISPLAY_NextWindowOptions(uint16 flags)
 #endif
 }
 
+#ifdef USE_GLFW
+extern void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+#endif
+
 bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
 {
     // Set to monitor[0] for fullscreen at 4th parameter
@@ -438,6 +437,7 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     if(!glfw_window) return false;
     glfw_windows.push_back(glfw_window);
     glfwSetWindowCloseCallback(glfw_window, GLFW_CloseCallback);
+    glfwSetFramebufferSizeCallback(glfw_window, framebuffer_size_callback);
     FLYLOG(FLY_LogType::LT_INFO, "GLFW Window Created!");
 #endif
     FLYLOG(FLY_LogType::LT_INFO, "FLY_Window Created!");
@@ -448,12 +448,6 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
 
     FLYDISPLAY_MakeContextMain(fly_windows.size()-1);
     FLYINPUT_Init(fly_windows.size() - 1);
-
-#ifdef USE_IMGUI
-#ifdef USE_GLFW
-    ImGui_ImplGlfw_InitForOpenGL(glfw_window, false);
-#endif
-#endif
 
     return true;
 }
@@ -476,10 +470,6 @@ void FLYDISPLAY_SwapAllBuffers()
         glfwSwapBuffers(glfw_windows[i]);
 #endif
     }
-
-#ifdef USE_IMGUI
-        ImGui_ImplGlfw_NewFrame();
-#endif
 }
 
 void FLYDISPLAY_SwapBuffers(uint16 window)
@@ -501,4 +491,18 @@ void FLYDISPLAY_MakeContextMain(uint16 window)
 #elif defined USE_GLFW
     glfwMakeContextCurrent(glfw_windows[window]);
 #endif
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// INITIALIZING & GLOBAL STATE CONTROL ///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifndef USE_GLFW
+struct GLFWwindow*;
+#endif
+GLFWwindow* FLYDISPLAY_RetrieveMainGLFWwindow()
+{
+#ifndef USE_GLFW
+    return nullptr;
+#endif
+    return glfw_windows[0];
 }

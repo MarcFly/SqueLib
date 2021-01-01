@@ -166,6 +166,9 @@ FL_API bool FLYDISPLAY_OpenWindow(FLY_Window* window = NULL, uint16 monitor = 0)
 FL_API void FLYDISPLAY_Clean();
 FL_API void FLYDISPLAY_SwapAllBuffers();
 FL_API void FLYDISPLAY_MakeContextMain(uint16 window);
+// Sending GLFW/EGL/... specifics for other apps to use
+struct GLFWwindow;
+FL_API GLFWwindow* FLYDISPLAY_RetrieveMainGLFWwindow();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INPUT /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,5 +269,7 @@ typedef struct ColorRGBA {
 
 FL_API bool FLYRENDER_Init();
 FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);
+FL_API const char* FLYRENDER_GetGLSLVer();
+FL_API void ForceLoadGL();
 
 #endif // _FLY_LIB_
