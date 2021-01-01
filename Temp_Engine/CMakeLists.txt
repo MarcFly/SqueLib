@@ -138,9 +138,9 @@ target_include_directories(TempEngine
         ${CMAKE_CURRENT_SOURCE_DIR}/EngineCode)
 
 # INCLUDE AND LINK TO OTHER SUBPROJECTS
-target_sources(FlyLib PUBLIC
+target_sources(TempEngine PUBLIC
     "${imgui_src}"
 )
-target_include_directories(FlyLib PUBLIC
+target_include_directories(TempEngine   PUBLIC
     ${imgui_include} ${imgui_include}/examples
 )

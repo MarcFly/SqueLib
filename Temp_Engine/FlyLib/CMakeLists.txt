@@ -36,6 +36,16 @@ add_library(FlyLib SHARED "${FLYLIB_SRC}")
 #------------------------------------------------------------------------------------------------
 execute_process(COMMAND mkdir -p ${CMAKE_SOURCE_DIR}/builds)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/builds)
+
+if(ToAndroid)
+    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
+else()
+    set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
+    # Change System Name to desired, 
+    #then setup compiler and linkers and whatever is needed for crosscompiling
+    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
+endif()
+execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
 #------------------------------------------------------------------------------------------------
 # FIND SYSTEM LIBRARIES
 #------------------------------------------------------------------------------------------------
@@ -51,7 +61,7 @@ endif()
 #------------------------------------------------------------------------------------------------
 # ADD NON-FETCHABLE SUBPROJECTS
 #------------------------------------------------------------------------------------------------
-if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
+#if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     # GLAD---------------------------------------------------------------------------------------
     add_library(glad SHARED "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
     set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
@@ -62,7 +72,7 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
             LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
             RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
     )
-endif()
+#endif()
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
@@ -102,9 +112,8 @@ endif()
 #------------------------------------------------------------------------------------------------
 set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 if(ToAndroid)
+    add_compile_definitions(ANDROID)
     include(${FL_cmake}/FindAndroidSDKVars.cmake)
-    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
-    execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
 
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     target_sources(FlyLib PUBLIC ${app_glue}) # Add Android Files required 
@@ -128,10 +137,7 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # CROSS-COMPILING Windows-Linux
     #---------------------------------------------------------------------------------------------
-    set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
-    # Change System Name to desired, 
-    #then setup compiler and linkers and whatever is needed for crosscompiling
-    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
+    
     #---------------------------------------------------------------------------------------------
     # DESKTOP INCLUDES/LINKS
     #---------------------------------------------------------------------------------------------
@@ -163,8 +169,12 @@ endif()
 #------------------------------------------------------------------------------------------------
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
-
-
+target_link_libraries(FlyLib PUBLIC
+    glad
+)
+target_include_directories(FlyLib PUBLIC
+    ${glad_include}
+)
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------

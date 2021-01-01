@@ -1,7 +1,12 @@
 #include <iostream>
 #include <fly_lib.h>
 #include <imgui.h>
+#ifdef USE_GLFW
 #include <imgui_impl_glfw.h>
+#elif defined USE_EGL
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
 #include <imgui_impl_opengl3.h>
 #include <glad/glad.h>
 enum main_states
@@ -27,9 +32,14 @@ int main()
     }
     
 
+#ifdef USE_GLFW
     ImGui_ImplGlfw_InitForOpenGL(FLYDISPLAY_RetrieveMainGLFWwindow(), true);
-    const char* glsl = "#version 150";
+#elif defined USE_EGL
+    //gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress);
+#endif
     gladLoadGL();
+    const char* glsl = "#version 150";
+    
     ImGui_ImplOpenGL3_Init(FLYRENDER_GetGLSLVer());
     ImGui::StyleColorsDark();
     
@@ -49,7 +59,9 @@ int main()
     while(state == MAIN_UPDATE)
     {
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();        
+        #ifdef USE_GLFW
+        ImGui_ImplGlfw_NewFrame();
+        #endif        
         ImGui::NewFrame();
         if(ret)ImGui::ShowDemoWindow(&ret);
         // Update all modules in specific order

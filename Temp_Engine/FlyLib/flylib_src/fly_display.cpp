@@ -11,13 +11,12 @@
 
 // Define which API Backend to USE
 #ifdef ANDROID
-#   define USE_EGL
     extern int OGLESStarted;
     extern struct android_app* app;
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
 #elif defined _WIN32 || defined __linux__
-#   define USE_GLFW
+
 #endif
 
 // Platfrom Agnostic Includes and Variables
@@ -141,7 +140,7 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
     FLYLOG(LT_INFO, "Performing Platform Specific PreInitialization...");
 // Platform Specifics PreInitialization
 #ifdef ANDROID
-    FLYLOG(LT_INFO, "ANDROID - Waiting of OpenGLES Initialization...")
+    FLYLOG(LT_INFO, "ANDROID - Waiting of OpenGLES Initialization...");
     int events;
     while(!OGLESStarted)
     {  
@@ -202,9 +201,10 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
     }
 #endif
     FLYLOG(FLY_LogType::LT_INFO, "Getting EGL Surface..");
+    egl_window = app->window;
     if(!egl_window)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "Could not get EGL_Window!");
+        FLYLOG(FLY_LogType::LT_ERROR, "EGL Window got dereferenced!");
         return false;
     }
 
@@ -497,12 +497,20 @@ void FLYDISPLAY_MakeContextMain(uint16 window)
 // INITIALIZING & GLOBAL STATE CONTROL ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef USE_GLFW
-struct GLFWwindow*;
+struct GLFWwindow;
 #endif
 GLFWwindow* FLYDISPLAY_RetrieveMainGLFWwindow()
 {
 #ifndef USE_GLFW
     return nullptr;
-#endif
+#else
     return glfw_windows[0];
+#endif
 }
+
+#ifndef USE_EGL
+void* FLYDISPLAY_RetrieveEGLProcAddress()
+{
+    reuturn eglGetProcAddress;
+}
+#endif
