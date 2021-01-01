@@ -10,6 +10,7 @@ release/
 game/
 debug/
 cmake_bloat*/
+*_deps/
 
 ### CMake ###
 CMakeLists.txt.user
