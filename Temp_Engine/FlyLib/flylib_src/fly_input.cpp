@@ -68,8 +68,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev);
 
 int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 {
-    int32 evtype = AInputEvent_getType(ev);
-
+    int32_t evtype = AInputEvent_getType(ev);
+    int32_t ret;
     switch(evtype)
     {
         case AINPUT_EVENT_TYPE_FOCUS:
@@ -77,13 +77,13 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
         case AINPUT_EVENT_TYPE_KEY:
             break;
         case AINPUT_EVENT_TYPE_MOTION:
-            HandleAndroidMotion(app, ev);
+            ret = HandleAndroidMotion(app, ev);
             break;
     }
 
 
     //int32 action = AInputEvent_getAction(ev);
-    return 0;
+    return 1;
 }
 
 #endif
@@ -186,43 +186,59 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         // Cancelled Event
         return -1;
     }
+    FLYLOG(LT_INFO, "Reading Touch Motion Event...");
     int num_pointers = AMotionEvent_getPointerCount(ev);
-    if (num_pointers > MAX_POINTERS) return -1;
-
+    if (num_pointers >= MAX_POINTERS) return -1;
+    int whichsource = action >> 8;
+    action &= AMOTION_EVENT_ACTION_MASK;
     bool motion_ended = true;
     for (int i = 0; i < num_pointers; ++i)
     {
+        FLYLOG(LT_INFO, "Get Pointer %d Status...", i);
+        int x, y;
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
+        x = AMotionEvent_getX(ev, i);
+        y = AMotionEvent_getY(ev, i);
         FLY_Pointer& p = fly_pointers[pointer];
         FLY_Gesture& g = p.gesture;
+        if(whichsource != p.id) continue;
         switch (action)
         {
         case AMOTION_EVENT_ACTION_DOWN:
             p.active = true;
-            g.start_x = AMotionEvent_getX(ev, i);
-            g.start_y = AMotionEvent_getX(ev, i);
+            g.start_x = x;
+            g.start_y = y;
+            ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
+            FLYLOG(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
             g.refresh_bucket += g.timer.ReadMilliSec();
             if(g.refresh_bucket >= GESTURE_REFRESH)
             {
                 g.refresh_bucket -= GESTURE_REFRESH;
-                // Add point to be tracket;
-                int x,y;
-                x = AMotionEvent_getX(ev, i);
-                y = AMotionEvent_getY(ev, i);
+                // Add point to be tracked;
+
+                FLYLOG(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             }
             break;
         case AMOTION_EVENT_ACTION_UP:
             p.active = false;
-            g.end_x = AMotionEvent_getX(ev, i);
-            g.end_y = AMotionEvent_getX(ev, i);
+            g.end_x = x;
+            g.end_y = y;
+            FLYLOG(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
             break;
         }
-        motion_ended = (motion_ended != false) ? !p.active : motion_ended;
+        FLYLOG(LT_INFO, "Test if pointer is Active");
+        if(motion_ended == true) motion_ended = !p.active;
+    }
+    
+    if(motion_ended) 
+    {
+        FLYLOG(LT_INFO, "Evaluate Motion event...");
+        //FLY_EvalMotionEvent();
     }
 
-    //if(motion_ended) FLY_EvalMotionEvent();
+    return 1;
 }
 
 #elif defined _WIN32 || defined __linux__

@@ -5,15 +5,22 @@
 #endif
 
 #include <glad/glad.h>
-#include <GLES3/gl32.h>
-#include <GLES3/gl3ext.h>
-#include <GLES3/gl3platform.h>
-#ifdef USE_GLFW
 
+#ifdef USE_OPENGLES
+#include <GLES3/gl32.h>
+#include <EGL/egl.h>
+#endif
+
+void FLYRENDER_ViewportSizeCallback(int width, int height)
+{
+    glViewport(0,0, width, height);
+}
+
+#ifdef USE_GLFW
 #   include <GLFW/glfw3.h>
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    FLYRENDER_ViewportSizeCallback(width, height);
 }
 
 #endif
@@ -29,7 +36,10 @@ bool FLYRENDER_Init()
         return false;
     }
 #elif defined USE_OPENGLES
-    //if(!gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress))
+    if(!gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress))
+    {
+        gladLoadGL();   
+    }
 #endif
     
 
@@ -41,7 +51,7 @@ bool FLYRENDER_Init()
 #endif
     // Generate Viewport with window size
     glViewport(0,0,100,100);
-
+    FLYLOG(FLY_LogType::LT_INFO, "Main Viewoprt init...");
     return ret;
 }
 

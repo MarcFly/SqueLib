@@ -290,7 +290,7 @@ void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h)
 void FLYDISPLAY_GetSize(uint16 window, uint16* x, uint16* y)
 {
     uint16 size = fly_windows.size();
-    if (size > window)
+    if (size > window && x != NULL & y != NULL)
     {
         *x = fly_windows[window]->width;
         *y = fly_windows[window]->height;
@@ -462,19 +462,27 @@ void FLYDISPLAY_CleanAll()
 
 void FLYDISPLAY_SwapAllBuffers()
 {
-    for(int i = 0; i < fly_windows.size(); ++i)
-    {
+    if(fly_windows.size() < 1) return;
 #ifdef USE_EGL
-
-#elif defined USE_GLFW
-        glfwSwapBuffers(glfw_windows[i]);
+    eglSwapBuffers(egl_display, egl_surface);
+    fly_windows[0]->width = ANativeWindow_getWidth( egl_window );
+	fly_windows[0]->height = ANativeWindow_getHeight( egl_window );
+	FLYRENDER_ViewportSizeCallback(fly_windows[0]->width, fly_windows[0]->height);
 #endif
+
+#ifdef USE_GLFW
+        glfwSwapBuffers(glfw_windows[0]);
+#endif
+    //for(int i = 0; i < fly_windows.size(); ++i)
+    {        
+
     }
 }
 
 void FLYDISPLAY_SwapBuffers(uint16 window)
 {
 #ifdef USE_EGL
+    eglSwapBuffers(egl_display, egl_surface);
 #elif defined USE_GLFW
     glfwSwapBuffers(glfw_windows[window]);
 #endif
@@ -509,8 +517,9 @@ GLFWwindow* FLYDISPLAY_RetrieveMainGLFWwindow()
 }
 
 #ifndef USE_EGL
-void* FLYDISPLAY_RetrieveEGLProcAddress()
-{
-    reuturn eglGetProcAddress;
-}
+void* eglGetProcAddress(const char*) {return nullptr;}
 #endif
+/*void(*FLYDISPLAY_RetrieveEGLProcAddress())(const char*)
+{
+    return eglGetProcAddress;
+}*/

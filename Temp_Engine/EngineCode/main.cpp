@@ -6,6 +6,7 @@
 #elif defined USE_EGL
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <imgui_impl_android.h>
 #endif
 #include <imgui_impl_opengl3.h>
 #include <glad/glad.h>
@@ -37,12 +38,17 @@ int main()
 #elif defined USE_EGL
     //gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress);
 #endif
+    FLYLOG(FLY_LogType::LT_INFO, "GLAD init for ImGui...");
     gladLoadGL();
     const char* glsl = "#version 150";
-    
+    FLYLOG(FLY_LogType::LT_INFO, "OpenGL3 Init for ImGui...");
     ImGui_ImplOpenGL3_Init(FLYRENDER_GetGLSLVer());
     ImGui::StyleColorsDark();
     
+    FLYLOG(FLY_LogType::LT_INFO, "Android Test ImGui Init...");
+    #ifdef ANDROID
+    ImGui_ImplAndroidGLES2_Init();
+    #endif
     // Engine Initialization
     {
         FLYLOG(FLY_LogType::LT_INFO, "Initializing Engine...");
@@ -55,12 +61,16 @@ int main()
     }
 
     // Update Loop
-    
+    FLY_Timer t;
     while(state == MAIN_UPDATE)
     {
         ImGui_ImplOpenGL3_NewFrame();
         #ifdef USE_GLFW
         ImGui_ImplGlfw_NewFrame();
+        #elif defined USE_EGL
+        uint16 w, h;
+        FLYDISPLAY_GetSize(0, &w, &h);
+        ImGui_ImplAndroidGLES2_NewFrame(w ,h, t.ReadMilliSec());
         #endif        
         ImGui::NewFrame();
         if(ret)ImGui::ShowDemoWindow(&ret);

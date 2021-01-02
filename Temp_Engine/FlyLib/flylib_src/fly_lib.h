@@ -276,6 +276,7 @@ typedef struct ColorRGBA {
 	float r, g, b, a;
 } ColorRGBA;
 
+FL_API void FLYRENDER_ViewportSizeCallback(int width, int height);
 FL_API bool FLYRENDER_Init();
 FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();
