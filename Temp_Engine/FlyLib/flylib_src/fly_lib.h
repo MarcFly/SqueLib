@@ -95,7 +95,7 @@ typedef struct FLY_Log
 	FLY_LogType lt = LT_INFO;
 	char log[LOGSIZE] = {0};
 } FLY_Log;
-FL_API void FLYLOGGER_Print(const char* log, int lt);
+FL_API void FLYLOGGER_Print(int lt, const char* log);
 FL_API void FLYLOGGER_DumpData();
 FL_API bool FLYLOGGER_Init(bool dumpdata);
 FL_API void FLYLOGGER_Close();
@@ -117,7 +117,9 @@ typedef struct FLY_Timer
 
 	void Start();
 	void Stop();
+	void Kill();
 	bool IsStopped() const;
+	bool IsActive() const;
 	uint16_t ReadMilliSec() const;
 	uint32_t ReadMicroSec() const;
 	uint32_t ReadNanoSec() const;
@@ -132,6 +134,7 @@ private:
 	uint16_t stop_at_ms;
 
 	std::atomic<bool> is_stopped;
+	std::atomic<bool> is_active;
 } FLY_Timer;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,11 +242,12 @@ enum FLY_KeyboardKeys
 	FLY_KEY_MAX 
 };
 #define NUM_KEYS 121
+#define MAX_KEYS 512
 #define MAX_POINTERS 10
 #define GESTURE_REFRESH 0.5f // in ms
 #define MAX_MIDPOINTS 10
 
-enum FLY_INPUT_ACTIONS
+enum FLYINPUT_ACTIONS
 {
 	FLY_ACTION_UNKNOWN = -1,
 	// Button States
@@ -252,6 +256,7 @@ enum FLY_INPUT_ACTIONS
 	FLY_ACTION_REPEAT,
 	
 	// Touch Controls
+	FLY_ACTION_TAP,
 	FLY_ACTION_CLICK,
 	FLY_ACTION_DOUBLE_CLICK,
 	FLY_ACTION_SWIPE_UP,
@@ -266,6 +271,8 @@ enum FLY_INPUT_ACTIONS
 
 FL_API void FLYINPUT_Init(uint16 window);
 FL_API void FLYINPUT_Process(uint16 window);
+FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
+FL_API FLYINPUT_ACTIONS FLYINPUT_EvalGesture();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////

@@ -51,15 +51,15 @@ void android_main(struct android_app* gapp)
 {
     app = gapp;
     #ifndef FLYLOGGER_OUT
-    FLYLOGGER_Print("Android Flylib Start", FLY_LogType::LT_INFO);
+    FLYLOGGER_Print(FLY_LogType::LT_INFO, "FLYLIB - Android Flylib Start...");
     #endif
 
     app->onAppCmd = HandleAndroidCMD;
     app->onInputEvent = HandleAndroidInput;
     //char *argv[] = {"AppMain", 0};
-    FLYLOGGER_Print("CALLING MAIN", FLY_LogType::LT_INFO);
+    FLYLOGGER_Print(FLY_LogType::LT_INFO, "FLYLIB - Calling App Main...");
     main();
     //app->destroyRequested = 0;
-    FLYLOGGER_Print("FINISHED MAIN?", FLY_LogType::LT_INFO);
+    FLYLOGGER_Print(FLY_LogType::LT_INFO, "FLYLIB - Finished executing App...");
 }
 #endif

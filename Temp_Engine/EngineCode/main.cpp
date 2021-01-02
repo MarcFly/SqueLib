@@ -62,6 +62,7 @@ int main()
 
     // Update Loop
     FLY_Timer t;
+    FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {
         ImGui_ImplOpenGL3_NewFrame();

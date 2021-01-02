@@ -48,7 +48,7 @@ static bool DUMPDATA = true;
 //#   include <Windows.h>
 #endif
 
-void FLYLOGGER_Print(const char* log, int lt)
+void FLYLOGGER_Print(int lt, const char* log)
 {
     printf("FLY_LogType-%d: %s\n", lt, log);
 #ifdef _WIN32
@@ -157,5 +157,5 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
 
     logs.push_back(PairLOG(push.type, push));
 
-    FLYLOGGER_Print(&push.log[0], (int)lt);	
+    FLYLOGGER_Print((int) lt, &push.log[0]);	
 }
