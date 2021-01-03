@@ -3,12 +3,13 @@
 #include <imgui.h>
 #ifdef USE_GLFW
 #include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #elif defined USE_EGL
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <imgui_impl_android.h>
 #endif
-#include <imgui_impl_opengl3.h>
+
 #include <glad/glad.h>
 enum main_states
 {
@@ -35,14 +36,15 @@ int main()
 
 #ifdef USE_GLFW
     ImGui_ImplGlfw_InitForOpenGL(FLYDISPLAY_RetrieveMainGLFWwindow(), true);
-#elif defined USE_EGL
-    //gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress);
-#endif
     FLYLOG(FLY_LogType::LT_INFO, "GLAD init for ImGui...");
     gladLoadGL();
     const char* glsl = "#version 150";
     FLYLOG(FLY_LogType::LT_INFO, "OpenGL3 Init for ImGui...");
     ImGui_ImplOpenGL3_Init(FLYRENDER_GetGLSLVer());
+#elif defined USE_EGL
+    //gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress);
+#endif
+    
     ImGui::StyleColorsDark();
     
     FLYLOG(FLY_LogType::LT_INFO, "Android Test ImGui Init...");
@@ -62,18 +64,32 @@ int main()
 
     // Update Loop
     FLY_Timer t;
+    t.Start();
     FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {
-        ImGui_ImplOpenGL3_NewFrame();
-        #ifdef USE_GLFW
-        ImGui_ImplGlfw_NewFrame();
-        #elif defined USE_EGL
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);
+
+
+        #ifdef USE_GLFW
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        #elif defined USE_EGL
         ImGui_ImplAndroidGLES2_NewFrame(w ,h, t.ReadMilliSec());
+        FLYPRINT(LT_INFO, "Reading ImGui Input:\nMouse Button 0: %d\nMouse POS: %.2f,%.2f",ImGui::IsMouseDown(0), ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        
         #endif        
         ImGui::NewFrame();
+        
+        float posx = (t.ReadMilliSec() / 100.f) -  ((int)((t.ReadMilliSec() / 100.f)/w))*w;
+        float posy = (t.ReadMilliSec() / 100.f) -  ((int)((t.ReadMilliSec() / 100.f)/h))*h;
+        ImGui::SetNextWindowPos(ImVec2(posx, posy));
+        ImGui::Begin("Another Window", &ret);
+		ImGui::Text("Hello");
+		ImGui::End();
+        //FLYPRINT(LT_INFO, "WINDOW AT: %.2f, %.2f", posx, posy);
+        FLYPRINT(LT_INFO, "Reading ImGui Input:\nMouse Button 0: %d\nMouse POS: %.2f,%.2f",ImGui::IsMouseDown(0), ImGui::GetMousePos().x, ImGui::GetMousePos().y);
         if(ret)ImGui::ShowDemoWindow(&ret);
         // Update all modules in specific order
         
@@ -86,8 +102,10 @@ int main()
         ColorRGBA col = ColorRGBA(.1,.3,.1,1.);
 
         ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+#ifdef USE_OPENGL
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
         FLYDISPLAY_SwapAllBuffers();
         FLYRENDER_Clear(NULL, &col);
         FLYINPUT_Process(0);      

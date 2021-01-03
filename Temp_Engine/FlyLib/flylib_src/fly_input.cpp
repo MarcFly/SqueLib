@@ -15,50 +15,50 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
     switch(cmd)
     {
         case APP_CMD_INIT_WINDOW:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_INIT_WINDOW");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_INIT_WINDOW");
             if(!OGLESStarted) OGLESStarted = 1;
             break;
         case APP_CMD_TERM_WINDOW:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_TERM_WINDOW");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_TERM_WINDOW");
             break;
         case APP_CMD_WINDOW_RESIZED:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_RESIZED");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_RESIZED");
             break;
         case APP_CMD_WINDOW_REDRAW_NEEDED:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_REDRAW_NEEDED");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_REDRAW_NEEDED");
             break;
         case APP_CMD_CONTENT_RECT_CHANGED:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_CONTENT_RECT_CHANGED");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_CONTENT_RECT_CHANGED");
             break;
         case APP_CMD_GAINED_FOCUS:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_GAINED_FOCUS");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_GAINED_FOCUS");
             break;
         case APP_CMD_LOST_FOCUS:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_LOST_FOCUS");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_LOST_FOCUS");
             break;
         case APP_CMD_CONFIG_CHANGED:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_CONFIG_CHANGED");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_CONFIG_CHANGED");
             break;
         case APP_CMD_LOW_MEMORY:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_LOW_MEMORY");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_LOW_MEMORY");
             break;
         case APP_CMD_START:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_START");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_START");
             break;
         case APP_CMD_RESUME:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_RESUME");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_RESUME");
             break;
         case APP_CMD_SAVE_STATE:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
             break;
         case APP_CMD_PAUSE:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_PAUSE");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_PAUSE");
             break;
         case APP_CMD_STOP:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_STOP");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_STOP");
             break;
         case APP_CMD_DESTROY:
-            FLYLOGGER_Print(FLY_LogType::LT_INFO, "APP_CMD_DESTROY");
+            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_DESTROY");
             FLYDISPLAY_SetWindowClose(0); // Set to Close main window and end execution
             break;
     } 
@@ -93,7 +93,7 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 
 void EmptyKeyCallback(int key, const int prev_state, const int state) 
 {
-    FLYLOG(LT_INFO, "Key %c: %d", key, state);
+    FLYPRINT(LT_INFO, "Key %c: %d", key, state);
 }
 
 typedef struct FLY_Key
@@ -114,14 +114,38 @@ typedef struct FLY_Mouse
     double prev_scrollx, prev_scrolly;
     double scrollx, scrolly;
 
-    FLY_Key mbuttons[16];
+    FLY_Key mbuttons[MAX_MOUSE_BUTTONS];
     
 } FLY_Mouse;
 
 FLY_Mouse mouse;
 FLY_Key keyboard[MAX_KEYS];
 
+FLYINPUT_ACTIONS FLYINPUT_GetMouseButton(int button)
+{
+    if(button > MAX_MOUSE_BUTTONS) return FLY_ACTION_UNKNOWN;
+    return (FLYINPUT_ACTIONS)mouse.mbuttons[button].state;
+}
 
+void FLYINPUT_GetMousePos(float* x, float* y)
+{
+    *x = mouse.x;
+    *y = mouse.y;
+}
+
+void FLYINPUT_UpdateMouseFromPointer(float xpos, float ypos, int state, int num_pointers)
+{
+    mouse.prev_delta_x = mouse.x - mouse.prev_x;
+    mouse.prev_delta_y = mouse.y - mouse.prev_y;
+    mouse.prev_x = mouse.x;
+    mouse.prev_y = mouse.y;
+    mouse.x = xpos;
+    mouse.y = ypos;
+
+    mouse.mbuttons[0].prev_state = mouse.mbuttons[0].state;
+    mouse.mbuttons[0].state =  state;
+    mouse.mbuttons[0].key_callback(0, mouse.mbuttons[0].prev_state, mouse.mbuttons[0].state);
+}
 
 typedef struct FLY_Gesture
 {
@@ -138,6 +162,7 @@ typedef struct FLY_Pointer
 {
     bool active = false;
     int32_t id;
+    FLY_Timer timer;
     FLY_Gesture gesture;
 
 } FLY_Pointer;
@@ -191,19 +216,20 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     int32_t action = AMotionEvent_getAction(ev);
     if (action == AMOTION_EVENT_ACTION_CANCEL)
     {
-        FLYLOG(LT_INFO, "Cancelled Touch Motion Event...");
+        FLYPRINT(LT_INFO, "Cancelled Touch Motion Event...");
         // Cancelled Event
         return -1;
     }
-    FLYLOG(LT_INFO, "Reading Touch Motion Event...");
+    FLYPRINT(LT_INFO, "Reading Touch Motion Event...");
     int num_pointers = AMotionEvent_getPointerCount(ev);
     if (num_pointers >= MAX_POINTERS) return -1;
     int whichsource = action >> 8;
     action &= AMOTION_EVENT_ACTION_MASK;
     bool motion_ended = true;
+    // On Pointer 0, update mouse data for other libraries to use
     for (int i = 0; i < num_pointers; ++i)
     {
-        FLYLOG(LT_INFO, "Get Pointer %d Status...", i);
+        FLYPRINT(LT_INFO, "Get Pointer %d Status...", i);
         int x, y;
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
         x = AMotionEvent_getX(ev, i);
@@ -216,13 +242,16 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         case AMOTION_EVENT_ACTION_DOWN:
             g.start_x = x;
             g.start_y = y;
+            p.timer.Start();
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
-            FLYLOG(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
+            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_ACTIONS::FLY_ACTION_PRESS, num_pointers);
+            FLYPRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
-            g.refresh_bucket += g.timer.ReadMilliSec();
+            g.refresh_bucket += p.timer.ReadMilliSec();
             if(g.refresh_bucket >= GESTURE_REFRESH)
             {
+                p.timer.Start();
                 g.refresh_bucket -= GESTURE_REFRESH;
                 // Add point to be tracked;
                 if(g.start_x == INT32_MAX)
@@ -235,7 +264,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
                     g.end_x = x;
                     g.end_y = y;
                 }
-                FLYLOG(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
+                if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_ACTIONS::FLY_ACTION_REPEAT, num_pointers);
+                FLYPRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             }
             break;
         case AMOTION_EVENT_ACTION_UP:
@@ -243,16 +273,17 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.end_x = x;
             g.end_y = y;
             g.timer.Stop();
-            FLYLOG(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
+            p.timer.Kill();
+            FLYPRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
+            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_ACTIONS::FLY_ACTION_RELEASE, num_pointers);
             break;
         }
-        FLYLOG(LT_INFO, "Test if pointer is Active");
         if(motion_ended == true) motion_ended = !p.active;
     }
     
     if(motion_ended) 
     {
-        FLYLOG(LT_INFO, "Evaluate Motion event...");
+        FLYPRINT(LT_INFO, "Evaluate Motion event...");
         FLYINPUT_EvalGesture();
     }
 
@@ -302,7 +333,7 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     }
     else
     {
-        FLYLOGGER_Print(LT_WARNING, "Unicode Value not supported...");
+        FLY_ConsolePrint(LT_WARNING, "Unicode Value not supported...");
     }
     
     return 1;
@@ -397,32 +428,28 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 {
 #ifdef ANDROID
     jint lflags = 0;
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
+    FLY_ConsolePrint(LT_INFO, "Testing Crash");
     // Get Java Environment
     JNIEnv * env = 0;
 	JNIEnv ** env_ptr = &env;
 	JavaVM ** jnii_ptr = &app->activity->vm;
 	JavaVM * jnii = *jnii_ptr;
     
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
     jnii->AttachCurrentThread( env_ptr, NULL);
 	env = (*env_ptr);
     jclass activity_class = env->FindClass("android/app/NativeActivity");
     jobject lnative_activity = app->activity->clazz;
 
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
     // Retrieves Context.INPUT_METHOD_SERVICE.
     jclass class_context = env->FindClass("android/content/Context");
 	jfieldID field_INPUT_METHOD_SERVICE = env->GetStaticFieldID(class_context, "INPUT_METHOD_SERVICE", "Ljava/lang/String;" );
 	jobject INPUT_METHOD_SERVICE = env->GetStaticObjectField(class_context, field_INPUT_METHOD_SERVICE );
 
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
     // Runs getSystemService(Context.INPUT_METHOD_SERVICE).
 	jclass class_input_method_manager = env->FindClass("android/view/inputmethod/InputMethodManager" );
 	jmethodID method_get_system_service = env->GetMethodID(activity_class, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
 	jobject linput_method_manager = env->CallObjectMethod(lnative_activity, method_get_system_service, INPUT_METHOD_SERVICE);
 
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
 	// Runs getWindow().getDecorView().
 	jmethodID method_get_window = env->GetMethodID(activity_class, "getWindow", "()Landroid/view/Window;");
 	jobject lwindow = env->CallObjectMethod(lnative_activity, method_get_window);
@@ -430,7 +457,6 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 	jmethodID method_get_decor_view = env->GetMethodID(class_window, "getDecorView", "()Landroid/view/View;");
 	jobject ldecor_view = env->CallObjectMethod(lwindow, method_get_decor_view);
 
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
 	if (show) {
 		// Runs lInputMethodManager.showSoftInput(...).
 		jmethodID method_show_soft_input = env->GetMethodID(class_input_method_manager, "showSoftInput", "(Landroid/view/View;I)Z");
@@ -446,7 +472,6 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 		/*jboolean lRes = */env->CallBooleanMethod(linput_method_manager, method_hide_soft_input, lbinder, lflags);
 	}
 
-    FLYLOGGER_Print(LT_INFO, "Testing Crash");
 	// Finished with the JVM.
 	jnii->DetachCurrentThread();
 
@@ -467,17 +492,18 @@ FLYINPUT_ACTIONS FLYINPUT_DetectGesture(FLY_Pointer& p)
     float dist_perc_y = 100*abs_delta_y / (float)screen_h;
 
     uint16 time = p.gesture.timer.ReadMilliSec();
-    if(time <= 2*GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
+    // Tap Gesture
+    if(time <= GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
     {
         return FLYINPUT_ACTIONS::FLY_ACTION_TAP;
     }
-    else if(time > 2*GESTURE_REFRESH && abs_delta_x > abs_delta_y)
+    // Swipe Gesture
+    else if(time > GESTURE_REFRESH && time <= 3*GESTURE_REFRESH)
     {
-        return (FLYINPUT_ACTIONS)(FLY_ACTION_SWIPE_LEFT+(int)(delta_x > 0));
-    }
-    else if(time > 2*GESTURE_REFRESH && abs_delta_x < abs_delta_y)
-    {
-        return (FLYINPUT_ACTIONS)(FLY_ACTION_SWIPE_UP+(int)(delta_y < 0));
+        if(abs_delta_x > abs_delta_y)
+            return (FLYINPUT_ACTIONS)(FLY_ACTION_SWIPE_LEFT+(int)(delta_x > 0)); // Swipe Horizontal
+        else
+            return (FLYINPUT_ACTIONS)(FLY_ACTION_SWIPE_UP+(int)(delta_y < 0));  // Swipe Vertical
     }
 
     return FLYINPUT_ACTIONS::FLY_ACTION_UNKNOWN;
@@ -492,7 +518,7 @@ FLYINPUT_ACTIONS FLYINPUT_EvalGesture()
         if(fly_pointers[i].id == INT32_MAX || !fly_pointers[i].gesture.timer.IsActive()) 
                     break;
         actions[i] = FLYINPUT_DetectGesture(fly_pointers[i]);
-        FLYLOG(LT_INFO, "Pointer %d: FLYINPUT_ACTION::%d", i, actions[i]);
+        FLYPRINT(LT_INFO, "Pointer %d: FLYINPUT_ACTION::%d", i, actions[i]);
     }
 
     ResetPointers();

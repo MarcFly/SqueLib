@@ -8,7 +8,11 @@
                 "/home/marcfly/Android/Sdk/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android",
                 "/home/marcfly/Android/Sdk/ndk/22.0.6917172/sources/android/native_app_glue",
                 "${workspaceFolder}/FlyLib/flylib_src",
-                "${workspaceFolder}/FlyLib/external/glad/include"
+                "${workspaceFolder}/FlyLib/external/glad/include",
+                "${workspaceFolder}/external/TempEngine_deps/imgui-src",
+                "${workspaceFolder}/external/TempEngine_deps/imgui-src/examples",
+                "${workspaceFolder}/external/FlyLib_deps/glfw-src/include"
+
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

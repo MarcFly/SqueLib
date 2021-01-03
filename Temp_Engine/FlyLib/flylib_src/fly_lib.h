@@ -95,12 +95,15 @@ typedef struct FLY_Log
 	FLY_LogType lt = LT_INFO;
 	char log[LOGSIZE] = {0};
 } FLY_Log;
-FL_API void FLYLOGGER_Print(int lt, const char* log);
+FL_API void FLY_ConsolePrint(int lt, const char* log);
 FL_API void FLYLOGGER_DumpData();
 FL_API bool FLYLOGGER_Init(bool dumpdata);
 FL_API void FLYLOGGER_Close();
 FL_API void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...);
 #define FLYLOG(LogType,format,...) FL_MACRO FLYLOGGER_Log(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
+FL_API void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const char* format, ...);
+#define FLYPRINT(LogType, format,...) FL_MACRO FLYLOGGER_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TIMER /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +168,7 @@ typedef struct FLY_Window
 FL_API bool FLYDISPLAY_Init(uint16 flags, const char* title = "", uint16 w = 0, uint16 h = 0);
 FL_API bool FLYDISPLAY_Close();
 FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);
+FL_API int32 FLYDISPLAY_GetDPIDensity(uint16 window = 0);
 // Control Specific Windows
 FL_API void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h);
 FL_API void FLYDISPLAY_GetSize(uint16 window, uint16* w, uint16* h);
@@ -243,15 +247,16 @@ enum FLY_KeyboardKeys
 };
 #define NUM_KEYS 121
 #define MAX_KEYS 512
+#define MAX_MOUSE_BUTTONS 16
 #define MAX_POINTERS 10
-#define GESTURE_REFRESH 0.5f // in ms
+#define GESTURE_REFRESH 10 // in ms
 #define MAX_MIDPOINTS 10
 
 enum FLYINPUT_ACTIONS
 {
 	FLY_ACTION_UNKNOWN = -1,
 	// Button States
-	FLY_ACTION_RELESAE,
+	FLY_ACTION_RELEASE,
 	FLY_ACTION_PRESS,
 	FLY_ACTION_REPEAT,
 	
@@ -272,6 +277,8 @@ enum FLYINPUT_ACTIONS
 FL_API void FLYINPUT_Init(uint16 window);
 FL_API void FLYINPUT_Process(uint16 window);
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
+FL_API FLYINPUT_ACTIONS FLYINPUT_GetMouseButton(int button);
+FL_API void FLYINPUT_GetMousePos(float* x, float* y);
 FL_API FLYINPUT_ACTIONS FLYINPUT_EvalGesture();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

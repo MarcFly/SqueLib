@@ -279,6 +279,19 @@ void FLYDISPLAY_SetVSYNC(int16_t vsync_val)
 #endif
 }
 
+#include <android/configuration.h>
+
+int32 FLYDISPLAY_GetDPIDensity(uint16 window)
+{
+#ifdef ANDROID
+    AConfiguration* config = AConfiguration_new();
+    AConfiguration_fromAssetManager(config, app->activity->assetManager);
+    int32_t density = AConfiguration_getDensity(config);
+    AConfiguration_delete(config);
+    return density;
+#endif
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONTROL SPECIFIC WINDOWS //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

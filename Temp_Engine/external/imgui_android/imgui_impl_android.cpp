@@ -4,6 +4,7 @@
 // See main.cpp for an example of using this.
 // https://github.com/ocornut/imgui
 
+#include "imgui.h"
 #include "imgui_impl_android.h"
 
 /* Android OpenGL ES 2 headers */
@@ -15,11 +16,19 @@
 #include <stdlib.h>	
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO,"ImguiTest", __VA_ARGS__))
 
+// FLYLIB
+#include <fly_lib.h>
 
 // Data
 static double       g_Time = 0.0f;
-static bool         g_MousePressed[3] = { false, false, false };
-static float        g_MouseWheel = 0.0f;
+static bool			fly_KeyCtrl = false;
+static bool			fly_KeyShift = false;
+static bool			fly_KeyAlt = false;
+static bool			fly_KeySuper = false;
+static ImVec2		fly_MousePos = {-FLT_MAX, -FLT_MAX};
+static bool         fly_MousePressed[5] = { false, false, false, false, false };
+static float        fly_MouseWheel = 0.0f;
+static float		fly_MouseWheelH = 0.0f;
 static GLuint       g_FontTexture = 0;
 static int          g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
 static int          g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
@@ -88,6 +97,15 @@ void ImGui_ImplAndroidGLES2_RenderDrawLists(ImDrawData* draw_data)
 
 		glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
 		glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.size() * sizeof(ImDrawVert), (GLvoid*)&cmd_list->VtxBuffer.front(), GL_STREAM_DRAW);
+		glEnableVertexAttribArray(g_AttribLocationPosition);
+		glEnableVertexAttribArray(g_AttribLocationUV);
+		glEnableVertexAttribArray(g_AttribLocationColor);
+
+	#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+		glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos));
+		glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
+		glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
+	#undef OFFSETOF
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.size() * sizeof(ImDrawIdx), (GLvoid*)&cmd_list->IdxBuffer.front(), GL_STREAM_DRAW);
@@ -150,51 +168,6 @@ static void ImGui_ImplAndroidGLES2_SetClipboardText(const char* text)
 	//SDL_SetClipboardText(text);
 }*/
 
-/*bool ImGui_ImplAndroidGLES2_ProcessEvent(SDL_Event* event)
-{
-	ImGuiIO& io = ImGui::GetIO();
-	switch (event->type)
-	{
-	case SDL_MOUSEWHEEL:
-	{
-		if (event->wheel.y > 0)
-			g_MouseWheel = 1;
-		if (event->wheel.y < 0)
-			g_MouseWheel = -1;
-		return true;
-	}
-	case SDL_MOUSEBUTTONDOWN:
-	{
-		if (event->button.button == SDL_BUTTON_LEFT) g_MousePressed[0] = true;
-		if (event->button.button == SDL_BUTTON_RIGHT) g_MousePressed[1] = true;
-		if (event->button.button == SDL_BUTTON_MIDDLE) g_MousePressed[2] = true;
-		return true;
-	}
-	case SDL_FINGERDOWN:
-	{
-		//SDL_Log("Finger down !!");
-		return true;
-	}
-	case SDL_TEXTINPUT:
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.AddInputCharactersUTF8(event->text.text);
-		return true;
-	}
-	case SDL_KEYDOWN:
-	case SDL_KEYUP:
-	{
-		int key = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
-		io.KeysDown[key] = (event->type == SDL_KEYDOWN);
-		io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
-		io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
-		io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
-		return true;
-	}
-	}
-	return false;
-}
-*/
 void ImGui_ImplAndroidGLES2_CreateFontsTexture()
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -342,29 +315,17 @@ void ImGui_ImplAndroidGLES2_InvalidateDeviceObjects()
 bool ImGui_ImplAndroidGLES2_Init()
 {	
 	ImGuiIO& io = ImGui::GetIO();
-	/*io.KeyMap[ImGuiKey_Tab] = SDLK_TAB;                     // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-	io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
-	io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
-	io.KeyMap[ImGuiKey_UpArrow] = SDL_SCANCODE_UP;
-	io.KeyMap[ImGuiKey_DownArrow] = SDL_SCANCODE_DOWN;
-	io.KeyMap[ImGuiKey_PageUp] = SDL_SCANCODE_PAGEUP;
-	io.KeyMap[ImGuiKey_PageDown] = SDL_SCANCODE_PAGEDOWN;
-	io.KeyMap[ImGuiKey_Home] = SDL_SCANCODE_HOME;
-	io.KeyMap[ImGuiKey_End] = SDL_SCANCODE_END;
-	io.KeyMap[ImGuiKey_Delete] = SDLK_DELETE;
-	io.KeyMap[ImGuiKey_Backspace] = SDLK_BACKSPACE;
-	io.KeyMap[ImGuiKey_Enter] = SDLK_RETURN;
-	io.KeyMap[ImGuiKey_Escape] = SDLK_ESCAPE;
-	io.KeyMap[ImGuiKey_A] = SDLK_a;
-	io.KeyMap[ImGuiKey_C] = SDLK_c;
-	io.KeyMap[ImGuiKey_V] = SDLK_v;
-	io.KeyMap[ImGuiKey_X] = SDLK_x;
-	io.KeyMap[ImGuiKey_Y] = SDLK_y;
-	io.KeyMap[ImGuiKey_Z] = SDLK_z;*/
+	
+	uint16 dpi = FLYDISPLAY_GetDPIDensity();
+	uint16 w, h; FLYDISPLAY_GetSize(0, &w, &h);
+	uint16 bigger = (w > h) ? w : h;
+	io.FontGlobalScale = bigger / dpi;
+
+	//io.BackendFlags &= ~ImGuiBackendFlags_HasMouseCursors;
+	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
+	io.BackendPlatformName = "imgui_impl_flylib";
 
 	io.RenderDrawListsFn = ImGui_ImplAndroidGLES2_RenderDrawLists;   // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
-	//io.SetClipboardTextFn = ImGui_ImplAndroidGLES2_SetClipboardText;
-	//io.GetClipboardTextFn = ImGui_ImplAndroidGLES2_GetClipboardText;
 
 	return true;
 }
@@ -372,6 +333,30 @@ bool ImGui_ImplAndroidGLES2_Init()
 void ImGui_ImplAndroidGLES2_Shutdown()
 {
     ImGui_ImplAndroidGLES2_InvalidateDeviceObjects();
+}
+
+void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
+{
+	// Update Mouse / Pointer / MouseButtons / ScrollWheel
+	for(int i = 0; i < IM_ARRAYSIZE(fly_MousePressed); ++i)
+	{
+		FLYINPUT_ACTIONS state = FLYINPUT_GetMouseButton(i);
+		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE && state != FLY_ACTION_UNKNOWN);
+	}
+
+	// Update Position
+	// Get if window is focused and so something about it
+	FLYINPUT_GetMousePos(&fly_MousePos.x, &fly_MousePos.y);
+
+	// Update Wheel
+	fly_MouseWheel = 0.0f;
+	fly_MouseWheelH = 0.0f;
+
+	// Update Modifiers
+	fly_KeyCtrl = false;
+	fly_KeyShift = false;
+	fly_KeyAlt = false;
+	fly_KeySuper = false;
 }
 
 void ImGui_ImplAndroidGLES2_NewFrame(int width, int height, unsigned int millis)
@@ -382,8 +367,6 @@ void ImGui_ImplAndroidGLES2_NewFrame(int width, int height, unsigned int millis)
 	ImGuiIO& io = ImGui::GetIO();
 
 	// Setup display size (every frame to accommodate for window resizing)
-	//int w, h;
-	//SDL_GetWindowSize(g_Window, &w, &h);
 	io.DisplaySize = ImVec2((float)width, (float)height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
@@ -394,27 +377,19 @@ void ImGui_ImplAndroidGLES2_NewFrame(int width, int height, unsigned int millis)
 	io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
 	g_Time = current_time;
 
-	// Setup inputs
-	// (we already got mouse wheel, keyboard keys & characters from SDL_PollEvent())
-	/*int mx, my;
-	Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
-	if (SDL_GetWindowFlags(g_Window) & SDL_WINDOW_MOUSE_FOCUS)
-		io.MousePos = ImVec2((float)mx, (float)my);   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
-	else
-		io.MousePos = ImVec2(-1, -1);
-	*/
-	io.MousePos = ImVec2(-1,-1);
-	//io.MouseDown[0] = g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;		// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-	//io.MouseDown[1] = g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
-	//io.MouseDown[2] = g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
-	g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
+	ImGui_ImplFlyLib_UpdateMousePosAndButtons();
+	// Copy Values to DearImGui IO
+	for(int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i)
+		io.MouseDown[i] = fly_MousePressed[i];
 
-	io.MouseWheel = g_MouseWheel;
-	g_MouseWheel = 0.0f;
+	io.MousePos = fly_MousePos;
+	// Update Wheel
+	io.MouseWheel = fly_MouseWheel;
+	io.MouseWheelH = fly_MouseWheelH;
 
-	// Hide OS mouse cursor if ImGui is drawing it
-	//SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);
-
-	// Start the frame
-	ImGui::NewFrame();
+	// Update Modifiers
+	io.KeyCtrl = fly_KeyCtrl; 
+	io.KeyShift = fly_KeyShift; 
+	io.KeyAlt = fly_KeyAlt; 
+	io.KeySuper = fly_KeySuper;
 }

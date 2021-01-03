@@ -48,7 +48,7 @@ static bool DUMPDATA = true;
 //#   include <Windows.h>
 #endif
 
-void FLYLOGGER_Print(int lt, const char* log)
+void FLY_ConsolePrint(int lt, const char* log)
 {
     printf("FLY_LogType-%d: %s\n", lt, log);
 #ifdef _WIN32
@@ -157,5 +157,25 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
 
     logs.push_back(PairLOG(push.type, push));
 
-    FLYLOGGER_Print((int) lt, &push.log[0]);	
+    FLY_ConsolePrint((int) lt, &push.log[0]);	
+}
+
+void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const char* format,...)
+{   
+    std::string sttr(strrchr(file, FOLDER_ENDING));
+
+    static va_list ap;
+
+    int sizeminus = sizeof(file) + 2 + 4;
+    int calc_logsize = LOGSIZE - sizeminus;
+    char* tmp = new char[calc_logsize];
+    va_start(ap, format);
+    int len = vsnprintf(tmp, calc_logsize, format, ap);
+    va_end(ap);
+
+    if(len > (calc_logsize)) return;
+
+    FLY_ConsolePrint((int) lt, tmp);
+
+    delete tmp;
 }
