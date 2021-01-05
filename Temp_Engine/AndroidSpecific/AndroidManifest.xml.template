@@ -11,12 +11,16 @@
     <uses-permission 
         android:name="android.permission.SET_RELEASE_APP"/>
     
+    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
+        </style>
+
     <application 
         android:debuggable="true" 
         android:hasCode="false" 
         android:label="${LABEL}" 
         tools:replace="android:icon,android:theme,android:allowBackup,label" 
         android:icon="@mipmap/icon">
+        <!--android:theme="@mipmap/icon" This is how to change the splash theme (white screen at load), but seems to not work properly, look into better-->
         
         <activity 
             android:configChanges="keyboardHidden|orientation" 
@@ -31,7 +35,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-        </activity>
+        </activity>        
 
     </application>
 
