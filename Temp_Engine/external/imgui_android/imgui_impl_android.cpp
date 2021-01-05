@@ -4,7 +4,6 @@
 // See main.cpp for an example of using this.
 // https://github.com/ocornut/imgui
 
-#include "imgui.h"
 #include "imgui_impl_android.h"
 
 /* Android OpenGL ES 2 headers */
@@ -361,7 +360,7 @@ void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 	{
 		FLYINPUT_ACTIONS state = FLYINPUT_GetMouseButton(i);
 		fly_MousePressed_last[i] = fly_MousePressed[i];
-		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE && state != FLY_ACTION_UNKNOWN);
+		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE || state == FLY_ACTION_UNKNOWN);
 		no_button_active = (no_button_active == true && fly_MousePressed[i] == false);
 	}
 	fly_MousePos = (no_button_active && no_button_active_last) ? ImVec2(-FLT_MAX, -FLT_MAX) : fly_MousePos;

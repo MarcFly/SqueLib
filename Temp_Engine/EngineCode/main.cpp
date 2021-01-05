@@ -77,9 +77,8 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         #elif defined USE_EGL
         ImGui_ImplAndroidGLES2_NewFrame(w ,h, t.ReadMilliSec());
-        FLYPRINT(LT_INFO, "Reading ImGui Input:\nMouse Button 0: %d\nMouse POS: %.2f,%.2f",ImGui::IsMouseDown(0), ImGui::GetMousePos().x, ImGui::GetMousePos().y);
-        
         #endif        
+        
         ImGui::NewFrame();
         
         float posx = (t.ReadMilliSec() / 100.f) -  ((int)((t.ReadMilliSec() / 100.f)/w))*w;
@@ -89,7 +88,9 @@ int main()
 		ImGui::Text("Hello");
 		ImGui::End();
         //FLYPRINT(LT_INFO, "WINDOW AT: %.2f, %.2f", posx, posy);
-        FLYPRINT(LT_INFO, "Reading ImGui Input:\nMouse Button 0: %d\nMouse POS: %.2f,%.2f",ImGui::IsMouseDown(0), ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        if(ImGui::IsMouseDown(0))
+            FLYPRINT(LT_INFO, "Reading ImGui Input:\nMouse Button 0: %d\nMouse POS: %.2f,%.2f",ImGui::IsMouseDown(0), ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        
         if(ret)ImGui::ShowDemoWindow(&ret);
         // Update all modules in specific order
         
