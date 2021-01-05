@@ -290,7 +290,17 @@ int32 FLYDISPLAY_GetDPIDensity(uint16 window)
     int32_t density = AConfiguration_getDensity(config);
     AConfiguration_delete(config);
     return density;
+#elif defined USE_GLFW
+    const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
+    int width_mm, height_mm;
+    glfwGetMonitorPhysicalSize(glfw_monitors[0], &width_mm, &height_mm);
+    float inches = (width_mm * height_mm) / 25.4f;
+
+    return (mode->width * mode->height) / inches;
 #endif
+
+    return 400;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

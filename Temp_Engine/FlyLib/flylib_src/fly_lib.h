@@ -29,8 +29,8 @@
 #define FL_VERSION_MINOR 1
 #define FL_VERSION ((FL_VERSION_MAJOR << 16) | FL_VERSION_MINOR)
 
-unsigned int FLYLIB_GetVersion(void);
-int FLYLIB_IsCompatibleDLL(void);
+FL_API unsigned int FLYLIB_GetVersion(void);
+FL_API int FLYLIB_IsCompatibleDLL(void);
 
 FL_API bool FLYLIB_Init(/* flags */);
 FL_API bool FLYLIB_Close(/* flags */);
@@ -57,9 +57,9 @@ enum FLY_BitFlags
 }; // Enums are hard truncated to 32bit by default, just does not throw eror in MSVC
 // To get 64bit you have to define the size (enum MyEnum : <integer_type>) but I can' make it work
 
-typedef short int16;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
+typedef short int16;
 typedef int int32;
 
 typedef struct float4 { float x, y, z, w;} float4;
@@ -109,36 +109,34 @@ FL_API void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, co
 // TIMER /////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <stdint.h>
 #include <atomic>
-#include <cstddef>
 
 typedef struct FLY_Timer
 {
-	FLY_Timer();
-	~FLY_Timer() {};
-
-	void Start();
-	void Stop();
-	void Kill();
-	bool IsStopped() const;
-	bool IsActive() const;
-	uint16_t ReadMilliSec() const;
-	uint32_t ReadMicroSec() const;
-	uint32_t ReadNanoSec() const;
+	FL_API FLY_Timer();
+	
+	FL_API void Start();
+	FL_API void Stop();
+	FL_API void Kill();
+	FL_API bool IsStopped();
+	FL_API bool IsActive();
+	FL_API uint16 ReadMilliSec();
+	FL_API uint32 ReadMicroSec();
+	FL_API uint32 ReadNanoSec();
 	
 private:
-	uint32_t start_at_ns;
-	uint32_t start_at_us;
-	uint16_t start_at_ms;
-
-	uint32_t stop_at_ns;
-	uint32_t stop_at_us;
-	uint16_t stop_at_ms;
+	uint16 start_at_ms;
+	uint32 start_at_ns;
+	uint32 start_at_us;
+	
+	uint16 stop_at_ms;
+	uint32 stop_at_ns;
+	uint32 stop_at_us;
 
 	std::atomic<bool> is_stopped;
 	std::atomic<bool> is_active;
 } FLY_Timer;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DISPLAY ///////////////////////////////////////////////////////////////////////////////////////////////

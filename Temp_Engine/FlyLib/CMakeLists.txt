@@ -103,6 +103,14 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
 
     # MAKEAVAILABLE------------------------------------------------------------------------------
     FetchContent_MakeAvailable(glfw)
+    set_target_properties(glfw
+        PROPERTIES
+            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+            LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+            RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+            POSITION_INDEPENDENT_CODE ON
+            PUBLIC_HEADER "fly_lib.h"
+    )
     # All MakeAvailable together, first we declare so that they can start populating i belive
     # MakeAvailable should check completion/availability and finish/start downloading
     # -------------------------------------------------------------------------------------------

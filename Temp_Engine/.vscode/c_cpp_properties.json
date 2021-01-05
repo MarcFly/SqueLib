@@ -1,6 +1,18 @@
 {
     "configurations": [
         {
+            "name": "Win32",
+            "includePath": [
+                "${default}",
+                "C:/dev/AndroidSDK/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include",
+                "C:/dev/AndroidSDK/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android",
+                "C:/dev/AndroidSDK/ndk/22.0.6917172/sources/android/native_app_glue",
+                "${workspaceFolder}/FlyLib/flylib_src"
+            ],
+            "defines": [],
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe"
+        },
+        {
             "name": "Linux",
             "includePath": [
                 "${default}",
@@ -19,19 +31,8 @@
             "cStandard": "gnu17",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "gcc-x64"
-        },
-        {
-            "name": "Win32",
-            "includePath": [
-                "${default}",
-                "C:/dev/AndroidSDK/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include",
-                "C:/dev/AndroidSDK/ndk/22.0.6917172/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android",
-                "C:/dev/AndroidSDK/ndk/22.0.6917172/sources/android/native_app_glue",
-                "${workspaceFolder}/FlyLib/flylib_src"
-            ],
-            "defines": [],
-            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe"
         }
+        
     ],
     "version": 4
 }

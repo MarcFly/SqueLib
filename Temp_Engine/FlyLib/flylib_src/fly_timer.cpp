@@ -5,7 +5,7 @@
 #endif
 
 #include <chrono>
-#include <atomic>
+//#include <atomic>
 
 typedef std::chrono::high_resolution_clock::duration high_res_clock;
 
@@ -44,35 +44,36 @@ void FLY_Timer::Kill()
     stop_at_ns = 0;
 }
 
-bool FLY_Timer::IsStopped() const
+bool FLY_Timer::IsStopped()
 {
     return is_stopped;
 }
 
-bool FLY_Timer::IsActive() const
+bool FLY_Timer::IsActive()
 {
     return is_active;
 }
-uint16_t FLY_Timer::ReadMilliSec() const
+
+uint16 FLY_Timer::ReadMilliSec()
 {
     if (is_stopped || !is_active)
         return stop_at_ms - start_at_ms;
-    uint16_t now = (uint16_t)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    uint16 now = (uint16)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     return now - start_at_ms;
 }
 
-uint32_t FLY_Timer::ReadMicroSec() const
+uint32 FLY_Timer::ReadMicroSec()
 {
     if (is_stopped || !is_active)
         return stop_at_us - start_at_us;
-    uint32_t now = (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    uint32 now = (uint32)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     return now - start_at_us;
 }
 
-uint32_t FLY_Timer::ReadNanoSec() const
+uint32 FLY_Timer::ReadNanoSec()
 {
     if (is_stopped || !is_active)
         return stop_at_ns - start_at_ns;
-    uint32_t now = (uint32_t)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    uint32 now = (uint32)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     return now - start_at_us;
 }
