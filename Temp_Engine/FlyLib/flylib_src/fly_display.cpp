@@ -279,8 +279,9 @@ void FLYDISPLAY_SetVSYNC(int16_t vsync_val)
 #endif
 }
 
+#ifdef ANDROID
 #include <android/configuration.h>
-
+#endif
 int32 FLYDISPLAY_GetDPIDensity(uint16 window)
 {
 #ifdef ANDROID

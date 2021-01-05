@@ -26,6 +26,8 @@ static bool			fly_KeyShift = false;
 static bool			fly_KeyAlt = false;
 static bool			fly_KeySuper = false;
 static ImVec2		fly_MousePos = {-FLT_MAX, -FLT_MAX};
+static bool			no_button_active_last = false;
+static bool         fly_MousePressed_last[5] = { false, false, false, false, false };
 static bool         fly_MousePressed[5] = { false, false, false, false, false };
 static float        fly_MouseWheel = 0.0f;
 static float		fly_MouseWheelH = 0.0f;
@@ -319,7 +321,9 @@ bool ImGui_ImplAndroidGLES2_Init()
 	uint16 dpi = FLYDISPLAY_GetDPIDensity();
 	uint16 w, h; FLYDISPLAY_GetSize(0, &w, &h);
 	uint16 bigger = (w > h) ? w : h;
-	io.FontGlobalScale = bigger / dpi;
+	float scale = (bigger / dpi)*.8;
+	io.FontGlobalScale = scale;
+	ImGui::GetStyle().ScaleAllSizes(scale);
 
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasMouseCursors;
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
@@ -337,13 +341,6 @@ void ImGui_ImplAndroidGLES2_Shutdown()
 
 void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 {
-	// Update Mouse / Pointer / MouseButtons / ScrollWheel
-	for(int i = 0; i < IM_ARRAYSIZE(fly_MousePressed); ++i)
-	{
-		FLYINPUT_ACTIONS state = FLYINPUT_GetMouseButton(i);
-		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE && state != FLY_ACTION_UNKNOWN);
-	}
-
 	// Update Position
 	// Get if window is focused and so something about it
 	FLYINPUT_GetMousePos(&fly_MousePos.x, &fly_MousePos.y);
@@ -357,6 +354,18 @@ void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 	fly_KeyShift = false;
 	fly_KeyAlt = false;
 	fly_KeySuper = false;
+
+	// Update Mouse / Pointer / MouseButtons / ScrollWheel
+	bool no_button_active;
+	for(int i = 0; i < IM_ARRAYSIZE(fly_MousePressed); ++i)
+	{
+		FLYINPUT_ACTIONS state = FLYINPUT_GetMouseButton(i);
+		fly_MousePressed_last[i] = fly_MousePressed[i];
+		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE && state != FLY_ACTION_UNKNOWN);
+		no_button_active = (no_button_active == true && fly_MousePressed[i] == false);
+	}
+	fly_MousePos = (no_button_active && no_button_active_last) ? ImVec2(-FLT_MAX, -FLT_MAX) : fly_MousePos;
+	no_button_active_last = no_button_active;
 }
 
 void ImGui_ImplAndroidGLES2_NewFrame(int width, int height, unsigned int millis)
