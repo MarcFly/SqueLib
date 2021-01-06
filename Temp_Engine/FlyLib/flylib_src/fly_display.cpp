@@ -242,7 +242,7 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
 
     if(!FLYDISPLAY_OpenWindow(init_window)) return false;
     FLYLOG(FLY_LogType::LT_INFO, "Opened main GLFW window!");
-
+    FLYDISPLAY_MakeContextMain(0);
     FLYDISPLAY_SetVSYNC(1); // Swap Interval
 #endif
     
@@ -308,6 +308,15 @@ int32 FLYDISPLAY_GetDPIDensity(uint16 window)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h)
 {
+    if(window >= fly_windows.size()) return;
+
+    fly_windows[window]->width = w;
+    fly_windows[window]->height = h;
+#ifdef USE_GLFW
+    //glfwSetWindowSize(glfw_windows[window], w, h);
+#elif defined USE_EGL
+
+#endif
 
 }
 
@@ -445,12 +454,12 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     FLYDISPLAY_NextWindowOptions(window->flags);
     // hardcoded window setup for working with opengl or opengles
 #ifdef USE_GLFW
-    glfwWindowHint(
+    /*glfwWindowHint(
         GLFW_OPENGL_PROFILE,
         GLFW_OPENGL_CORE_PROFILE
-        );
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        );*/
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 #elif defined USE_EGL
 #endif
 
@@ -519,6 +528,7 @@ void FLYDISPLAY_MakeContextMain(uint16 window)
         FLYLOG(FLY_LogType::LT_WARNING, "Invalid context!");
         return;
     }
+    main_window_context = 0;
 #ifdef USE_EGL
 #elif defined USE_GLFW
     glfwMakeContextCurrent(glfw_windows[window]);

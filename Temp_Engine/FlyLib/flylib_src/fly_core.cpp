@@ -21,7 +21,14 @@ bool FLYLIB_Close(/* flags */)
     bool ret = true;
 
     // Call close for all required modules for FlyLib
-    FLYDISPLAY_Close();
+
+    FLYRENDER_Close();
+    FLYINPUT_Close();
+
+    // Display is last that has ties with GLFW, holds GLFWTerminate
+    FLYDISPLAY_Close(); 
+
+    // Unrelated Helpers that are still required
     FLYLOGGER_Close();
 
     return ret;
