@@ -141,15 +141,10 @@ void FLYRENDER_BufferArray(FLY_Mesh* mesh)
     }
 }
 
-bool FLYRENDER_IsBufferFlagSet(FLY_Buffer* buf, int flag)
-{
-    return (buf->buffer_structure & flag) > 0;
-}
-
 void FLYRENDER_SetAttributesForBuffer(FLY_Buffer* buf)
 {
     int attribs = 0;
-    if(FLYRENDER_IsBufferFlagSet(buf, FLYBUFFER_HAS_VERTEX))
+    if(CHK_FLAG(buf->buffer_structure, FLYBUFFER_HAS_VERTEX))
     {   
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
         glVertexAttribPointer(attribs, buf->vert_size, GL_FLOAT, GL_FALSE, buf->vert_size*sizeof(float), (void*)0);
@@ -305,12 +300,28 @@ void FLYRENDER_CheckProgramLog(FLY_Program* prog)
     FLYLOG(LT_WARNING, "Program Linkage Info: %s", infoLog);
 }
 
+void FLYRENDER_ProgramEnableAttributes(FLY_Program* prog)
+{
+    if(CHK_FLAG(prog->program_structure, FLYBUFFER_HAS_VERTEX))
+    {   
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+        GLint attr = glGetAttribLocation(prog->id, "aPos");
+        glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+        // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
+        // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
+        glEnableVertexAttribArray(attr);
+#endif
+    }
+}
+
+
 
 
 void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
 {
     glUseProgram(prog.id);
     glBindVertexArray(mesh.buffers[0]->attribute_object);
+    FLYRENDER_ProgramEnableAttributes(&prog);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 

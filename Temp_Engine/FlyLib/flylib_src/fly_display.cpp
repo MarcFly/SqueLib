@@ -441,10 +441,10 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     int x=0,y=0,w=0,h=0;
     
 #ifdef USE_EGL
-    eglQuerySurface(egl_display, egl_surface, EGL_WIDTH, &window->width);
-    eglQuerySurface(egl_display, egl_surface, EGL_HEIGHT, &window->height);
-    w = window->width;
-    h = window->height;
+    eglQuerySurface(egl_display, egl_surface, EGL_WIDTH, &w);
+    eglQuerySurface(egl_display, egl_surface, EGL_HEIGHT, &h);
+    window->width = w;
+    window->height = h;
 
 #elif defined USE_GLFW
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
@@ -456,12 +456,12 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     FLYDISPLAY_NextWindowOptions(window->flags);
     // hardcoded window setup for working with opengl or opengles
 #ifdef USE_GLFW
-    /*glfwWindowHint(
+    glfwWindowHint(
         GLFW_OPENGL_PROFILE,
         GLFW_OPENGL_CORE_PROFILE
-        );*/
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        );
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #elif defined USE_EGL
 #endif
 

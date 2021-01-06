@@ -57,6 +57,11 @@ enum FLY_BitFlags
 }; // Enums are hard truncated to 32bit by default, just does not throw eror in MSVC
 // To get 64bit you have to define the size (enum MyEnum : <integer_type>) but I can' make it work
 
+#define SET_FLAG(n, f) ((n) |= (f)) 
+#define CLR_FLAG(n, f) ((n) &= ~(f)) 
+#define TGL_FLAG(n, f) ((n) ^= (f)) 
+#define CHK_FLAG(n, f) (((n) & (f)) > 0)
+
 typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef short int16;
@@ -79,6 +84,7 @@ typedef struct float2 { float x, y;} float2;
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <cstdarg>
+#include <cstddef>
 
 #define LOGSIZE 512
 typedef enum FLY_LogType
@@ -357,6 +363,7 @@ FL_API void FLYRENDER_CheckShaderLog(FLY_Shader* fly_shader);
 typedef struct FLY_Program
 {
 	uint32 id = UINT32_MAX;
+	uint16 program_structure;
 	uint16 num_shaders = 0;
 	FLY_Shader** shaders = nullptr;
 } FLY_Program;
@@ -368,7 +375,7 @@ FL_API void FLYRENDER_AttachShaderToProgram(FLY_Shader* fly_shader, FLY_Program*
 FL_API void FLYRENDER_AttachMultipleShadersToProgram(uint16 num_shaders, FLY_Shader** fly_shaders, FLY_Program* fly_program);
 FL_API void FLYRENDER_LinkShaderProgram(FLY_Program* fly_program);
 FL_API void FLYRENDER_CheckProgramLog(FLY_Program* fly_program);
-
+FL_API void FLYRENDER_ProgramEnableAttributes(FLY_Program* fly_program);
 
 FL_API void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh);
 FL_API void GetGLError();

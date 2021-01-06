@@ -437,7 +437,7 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 {
 #ifdef ANDROID
     jint lflags = 0;
-    FLY_ConsolePrint(LT_INFO, "Testing Crash");
+    
     // Get Java Environment
     JNIEnv * env = 0;
 	JNIEnv ** env_ptr = &env;

@@ -10,6 +10,7 @@
 #include <imgui_impl_android.h>
 #endif
 
+#ifndef ANDROID
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "void main()\n"
@@ -22,6 +23,22 @@ const char* fragmentShaderSource = "#version 330 core\n"
 "{\n"
 "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 "}\n\0";
+#else
+const char* vertexShaderSource = "#version 320 es\n"
+"precision mediump float;"
+"in vec3 aPos;\n"
+"void main()\n"
+"{\n"
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"}\0";
+const char* fragmentShaderSource = "#version 320 es\n"
+"precision mediump float;"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\n\0";
+#endif
 
 #include <glad/glad.h>
 enum main_states
@@ -89,8 +106,7 @@ int main()
     GLenum err;
 
     FLYRENDER_GenBuffer(&mesh, 1);
-    GetGLError();
-    mesh.buffers[0]->verts = new float[]{
+    mesh.buffers[0]->verts = new float[9]{
         -0.5f, -0.5f, 0.0f, // left  
          0.5f, -0.5f, 0.0f, // right 
          0.0f,  0.5f, 0.0f  // top   
@@ -108,17 +124,17 @@ int main()
     f_shader.type = FLYSHADER_FRAGMENT;
     FLYRENDER_CreateShader(&v_shader);
     FLYRENDER_CreateShader(&f_shader);
-    GetGLError();
     FLYRENDER_CompileShader(&v_shader);
     FLYRENDER_CompileShader(&f_shader);
-    GetGLError();
 
     FLY_Program prog;
     FLYRENDER_CreateShaderProgram(&prog);
-    GetGLError();
     FLY_Shader* shaders[] = {&v_shader, &f_shader};
     FLYRENDER_AttachMultipleShadersToProgram(2, shaders, &prog);
     FLYRENDER_LinkShaderProgram(&prog);
+
+    SET_FLAG(prog.program_structure, FLYBUFFER_HAS_VERTEX);
+    FLYRENDER_ProgramEnableAttributes(&prog);
 
     // Update Loop
     FLY_Timer t;
