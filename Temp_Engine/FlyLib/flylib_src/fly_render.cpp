@@ -133,7 +133,8 @@ void FLYRENDER_BufferArray(FLY_Mesh* mesh)
         glBindVertexArray(mesh->buffers[i]->attribute_object);
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh->ids[i]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->buffers[i]->num_verts, mesh->buffers[i]->verts, GL_STATIC_DRAW);
+        int buffer_size = mesh->buffers[i]->vert_size * mesh->buffers[i]->num_verts * sizeof(float);
+        glBufferData(GL_ARRAY_BUFFER, buffer_size, mesh->buffers[i]->verts, GL_STATIC_DRAW);
 #endif
 
         FLYRENDER_SetAttributesForBuffer(mesh->buffers[i]);
@@ -200,6 +201,8 @@ void FLYRENDER_CompileShader(FLY_Shader* shader)
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     glShaderSource(shader->id, 1, &shader->source, NULL);
     glCompileShader(shader->id);
+
+    FLYRENDER_CheckShaderLog(shader);
 #endif
 }
 
@@ -295,9 +298,23 @@ void FLYRENDER_CheckProgramLog(FLY_Program* prog)
     char infoLog[512];
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glGetProgramiv(prog->id, GL_COMPILE_STATUS, &success);
+    glGetProgramiv(prog->id, GL_LINK_STATUS, &success);
     glGetProgramInfoLog(prog->id, 512, NULL, infoLog);
 
 #endif
     FLYLOG(LT_WARNING, "Program Linkage Info: %s", infoLog);
+}
+
+
+
+void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
+{
+    glUseProgram(prog.id);
+    glBindVertexArray(mesh.buffers[0]->attribute_object);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void GetGLError()
+{
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 }

@@ -368,4 +368,8 @@ FL_API void FLYRENDER_AttachShaderToProgram(FLY_Shader* fly_shader, FLY_Program*
 FL_API void FLYRENDER_AttachMultipleShadersToProgram(uint16 num_shaders, FLY_Shader** fly_shaders, FLY_Program* fly_program);
 FL_API void FLYRENDER_LinkShaderProgram(FLY_Program* fly_program);
 FL_API void FLYRENDER_CheckProgramLog(FLY_Program* fly_program);
+
+
+FL_API void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh);
+FL_API void GetGLError();
 #endif // _FLY_LIB_

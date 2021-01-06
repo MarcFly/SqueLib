@@ -439,15 +439,17 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     }
 
     int x=0,y=0,w=0,h=0;
-
+    
 #ifdef USE_EGL
+    eglQuerySurface(egl_display, egl_surface, EGL_WIDTH, &window->width);
+    eglQuerySurface(egl_display, egl_surface, EGL_HEIGHT, &window->height);
     w = window->width;
     h = window->height;
 
 #elif defined USE_GLFW
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
-    w = (window->width != 0) ? window->width : 7 * w / 10;
-    h = (window->height != 0) ? window->height : 7 * h / 10;
+    window->width = (window->width != 0) ? window->width : w;
+    window->height = (window->height != 0) ? window->height : h;
 
 #endif
 
@@ -459,7 +461,7 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
         GLFW_OPENGL_CORE_PROFILE
         );*/
     //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #elif defined USE_EGL
 #endif
 
@@ -503,12 +505,12 @@ void FLYDISPLAY_SwapAllBuffers()
 	FLYRENDER_ViewportSizeCallback(fly_windows[0]->width, fly_windows[0]->height);
 #endif
 
-#ifdef USE_GLFW
-        glfwSwapBuffers(glfw_windows[0]);
-#endif
-    //for(int i = 0; i < fly_windows.size(); ++i)
-    {        
 
+    for(int i = 0; i < fly_windows.size(); ++i)
+    {        
+#ifdef USE_GLFW
+        glfwSwapBuffers(glfw_windows[i]);
+#endif
     }
 }
 
