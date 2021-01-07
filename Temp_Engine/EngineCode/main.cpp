@@ -19,9 +19,10 @@ const char* vertexShaderSource = "#version 330 core\n"
 "}\0";
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
+"uniform vec4 ourColor;"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   FragColor = ourColor;\n"
 "}\n\0";
 #else
 const char* vertexShaderSource = "#version 320 es\n"
@@ -120,28 +121,26 @@ int main()
         0, 1, 3,
         1, 2, 3        
     };
-    SET_FLAG(mesh.buffers[0]->buffer_structure, FLYBUFFER_HAS_INDICES);
+    SET_FLAG(mesh.buffers[0]->layout, FLYSHADER_LAYOUT_HAS_INDICES);
     FLYRENDER_BufferArray(&mesh);
 
-    FLY_Shader v_shader;
-    v_shader.source = vertexShaderSource;
-    v_shader.type = FLYSHADER_VERTEX;
-    FLY_Shader f_shader;
-    f_shader.source = fragmentShaderSource;
-    f_shader.type = FLYSHADER_FRAGMENT;
-    FLYRENDER_CreateShader(&v_shader);
-    FLYRENDER_CreateShader(&f_shader);
-    FLYRENDER_CompileShader(&v_shader);
-    FLYRENDER_CompileShader(&f_shader);
+    FLY_Shader* v_shader = FLYSHADER_Create(FLYSHADER_VERTEX, vertexShaderSource);
+    FLY_Shader* f_shader = FLYSHADER_Create(FLYSHADER_FRAGMENT, fragmentShaderSource);
+    v_shader->Compile();
+    f_shader->Compile();
 
-    FLY_Program prog;
-    FLYRENDER_CreateShaderProgram(&prog);
-    FLY_Shader* shaders[] = {&v_shader, &f_shader};
-    FLYRENDER_AttachMultipleShadersToProgram(2, shaders, &prog);
-    FLYRENDER_LinkShaderProgram(&prog);
+    FLY_Program* prog = FLYSHADER_CreateProgram(FLYSHADER_LAYOUT_HAS_INDICES);
+    prog->AttachShader(&v_shader);
+    prog->AttachShader(&f_shader);
+    prog->Link();
+    prog->EnableAttributes();
 
-    SET_FLAG(prog.program_structure, FLYBUFFER_HAS_INDICES);
-    FLYRENDER_ProgramEnableAttributes(&prog);
+    FLY_Uniform* ourColor = new FLY_Uniform();
+    ourColor->name = "ourColor";
+    prog->uniform.push_back(ourColor);
+    prog->SetupUniformLocations();
+
+    // Setup the uniforms
 
     // Update Loop
     FLY_Timer t;
@@ -152,7 +151,12 @@ int main()
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLYRENDER_Clear(NULL, &col);        
         
-        FLYRENDER_TestRender(prog, mesh);
+        prog->Prepare();
+        float time_val = t.ReadMilliSec()/1000.;
+        float green = sin(time_val) + .5f;
+        int v_color_loc = prog->GetUniformLocation("ourColor");
+        glUniform4f(v_color_loc, 0.f, green, 0.f, 1.f);
+        prog->Draw(mesh.buffers[0]->attribute_object, mesh.buffers[0]->num_index);
 
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);
@@ -198,6 +202,10 @@ int main()
         }
         
         
+    }
+
+    {
+        delete prog;
     }
 
     //  Engine CleanUp

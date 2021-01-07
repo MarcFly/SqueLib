@@ -302,15 +302,16 @@ FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL
 FL_API const char* FLYRENDER_GetGLSLVer();
 
 
-enum FLY_BufferStructure
+enum FLYSHADER_Layout
 {
-	FLYBUFFER_NONE = 0, // We Assume that EVERY Mesh has vertices, if incorrect later, well crap
-	FLYBUFFER_HAS_INDICES = BITSET1,
-	FLYBUFFER_HAS_NORMALS = BITSET2,
-	FLYBUFFER_HAS_VERT_COLOR = BITSET3,
-	FLYBUFFER_HAS_UV = BITSET4,
-	FLYBUFFER_HAS_TANGET = BITSET5,
-	FLYBUFFER_HAS_BITANGENT = BITSET6,
+	FLYSHADER_LAYOUT_NONE = 0, // We Assume that EVERY Mesh has vertices, if incorrect later, well crap
+	FLYSHADER_LAYOUT_HAS_INDICES = BITSET1,
+	FLYSHADER_LAYOUT_HAS_NORMALS = BITSET2,
+	FLYSHADER_LAYOUT_HAS_VERT_COLOR = BITSET3,
+	FLYSHADER_LAYOUT_HAS_UV = BITSET4,
+	FLYSHADER_LAYOUT_HAS_TANGET = BITSET5,
+	FLYSHADER_LAYOUT_HAS_BITANGENT = BITSET6,
+	FLYSHADER_LAYOUT_VERT_SIZE_2 = BITSET7,
 
 	FLYBUFFER_MAX = BITSET16
 };
@@ -319,7 +320,7 @@ enum FLY_BufferStructure
 typedef struct FLY_Buffer
 {
 	
-	uint16 buffer_structure = NULL;
+	uint16 layout = NULL;
 	
 	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
 
@@ -340,7 +341,15 @@ typedef struct FLY_Mesh
 	uint32* ids = nullptr;
 	FLY_Buffer** buffers = nullptr;
 } FLY_Mesh;
-// For now let's use strings as a shader
+
+FL_API void FLYRENDER_GenBuffer(FLY_Mesh* fly_mesh, uint16 num_buffers);
+FL_API void FLYRENDER_BufferArray(FLY_Mesh* fly_mesh);
+FL_API void FLYRENDER_SetAttributesForBuffer(FLY_Buffer* fly_buffer);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADERS ///////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum FLY_ShaderTypes
 {
 	FLYSHADER_UNKNOWN = -1,
@@ -351,37 +360,68 @@ enum FLY_ShaderTypes
 
 };
 
-FL_API void FLYRENDER_GenBuffer(FLY_Mesh* fly_mesh, uint16 num_buffers);
-FL_API void FLYRENDER_BufferArray(FLY_Mesh* fly_mesh);
-FL_API void FLYRENDER_SetAttributesForBuffer(FLY_Buffer* fly_buffer);
 typedef struct FLY_Shader
 {
 	uint32 id = UINT32_MAX;
 	int type;
 	const char* source;
+
+	// Shader Usage Functions
+	FL_API void Compile();
+
+	// CleanUp
+	//FL_API void CleanUp();
+	//FL_API ~FLY_Shader() { CleanUp; }
 } FLY_Shader;
 
-FL_API void FLYRENDER_CreateShader(FLY_Shader* fly_shader);
-FL_API void FLYRENDER_CompileShader(FLY_Shader* fly_shader);
-FL_API void FLYRENDER_CheckShaderLog(FLY_Shader* fly_shader);
+FL_API FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string = false);
+FL_API void FLYSHADER_CheckCompileLog(FLY_Shader* fly_shader);
 
+typedef struct FLY_Uniform
+{
+	uint32 id;
+	const char* name;
+} FLY_Uniform;
+
+#include <vector>
 typedef struct FLY_Program
 {
 	uint32 id = UINT32_MAX;
-	uint16 program_structure;
-	uint16 num_shaders = 0;
-	FLY_Shader** shaders = nullptr;
+	uint16 layout;
+	//uint16 num_shaders = 0;
+	FLY_Shader* vertex_s = nullptr;
+	FLY_Shader* fragment_s = nullptr;
+	std::vector<FLY_Uniform*> uniform;
+	
+	// Flow/Helper Functions
+	FL_API void CompileShaders();
+
+	// Program Usage Functions
+	FL_API void AttachShader(FLY_Shader** fly_shader); // Obtains ownership of the shader 
+	FL_API void Link();
+	FL_API void EnableAttributes();
+	FL_API void SetupUniformLocations();
+	FL_API uint32 GetUniformLocation(const char* name);
+	FL_API void Prepare();
+	FL_API void Draw(uint32 attribute_object, uint32 num_index = 0);
+	
+	// CleanUp
+	FL_API void CleanUp();
+	FL_API ~FLY_Program();
+	
+
+	
 } FLY_Program;
+
 
 // I will send the hwole pointer because i don't know how other libs will try to access data
 // OpenGL marks by ids and it would be better to just sent the id, but other may differ and require more
-FL_API void FLYRENDER_CreateShaderProgram(FLY_Program* fly_program);
-FL_API void FLYRENDER_AttachShaderToProgram(FLY_Shader* fly_shader, FLY_Program* fly_program);
-FL_API void FLYRENDER_AttachMultipleShadersToProgram(uint16 num_shaders, FLY_Shader** fly_shaders, FLY_Program* fly_program);
-FL_API void FLYRENDER_LinkShaderProgram(FLY_Program* fly_program);
+FL_API FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags);
 FL_API void FLYRENDER_CheckProgramLog(FLY_Program* fly_program);
-FL_API void FLYRENDER_ProgramEnableAttributes(FLY_Program* fly_program);
+
+// Debugging Functions
 
 FL_API void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh);
 FL_API void GetGLError();
+
 #endif // _FLY_LIB_
