@@ -174,6 +174,7 @@ void FLY_Program::SetupUniformLocations()
     }
 }
 
+#include <cstring>
 uint32 FLY_Program::GetUniformLocation(const char* name)
 {
     int size = uniform.size();

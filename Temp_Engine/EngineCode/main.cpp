@@ -35,9 +35,10 @@ const char* vertexShaderSource = "#version 320 es\n"
 const char* fragmentShaderSource = "#version 320 es\n"
 "precision mediump float;"
 "out vec4 FragColor;\n"
+"uniform vec4 ourColor;"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   FragColor = ourColor;\n"
 "}\n\0";
 #endif
 
@@ -49,6 +50,8 @@ enum main_states
 	MAIN_FINISH,
 	MAIN_EXIT
 };
+
+#include <cmath>
 
 int main()
 {
@@ -190,7 +193,7 @@ int main()
 
 #ifdef USE_OPENGL
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif*/
+#endif
         FLYDISPLAY_SwapAllBuffers();
         
 
