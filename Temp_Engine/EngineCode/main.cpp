@@ -10,6 +10,36 @@
 #include <imgui_impl_android.h>
 #endif
 
+#ifndef ANDROID
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec3 aPos;\n"
+"void main()\n"
+"{\n"
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"}\0";
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\n\0";
+#else
+const char* vertexShaderSource = "#version 320 es\n"
+"precision mediump float;"
+"in vec3 aPos;\n"
+"void main()\n"
+"{\n"
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"}\0";
+const char* fragmentShaderSource = "#version 320 es\n"
+"precision mediump float;"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\n\0";
+#endif
+
 #include <glad/glad.h>
 enum main_states
 {
@@ -38,7 +68,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(FLYDISPLAY_RetrieveMainGLFWwindow(), true);
     FLYLOG(FLY_LogType::LT_INFO, "GLAD init for ImGui...");
     gladLoadGL();
-    const char* glsl = "#version 150";
+    const char* glsl = "#version 330";
     FLYLOG(FLY_LogType::LT_INFO, "OpenGL3 Init for ImGui...");
     ImGui_ImplOpenGL3_Init(FLYRENDER_GetGLSLVer());
 #elif defined USE_EGL
@@ -62,15 +92,70 @@ int main()
         else FLYLOG(FLY_LogType::LT_WARNING, "Error Initializing Engine...");
     }
 
+
+// Testing Info for Render Pipeline Testing
+    //TestHardCode();
+
+    FLY_Mesh mesh;
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f, // left  
+         0.5f, -0.5f, 0.0f, // right 
+         0.0f,  0.5f, 0.0f  // top   
+    };
+
+    GLenum err;
+
+    FLYRENDER_GenBuffer(&mesh, 1);
+    mesh.buffers[0]->verts = new float[12]{
+         0.5f,  0.5f, 0.0f, // left  
+         0.5f, -0.5f, 0.0f, // right 
+        -0.5f, -0.5f, 0.0f,  // top
+        -0.5f,  0.5f, 0.0f
+    };
+    mesh.buffers[0]->num_verts = 4;
+    mesh.buffers[0]->vert_size = 3;
+
+    mesh.buffers[0]->num_index = 6;
+    mesh.buffers[0]->indices = new uint32[6]{
+        0, 1, 3,
+        1, 2, 3        
+    };
+    SET_FLAG(mesh.buffers[0]->buffer_structure, FLYBUFFER_HAS_INDICES);
+    FLYRENDER_BufferArray(&mesh);
+
+    FLY_Shader v_shader;
+    v_shader.source = vertexShaderSource;
+    v_shader.type = FLYSHADER_VERTEX;
+    FLY_Shader f_shader;
+    f_shader.source = fragmentShaderSource;
+    f_shader.type = FLYSHADER_FRAGMENT;
+    FLYRENDER_CreateShader(&v_shader);
+    FLYRENDER_CreateShader(&f_shader);
+    FLYRENDER_CompileShader(&v_shader);
+    FLYRENDER_CompileShader(&f_shader);
+
+    FLY_Program prog;
+    FLYRENDER_CreateShaderProgram(&prog);
+    FLY_Shader* shaders[] = {&v_shader, &f_shader};
+    FLYRENDER_AttachMultipleShadersToProgram(2, shaders, &prog);
+    FLYRENDER_LinkShaderProgram(&prog);
+
+    SET_FLAG(prog.program_structure, FLYBUFFER_HAS_INDICES);
+    FLYRENDER_ProgramEnableAttributes(&prog);
+
     // Update Loop
     FLY_Timer t;
     t.Start();
     FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {
+        ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
+        FLYRENDER_Clear(NULL, &col);        
+        
+        FLYRENDER_TestRender(prog, mesh);
+
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);
-
 
         #ifdef USE_GLFW
         ImGui_ImplOpenGL3_NewFrame();
@@ -95,21 +180,22 @@ int main()
         // Update all modules in specific order
         
         // Check for main window for closure, if main window is set to close, close everything
-        if(FLYDISPLAY_ShouldWindowClose(0))
-        {
-            FLYLOG(FLY_LogType::LT_INFO, "Checked Window to Close");
-            state = MAIN_FINISH;
-        }
-        ColorRGBA col = ColorRGBA(.1,.3,.1,1.);
+        
 
         ImGui::Render();
 
 #ifdef USE_OPENGL
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif
+#endif*/
         FLYDISPLAY_SwapAllBuffers();
-        FLYRENDER_Clear(NULL, &col);
-        FLYINPUT_Process(0);      
+        
+
+        FLYINPUT_Process(0);
+        if (FLYDISPLAY_ShouldWindowClose(0))
+        {
+            FLYLOG(FLY_LogType::LT_INFO, "Checked Window to Close");
+            state = MAIN_FINISH;
+        }
         
         
     }

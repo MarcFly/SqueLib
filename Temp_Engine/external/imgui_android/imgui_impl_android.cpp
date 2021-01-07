@@ -358,7 +358,7 @@ void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 	bool no_button_active;
 	for(int i = 0; i < IM_ARRAYSIZE(fly_MousePressed); ++i)
 	{
-		FLYINPUT_ACTIONS state = FLYINPUT_GetMouseButton(i);
+		FLYINPUT_Actions state = FLYINPUT_GetMouseButton(i);
 		fly_MousePressed_last[i] = fly_MousePressed[i];
 		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE || state == FLY_ACTION_UNKNOWN);
 		no_button_active = (no_button_active == true && fly_MousePressed[i] == false);

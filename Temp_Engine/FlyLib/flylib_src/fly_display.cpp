@@ -122,7 +122,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
     init_window->title = title;
     init_window->width = w;
     init_window->height = h;
-    init_window->flags |= flags;
+    SET_FLAG(init_window->flags,flags);
     fly_windows.push_back(init_window);
 
 FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
@@ -242,7 +242,7 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
 
     if(!FLYDISPLAY_OpenWindow(init_window)) return false;
     FLYLOG(FLY_LogType::LT_INFO, "Opened main GLFW window!");
-
+    FLYDISPLAY_MakeContextMain(0);
     FLYDISPLAY_SetVSYNC(1); // Swap Interval
 #endif
     
@@ -308,6 +308,15 @@ int32 FLYDISPLAY_GetDPIDensity(uint16 window)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h)
 {
+    if(window >= fly_windows.size()) return;
+
+    fly_windows[window]->width = w;
+    fly_windows[window]->height = h;
+#ifdef USE_GLFW
+    //glfwSetWindowSize(glfw_windows[window], w, h);
+#elif defined USE_EGL
+
+#endif
 
 }
 
@@ -333,7 +342,7 @@ void FLYDISPLAY_GetAmountWindows(uint16* windows)
 void FLYDISPLAY_SetWindowClose(uint16 window)
 {
     if(window < fly_windows.size())
-        fly_windows[window]->flags |= FLYWINDOW_TO_CLOSE;
+        SET_FLAG(fly_windows[window]->flags, FLYWINDOW_TO_CLOSE);
 }
 
 bool FLYDISPLAY_ShouldWindowClose(uint16 window)
@@ -430,15 +439,17 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     }
 
     int x=0,y=0,w=0,h=0;
-
+    
 #ifdef USE_EGL
-    w = window->width;
-    h = window->height;
+    eglQuerySurface(egl_display, egl_surface, EGL_WIDTH, &w);
+    eglQuerySurface(egl_display, egl_surface, EGL_HEIGHT, &h);
+    window->width = w;
+    window->height = h;
 
 #elif defined USE_GLFW
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
-    w = (window->width != 0) ? window->width : 7 * w / 10;
-    h = (window->height != 0) ? window->height : 7 * h / 10;
+    window->width = (window->width != 0) ? window->width : w;
+    window->height = (window->height != 0) ? window->height : h;
 
 #endif
 
@@ -450,7 +461,7 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
         GLFW_OPENGL_CORE_PROFILE
         );
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #elif defined USE_EGL
 #endif
 
@@ -494,12 +505,12 @@ void FLYDISPLAY_SwapAllBuffers()
 	FLYRENDER_ViewportSizeCallback(fly_windows[0]->width, fly_windows[0]->height);
 #endif
 
-#ifdef USE_GLFW
-        glfwSwapBuffers(glfw_windows[0]);
-#endif
-    //for(int i = 0; i < fly_windows.size(); ++i)
-    {        
 
+    for(int i = 0; i < fly_windows.size(); ++i)
+    {        
+#ifdef USE_GLFW
+        glfwSwapBuffers(glfw_windows[i]);
+#endif
     }
 }
 
@@ -519,6 +530,7 @@ void FLYDISPLAY_MakeContextMain(uint16 window)
         FLYLOG(FLY_LogType::LT_WARNING, "Invalid context!");
         return;
     }
+    main_window_context = 0;
 #ifdef USE_EGL
 #elif defined USE_GLFW
     glfwMakeContextCurrent(glfw_windows[window]);

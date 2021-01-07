@@ -57,6 +57,12 @@ enum FLY_BitFlags
 }; // Enums are hard truncated to 32bit by default, just does not throw eror in MSVC
 // To get 64bit you have to define the size (enum MyEnum : <integer_type>) but I can' make it work
 
+#define SET_FLAG(n, f) ((n) |= (f)) 
+#define CLR_FLAG(n, f) ((n) &= ~(f))
+#define APPLY_MASK(n, f) ((n) &= (f))
+#define TGL_FLAG(n, f) ((n) ^= (f)) 
+#define CHK_FLAG(n, f) (((n) & (f)) > 0)
+
 typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef short int16;
@@ -79,6 +85,7 @@ typedef struct float2 { float x, y;} float2;
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <cstdarg>
+#include <cstddef>
 
 #define LOGSIZE 512
 typedef enum FLY_LogType
@@ -143,8 +150,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Flag setting and unsettign using |=FLAG|FLAG and &=(~FLAG | ~FLAG | ~FLAG |...)
-typedef uint16_t FLY_WindowFlags; // -> enum FLY_WindowFlags_
-enum FLY_WindowFlags_
+enum FLY_WindowFlags
 {
 	FLYWINDOW_NOT_RESIZABLE = BITSET1,
 	FLYWINDOW_NOT_DECORATED = BITSET2,
@@ -158,7 +164,7 @@ typedef struct FLY_Window
 {
 	const char* title = "";
 	uint16 width=0, height=0;
-	FLY_WindowFlags flags;
+	uint16 flags;
 	int mouse_in = -1;
 } FLY_Window;
 
@@ -250,7 +256,7 @@ enum FLY_KeyboardKeys
 #define GESTURE_REFRESH 10 // in ms
 #define MAX_MIDPOINTS 10
 
-enum FLYINPUT_ACTIONS
+enum FLYINPUT_Actions
 {
 	FLY_ACTION_UNKNOWN = -1,
 	// Button States
@@ -272,12 +278,13 @@ enum FLYINPUT_ACTIONS
 	FLY_ACTION_MAX
 };
 
-FL_API void FLYINPUT_Init(uint16 window);
+FL_API bool FLYINPUT_Init(uint16 window);
+FL_API bool FLYINPUT_Close();
 FL_API void FLYINPUT_Process(uint16 window);
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
-FL_API FLYINPUT_ACTIONS FLYINPUT_GetMouseButton(int button);
+FL_API FLYINPUT_Actions FLYINPUT_GetMouseButton(int button);
 FL_API void FLYINPUT_GetMousePos(float* x, float* y);
-FL_API FLYINPUT_ACTIONS FLYINPUT_EvalGesture();
+FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,8 +297,91 @@ typedef struct ColorRGBA {
 
 FL_API void FLYRENDER_ViewportSizeCallback(int width, int height);
 FL_API bool FLYRENDER_Init();
+FL_API void FLYRENDER_Close();
 FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();
-FL_API void ForceLoadGL();
 
+
+enum FLY_BufferStructure
+{
+	FLYBUFFER_NONE = 0, // We Assume that EVERY Mesh has vertices, if incorrect later, well crap
+	FLYBUFFER_HAS_INDICES = BITSET1,
+	FLYBUFFER_HAS_NORMALS = BITSET2,
+	FLYBUFFER_HAS_VERT_COLOR = BITSET3,
+	FLYBUFFER_HAS_UV = BITSET4,
+	FLYBUFFER_HAS_TANGET = BITSET5,
+	FLYBUFFER_HAS_BITANGENT = BITSET6,
+
+	FLYBUFFER_MAX = BITSET16
+};
+
+// Render Pipeline
+typedef struct FLY_Buffer
+{
+	
+	uint16 buffer_structure = NULL;
+	
+	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
+
+	uint32 vert_id = UINT32_MAX;
+	uint16 num_verts = 0;
+	uint16 vert_size = 0;
+	float* verts = nullptr;
+
+	uint32 index_id = UINT32_MAX;
+	uint16 num_index = 0;
+	uint32* indices = nullptr;
+
+	// add other parts of the buffer
+} FLY_Buffer;
+typedef struct FLY_Mesh
+{
+	uint16 num_ids = UINT32_MAX;
+	uint32* ids = nullptr;
+	FLY_Buffer** buffers = nullptr;
+} FLY_Mesh;
+// For now let's use strings as a shader
+enum FLY_ShaderTypes
+{
+	FLYSHADER_UNKNOWN = -1,
+	FLYSHADER_VERTEX,
+	FLYSHADER_FRAGMENT,
+
+	FLYSHADER_MAX
+
+};
+
+FL_API void FLYRENDER_GenBuffer(FLY_Mesh* fly_mesh, uint16 num_buffers);
+FL_API void FLYRENDER_BufferArray(FLY_Mesh* fly_mesh);
+FL_API void FLYRENDER_SetAttributesForBuffer(FLY_Buffer* fly_buffer);
+typedef struct FLY_Shader
+{
+	uint32 id = UINT32_MAX;
+	int type;
+	const char* source;
+} FLY_Shader;
+
+FL_API void FLYRENDER_CreateShader(FLY_Shader* fly_shader);
+FL_API void FLYRENDER_CompileShader(FLY_Shader* fly_shader);
+FL_API void FLYRENDER_CheckShaderLog(FLY_Shader* fly_shader);
+
+typedef struct FLY_Program
+{
+	uint32 id = UINT32_MAX;
+	uint16 program_structure;
+	uint16 num_shaders = 0;
+	FLY_Shader** shaders = nullptr;
+} FLY_Program;
+
+// I will send the hwole pointer because i don't know how other libs will try to access data
+// OpenGL marks by ids and it would be better to just sent the id, but other may differ and require more
+FL_API void FLYRENDER_CreateShaderProgram(FLY_Program* fly_program);
+FL_API void FLYRENDER_AttachShaderToProgram(FLY_Shader* fly_shader, FLY_Program* fly_program);
+FL_API void FLYRENDER_AttachMultipleShadersToProgram(uint16 num_shaders, FLY_Shader** fly_shaders, FLY_Program* fly_program);
+FL_API void FLYRENDER_LinkShaderProgram(FLY_Program* fly_program);
+FL_API void FLYRENDER_CheckProgramLog(FLY_Program* fly_program);
+FL_API void FLYRENDER_ProgramEnableAttributes(FLY_Program* fly_program);
+
+FL_API void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh);
+FL_API void GetGLError();
 #endif // _FLY_LIB_

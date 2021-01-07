@@ -121,10 +121,10 @@ typedef struct FLY_Mouse
 FLY_Mouse mouse;
 FLY_Key keyboard[MAX_KEYS];
 
-FLYINPUT_ACTIONS FLYINPUT_GetMouseButton(int button)
+FLYINPUT_Actions FLYINPUT_GetMouseButton(int button)
 {
     if(button > MAX_MOUSE_BUTTONS) return FLY_ACTION_UNKNOWN;
-    return (FLYINPUT_ACTIONS)mouse.mbuttons[button].state;
+    return (FLYINPUT_Actions)mouse.mbuttons[button].state;
 }
 
 void FLYINPUT_GetMousePos(float* x, float* y)
@@ -224,7 +224,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     int num_pointers = AMotionEvent_getPointerCount(ev);
     if (num_pointers >= MAX_POINTERS) return -1;
     int whichsource = action >> 8;
-    action &= AMOTION_EVENT_ACTION_MASK;
+    APPLY_MASK(action, AMOTION_EVENT_ACTION_MASK);
     bool motion_ended = true;
     // On Pointer 0, update mouse data for other libraries to use
     for (int i = 0; i < num_pointers; ++i)
@@ -244,7 +244,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.start_y = y;
             p.timer.Start();
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
-            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_ACTIONS::FLY_ACTION_PRESS, num_pointers);
+            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_PRESS, num_pointers);
             FLYPRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
@@ -264,7 +264,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
                     g.end_x = x;
                     g.end_y = y;
                 }
-                if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_ACTIONS::FLY_ACTION_REPEAT, num_pointers);
+                if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_REPEAT, num_pointers);
                 FLYPRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             }
             break;
@@ -275,7 +275,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.timer.Stop();
             p.timer.Kill();
             FLYPRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
-            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_ACTIONS::FLY_ACTION_RELEASE, num_pointers);
+            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_RELEASE, num_pointers);
             break;
         }
         if(motion_ended == true) motion_ended = !p.active;
@@ -392,8 +392,9 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
 
 
     
-void FLYINPUT_Init(uint16 window)
+bool FLYINPUT_Init(uint16 window)
 {
+    bool ret = true;
 #ifdef ANDROID
 #elif defined USE_GLFW
     glfwSetKeyCallback(glfw_windows[window], GLFW_KeyCallback);
@@ -402,8 +403,16 @@ void FLYINPUT_Init(uint16 window)
     glfwSetMouseButtonCallback(glfw_windows[window], GLFW_MouseButtonCallback);
     glfwSetScrollCallback(glfw_windows[window], GLFW_MouseScrollCallback);
 #endif
+
+    return ret;
 }
 
+bool FLYINPUT_Close()
+{
+    bool ret = true;
+    
+    return ret;
+}
 
 
 void FLYINPUT_Process(uint16 window)
@@ -428,7 +437,7 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 {
 #ifdef ANDROID
     jint lflags = 0;
-    FLY_ConsolePrint(LT_INFO, "Testing Crash");
+    
     // Get Java Environment
     JNIEnv * env = 0;
 	JNIEnv ** env_ptr = &env;
@@ -478,7 +487,7 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 #endif
 }
 
-FLYINPUT_ACTIONS FLYINPUT_DetectGesture(FLY_Pointer& p)
+FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p)
 {
     // Evaluate what the pointer has done during the time it was tracked
     int16 delta_x = p.gesture.end_x - p.gesture.start_x;
@@ -495,24 +504,24 @@ FLYINPUT_ACTIONS FLYINPUT_DetectGesture(FLY_Pointer& p)
     // Tap Gesture
     if(time <= GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
     {
-        return FLYINPUT_ACTIONS::FLY_ACTION_TAP;
+        return FLYINPUT_Actions::FLY_ACTION_TAP;
     }
     // Swipe Gesture
     else if(time > GESTURE_REFRESH && time <= 3*GESTURE_REFRESH)
     {
         if(abs_delta_x > abs_delta_y)
-            return (FLYINPUT_ACTIONS)(FLY_ACTION_SWIPE_LEFT+(int)(delta_x > 0)); // Swipe Horizontal
+            return (FLYINPUT_Actions)(FLY_ACTION_SWIPE_LEFT+(int)(delta_x > 0)); // Swipe Horizontal
         else
-            return (FLYINPUT_ACTIONS)(FLY_ACTION_SWIPE_UP+(int)(delta_y < 0));  // Swipe Vertical
+            return (FLYINPUT_Actions)(FLY_ACTION_SWIPE_UP+(int)(delta_y < 0));  // Swipe Vertical
     }
 
-    return FLYINPUT_ACTIONS::FLY_ACTION_UNKNOWN;
+    return FLYINPUT_Actions::FLY_ACTION_UNKNOWN;
 }
 
-FLYINPUT_ACTIONS FLYINPUT_EvalGesture()
+FLYINPUT_Actions FLYINPUT_EvalGesture()
 {
     int num_pointers = 0;
-    FLYINPUT_ACTIONS actions[MAX_POINTERS];
+    FLYINPUT_Actions actions[MAX_POINTERS];
     for(int i = 0; i < MAX_POINTERS; ++i) 
     {
         if(fly_pointers[i].id == INT32_MAX || !fly_pointers[i].gesture.timer.IsActive()) 
@@ -523,5 +532,5 @@ FLYINPUT_ACTIONS FLYINPUT_EvalGesture()
 
     ResetPointers();
 
-    return FLYINPUT_ACTIONS::FLY_ACTION_UNKNOWN;
+    return FLYINPUT_Actions::FLY_ACTION_UNKNOWN;
 }
