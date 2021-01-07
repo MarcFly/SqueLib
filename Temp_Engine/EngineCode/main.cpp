@@ -186,7 +186,7 @@ int main()
 
 #ifdef USE_OPENGL
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif*/
+#endif
         FLYDISPLAY_SwapAllBuffers();
         
 
@@ -216,6 +216,15 @@ int main()
     {
         FLYLOG(FLY_LogType::LT_INFO, "Finishing Executing Engine...");
         // Close something that is not part of the engine as a module
+
+        FLYLOG(LT_INFO, "ImGui::Shutdown()");
+#ifdef USE_EGL
+        ImGui_ImplAndroidGLES2_Shutdown();
+#elif defined(USE_GLFW)
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+#endif
+        //ImGui::Shutdown(imgui_ctx);
 
         FLYLOG(FLY_LogType::LT_INFO, "Closing Helpers...");
         FLYLIB_Close();

@@ -317,6 +317,26 @@ bool ImGui_ImplAndroidGLES2_Init()
 {	
 	ImGuiIO& io = ImGui::GetIO();
 	
+	io.KeyMap[ImGuiKey_Tab] = FLY_KEY_TAB;                     // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
+	io.KeyMap[ImGuiKey_LeftArrow] = FLY_KEY_ARROW_LEFT;
+	io.KeyMap[ImGuiKey_RightArrow] = FLY_KEY_ARROW_RIGHT;
+	io.KeyMap[ImGuiKey_UpArrow] = FLY_KEY_ARROW_UP;
+	io.KeyMap[ImGuiKey_DownArrow] = FLY_KEY_ARROW_DOWN;
+	io.KeyMap[ImGuiKey_PageUp] = FLY_KEY_PAGE_UP;
+	io.KeyMap[ImGuiKey_PageDown] = FLY_KEY_PAGE_DOWN;
+	io.KeyMap[ImGuiKey_Home] = FLY_KEY_HOME;
+	io.KeyMap[ImGuiKey_End] = FLY_KEY_END;
+	io.KeyMap[ImGuiKey_Delete] = FLY_KEY_DELETE;
+	io.KeyMap[ImGuiKey_Backspace] = FLY_KEY_BACKSPACE;
+	io.KeyMap[ImGuiKey_Enter] = FLY_KEY_ENTER;
+	io.KeyMap[ImGuiKey_Escape] = FLY_KEY_ESCAPE;
+	io.KeyMap[ImGuiKey_A] = FLY_KEY_UPPER_A;
+	io.KeyMap[ImGuiKey_C] = FLY_KEY_UPPER_C;
+	io.KeyMap[ImGuiKey_V] = FLY_KEY_UPPER_V;
+	io.KeyMap[ImGuiKey_X] = FLY_KEY_UPPER_X;
+	io.KeyMap[ImGuiKey_Y] = FLY_KEY_UPPER_Y;
+	io.KeyMap[ImGuiKey_Z] = FLY_KEY_UPPER_Z;
+
 	uint16 dpi = FLYDISPLAY_GetDPIDensity();
 	uint16 w, h; FLYDISPLAY_GetSize(0, &w, &h);
 	uint16 bigger = (w > h) ? w : h;
@@ -400,4 +420,8 @@ void ImGui_ImplAndroidGLES2_NewFrame(int width, int height, unsigned int millis)
 	io.KeyShift = fly_KeyShift; 
 	io.KeyAlt = fly_KeyAlt; 
 	io.KeySuper = fly_KeySuper;
+
+	int code;
+	while((code = FLYINPUT_GetCharFromBuffer()) != -1)
+		io.AddInputCharacter(code);
 }

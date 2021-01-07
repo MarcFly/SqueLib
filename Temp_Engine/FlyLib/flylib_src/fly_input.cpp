@@ -120,6 +120,15 @@ typedef struct FLY_Mouse
 
 FLY_Mouse mouse;
 FLY_Key keyboard[MAX_KEYS];
+#include <list>
+std::list<int> char_buffer;
+
+int FLYINPUT_GetCharFromBuffer()
+{
+    int ret = (char_buffer.size() > 0) ? char_buffer.front() : -1;
+    if(ret != -1) char_buffer.pop_front();
+    return ret;
+}
 
 FLYINPUT_Actions FLYINPUT_GetMouseButton(int button)
 {
@@ -325,6 +334,8 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     int code = AKeyEvent_getKeyCode(ev);
 
     int unicode = AndroidGetUnicodeChar( code, AMotionEvent_getMetaState(ev));
+    if(AKeyEvent_getAction(ev) == 1) char_buffer.push_back(unicode);
+
     if(unicode && unicode < MAX_KEYS)
     {
         keyboard[unicode].prev_state = keyboard[unicode].state;

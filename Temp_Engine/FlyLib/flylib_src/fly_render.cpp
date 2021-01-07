@@ -345,7 +345,6 @@ void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
         glDrawElements(GL_TRIANGLES, mesh.buffers[0]->num_index, GL_UNSIGNED_INT, 0);
     else 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 }
 
 void GetGLError()
