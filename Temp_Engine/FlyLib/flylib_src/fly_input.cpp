@@ -224,7 +224,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     int num_pointers = AMotionEvent_getPointerCount(ev);
     if (num_pointers >= MAX_POINTERS) return -1;
     int whichsource = action >> 8;
-    action &= AMOTION_EVENT_ACTION_MASK;
+    APPLY_MASK(action, AMOTION_EVENT_ACTION_MASK);
     bool motion_ended = true;
     // On Pointer 0, update mouse data for other libraries to use
     for (int i = 0; i < num_pointers; ++i)

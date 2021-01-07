@@ -122,7 +122,7 @@ bool FLYDISPLAY_Init(uint16 flags, const char* title, uint16 w, uint16 h)
     init_window->title = title;
     init_window->width = w;
     init_window->height = h;
-    init_window->flags |= flags;
+    SET_FLAG(init_window->flags,flags);
     fly_windows.push_back(init_window);
 
 FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
@@ -342,7 +342,7 @@ void FLYDISPLAY_GetAmountWindows(uint16* windows)
 void FLYDISPLAY_SetWindowClose(uint16 window)
 {
     if(window < fly_windows.size())
-        fly_windows[window]->flags |= FLYWINDOW_TO_CLOSE;
+        SET_FLAG(fly_windows[window]->flags, FLYWINDOW_TO_CLOSE);
 }
 
 bool FLYDISPLAY_ShouldWindowClose(uint16 window)

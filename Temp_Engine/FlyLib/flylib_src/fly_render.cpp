@@ -106,9 +106,10 @@ void FLYRENDER_GenBuffer(FLY_Mesh* mesh, uint16 num_buffers)
         for(int i = 0; i < num_buffers; ++i)
         {
             mesh->buffers[i] = new FLY_Buffer();
-            mesh->buffers[i]->id = mesh->ids[i];
+            FLY_Buffer* buf = mesh->buffers[i];
+            buf->vert_id = mesh->ids[i];
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-            glGenVertexArrays(1, &mesh->buffers[i]->attribute_object);
+            glGenVertexArrays(1, &buf->attribute_object);
 #endif
         }
     }
@@ -122,19 +123,28 @@ void FLYRENDER_BufferArray(FLY_Mesh* mesh)
         FLYLOG(LT_WARNING, "No mesh sent to buffer data...");
         return;
     }
-    else if(mesh->buffers == nullptr || mesh->buffers[0]->id == UINT32_MAX || mesh->buffers[0]->attribute_object == UINT32_MAX)
+    else if(mesh->buffers == nullptr || mesh->buffers[0]->vert_id == UINT32_MAX || mesh->buffers[0]->attribute_object == UINT32_MAX)
     {
         FLYLOG(LT_WARNING, "Buffers have not been generated...");
         return;
     }
     for(int i = 0; i < mesh->num_ids; ++i)
     {
+        FLY_Buffer* buf = mesh->buffers[i];
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-        glBindVertexArray(mesh->buffers[i]->attribute_object);
+        glBindVertexArray(buf->attribute_object);
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh->ids[i]);
-        int buffer_size = mesh->buffers[i]->vert_size * mesh->buffers[i]->num_verts * sizeof(float);
-        glBufferData(GL_ARRAY_BUFFER, buffer_size, mesh->buffers[i]->verts, GL_STATIC_DRAW);
+        int buffer_size = buf->vert_size * buf->num_verts * sizeof(float);
+        glBufferData(GL_ARRAY_BUFFER, buffer_size, buf->verts, GL_STATIC_DRAW);
+
+        if (CHK_FLAG(buf->buffer_structure, FLYBUFFER_HAS_INDICES) || buf->num_index == 0)
+        {
+            glGenBuffers(1, &buf->index_id);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf->index_id);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32)*buf->num_index, buf->indices, GL_STATIC_DRAW);
+        }
+
 #endif
 
         FLYRENDER_SetAttributesForBuffer(mesh->buffers[i]);
@@ -144,15 +154,17 @@ void FLYRENDER_BufferArray(FLY_Mesh* mesh)
 void FLYRENDER_SetAttributesForBuffer(FLY_Buffer* buf)
 {
     int attribs = 0;
-    if(CHK_FLAG(buf->buffer_structure, FLYBUFFER_HAS_VERTEX))
-    {   
+    
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-        glVertexAttribPointer(attribs, buf->vert_size, GL_FLOAT, GL_FALSE, buf->vert_size*sizeof(float), (void*)0);
-        // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
-        // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
-        glEnableVertexAttribArray(attribs);
-        attribs++;
+    glVertexAttribPointer(attribs, buf->vert_size, GL_FLOAT, GL_FALSE, buf->vert_size*sizeof(float), (void*)0);
+    // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
+    // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
+    glEnableVertexAttribArray(attribs);
+    attribs++;
 #endif
+    
+    if (CHK_FLAG(buf->buffer_structure, FLYBUFFER_HAS_INDICES))
+    {
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -302,14 +314,21 @@ void FLYRENDER_CheckProgramLog(FLY_Program* prog)
 
 void FLYRENDER_ProgramEnableAttributes(FLY_Program* prog)
 {
-    if(CHK_FLAG(prog->program_structure, FLYBUFFER_HAS_VERTEX))
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    GLint attr = glGetAttribLocation(prog->id, "aPos");
+    glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
+    // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
+    glEnableVertexAttribArray(attr);
+#endif
+    if(CHK_FLAG(prog->program_structure, FLYBUFFER_HAS_INDICES))
     {   
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-        GLint attr = glGetAttribLocation(prog->id, "aPos");
-        glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+        /*attr = glGetAttribLocation(prog->id, "aPos");
+        glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
         // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
-        glEnableVertexAttribArray(attr);
+        glEnableVertexAttribArray(attr);*/
 #endif
     }
 }
@@ -321,8 +340,12 @@ void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
 {
     glUseProgram(prog.id);
     glBindVertexArray(mesh.buffers[0]->attribute_object);
-    FLYRENDER_ProgramEnableAttributes(&prog);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    //FLYRENDER_ProgramEnableAttributes(&prog);
+    if (CHK_FLAG(mesh.buffers[0]->buffer_structure, FLYBUFFER_HAS_INDICES)) 
+        glDrawElements(GL_TRIANGLES, mesh.buffers[0]->num_index, GL_UNSIGNED_INT, 0);
+    else 
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 }
 
 void GetGLError()

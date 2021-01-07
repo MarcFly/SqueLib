@@ -106,14 +106,21 @@ int main()
     GLenum err;
 
     FLYRENDER_GenBuffer(&mesh, 1);
-    mesh.buffers[0]->verts = new float[9]{
-        -0.5f, -0.5f, 0.0f, // left  
+    mesh.buffers[0]->verts = new float[12]{
+         0.5f,  0.5f, 0.0f, // left  
          0.5f, -0.5f, 0.0f, // right 
-         0.0f,  0.5f, 0.0f  // top   
+        -0.5f, -0.5f, 0.0f,  // top
+        -0.5f,  0.5f, 0.0f
     };
-    mesh.buffers[0]->num_verts = 3;
+    mesh.buffers[0]->num_verts = 4;
     mesh.buffers[0]->vert_size = 3;
-    mesh.buffers[0]->buffer_structure |= FLYBUFFER_HAS_VERTEX;
+
+    mesh.buffers[0]->num_index = 6;
+    mesh.buffers[0]->indices = new uint32[6]{
+        0, 1, 3,
+        1, 2, 3        
+    };
+    SET_FLAG(mesh.buffers[0]->buffer_structure, FLYBUFFER_HAS_INDICES);
     FLYRENDER_BufferArray(&mesh);
 
     FLY_Shader v_shader;
@@ -133,7 +140,7 @@ int main()
     FLYRENDER_AttachMultipleShadersToProgram(2, shaders, &prog);
     FLYRENDER_LinkShaderProgram(&prog);
 
-    SET_FLAG(prog.program_structure, FLYBUFFER_HAS_VERTEX);
+    SET_FLAG(prog.program_structure, FLYBUFFER_HAS_INDICES);
     FLYRENDER_ProgramEnableAttributes(&prog);
 
     // Update Loop

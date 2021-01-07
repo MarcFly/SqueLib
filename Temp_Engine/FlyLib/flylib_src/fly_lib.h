@@ -58,7 +58,8 @@ enum FLY_BitFlags
 // To get 64bit you have to define the size (enum MyEnum : <integer_type>) but I can' make it work
 
 #define SET_FLAG(n, f) ((n) |= (f)) 
-#define CLR_FLAG(n, f) ((n) &= ~(f)) 
+#define CLR_FLAG(n, f) ((n) &= ~(f))
+#define APPLY_MASK(n, f) ((n)) &= (f))
 #define TGL_FLAG(n, f) ((n) ^= (f)) 
 #define CHK_FLAG(n, f) (((n) & (f)) > 0)
 
@@ -303,14 +304,13 @@ FL_API const char* FLYRENDER_GetGLSLVer();
 
 enum FLY_BufferStructure
 {
-	FLYBUFFER_NONE = 0,
-	FLYBUFFER_HAS_VERTEX = BITSET1,
+	FLYBUFFER_NONE = 0, // We Assume that EVERY Mesh has vertices, if incorrect later, well crap
+	FLYBUFFER_HAS_INDICES = BITSET1,
 	FLYBUFFER_HAS_NORMALS = BITSET2,
 	FLYBUFFER_HAS_VERT_COLOR = BITSET3,
 	FLYBUFFER_HAS_UV = BITSET4,
 	FLYBUFFER_HAS_TANGET = BITSET5,
 	FLYBUFFER_HAS_BITANGENT = BITSET6,
-	FLYBUFFER_HAS_INDICES = BITSET7,
 
 	FLYBUFFER_MAX = BITSET16
 };
@@ -318,14 +318,19 @@ enum FLY_BufferStructure
 // Render Pipeline
 typedef struct FLY_Buffer
 {
-	uint32 id = UINT32_MAX;
+	
 	uint16 buffer_structure = NULL;
 	
 	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
 
+	uint32 vert_id = UINT32_MAX;
 	uint16 num_verts = 0;
 	uint16 vert_size = 0;
 	float* verts = nullptr;
+
+	uint32 index_id = UINT32_MAX;
+	uint16 num_index = 0;
+	uint32* indices = nullptr;
 
 	// add other parts of the buffer
 } FLY_Buffer;
