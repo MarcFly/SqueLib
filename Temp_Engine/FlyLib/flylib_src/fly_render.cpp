@@ -83,31 +83,83 @@ const char* FLYRENDER_GetGLSLVer()
 // BUFFER MANAGEMENT /////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYRENDER_GenBuffer(FLY_Mesh* mesh, uint16 num_buffers)
+void FLY_Buffer::SetSizes(uint16 pos, uint16 col, uint16 uv, uint16 normal)
 {
-    if(mesh == nullptr || num_buffers == 0)
-    {
-        FLYLOG(LT_WARNING, "No mesh sent to generate buffers for...");
-        return;
-    }
+    pos_size = pos;
+    color_size = col;
+    uv_size = uv;
+    normal_size = normal;
+    // tangent, bitangent,... whtever needed
+}
 
-    if(mesh->ids != nullptr) delete mesh->ids;
-    mesh->ids = new uint32[num_buffers];
-    mesh->num_ids = num_buffers;
+uint16 FLY_Buffer::GetVertSize()
+{
+    return pos_size + color_size + uv_size + normal_size /* tangent, bitangent,... whatever needed*/;
+}
+
+void FLY_Buffer::SetAttributes()
+{
+    int attribs = 0;
+
+    int vert_size = GetVertSize();
+    int offset = 0;
+    
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    // Vertex Position
+    if (pos_size > 0)
+    {
+        glVertexAttribPointer(attribs, pos_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
+        glEnableVertexAttribArray(attribs);
+        offset += pos_size;
+    }   attribs++;
+    // Vertex Color
+    if(color_size > 0)
+    {
+        glVertexAttribPointer(attribs, color_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
+        glEnableVertexAttribArray(attribs);
+        offset += color_size;
+    }   attribs++;
+    // Vertex UV
+    if(uv_size > 0)
+    {
+        glVertexAttribPointer(attribs, uv_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
+        glEnableVertexAttribArray(attribs);
+        offset += uv_size;
+    }   attribs++;
+    // Vertex Normals
+    if (normal_size > 0)
+    {
+        glVertexAttribPointer(attribs, normal_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset * sizeof(float)));
+        glEnableVertexAttribArray(attribs);
+        offset += uv_size;
+    }   attribs++;
+    // Other required data...
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESH MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FLY_Mesh::PrepareBuffers(uint16 num_buffers)
+{
+    if(ids != nullptr) delete ids;
+    ids = new uint32[num_buffers];
+    num_ids = num_buffers;
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glGenBuffers(num_buffers, mesh->ids);
+    glGenBuffers(num_buffers, ids);
 #endif
 
-    if(mesh->buffers == nullptr)
+    if(buffers == nullptr)
     {
-        mesh->buffers = new FLY_Buffer*[num_buffers];
+        buffers = new FLY_Buffer*[num_buffers];
 
         for(int i = 0; i < num_buffers; ++i)
         {
-            mesh->buffers[i] = new FLY_Buffer();
-            FLY_Buffer* buf = mesh->buffers[i];
-            buf->vert_id = mesh->ids[i];
+            buffers[i] = new FLY_Buffer();
+            FLY_Buffer* buf = buffers[i];
+            buf->vert_id = ids[i];
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
             glGenVertexArrays(1, &buf->attribute_object);
 #endif
@@ -116,29 +168,19 @@ void FLYRENDER_GenBuffer(FLY_Mesh* mesh, uint16 num_buffers)
 
 }
 
-void FLYRENDER_BufferArray(FLY_Mesh* mesh)
+void FLY_Mesh::SendToGPU()
 {
-    if(mesh == nullptr)
+    for(int i = 0; i < num_ids; ++i)
     {
-        FLYLOG(LT_WARNING, "No mesh sent to buffer data...");
-        return;
-    }
-    else if(mesh->buffers == nullptr || mesh->buffers[0]->vert_id == UINT32_MAX || mesh->buffers[0]->attribute_object == UINT32_MAX)
-    {
-        FLYLOG(LT_WARNING, "Buffers have not been generated...");
-        return;
-    }
-    for(int i = 0; i < mesh->num_ids; ++i)
-    {
-        FLY_Buffer* buf = mesh->buffers[i];
+        FLY_Buffer* buf = buffers[i];
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
         glBindVertexArray(buf->attribute_object);
 
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->ids[i]);
-        int buffer_size = buf->vert_size * buf->num_verts * sizeof(float);
+        glBindBuffer(GL_ARRAY_BUFFER, ids[i]);
+        int buffer_size = buf->GetVertSize() * buf->num_verts * sizeof(float);
         glBufferData(GL_ARRAY_BUFFER, buffer_size, buf->verts, GL_STATIC_DRAW);
 
-        if (CHK_FLAG(buf->layout, FLYSHADER_LAYOUT_HAS_INDICES) || buf->num_index == 0)
+        if (CHK_FLAG(buf->layout, FLYSHADER_LAYOUT_HAS_INDICES) || buf->num_index > 0)
         {
             glGenBuffers(1, &buf->index_id);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf->index_id);
@@ -146,35 +188,18 @@ void FLYRENDER_BufferArray(FLY_Mesh* mesh)
         }
 
 #endif
-
-        FLYRENDER_SetAttributesForBuffer(mesh->buffers[i]);
+        buffers[i]->SetAttributes();
     }
 }
 
-void FLYRENDER_SetAttributesForBuffer(FLY_Buffer* buf)
-{
-    int attribs = 0;
-    
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glVertexAttribPointer(attribs, buf->vert_size, GL_FLOAT, GL_FALSE, buf->vert_size*sizeof(float), (void*)0);
-    // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
-    // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
-    glEnableVertexAttribArray(attribs);
-    attribs++;
-#endif
-    
-    if (CHK_FLAG(buf->layout, FLYSHADER_LAYOUT_HAS_INDICES))
-    {
-    }
-}
-
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DEBUG... //////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
 {
 
-    prog.Draw(mesh.buffers[0]->attribute_object, mesh.buffers[0]->num_index);
+    prog.Draw(mesh.buffers[0]);
     FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 }
 

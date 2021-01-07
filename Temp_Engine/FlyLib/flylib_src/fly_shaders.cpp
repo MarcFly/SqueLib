@@ -139,28 +139,33 @@ void FLY_Program::Link()
 
 
 
-void FLY_Program::EnableAttributes()
+void FLY_Program::EnableAttributes(FLY_Buffer* buf)
 {
+    const int vert_size = buf->GetVertSize();
+    int offset = 0;
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    GLint attr = glGetAttribLocation(id, "aPos");
-    if(CHK_FLAG(layout, FLYSHADER_LAYOUT_VERT_SIZE_2))
-        glVertexAttribPointer(attr, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    else
-        glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
-    // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
+    // Verte Position
+    GLint attr = glGetAttribLocation(id, "v_pos");
+    glVertexAttribPointer(attr, buf->pos_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
     glEnableVertexAttribArray(attr);
+    offset += buf->pos_size;
+    // Vertex Color
+    attr = glGetAttribLocation(id, "v_col");
+    glVertexAttribPointer(attr, buf->color_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
+    glEnableVertexAttribArray(attr);
+    offset += buf->color_size;
+    // Vertex UV
+    attr = glGetAttribLocation(id, "v_uv");
+    glVertexAttribPointer(attr, buf->uv_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset * sizeof(float)));
+    glEnableVertexAttribArray(attr);
+    offset += buf->uv_size;
+    // Vertex Normals
+    attr = glGetAttribLocation(id, "v_normal");
+    glVertexAttribPointer(attr, buf->normal_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset * sizeof(float)));
+    glEnableVertexAttribArray(attr);
+    offset += buf->normal_size;
+
 #endif
-    if (CHK_FLAG(layout, FLYSHADER_LAYOUT_HAS_INDICES))
-    {
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-        /*attr = glGetAttribLocation(prog->id, "aPos");
-        glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        // Remember to check back on this function to accept other attributes, how to setup the stride, position,...
-        // Because the buffer right now just packs all vertex sent and that is that, no need to care but will be required.
-        glEnableVertexAttribArray(attr);*/
-#endif
-    }
 }
 
 void FLY_Program::SetupUniformLocations()
@@ -175,7 +180,7 @@ void FLY_Program::SetupUniformLocations()
 }
 
 #include <cstring>
-uint32 FLY_Program::GetUniformLocation(const char* name)
+uint32 FLY_Program::GetUniformLocation(const char* name) const
 {
     int size = uniform.size();
     for (int i = 0; i < size; ++i)
@@ -191,27 +196,76 @@ void FLY_Program::Prepare()
 #endif
 }
 
-void FLY_Program::Draw(uint32 attribute_object, uint32 num_index)
+void FLY_Program::Draw(FLY_Buffer* buf)
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     glUseProgram(id);
-    glBindVertexArray(attribute_object);
+    glBindVertexArray(buf->attribute_object);
 #endif
-    EnableAttributes();
-    if(CHK_FLAG(layout, FLYSHADER_LAYOUT_HAS_INDICES))
+    EnableAttributes(buf);
+    if(buf->num_index > 0)
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        glDrawElements(GL_TRIANGLES, num_index, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, buf->num_index, GL_UNSIGNED_INT, 0);
 #else
     {}
 #endif
     else
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        glDrawArrays(GL_TRIANGLES, 0, ((CHK_FLAG(layout, FLYSHADER_LAYOUT_VERT_SIZE_2)? 2 : 3)));
+        glDrawArrays(GL_TRIANGLES, 0, ((CHK_FLAG(layout, FLYSHADER_SIZE_POS_2)? 2 : 3)));
 #else
     {}
 #endif
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PROGRAM PASSING UNIFORMS //////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FLY_Program::SetBool(const char* name, bool value) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniform1i(GetUniformLocation(name), value);
+#endif
+}
+
+void FLY_Program::SetInt(const char* name, int value) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniform1i(GetUniformLocation(name), value);
+#endif
+}
+
+void FLY_Program::SetFloat(const char* name, float value) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniform1f(GetUniformLocation(name), value);
+#endif
+}
+
+void FLY_Program::SetFloat2(const char* name, float2 value) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniform2f(GetUniformLocation(name), value.x, value.y);
+#endif
+}
+
+void FLY_Program::SetFloat3(const char* name, float3 value) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniform3f(GetUniformLocation(name), value.x, value.y, value.z);
+#endif
+}
+
+void FLY_Program::SetFloat4(const char* name, float4 value) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniform4f(GetUniformLocation(name), value.x, value.y, value.z, value.w);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PROGRAM CLEANUP ///////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 FLY_Program::~FLY_Program() { CleanUp(); }
 void FLY_Program::CleanUp()
 {
