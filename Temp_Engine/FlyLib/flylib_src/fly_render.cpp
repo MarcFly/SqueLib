@@ -340,7 +340,7 @@ void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
 {
     glUseProgram(prog.id);
     glBindVertexArray(mesh.buffers[0]->attribute_object);
-    //FLYRENDER_ProgramEnableAttributes(&prog);
+    FLYRENDER_ProgramEnableAttributes(&prog);
     if (CHK_FLAG(mesh.buffers[0]->buffer_structure, FLYBUFFER_HAS_INDICES)) 
         glDrawElements(GL_TRIANGLES, mesh.buffers[0]->num_index, GL_UNSIGNED_INT, 0);
     else 
