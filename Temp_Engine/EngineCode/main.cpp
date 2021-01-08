@@ -12,31 +12,41 @@
 
 #ifndef ANDROID
 const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
+"layout (location = 0) in vec3 v_pos;\n"
+"layout (location = 3) in vec3 v_normal;\n"
+"out vec3 ourColor;\n"
 "void main()\n"
 "{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   gl_Position = vec4(v_pos.x, v_pos.y, v_pos.z, 1.0);\n"
+"   ourColor = v_normal;\n"
 "}\0";
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
+"in vec3 ourColor;\n"
+"uniform vec4 unfColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   FragColor = vec4(ourColor, 1.0)+unfColor;\n"
 "}\n\0";
 #else
 const char* vertexShaderSource = "#version 320 es\n"
 "precision mediump float;"
-"in vec3 aPos;\n"
+"in vec3 v_pos;\n"
+"in vec3 v_normal;\n"
+"out vec3 ourColor;\n"
 "void main()\n"
 "{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   gl_Position = vec4(v_pos.x, v_pos.y, v_pos.z, 1.0);\n"
+"   ourColor = v_normal;\n"
 "}\0";
 const char* fragmentShaderSource = "#version 320 es\n"
 "precision mediump float;"
 "out vec4 FragColor;\n"
+"in vec3 ourColor;\n"
+"uniform vec4 unfColor;"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   FragColor = vec4(ourColor, 1.0)+unfColor;\n"
 "}\n\0";
 #endif
 
@@ -48,6 +58,8 @@ enum main_states
 	MAIN_FINISH,
 	MAIN_EXIT
 };
+
+#include <cmath>
 
 int main()
 {
@@ -97,51 +109,42 @@ int main()
     //TestHardCode();
 
     FLY_Mesh mesh;
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left  
-         0.5f, -0.5f, 0.0f, // right 
-         0.0f,  0.5f, 0.0f  // top   
-    };
-
     GLenum err;
-
-    FLYRENDER_GenBuffer(&mesh, 1);
-    mesh.buffers[0]->verts = new float[12]{
-         0.5f,  0.5f, 0.0f, // left  
-         0.5f, -0.5f, 0.0f, // right 
-        -0.5f, -0.5f, 0.0f,  // top
-        -0.5f,  0.5f, 0.0f
+    mesh.PrepareBuffers(1);
+    mesh.buffers[0]->verts = new float[18]{
+        // positions         // colors
+         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
-    mesh.buffers[0]->num_verts = 4;
-    mesh.buffers[0]->vert_size = 3;
+    mesh.buffers[0]->num_verts = 3;
+    mesh.buffers[0]->SetSizes(3, 0, 0, 3);
 
-    mesh.buffers[0]->num_index = 6;
+    //mesh.buffers[0]->num_index = 6;
     mesh.buffers[0]->indices = new uint32[6]{
         0, 1, 3,
         1, 2, 3        
     };
-    SET_FLAG(mesh.buffers[0]->buffer_structure, FLYBUFFER_HAS_INDICES);
-    FLYRENDER_BufferArray(&mesh);
+    //SET_FLAG(mesh.buffers[0]->layout, FLYSHADER_LAYOUT_HAS_INDICES);
+    mesh.SendToGPU();
 
-    FLY_Shader v_shader;
-    v_shader.source = vertexShaderSource;
-    v_shader.type = FLYSHADER_VERTEX;
-    FLY_Shader f_shader;
-    f_shader.source = fragmentShaderSource;
-    f_shader.type = FLYSHADER_FRAGMENT;
-    FLYRENDER_CreateShader(&v_shader);
-    FLYRENDER_CreateShader(&f_shader);
-    FLYRENDER_CompileShader(&v_shader);
-    FLYRENDER_CompileShader(&f_shader);
+    FLY_Shader* v_shader = FLYSHADER_Create(FLYSHADER_VERTEX, vertexShaderSource);
+    FLY_Shader* f_shader = FLYSHADER_Create(FLYSHADER_FRAGMENT, fragmentShaderSource);
+    v_shader->Compile();
+    f_shader->Compile();
 
-    FLY_Program prog;
-    FLYRENDER_CreateShaderProgram(&prog);
-    FLY_Shader* shaders[] = {&v_shader, &f_shader};
-    FLYRENDER_AttachMultipleShadersToProgram(2, shaders, &prog);
-    FLYRENDER_LinkShaderProgram(&prog);
+    FLY_Program* prog = FLYSHADER_CreateProgram(NULL);
+    prog->AttachShader(&v_shader);
+    prog->AttachShader(&f_shader);
+    prog->Link();
+    prog->EnableAttributes(mesh.buffers[0]);
 
-    SET_FLAG(prog.program_structure, FLYBUFFER_HAS_INDICES);
-    FLYRENDER_ProgramEnableAttributes(&prog);
+    FLY_Uniform* ourColor = new FLY_Uniform();
+    ourColor->name = "unfColor";
+    prog->uniform.push_back(ourColor);
+    prog->SetupUniformLocations();
+
+    // Setup the uniforms
 
     // Update Loop
     FLY_Timer t;
@@ -152,7 +155,11 @@ int main()
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLYRENDER_Clear(NULL, &col);        
         
-        FLYRENDER_TestRender(prog, mesh);
+        prog->Prepare();
+        float time_val = t.ReadMilliSec()/1000.;
+        float green = sin(time_val) + .5f;
+        prog->SetFloat4(ourColor->name, float4(0,green,0,1));
+        prog->Draw(mesh.buffers[0]);
 
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);
@@ -198,6 +205,10 @@ int main()
         }
         
         
+    }
+
+    {
+        delete prog;
     }
 
     //  Engine CleanUp
