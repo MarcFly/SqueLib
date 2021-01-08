@@ -10,9 +10,10 @@
 static FLY_Timer    fly_Time;
 static float        fly_lastTime = 0;
 // Drawing Variables
-static ImVec2           fly_displaySize = {0,0};
+static uint16           fly_displayWidth = 0;
+static uint16           fly_displayHeight = 0;
 static uint32           fly_FontTexture = 0;
-static FLY_Texture      fly_fontTexture;
+static FLY_Texture2D    fly_fontTexture;
 static FLY_RenderState  fly_renderState;
 static FLY_Program      fly_shaderProgram;
 static FLY_Mesh         fly_dataHandle;
@@ -67,15 +68,15 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     fly_renderState.BackUp();
     
     fly_dataHandle.PrepareBuffers(1);
-    fly_dataHandle.buffers[0]->SetSizes(2, 4, 2, 0);
+    fly_dataHandle.buffers[0]->SetComponentSize(2,4,2,0);
     
 
-    FLY_Shader* vert = FLYSHADER_Create(FLYSHADER_VERTEX, vertex_shader);
+    FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, vertex_shader);
     vert->Compile();
-    FLY_Shader* frag = FLYSHADER_Create(FLYSHADER_VERTEX, fragment_shader);
+    FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, fragment_shader);
     frag->Compile();
 
-    fly_shaderProgram.Init();
+    fly_shaderProgram.Init(NULL);
     fly_shaderProgram.AttachShader(&vert);
     fly_shaderProgram.AttachShader(&frag);
 
@@ -87,7 +88,7 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
 
     fly_shaderProgram.Link();
     fly_attrTex.name = "Texture";
-    fly_attrTProjMtx.name = "ProjMtx";
+    fly_attrProjMtx.name = "ProjMtx";
     fly_shaderProgram.uniform.push_back(&fly_attrTex);
     fly_shaderProgram.uniform.push_back(&fly_attrProjMtx);
 
@@ -101,16 +102,16 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
     ImGuiIO& io = ImGui::GetIO();
 
     // Build Texture Atlas
-    fly_fontTexture.Init();
-    io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture->pixels, &fly_fontTetxure->w, &fly_fontTexture->h);
+    fly_fontTexture.Init(FLY_RGBA);
+    io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
     // Create the Texture
     fly_renderState.BackUp();
-    fly_fontTexture->SetFiltering(FLYTEXTURE_LINEAR, FLYTEXTURE_LINEAR);
-    fly_fontTexture->SendToGPU();
+    fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
+    fly_fontTexture.SendToGPU();
 
     // ImGui stores texture_id
-    io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture->id;
+    io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
 
     fly_renderState.SetUp();
 }
@@ -142,8 +143,8 @@ void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE || state == FLY_ACTION_UNKNOWN);
 		no_button_active = (no_button_active == true && fly_MousePressed[i] == false);
 	}
-	fly_MousePos = (no_button_active && no_button_active_last) ? ImVec2(-FLT_MAX, -FLT_MAX) : fly_MousePos;
-	no_button_active_last = no_button_active;
+	fly_MousePos = (no_button_active && fly_NoButtonActiveLast) ? ImVec2(-FLT_MAX, -FLT_MAX) : fly_MousePos;
+	fly_NoButtonActiveLast = no_button_active;
 }
 
 const char* ImGui_ImplFlyLib_GetClipboardText()
@@ -151,7 +152,7 @@ const char* ImGui_ImplFlyLib_GetClipboardText()
     return "TODO...";
 }
 
-void ImGui_ImplFlyLib_SetClipboardText(const char* text);
+void ImGui_ImplFlyLib_SetClipboardText(const char* text)
 {
 
 }
@@ -215,8 +216,8 @@ void ImGui_ImplFlyLib_NewFrame()
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup display size (every frame to accommodate for window resizing)
-	FLYDISPLAY_GetSize(0, fly_displaySize.x, fly_displaySize.y);
-    io.DisplaySize = fly_displaySize;
+	FLYDISPLAY_GetSize(0, &fly_displayWidth, &fly_displayHeight);
+    io.DisplaySize = ImVec2(fly_displayWidth, fly_displayHeight);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
     // Setup Time Step
