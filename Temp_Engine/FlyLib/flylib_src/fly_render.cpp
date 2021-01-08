@@ -198,7 +198,6 @@ void FLY_Mesh::SendToGPU()
 
 void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh)
 {
-
     prog.Draw(mesh.buffers[0]);
     FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 }

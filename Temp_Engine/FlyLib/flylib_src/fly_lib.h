@@ -297,6 +297,7 @@ FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
 FL_API FLYINPUT_Actions FLYINPUT_GetMouseButton(int button);
 FL_API void FLYINPUT_GetMousePos(float* x, float* y);
 FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
+FL_API int FLYINPUT_GetCharFromBuffer();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
