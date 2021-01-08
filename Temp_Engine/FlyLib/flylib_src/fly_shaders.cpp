@@ -14,21 +14,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHADERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
 
-int ReturnNativeShaderType(int type)
-{
-    switch ((FLY_ShaderTypes)type)
-    {
-    case FLYSHADER_VERTEX:
-        return GL_VERTEX_SHADER;
-    case FLYSHADER_FRAGMENT:
-        return GL_FRAGMENT_SHADER;
-    }
-
-    return -1;
-}
-#endif
+// THIS HAS TO BE REVISED
+// Probably generating Macros depending on API WILL BE WAAAY Better but more cumbersome
+// example, generate a fly_rendermacros.h and add there the macros separately, just include if necessary
+// INSTEAD of using enums and switches...
 
 FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string)
 {
@@ -47,7 +37,7 @@ FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string)
     ret->type = type;
     ret->source = data;
 #if defined (USE_OPENGL) || defined(USE_OPENGLES)
-    ret->id = glCreateShader(ReturnNativeShaderType(ret->type));
+    ret->id = glCreateShader(ret->type);
     glShaderSource(ret->id, 1, &ret->source, NULL);
 #endif
 
@@ -106,15 +96,10 @@ void FLY_Program::AttachShader(FLY_Shader** shader)
         FLYLOG(LT_WARNING, "No shader/program sent to attach...");
         return;
     }
-    switch ((*shader)->type)
-    {
-    case FLYSHADER_VERTEX:
+    if ((*shader)->type == FLY_VERTEX_SHADER)
         vertex_s = *shader;
-        break;
-    case FLYSHADER_FRAGMENT:
+    else if ((*shader)->type == FLY_FRAGMENT_SHADER)
         fragment_s = *shader;
-        break;
-    }
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     glAttachShader(id, (*shader)->id);
@@ -141,29 +126,38 @@ void FLY_Program::Link()
 
 void FLY_Program::EnableAttributes(FLY_Buffer* buf)
 {
+    if (buf == nullptr)
+    {
+        FLYLOG(LT_WARNING, "Invalid buffer, no attributes enabled");
+        return;
+    }
     const int vert_size = buf->GetVertSize();
     int offset = 0;
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     // Verte Position
+    uint16 size = buf->GetPosSize();
     GLint attr = glGetAttribLocation(id, "v_pos");
-    glVertexAttribPointer(attr, buf->pos_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
+    glVertexAttribPointer(attr, buf->pos_comp, buf->pos_var, buf->pos_norm, vert_size, (void*)(offset));
     glEnableVertexAttribArray(attr);
-    offset += buf->pos_size;
+    offset += size;
     // Vertex Color
-    attr = glGetAttribLocation(id, "v_col");
-    glVertexAttribPointer(attr, buf->color_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset*sizeof(float)));
+    size = buf->GetColorSize();
+    attr = glGetAttribLocation(id, "v_color");
+    glVertexAttribPointer(attr, buf->color_comp, buf->color_var, buf->color_norm, vert_size, (void*)(offset));
     glEnableVertexAttribArray(attr);
-    offset += buf->color_size;
+    offset += size;
     // Vertex UV
+    size = buf->GetUVSize();
     attr = glGetAttribLocation(id, "v_uv");
-    glVertexAttribPointer(attr, buf->uv_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset * sizeof(float)));
+    glVertexAttribPointer(attr, buf->uv_comp, buf->uv_var, buf->uv_norm, vert_size, (void*)(offset));
     glEnableVertexAttribArray(attr);
-    offset += buf->uv_size;
+    offset += size;
     // Vertex Normals
+    size = buf->GetNormalSize();
     attr = glGetAttribLocation(id, "v_normal");
-    glVertexAttribPointer(attr, buf->normal_size, GL_FLOAT, GL_FALSE, vert_size * sizeof(float), (void*)(offset * sizeof(float)));
+    glVertexAttribPointer(attr, buf->normal_comp, buf->normal_var, buf->normal_norm, vert_size, (void*)(offset));
     glEnableVertexAttribArray(attr);
-    offset += buf->normal_size;
+    offset += size;
 
 #endif
 }
@@ -211,7 +205,7 @@ void FLY_Program::Draw(FLY_Buffer* buf)
 #endif
     else
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        glDrawArrays(GL_TRIANGLES, 0, ((CHK_FLAG(layout, FLYSHADER_SIZE_POS_2)? 2 : 3)));
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 #else
     {}
 #endif

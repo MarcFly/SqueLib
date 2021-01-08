@@ -29,6 +29,16 @@
 #define FL_VERSION_MINOR 1
 #define FL_VERSION ((FL_VERSION_MAJOR << 16) | FL_VERSION_MINOR)
 
+#ifdef ANDROID
+#   define USE_EGL
+#	define USE_OPENGLES
+#elif defined _WIN32 || defined __linux__
+#   define USE_GLFW
+#	define USE_OPENGL
+#endif
+
+#include <fly_remap_macros.h>
+
 FL_API unsigned int FLYLIB_GetVersion(void);
 FL_API int FLYLIB_IsCompatibleDLL(void);
 
@@ -67,6 +77,7 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef short int16;
 typedef int int32;
+typedef unsigned char uchar;
 
 typedef struct float4 
 {
@@ -83,15 +94,6 @@ typedef struct float2
 	float2(float x_, float y_) : x(x_), y(y_) {}; 
 	float x, y;
 } float2;
-
-
-#ifdef ANDROID
-#   define USE_EGL
-#	define USE_OPENGLES
-#elif defined _WIN32 || defined __linux__
-#   define USE_GLFW
-#	define USE_OPENGL
-#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,12 +310,28 @@ typedef struct ColorRGBA {
 	float r, g, b, a;
 } ColorRGBA;
 
+typedef struct FLY_RenderState
+{
+	int32 last_program, last_texture, last_array_buffer, last_element_array_buffer;
+	
+	int32 blend_equation_rgb, blend_equation_alpha;
+	
+	int32 blend_func_src_rgb, blend_func_dst_rgb;
+	int32 blend_func_src_alpha, blend_func_dst_alpha;
+
+	int last_vp[4];
+
+	bool blend, cull_faces, depth_test, scissor_test;
+
+	void SetUp();
+	void BackUp();	
+};
+
 FL_API void FLYRENDER_ViewportSizeCallback(int width, int height);
 FL_API bool FLYRENDER_Init();
 FL_API void FLYRENDER_Close();
 FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();
-
 
 enum FLYSHADER_Layout
 {
@@ -337,35 +355,59 @@ enum FLYSHADER_Layout
 
 // Render Pipeline
 typedef struct FLY_Buffer
-{
-	
+{	
 	uint16 layout = NULL;
 	
 	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
 
 	uint32 vert_id = UINT32_MAX;
-	//uint16 vert_size = 0;
 	uint16 num_verts = 0;
-	float* verts = nullptr;
+	char* verts = nullptr;
 	// Size of the vertex attributes
-	uint16 pos_size		=	UINT16_MAX;
-	uint16 color_size	=	UINT16_MAX;
-	uint16 uv_size		=	UINT16_MAX;
-	uint16 normal_size	=	UINT16_MAX;
-	// tangent, bitangent,... whatever needed later on
+	int32 pos_var		= INT32_MAX;
+	int32 color_var		= INT32_MAX;
+	int32 uv_var		= INT32_MAX;
+	int32 normal_var	= INT32_MAX;
 
+	uint16 pos_comp		= 0;
+	uint16 color_comp	= 0;
+	uint16 uv_comp		= 0;
+	uint16 normal_comp	= 0;
+
+	uint16 pos_size		= 0;
+	uint16 color_size	= 0;
+	uint16 uv_size		= 0;
+	uint16 normal_size	= 0;
+
+	bool pos_norm		= false;
+	bool color_norm		= false;
+	bool uv_norm		= false;
+	bool normal_norm	= false;
+
+
+	// tangent, bitangent,... whatever needed later on
+	// this might be variable, each might not map to a float (color will be 4 values of byte, but can be 4floats instea of uchars,...
 	// Indices for the buffer
-	uint32 index_id = UINT32_MAX;
-	uint16 num_index = 0;
-	uint32* indices = nullptr;
+	uint32 index_id		= UINT32_MAX;
+	uint16 num_index	= 0;
+	uint32* indices		= nullptr;
 
 	// add other parts of the buffer
 
-	// 
-	FL_API void SetSizes(uint16 pos, uint16 col, uint16 uv, uint16 normal);
-	FL_API uint16 GetVertSize();	
+	// Usage Funcs
+	FL_API void SetVarTypes(int32 position, int32 color, int32 uv, int32 normal);
+	FL_API void SetComponentSize(uint16 position, uint16 color, uint16 uv, uint16 normal);
+	FL_API void SetToNormalize(bool position, bool color, bool uv, bool normal);
 	FL_API void SetAttributes();
+
+	FL_API uint16 GetVertSize();	
+	
+	FL_API uint16 GetPosSize() const;
+	FL_API uint16 GetColorSize() const;
+	FL_API uint16 GetUVSize() const;
+	FL_API uint16 GetNormalSize() const;
 } FLY_Buffer;
+
 typedef struct FLY_Mesh
 {
 	uint16 num_ids = UINT32_MAX;
@@ -376,24 +418,49 @@ typedef struct FLY_Mesh
 	FL_API void SendToGPU();
 } FLY_Mesh;
 
+typedef struct FLY_Texture2D
+{
+	uint32 id		= 0;
+	int32 format	= 0;
+	int w, h;
+	uchar* pixels	= nullptr;
+
+	int32 min_filter	= INT32_MAX;
+	int32 mag_filter	= INT32_MAX;
+	int32 wrap_s		= INT32_MAX;
+	int32 wrap_t		= INT32_MAX;
+
+	FL_API void Init(int32 tex_format);
+	FL_API void SetFiltering(int32 min = INT32_MAX, int32 mag = INT32_MAX, int32 wraps = INT32_MAX, int32 wrapt = INT32_MAX);
+	FL_API void SendToGPU();
+};
+
+// FLY_Texture3D??...
+typedef struct FLY_Texture3D
+{
+	uint32 id = 0;
+	int32 format = 0;
+	int w, h;
+	uchar** pixels = nullptr;
+
+	int min_filter = INT32_MAX;
+	int mag_filter = INT32_MAX;
+	int wrap_s = INT32_MAX;
+	int wrap_t = INT32_MAX;
+
+	FL_API void Init(int32 tex_format);
+	FL_API void SetFiltering(int32 min = INT32_MAX, int32 mag = INT32_MAX, int32 wraps = INT32_MAX, int32 wrapt = INT32_MAX);
+	FL_API void SendToGPU();
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHADERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum FLY_ShaderTypes
-{
-	FLYSHADER_UNKNOWN = -1,
-	FLYSHADER_VERTEX,
-	FLYSHADER_FRAGMENT,
-
-	FLYSHADER_MAX
-
-};
-
 typedef struct FLY_Shader
 {
 	uint32 id = UINT32_MAX;
-	int type;
+	int32 type;
 	const char* source;
 
 	// Shader Usage Functions
@@ -404,7 +471,7 @@ typedef struct FLY_Shader
 	//FL_API ~FLY_Shader() { CleanUp; }
 } FLY_Shader;
 
-FL_API FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string = false);
+FL_API FLY_Shader* FLYSHADER_Create(int32 type, const char* file, bool raw_string = false);
 FL_API void FLYSHADER_CheckCompileLog(FLY_Shader* fly_shader);
 
 typedef struct FLY_Uniform
@@ -423,6 +490,9 @@ typedef struct FLY_Program
 	FLY_Shader* fragment_s = nullptr;
 	std::vector<FLY_Uniform*> uniform;
 	
+	// Call before doing anything prolly
+	FL_API void Init(uint16 prog_layout);
+
 	// Flow/Helper Functions
 	FL_API void CompileShaders();
 
