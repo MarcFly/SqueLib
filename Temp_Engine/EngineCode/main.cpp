@@ -13,12 +13,12 @@
 #ifndef ANDROID
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 v_pos;\n"
-"layout (location = 3) in vec3 v_normal;\n"
+"layout (location = 1) in vec3 v_color;\n"
 "out vec3 ourColor;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(v_pos.x, v_pos.y, v_pos.z, 1.0);\n"
-"   ourColor = v_normal;\n"
+"   ourColor = v_color;\n"
 "}\0";
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
@@ -108,28 +108,32 @@ int main()
 // Testing Info for Render Pipeline Testing
     //TestHardCode();
 
-    FLY_Mesh mesh;
-    GLenum err;
-    mesh.PrepareBuffers(1);
-    mesh.buffers[0]->verts = new float[18]{
+
+    float* verts = new float[18]{
         // positions         // colors
          0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
         -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
          0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
+    FLY_Mesh mesh;
+    GLenum err;
+    mesh.PrepareBuffers(1);
+    mesh.buffers[0]->verts = (char*)verts;
     mesh.buffers[0]->num_verts = 3;
-    mesh.buffers[0]->SetSizes(3, 0, 0, 3);
+    mesh.buffers[0]->SetVarTypes(FLY_FLOAT, FLY_FLOAT, NULL, NULL);
+    mesh.buffers[0]->SetComponentSize(3, 3, 0, 0);
+    mesh.buffers[0]->SetToNormalize(false, false,false,false);
 
     //mesh.buffers[0]->num_index = 6;
-    mesh.buffers[0]->indices = new uint32[6]{
+    /*mesh.buffers[0]->indices = new uint32[6]{
         0, 1, 3,
         1, 2, 3        
-    };
+    };*/
     //SET_FLAG(mesh.buffers[0]->layout, FLYSHADER_LAYOUT_HAS_INDICES);
     mesh.SendToGPU();
 
-    FLY_Shader* v_shader = FLYSHADER_Create(FLYSHADER_VERTEX, vertexShaderSource);
-    FLY_Shader* f_shader = FLYSHADER_Create(FLYSHADER_FRAGMENT, fragmentShaderSource);
+    FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER, vertexShaderSource);
+    FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER, fragmentShaderSource);
     v_shader->Compile();
     f_shader->Compile();
 
@@ -208,6 +212,7 @@ int main()
     }
 
     {
+        delete verts;
         delete prog;
     }
 
