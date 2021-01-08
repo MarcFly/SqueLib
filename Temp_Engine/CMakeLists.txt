@@ -41,13 +41,8 @@ if(USE_IMGUI)
         # Implementation Files
         ${imgui_include}/examples/imgui_impl_opengl3.cpp
     )
-    if(ToWindows OR ToLinux OR ToDarwing OR ToMacOS OR ToDesktop)
-        list(APPEND imgui_src ${imgui_include}/examples/imgui_impl_glfw.cpp)
-    elseif(ToAndroid)
-        list(APPEND imgui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_android/imgui_impl_android.cpp)
-        set(imgui_android ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_android)
-    endif()
-    
+    set(imgui_flylib ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_flylib)
+    list(APPEND imgui_src ${imgui_flylib}/imgui_impl_flylib.cpp)    
 endif(USE_IMGUI)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
@@ -145,5 +140,5 @@ target_sources(TempEngine PUBLIC
     "${imgui_src}"
 )
 target_include_directories(TempEngine   PUBLIC
-    ${imgui_include} ${imgui_include}/examples ${imgui_android}
+    ${imgui_include} ${imgui_flylib}
 )

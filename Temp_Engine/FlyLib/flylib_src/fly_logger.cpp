@@ -143,7 +143,7 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
 
     static va_list ap;
 
-    int sizeminus = sizeof(file) + 2 + 4;
+    int sizeminus = sttr.length() + 2 + 4;
     int calc_logsize = LOGSIZE - sizeminus;
     char* tmp = new char[calc_logsize];
     va_start(ap, format);
@@ -153,7 +153,7 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
     // For now let's just not take care of logs with bigger total size than 512
     if(len > (calc_logsize)) return;
 
-    sprintf(push.log, "%s(%d): %s", file, line, tmp);
+    sprintf(push.log, "%s(%d): %s", sttr.c_str(), line, tmp);
 
     logs.push_back(PairLOG(push.type, push));
 
@@ -166,14 +166,21 @@ void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const cha
 
     static va_list ap;
 
-    int sizeminus = sizeof(file) + 2 + 4;
+    int sizeminus = sttr.length() + 2 + 4;
     int calc_logsize = LOGSIZE - sizeminus;
     char* tmp = new char[calc_logsize];
     va_start(ap, format);
     int len = vsnprintf(tmp, calc_logsize, format, ap);
     va_end(ap);
 
-    if(len > (calc_logsize)) return;
+    if (len > (calc_logsize))
+    {
+        delete tmp;
+        tmp = new char[(len-LOGSIZE)+calc_logsize];
+        va_start(ap, format);
+        vsnprintf(tmp, calc_logsize, format, ap);
+        va_end(ap);
+    };
 
     FLY_ConsolePrint((int) lt, tmp);
 

@@ -63,17 +63,18 @@ void FLY_RenderState::BackUp()
 #endif
 }
 
-// Returns the size of the main viewport/context
-void FLYRENDER_ViewportSizeCallback(int width, int height)
+void FLYRENDER_ChangeViewPortSize(int width, int height)
 {
-    glViewport(0,0, width, height);
+#if defined(USE_OPENGL) || (USE_OPENGLES)
+    glViewport(0, 0, width, height);
+#endif
 }
 
 #ifdef USE_GLFW
 #   include <GLFW/glfw3.h>
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    FLYRENDER_ViewportSizeCallback(width, height);
+    FLYRENDER_ChangeViewPortSize(width, height);
 }
 
 #endif
@@ -125,7 +126,19 @@ void FLYRENDER_Clear(int clear_flags, ColorRGBA* color)
 
 const char* FLYRENDER_GetGLSLVer()
 {
-    return "#version 330";
+#if defined(USE_OPENGL)
+    return "#version 330\n";
+#else if defined(USE_OPENGLES)
+    return "#version 320 es\nprecision mediump float;"
+#endif
+        return "#Please update this function properly, saving opengl versions and such";
+}
+
+void FLYRENDER_Scissor(int x, int y, int w, int h)
+{
+#if defined(USE_OPENL) || defined(USE_OPENGLES)
+    glScissor(x, y, w, h);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +184,11 @@ void FLY_Buffer::SetToNormalize(bool p, bool c, bool uv, bool n)
     color_norm = c;
     uv_norm = uv;
     normal_norm = n;
+}
+
+void FLY_Buffer::SetDrawMode(int32 d_m)
+{
+    draw_mode = d_m;
 }
 
 uint16 FLY_Buffer::GetPosSize() const { return pos_size * pos_comp; };
@@ -269,13 +287,13 @@ void FLY_Mesh::SendToGPU()
         glBindBuffer(GL_ARRAY_BUFFER, ids[i]);
 
         int buffer_size = buf->GetVertSize() * buf->num_verts;
-        glBufferData(GL_ARRAY_BUFFER, buffer_size, buf->verts, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, buffer_size, buf->verts, buf->draw_mode);
 
         if (CHK_FLAG(buf->layout, FLYSHADER_LAYOUT_HAS_INDICES) || buf->num_index > 0)
         {
             glGenBuffers(1, &buf->index_id);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf->index_id);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32)*buf->num_index, buf->indices, GL_STATIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32)*buf->num_index, buf->indices, buf->draw_mode);
         }
 
 #endif
@@ -321,6 +339,13 @@ void FLY_Texture2D::SendToGPU()
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     // DataType will be revised if needed, UBYTE seems quite standard...
     glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, pixels);
+#endif
+}
+
+void FLYRENDER_BindExternalTexture(int tex_type, int32 id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindTexture(tex_type, id);
 #endif
 }
 

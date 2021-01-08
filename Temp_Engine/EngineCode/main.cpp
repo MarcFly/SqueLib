@@ -1,14 +1,7 @@
 #include <iostream>
 #include <fly_lib.h>
 #include <imgui.h>
-#ifdef USE_GLFW
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#elif defined USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#include <imgui_impl_android.h>
-#endif
+#include <imgui_impl_flylib.h>
 
 #ifndef ANDROID
 const char* vertexShaderSource = "#version 330 core\n"
@@ -75,17 +68,7 @@ int main()
         ret = FLYLIB_Init(/*flags*/);
     }
     
-
-#ifdef USE_GLFW
-    ImGui_ImplGlfw_InitForOpenGL(FLYDISPLAY_RetrieveMainGLFWwindow(), true);
-    FLYLOG(FLY_LogType::LT_INFO, "GLAD init for ImGui...");
-    gladLoadGL();
-    const char* glsl = "#version 330";
-    FLYLOG(FLY_LogType::LT_INFO, "OpenGL3 Init for ImGui...");
-    ImGui_ImplOpenGL3_Init(FLYRENDER_GetGLSLVer());
-#elif defined USE_EGL
-    //gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress);
-#endif
+    ImGui_ImplFlyLib_Init();
     
     ImGui::StyleColorsDark();
     
@@ -123,6 +106,7 @@ int main()
     mesh.buffers[0]->SetVarTypes(FLY_FLOAT, FLY_FLOAT, NULL, NULL);
     mesh.buffers[0]->SetComponentSize(3, 3, 0, 0);
     mesh.buffers[0]->SetToNormalize(false, false,false,false);
+    mesh.buffers[0]->SetDrawMode(FLY_STATIC_DRAW);
 
     //mesh.buffers[0]->num_index = 6;
     /*mesh.buffers[0]->indices = new uint32[6]{
@@ -132,8 +116,8 @@ int main()
     //SET_FLAG(mesh.buffers[0]->layout, FLYSHADER_LAYOUT_HAS_INDICES);
     mesh.SendToGPU();
 
-    FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER, vertexShaderSource);
-    FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER, fragmentShaderSource);
+    FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER,1, &vertexShaderSource, true);
+    FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER,1, &fragmentShaderSource, true);
     v_shader->Compile();
     f_shader->Compile();
 
@@ -168,13 +152,7 @@ int main()
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);
 
-        #ifdef USE_GLFW
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        #elif defined USE_EGL
-        ImGui_ImplAndroidGLES2_NewFrame(w ,h, t.ReadMilliSec());
-        #endif        
-        
+        ImGui_ImplFlyLib_NewFrame();
         ImGui::NewFrame();
         
         float posx = (t.ReadMilliSec() / 100.f) -  ((int)((t.ReadMilliSec() / 100.f)/w))*w;
@@ -195,9 +173,6 @@ int main()
 
         ImGui::Render();
 
-#ifdef USE_OPENGL
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif
         FLYDISPLAY_SwapAllBuffers();
         
 
@@ -234,12 +209,7 @@ int main()
         // Close something that is not part of the engine as a module
 
         FLYLOG(LT_INFO, "ImGui::Shutdown()");
-#ifdef USE_EGL
-        ImGui_ImplAndroidGLES2_Shutdown();
-#elif defined(USE_GLFW)
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-#endif
+        ImGui_ImplFlyLib_Shutdown();
         //ImGui::Shutdown(imgui_ctx);
 
         FLYLOG(FLY_LogType::LT_INFO, "Closing Helpers...");

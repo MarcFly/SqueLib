@@ -14,6 +14,7 @@ static uint16           fly_displayWidth = 0;
 static uint16           fly_displayHeight = 0;
 static uint32           fly_FontTexture = 0;
 static FLY_Texture2D    fly_fontTexture;
+static FLY_RenderState  fly_backupState;
 static FLY_RenderState  fly_renderState;
 static FLY_Program      fly_shaderProgram;
 static FLY_Mesh         fly_dataHandle;
@@ -23,10 +24,9 @@ static FLY_Uniform      fly_attrProjMtx;
 
 // Shaders
 const char* vertex_shader =
-    "precision mediump float;\n"
     "in vec2 v_pos;\n"
-    "in vec2 v_uv;\n"
     "in vec4 v_col;\n"
+    "in vec2 v_uv;\n"    
     "out vec2 Frag_UV;\n"
     "out vec4 Frag_Color;\n"
     "uniform mat4 ProjMtx;\n"
@@ -38,7 +38,6 @@ const char* vertex_shader =
     "}\n";
 
 const char* fragment_shader =
-    "precision mediump float;\n"
     "in vec2 Frag_UV;\n"
     "in vec4 Frag_Color;\n"
     "uniform sampler2D Texture;\n"
@@ -46,6 +45,29 @@ const char* fragment_shader =
     "{\n"
     "	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV.st);\n"
     "}\n";
+
+const char* vertex_shader_core =
+"layout (location = 0) in vec2 v_pos;\n"
+"layout (location = 1) in vec4 v_col;\n"
+"layout (location = 2) in vec2 v_uv;\n"
+"out vec2 Frag_UV;\n"
+"out vec4 Frag_Color;\n"
+"uniform mat4 ProjMtx;\n"
+"void main()\n"
+"{\n"
+"	Frag_UV = v_uv;\n"
+"	Frag_Color = v_col;\n"
+"	gl_Position = ProjMtx * vec4(v_pos.xy, 0, 1);\n"
+"}\n";
+
+const char* fragment_shader_core =
+"in vec2 Frag_UV;\n"
+"in vec4 Frag_Color;\n"
+"uniform sampler2D Texture;\n"
+"void main()\n"
+"{\n"
+"	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV.st);\n"
+"}\n";
 
 // Input Variables
 static bool			fly_KeyCtrl = false;
@@ -63,17 +85,74 @@ static float		fly_MouseWheelH = 0.0f;
 // ORGANIZATION FUNCTIONS ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING
+void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    // BackUp State
+    fly_backupState.BackUp();
+    
+    // Apply new state
+    fly_renderState.SetUp();
+    float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
+    draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+
+    // Setup Ortho Projection Matrix
+    FLYRENDER_ChangeViewPortSize(io.DisplaySize.x, io.DisplaySize.y);
+    const float ortho_projection[4][4] =
+    {
+        { 2.0f / io.DisplaySize.x, 0.0f,                   0.0f, 0.0f },
+        { 0.0f,                  2.0f / -io.DisplaySize.y, 0.0f, 0.0f },
+        { 0.0f,                  0.0f,                  -1.0f, 0.0f },
+        {-1.0f,                  1.0f,                   0.0f, 1.0f },
+    };
+
+    fly_shaderProgram.Prepare();
+    fly_shaderProgram.SetInt("Texture", 0);
+    fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
+
+    for (int i = 0; i < draw_data->CmdListsCount; ++i)
+    {
+        const ImDrawList* cmd_list = draw_data->CmdLists[i];
+        const ImDrawIdx* idx_buffer_offset = 0;
+
+        fly_dataHandle.buffers[0]->verts = (char*)&cmd_list->VtxBuffer.front();
+        fly_dataHandle.buffers[0]->indices = (uint32*)&cmd_list->IdxBuffer.front();
+        fly_dataHandle.SendToGPU();
+        for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
+        {
+            if (pcmd->UserCallback)
+                pcmd->UserCallback(cmd_list, pcmd);
+            else
+            {
+                FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
+                FLYRENDER_Scissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+                fly_shaderProgram.Draw(fly_dataHandle.buffers[0]);
+            }
+            idx_buffer_offset += pcmd->ElemCount;
+        }
+    }
+
+    // Regain State
+    fly_backupState.SetUp();
+}
+
 void ImGui_ImplFlyLib_CreateShaderProgram()
 {
-    fly_renderState.BackUp();
+    // Copy State
+    fly_backupState.BackUp();
     
     fly_dataHandle.PrepareBuffers(1);
+    fly_dataHandle.buffers[0]->SetVarTypes(FLY_FLOAT, FLY_UBYTE, FLY_FLOAT, NULL);
     fly_dataHandle.buffers[0]->SetComponentSize(2,4,2,0);
-    
+    fly_dataHandle.buffers[0]->SetToNormalize(false, true, false, false);
+    fly_dataHandle.buffers[0]->SetDrawMode(FLY_STREAM_DRAW);
+    fly_dataHandle.buffers[0]->SetAttributes();
 
-    FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, vertex_shader);
+    const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader_core};
+    const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader_core };
+    FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_shader, true);
     vert->Compile();
-    FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, fragment_shader);
+    FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_shader, true);
     frag->Compile();
 
     fly_shaderProgram.Init(NULL);
@@ -87,14 +166,18 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     */
 
     fly_shaderProgram.Link();
-    fly_attrTex.name = "Texture";
-    fly_attrProjMtx.name = "ProjMtx";
-    fly_shaderProgram.uniform.push_back(&fly_attrTex);
-    fly_shaderProgram.uniform.push_back(&fly_attrProjMtx);
+    FLY_Uniform* fly_attrTex = new FLY_Uniform();
+    FLY_Uniform* fly_attrProjMtx = new FLY_Uniform();
+    fly_attrTex->name = "Texture";
+    fly_attrProjMtx->name = "ProjMtx";
+    fly_shaderProgram.uniform.push_back(fly_attrTex);
+    fly_shaderProgram.uniform.push_back(fly_attrProjMtx);
 
     fly_shaderProgram.SetupUniformLocations();
     fly_shaderProgram.EnableAttributes(fly_dataHandle.buffers[0]);
-    fly_renderState.SetUp();
+
+    // Go back to the latest State
+    fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_CreateFontsTexture()
@@ -106,14 +189,14 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
     io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
     // Create the Texture
-    fly_renderState.BackUp();
+    fly_backupState.BackUp();
     fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
     fly_fontTexture.SendToGPU();
 
     // ImGui stores texture_id
     io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
 
-    fly_renderState.SetUp();
+    fly_backupState.SetUp();
 }
 
 
@@ -135,16 +218,12 @@ void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 	fly_KeySuper = false;
 
 	// Update Mouse / Pointer / MouseButtons / ScrollWheel
-	bool no_button_active;
 	for(int i = 0; i < IM_ARRAYSIZE(fly_MousePressed); ++i)
 	{
 		FLYINPUT_Actions state = FLYINPUT_GetMouseButton(i);
 		fly_MousePressed_last[i] = fly_MousePressed[i];
 		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE || state == FLY_ACTION_UNKNOWN);
-		no_button_active = (no_button_active == true && fly_MousePressed[i] == false);
 	}
-	fly_MousePos = (no_button_active && fly_NoButtonActiveLast) ? ImVec2(-FLT_MAX, -FLT_MAX) : fly_MousePos;
-	fly_NoButtonActiveLast = no_button_active;
 }
 
 const char* ImGui_ImplFlyLib_GetClipboardText()
@@ -161,8 +240,10 @@ void ImGui_ImplFlyLib_SetClipboardText(const char* text)
 // PUBLIC USAGE FUNCTIONS ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ImGui_ImpFlyLib_Init()
+bool ImGui_ImplFlyLib_Init()
 {
+    //gladLoadGL();
+    fly_Time.Start();
     bool ret = true;
 
     ImGuiIO &io = ImGui::GetIO();
@@ -201,8 +282,18 @@ bool ImGui_ImpFlyLib_Init()
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
 	io.BackendPlatformName = "imgui_impl_flylib";
 
-    // SetRenderDrawLists Func
+    // Setup Renderer
+    fly_renderState.blend = true;
+    fly_renderState.blend_equation_rgb = fly_renderState.blend_equation_alpha = FLY_FUNC_ADD;
+    fly_renderState.blend_func_src_alpha = FLY_SRC_ALPHA;
+    fly_renderState.blend_func_dst_alpha = FLY_ONE_MINUS_SRC_ALPHA;
+    fly_renderState.cull_faces = false;
+    fly_renderState.depth_test = false;
+    fly_renderState.scissor_test = true;
+
     io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
+    ImGui_ImplFlyLib_CreateShaderProgram();
+    ImGui_ImplFlyLib_CreateFontsTexture();
     return ret;
 }
 
@@ -222,7 +313,7 @@ void ImGui_ImplFlyLib_NewFrame()
 
     // Setup Time Step
     float curr_time = (fly_Time.ReadMilliSec() / 1000.f);
-    io.DeltaTime = fly_lastTime - curr_time;
+    io.DeltaTime = curr_time - fly_lastTime;
     fly_lastTime = curr_time;
 
     // Update Mouse

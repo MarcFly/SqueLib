@@ -11,10 +11,8 @@ IMGUI_IMPL_API void ImGui_ImplFlyLib_NewFrame();    // Before ImGui NewFrame(), 
 
 // Organization Functions, they are called inside the usage functions
 // Render
-IMGUI_IMPL_API void ImGui_ImplFlyLib_CreateFontsTexture();
-IMGUI_IMPL_API void ImGui_ImplFlyLib_InitShaders();
 IMGUI_IMPL_API void ImGui_ImplFlyLib_CleanUpRender();
-IMGUI_IMPL_API void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data);
+//IMGUI_IMPL_API void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data);
 
 
 #endif

@@ -323,15 +323,18 @@ typedef struct FLY_RenderState
 
 	bool blend, cull_faces, depth_test, scissor_test;
 
-	void SetUp();
-	void BackUp();	
+	FL_API void SetUp();
+	FL_API void BackUp();
 };
 
-FL_API void FLYRENDER_ViewportSizeCallback(int width, int height);
+FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);
 FL_API bool FLYRENDER_Init();
 FL_API void FLYRENDER_Close();
 FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();
+
+// Function Passtrhough of ones I don't know
+FL_API void FLYRENDER_Scissor(int x, int y, int w, int h);
 
 enum FLYSHADER_Layout
 {
@@ -357,9 +360,9 @@ enum FLYSHADER_Layout
 typedef struct FLY_Buffer
 {	
 	uint16 layout = NULL;
-	
+	int32 draw_mode = FLY_STATIC_DRAW;
 	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
-
+	
 	uint32 vert_id = UINT32_MAX;
 	uint16 num_verts = 0;
 	char* verts = nullptr;
@@ -384,7 +387,6 @@ typedef struct FLY_Buffer
 	bool uv_norm		= false;
 	bool normal_norm	= false;
 
-
 	// tangent, bitangent,... whatever needed later on
 	// this might be variable, each might not map to a float (color will be 4 values of byte, but can be 4floats instea of uchars,...
 	// Indices for the buffer
@@ -398,6 +400,7 @@ typedef struct FLY_Buffer
 	FL_API void SetVarTypes(int32 position, int32 color, int32 uv, int32 normal);
 	FL_API void SetComponentSize(uint16 position, uint16 color, uint16 uv, uint16 normal);
 	FL_API void SetToNormalize(bool position, bool color, bool uv, bool normal);
+	FL_API void SetDrawMode(int32 draw_mode);
 	FL_API void SetAttributes();
 
 	FL_API uint16 GetVertSize();	
@@ -435,6 +438,8 @@ typedef struct FLY_Texture2D
 	FL_API void SendToGPU();
 };
 
+FL_API void FLYRENDER_BindExternalTexture(int tex_type, int32 id);
+
 // FLY_Texture3D??...
 typedef struct FLY_Texture3D
 {
@@ -461,7 +466,8 @@ typedef struct FLY_Shader
 {
 	uint32 id = UINT32_MAX;
 	int32 type;
-	const char* source;
+	uint16 lines = 0;
+	const char** source;
 
 	// Shader Usage Functions
 	FL_API void Compile();
@@ -471,7 +477,7 @@ typedef struct FLY_Shader
 	//FL_API ~FLY_Shader() { CleanUp; }
 } FLY_Shader;
 
-FL_API FLY_Shader* FLYSHADER_Create(int32 type, const char* file, bool raw_string = false);
+FL_API FLY_Shader* FLYSHADER_Create(int32 type, uint16 strs, const char** file, bool raw_string = false);
 FL_API void FLYSHADER_CheckCompileLog(FLY_Shader* fly_shader);
 
 typedef struct FLY_Uniform
@@ -513,6 +519,7 @@ typedef struct FLY_Program
 	FL_API void SetFloat3(const char* name, float3 value) const;
 	FL_API void SetFloat4(const char* name, float4 value) const;
 	// ... add a matrix/array passer...
+	FL_API void SetMatrix4(const char* name, const float* matrix, uint16 number = 1, bool transpose = false) const;
 
 	// CleanUp
 	FL_API void CleanUp();

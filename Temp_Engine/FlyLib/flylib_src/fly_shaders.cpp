@@ -20,12 +20,18 @@
 // example, generate a fly_rendermacros.h and add there the macros separately, just include if necessary
 // INSTEAD of using enums and switches...
 
-FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string)
+FLY_Shader* FLYSHADER_Create(int32 type, uint16 strs, const char** file, bool raw_string)
 {
-    const char* data = file;
-    if (!raw_string)
+    const char** data = nullptr;
+    if (raw_string)
     {
+        data = file;
         // Load File into data
+    }
+    else
+    {
+        strs = 1;
+        // load the data
     }
 
     if (data == nullptr)
@@ -36,9 +42,10 @@ FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string)
     FLY_Shader* ret = new FLY_Shader();
     ret->type = type;
     ret->source = data;
+    ret->lines = strs;
 #if defined (USE_OPENGL) || defined(USE_OPENGLES)
     ret->id = glCreateShader(ret->type);
-    glShaderSource(ret->id, 1, &ret->source, NULL);
+    glShaderSource(ret->id, strs, ret->source, NULL);
 #endif
 
     return ret;
@@ -47,7 +54,7 @@ FLY_Shader* FLYSHADER_Create(int type, const char* file, bool raw_string)
 void FLY_Shader::Compile()
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glShaderSource(id, 1, &source, NULL);
+    glShaderSource(id, lines, source, NULL);
     glCompileShader(id);
 
     FLYSHADER_CheckCompileLog(this);
@@ -69,7 +76,7 @@ void FLYSHADER_CheckCompileLog(FLY_Shader* shader)
     glGetShaderInfoLog(shader->id, 512, NULL, infoLog);
 
 #endif
-    FLYLOG(LT_WARNING, "Shader Compilation Info: %s", infoLog);
+    FLYPRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +94,18 @@ FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags)
 #endif
 
     return ret;
+}
+
+void FLY_Program::Init(uint16 layout_flags)
+{
+    SET_FLAG(layout, layout_flags);
+
+    if (id == UINT32_MAX)
+    {
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+        id = glCreateProgram();
+#endif
+    }
 }
 
 void FLY_Program::AttachShader(FLY_Shader** shader)
@@ -121,8 +140,6 @@ void FLY_Program::Link()
 
     FLYRENDER_CheckProgramLog(this);
 }
-
-
 
 void FLY_Program::EnableAttributes(FLY_Buffer* buf)
 {
@@ -254,6 +271,13 @@ void FLY_Program::SetFloat4(const char* name, float4 value) const
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform4f(GetUniformLocation(name), value.x, value.y, value.z, value.w);
+#endif
+}
+
+void FLY_Program::SetMatrix4(const char* name, const float* value, uint16 number, bool transpose) const
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glUniformMatrix4fv(GetUniformLocation(name), number, transpose, value);
 #endif
 }
 
