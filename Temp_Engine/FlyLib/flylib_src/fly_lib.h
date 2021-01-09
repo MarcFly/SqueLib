@@ -392,18 +392,20 @@ typedef struct FLY_Buffer
 	// Indices for the buffer
 	uint32 index_id		= UINT32_MAX;
 	uint16 num_index	= 0;
-	uint32* indices		= nullptr;
+	uint32 index_var	= FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices
+	char* indices		= nullptr;
 
 	// add other parts of the buffer
 
 	// Usage Funcs
 	FL_API void SetVarTypes(int32 position, int32 color, int32 uv, int32 normal);
+	FL_API void SetIndexVarType(int32 index);
 	FL_API void SetComponentSize(uint16 position, uint16 color, uint16 uv, uint16 normal);
 	FL_API void SetToNormalize(bool position, bool color, bool uv, bool normal);
 	FL_API void SetDrawMode(int32 draw_mode);
 	FL_API void SetAttributes();
 
-	FL_API uint16 GetVertSize();	
+	FL_API uint16 GetVertSize() const;	
 	
 	FL_API uint16 GetPosSize() const;
 	FL_API uint16 GetColorSize() const;
@@ -434,7 +436,7 @@ typedef struct FLY_Texture2D
 	int32 wrap_t		= INT32_MAX;
 
 	FL_API void Init(int32 tex_format);
-	FL_API void SetFiltering(int32 min = INT32_MAX, int32 mag = INT32_MAX, int32 wraps = INT32_MAX, int32 wrapt = INT32_MAX);
+	FL_API void SetFiltering(int32 min = FLY_LINEAR, int32 mag = FLY_LINEAR, int32 wraps = FLY_CLAMP, int32 wrapt = FLY_CLAMP);
 	FL_API void SendToGPU();
 };
 
@@ -509,7 +511,7 @@ typedef struct FLY_Program
 	FL_API void SetupUniformLocations();
 	FL_API uint32 GetUniformLocation(const char* name) const;
 	FL_API void Prepare();
-	FL_API void Draw(FLY_Buffer* buf);
+	FL_API void Draw(FLY_Buffer* buf, int offset_bytes = 0, int count = 0);
 	
 	// Passing Uniforms
 	FL_API void SetBool(const char* name, bool value) const;

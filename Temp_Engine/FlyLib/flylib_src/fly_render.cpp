@@ -170,6 +170,11 @@ void FLY_Buffer::SetVarTypes(int32 p, int32 c, int32 uv, int32 n)
     normal_size = GetSize(normal_var);
 }
 
+void FLY_Buffer::SetIndexVarType(int32 ind)
+{
+    index_var = ind;
+}
+
 void FLY_Buffer::SetComponentSize(uint16 p, uint16 c, uint16 uv, uint16 n)
 {
     pos_comp = p;
@@ -195,8 +200,7 @@ uint16 FLY_Buffer::GetPosSize() const { return pos_size * pos_comp; };
 uint16 FLY_Buffer::GetColorSize() const { return color_size * color_comp; };
 uint16 FLY_Buffer::GetUVSize() const { return uv_size * uv_comp; };
 uint16 FLY_Buffer::GetNormalSize() const { return normal_size * normal_comp; };
-
-uint16 FLY_Buffer::GetVertSize()
+uint16 FLY_Buffer::GetVertSize() const
 {
     uint16 p_s = pos_size * pos_comp;
     uint16 c_s = color_size * color_comp;
@@ -204,45 +208,51 @@ uint16 FLY_Buffer::GetVertSize()
     uint16 n_s = normal_size * normal_comp;
     return p_s + c_s + uv_s + n_s /* tangent, bitangent,... whatever needed*/;
 }
-
+// Has Errors
 void FLY_Buffer::SetAttributes()
 {
+    if (glGetError() > 0)
+    {
+        bool break_here = 0;
+    }
     int attribs = 0;
 
     int vert_size = GetVertSize();
     int offset = 0;
     
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    glBindVertexArray(attribute_object);
     // Vertex Position
     int size;
     if ((size = GetPosSize()) > 0)
     {
-        glVertexAttribPointer(attribs, pos_comp, pos_var, pos_norm, vert_size, (void*)(offset));
         glEnableVertexAttribArray(attribs);
+        glVertexAttribPointer(attribs, pos_comp, pos_var, pos_norm, vert_size, (void*)(offset));
         offset += size;
     }attribs++;
     // Vertex Color
     if ((size = GetColorSize()) > 0)
     {
-        glVertexAttribPointer(attribs, color_comp, color_var, color_norm, vert_size, (void*)(offset));
         glEnableVertexAttribArray(attribs);
+        glVertexAttribPointer(attribs, color_comp, color_var, color_norm, vert_size, (void*)(offset));
         offset += size;
     }attribs++;
     // Vertex UV
     if ((size = GetUVSize()) > 0)
     {
-        glVertexAttribPointer(attribs, uv_comp, uv_var, uv_norm, vert_size, (void*)(offset));
         glEnableVertexAttribArray(attribs);
+        glVertexAttribPointer(attribs, uv_comp, uv_var, uv_norm, vert_size, (void*)(offset));
         offset += size;
     }attribs++;
     // Vertex Normals
     if ((size = GetNormalSize()) > 0)
     {
-        glVertexAttribPointer(attribs, normal_comp, normal_var, normal_norm, vert_size, (void*)(offset));
         glEnableVertexAttribArray(attribs);
+        glVertexAttribPointer(attribs, normal_comp, normal_var, normal_norm, vert_size, (void*)(offset));
         offset += size;
     }attribs++;
     // Other required data...
+    glBindVertexArray(0);
 #endif
 }
 
@@ -285,15 +295,13 @@ void FLY_Mesh::SendToGPU()
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
         glBindVertexArray(buf->attribute_object);
         glBindBuffer(GL_ARRAY_BUFFER, ids[i]);
-
         int buffer_size = buf->GetVertSize() * buf->num_verts;
         glBufferData(GL_ARRAY_BUFFER, buffer_size, buf->verts, buf->draw_mode);
-
         if (CHK_FLAG(buf->layout, FLYSHADER_LAYOUT_HAS_INDICES) || buf->num_index > 0)
         {
             glGenBuffers(1, &buf->index_id);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf->index_id);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32)*buf->num_index, buf->indices, buf->draw_mode);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * buf->num_index, buf->indices, buf->draw_mode);
         }
 
 #endif
@@ -329,8 +337,10 @@ void FLY_Texture2D::SetFiltering(int32 min, int32 mag, int32 wraps, int32 wrapt)
     glBindTexture(GL_TEXTURE_2D, id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 #endif
 }
 
@@ -338,6 +348,7 @@ void FLY_Texture2D::SendToGPU()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     // DataType will be revised if needed, UBYTE seems quite standard...
+    glBindTexture(GL_TEXTURE_2D, id);
     glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, pixels);
 #endif
 }

@@ -26,6 +26,9 @@
 // Data Types
 #define FLY_BYTE    GL_BYTE
 #define FLY_UBYTE   GL_UNSIGNED_BYTE
+#define FLY_USHORT  GL_UNSIGNED_SHORT
+#define FLY_UINT    GL_UNSIGNED_INT
+#define FLY_INT     GL_INT
 #define FLY_FLOAT   GL_FLOAT
 #define FLY_DOUBLE  GL_DOUBLE
 // Texture Types

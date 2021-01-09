@@ -67,9 +67,9 @@ int main()
     {
         ret = FLYLIB_Init(/*flags*/);
     }
-    
+    gladLoadGL();
     ImGui_ImplFlyLib_Init();
-    
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     ImGui::StyleColorsDark();
     
     FLYLOG(FLY_LogType::LT_INFO, "Android Test ImGui Init...");
@@ -107,7 +107,6 @@ int main()
     mesh.buffers[0]->SetComponentSize(3, 3, 0, 0);
     mesh.buffers[0]->SetToNormalize(false, false,false,false);
     mesh.buffers[0]->SetDrawMode(FLY_STATIC_DRAW);
-
     //mesh.buffers[0]->num_index = 6;
     /*mesh.buffers[0]->indices = new uint32[6]{
         0, 1, 3,
@@ -115,12 +114,10 @@ int main()
     };*/
     //SET_FLAG(mesh.buffers[0]->layout, FLYSHADER_LAYOUT_HAS_INDICES);
     mesh.SendToGPU();
-
     FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER,1, &vertexShaderSource, true);
     FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER,1, &fragmentShaderSource, true);
     v_shader->Compile();
     f_shader->Compile();
-
     FLY_Program* prog = FLYSHADER_CreateProgram(NULL);
     prog->AttachShader(&v_shader);
     prog->AttachShader(&f_shader);
@@ -132,9 +129,6 @@ int main()
     prog->uniform.push_back(ourColor);
     prog->SetupUniformLocations();
 
-    // Setup the uniforms
-
-    // Update Loop
     FLY_Timer t;
     t.Start();
     FLYINPUT_DisplaySoftwareKeyboard(true);
@@ -148,7 +142,7 @@ int main()
         float green = sin(time_val) + .5f;
         prog->SetFloat4(ourColor->name, float4(0,green,0,1));
         prog->Draw(mesh.buffers[0]);
-
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);
 
@@ -172,7 +166,6 @@ int main()
         
 
         ImGui::Render();
-
         FLYDISPLAY_SwapAllBuffers();
         
 

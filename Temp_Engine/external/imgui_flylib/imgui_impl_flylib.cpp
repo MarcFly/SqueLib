@@ -25,7 +25,7 @@ static FLY_Uniform      fly_attrProjMtx;
 // Shaders
 const char* vertex_shader =
     "in vec2 v_pos;\n"
-    "in vec4 v_col;\n"
+    "in vec4 v_color;\n"
     "in vec2 v_uv;\n"    
     "out vec2 Frag_UV;\n"
     "out vec4 Frag_Color;\n"
@@ -33,7 +33,7 @@ const char* vertex_shader =
     "void main()\n"
     "{\n"
     "	Frag_UV = v_uv;\n"
-    "	Frag_Color = v_col;\n"
+    "	Frag_Color = v_color;\n"
     "	gl_Position = ProjMtx * vec4(v_pos.xy, 0, 1);\n"
     "}\n";
 
@@ -48,7 +48,7 @@ const char* fragment_shader =
 
 const char* vertex_shader_core =
 "layout (location = 0) in vec2 v_pos;\n"
-"layout (location = 1) in vec4 v_col;\n"
+"layout (location = 1) in vec4 v_color;\n"
 "layout (location = 2) in vec2 v_uv;\n"
 "out vec2 Frag_UV;\n"
 "out vec4 Frag_Color;\n"
@@ -56,7 +56,7 @@ const char* vertex_shader_core =
 "void main()\n"
 "{\n"
 "	Frag_UV = v_uv;\n"
-"	Frag_Color = v_col;\n"
+"	Frag_Color = v_color;\n"
 "	gl_Position = ProjMtx * vec4(v_pos.xy, 0, 1);\n"
 "}\n";
 
@@ -89,8 +89,11 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 {
     ImGuiIO& io = ImGui::GetIO();
     // BackUp State
+    if (glGetError() > 0)
+    {
+        bool break_here = 0;
+    }
     fly_backupState.BackUp();
-    
     // Apply new state
     fly_renderState.SetUp();
     float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
@@ -109,24 +112,26 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
     fly_shaderProgram.Prepare();
     fly_shaderProgram.SetInt("Texture", 0);
     fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
-
     for (int i = 0; i < draw_data->CmdListsCount; ++i)
     {
         const ImDrawList* cmd_list = draw_data->CmdLists[i];
         const ImDrawIdx* idx_buffer_offset = 0;
 
-        fly_dataHandle.buffers[0]->verts = (char*)&cmd_list->VtxBuffer.front();
-        fly_dataHandle.buffers[0]->indices = (uint32*)&cmd_list->IdxBuffer.front();
-        fly_dataHandle.SendToGPU();
+        fly_dataHandle.buffers[0]->verts = (char*)cmd_list->VtxBuffer.Data;
+        fly_dataHandle.buffers[0]->num_verts = cmd_list->VtxBuffer.size();
+        fly_dataHandle.buffers[0]->indices = (char*)cmd_list->IdxBuffer.Data;
         for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
         {
+            
+            fly_dataHandle.buffers[0]->num_index = pcmd->ElemCount;
+            fly_dataHandle.SendToGPU();
             if (pcmd->UserCallback)
                 pcmd->UserCallback(cmd_list, pcmd);
             else
             {
                 FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
                 FLYRENDER_Scissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                fly_shaderProgram.Draw(fly_dataHandle.buffers[0]);
+                fly_shaderProgram.Draw(fly_dataHandle.buffers[0], pcmd->IdxOffset, pcmd->ElemCount);
             }
             idx_buffer_offset += pcmd->ElemCount;
         }
@@ -146,19 +151,22 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     fly_dataHandle.buffers[0]->SetComponentSize(2,4,2,0);
     fly_dataHandle.buffers[0]->SetToNormalize(false, true, false, false);
     fly_dataHandle.buffers[0]->SetDrawMode(FLY_STREAM_DRAW);
-    fly_dataHandle.buffers[0]->SetAttributes();
-
+    fly_dataHandle.buffers[0]->SetIndexVarType((sizeof(ImDrawIdx) == 2) ? FLY_USHORT : FLY_UINT);
+    if(sizeof(ImDrawIdx) > 2)
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader_core};
     const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader_core };
     FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_shader, true);
     vert->Compile();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_shader, true);
     frag->Compile();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
     fly_shaderProgram.Init(NULL);
     fly_shaderProgram.AttachShader(&vert);
     fly_shaderProgram.AttachShader(&frag);
-
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     /*
     fly_shaderProgram.AttachShader(&FLYSHADER_Create(FLYSHADER_VERTEX, vertex_shader));
     fly_shaderProgram.AttachShader(&FLYSHADER_Create(FLYSHADER_VERTEX, fragment_shader));
@@ -166,16 +174,18 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     */
 
     fly_shaderProgram.Link();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     FLY_Uniform* fly_attrTex = new FLY_Uniform();
     FLY_Uniform* fly_attrProjMtx = new FLY_Uniform();
     fly_attrTex->name = "Texture";
     fly_attrProjMtx->name = "ProjMtx";
     fly_shaderProgram.uniform.push_back(fly_attrTex);
     fly_shaderProgram.uniform.push_back(fly_attrProjMtx);
-
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_shaderProgram.SetupUniformLocations();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_shaderProgram.EnableAttributes(fly_dataHandle.buffers[0]);
-
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     // Go back to the latest State
     fly_backupState.SetUp();
 }
@@ -186,12 +196,15 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 
     // Build Texture Atlas
     fly_fontTexture.Init(FLY_RGBA);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
     // Create the Texture
     fly_backupState.BackUp();
     fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_fontTexture.SendToGPU();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
     // ImGui stores texture_id
     io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
@@ -239,7 +252,7 @@ void ImGui_ImplFlyLib_SetClipboardText(const char* text)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PUBLIC USAGE FUNCTIONS ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Has Errors
 bool ImGui_ImplFlyLib_Init()
 {
     //gladLoadGL();
@@ -293,7 +306,9 @@ bool ImGui_ImplFlyLib_Init()
 
     io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
     ImGui_ImplFlyLib_CreateShaderProgram();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     ImGui_ImplFlyLib_CreateFontsTexture();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     return ret;
 }
 
