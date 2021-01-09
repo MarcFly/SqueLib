@@ -117,8 +117,11 @@ int main()
     
     mesh.GiveAttribute(&pos);
     mesh.GiveAttribute(&color);
+    mesh.SetOffsetsInOrder();
+    mesh.SetLocationsInOrder();
     mesh.SendToGPU();
 
+    // Test Triangle Shader
     FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER,1, &vertexShaderSource, true);
     FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER,1, &fragmentShaderSource, true);
     v_shader->Compile();
@@ -127,13 +130,14 @@ int main()
     prog->AttachShader(&v_shader);
     prog->AttachShader(&f_shader);
     prog->Link();
-    //prog->EnableAttributes(mesh.buffers[0]);
-
+    
+    // Uniform Color for testing shader
     FLY_Uniform* ourColor = new FLY_Uniform();
     ourColor->name = "unfColor";
     prog->uniform.push_back(ourColor);
     prog->SetupUniformLocations();
-
+    
+    // For Testing timer and android keyboard
     FLY_Timer t;
     t.Start();
     FLYINPUT_DisplaySoftwareKeyboard(true);
@@ -143,9 +147,11 @@ int main()
         FLYRENDER_Clear(NULL, &col);        
         
         prog->Use();
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         float time_val = t.ReadMilliSec()/1000.;
         float green = sin(time_val) + .5f;
         prog->SetFloat4(ourColor->name, float4(0,green,0,1));
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         prog->DrawRawVertices(&mesh);
         FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         uint16 w, h;
@@ -171,6 +177,7 @@ int main()
         
 
         ImGui::Render();
+        ImGui::EndFrame();
         FLYDISPLAY_SwapAllBuffers();
         
 

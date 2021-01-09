@@ -372,12 +372,14 @@ typedef struct FLY_Attribute
 	FL_API void SetVarType(int32 var);
 	FL_API void SetNumComponents(uint16 num);
 	FL_API void SetNormalize(bool norm);
-
+	FL_API void SetOffset(uint32 offset_bytes);
+	FL_API void SetId(uint32 id_);
 	// Getters
 	FL_API uint16 GetSize() const;
 
 	// Usage
 	FL_API void SetAttribute() const;
+	FL_API void SetLocation(uint16 pos);
 } FLY_Attribute;
 
 #include <vector> 
@@ -403,11 +405,11 @@ typedef struct FLY_Mesh
 	// add other parts of the buffer
 
 	// Initialization
-	FL_API void Prepare();
 	FL_API void SetDrawMode(int32 draw_mode);
 	FL_API void SetIndexVarType(int32 var);
 	FL_API void GiveAttribute(FLY_Attribute** attribute);
-	FL_API void SetLocations();
+	FL_API void SetOffsetsInOrder();
+	FL_API void Prepare();	
 
 	// Getters
 	FL_API uint16 GetVertSize();	
@@ -415,6 +417,7 @@ typedef struct FLY_Mesh
 
 	// Usage
 	FL_API void SetAttributes();
+	FL_API void SetLocationsInOrder();
 	FL_API void SendToGPU();
 } FLY_Mesh;
 
@@ -510,7 +513,7 @@ typedef struct FLY_Program
 
 	// Attributes
 	//FL_API void EnableMeshAttributes(FLY_Mesh* fly_mesh);
-	FL_API void SetAttribute(FLY_Attribute** attr);
+	FL_API void GiveAttribute(FLY_Attribute** attr);
 	FL_API void EnableOwnAttributes();
 	
 	// Passing Uniforms

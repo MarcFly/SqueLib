@@ -96,6 +96,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
     fly_backupState.BackUp();
     // Apply new state
     fly_renderState.SetUp();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
@@ -110,8 +111,11 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
     };
 
     fly_shaderProgram.Use();
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_shaderProgram.SetInt("Texture", 0);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
+    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     for (int i = 0; i < draw_data->CmdListsCount; ++i)
     {
         const ImDrawList* cmd_list = draw_data->CmdLists[i];
@@ -122,9 +126,10 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
         fly_dataHandle.indices = (char*)cmd_list->IdxBuffer.Data;
         fly_dataHandle.num_index = cmd_list->IdxBuffer.size();
 
-        fly_shaderProgram.EnableOwnAttributes();
-
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         fly_dataHandle.SendToGPU();
+        fly_shaderProgram.EnableOwnAttributes();
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
         {
             if (pcmd->UserCallback)
@@ -136,6 +141,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
                 fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
             }
             idx_buffer_offset += pcmd->ElemCount;
+            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         }
     }
 
@@ -158,32 +164,37 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     pos->SetVarType(FLY_FLOAT);
     pos->SetNumComponents(2);
     pos->SetNormalize(false);
+    FLY_Attribute* pos_ = new FLY_Attribute();
+    *pos_ = *pos;
 
     FLY_Attribute* uv = new FLY_Attribute();
-    pos->SetName("v_uv");
-    pos->SetVarType(FLY_FLOAT);
-    pos->SetNumComponents(2);
-    pos->SetNormalize(false);
-    
+    uv->SetName("v_uv");
+    uv->SetVarType(FLY_FLOAT);
+    uv->SetNumComponents(2);
+    uv->SetNormalize(false);
+    uv->SetOffset(pos->GetSize());
+    FLY_Attribute* uv_ = new FLY_Attribute();
+    *uv_ = *uv;
+
     FLY_Attribute* color = new FLY_Attribute();
-    pos->SetName("v_color");
-    pos->SetVarType(FLY_UINT);
-    pos->SetNumComponents(4);
-    pos->SetNormalize(true);
-
-    fly_dataHandle.GiveAttribute(&pos);
-    fly_dataHandle.GiveAttribute(&uv);
-    fly_dataHandle.GiveAttribute(&color);
-
+    color->SetName("v_color");
+    color->SetVarType(FLY_UBYTE);
+    color->SetNumComponents(4);
+    color->SetNormalize(true);
+    color->SetOffset(uv->offset + uv->GetSize());
+    FLY_Attribute* color_ = new FLY_Attribute();
+    *color_ = *color;
+    
+    fly_dataHandle.GiveAttribute(&pos_);
+    fly_dataHandle.GiveAttribute(&uv_);
+    fly_dataHandle.GiveAttribute(&color_);
     // Initialize the Shaders
     const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader_core};
     const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader_core };
     FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_shader, true);
     vert->Compile();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_shader, true);
     frag->Compile();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
     fly_shaderProgram.Init(NULL);
     fly_shaderProgram.AttachShader(&vert);
@@ -203,11 +214,16 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     fly_attrProjMtx->name = "ProjMtx";
     fly_shaderProgram.uniform.push_back(fly_attrTex);
     fly_shaderProgram.uniform.push_back(fly_attrProjMtx);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+
+    
     fly_shaderProgram.SetupUniformLocations();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    fly_shaderProgram.Use();
+    fly_shaderProgram.GiveAttribute(&pos);
+    fly_shaderProgram.GiveAttribute(&uv);
+    fly_shaderProgram.GiveAttribute(&color);
+
     //fly_shaderProgram.EnableAttributes(fly_dataHandle.buffers[0]);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+
     // Go back to the latest State
     fly_backupState.SetUp();
 }

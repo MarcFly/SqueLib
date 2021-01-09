@@ -142,7 +142,7 @@ void FLY_Program::Link()
 }
 
 // Has Errors
-void FLY_Program::SetAttribute(FLY_Attribute** attr)
+void FLY_Program::GiveAttribute(FLY_Attribute** attr)
 {
     if (!attr || !*attr)
     {
@@ -150,11 +150,12 @@ void FLY_Program::SetAttribute(FLY_Attribute** attr)
         return;
     }
     attributes.push_back(*attr);
-    *attr = nullptr;
 
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-
+    int test = glGetAttribLocation(id, (*attr)->name);
+    (*attr)->SetId(glGetAttribLocation(id, (*attr)->name));
 #endif
+    *attr = nullptr;
 }
 
 //void FLY_Program::UpdateAttribute(const char* name)
