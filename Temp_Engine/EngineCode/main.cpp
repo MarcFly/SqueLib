@@ -3,47 +3,6 @@
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
 
-#ifndef ANDROID
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 v_pos;\n"
-"layout (location = 1) in vec3 v_color;\n"
-"out vec3 ourColor;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(v_pos.x, v_pos.y, v_pos.z, 1.0);\n"
-"   ourColor = v_color;\n"
-"}\0";
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
-"uniform vec4 unfColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(ourColor, 1.0)+unfColor;\n"
-"}\n\0";
-#else
-const char* vertexShaderSource = "#version 320 es\n"
-"precision mediump float;"
-"in vec3 v_pos;\n"
-"in vec3 v_normal;\n"
-"out vec3 ourColor;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(v_pos.x, v_pos.y, v_pos.z, 1.0);\n"
-"   ourColor = v_normal;\n"
-"}\0";
-const char* fragmentShaderSource = "#version 320 es\n"
-"precision mediump float;"
-"out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
-"uniform vec4 unfColor;"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(ourColor, 1.0)+unfColor;\n"
-"}\n\0";
-#endif
-
-#include <glad/glad.h>
 enum main_states
 {
 	MAIN_CREATION = 0,
@@ -58,24 +17,12 @@ int main()
 {
     main_states state = MAIN_CREATION;
     bool ret = true;
-    
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Helpers Initialization
     {
         ret = FLYLIB_Init(/*flags*/);
     }
-    gladLoadGL();
-    ImGui_ImplFlyLib_Init();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    ImGui::StyleColorsDark();
-    
-    FLYLOG(FLY_LogType::LT_INFO, "Android Test ImGui Init...");
-    #ifdef ANDROID
-    ImGui_ImplAndroidGLES2_Init();
-    #endif
+
     // Engine Initialization
     {
         FLYLOG(FLY_LogType::LT_INFO, "Initializing Engine...");
@@ -87,97 +34,114 @@ int main()
         else FLYLOG(FLY_LogType::LT_WARNING, "Error Initializing Engine...");
     }
 
+    // Follow LeanOpenGL
+    {
+        gladLoadGL();
+        // Shader Setup
+        const char* vertexShaderSource = 
+            "#version 330 core\n"
+            "layout (location = 0) in vec3 aPos;\n"
+            "layout (location = 1) in vec3 aCol;\n"
+            "out vec3 v_col;\n"
+            "void main()\n"
+            "{\n"
+            "   v_col = aCol;\n"
+            "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+            "}\0";
+        FLY_Shader* vert_s = FLYSHADER_Create(FLY_VERTEX_SHADER, 1, &vertexShaderSource, true);
+        vert_s->Compile();
 
-// Testing Info for Render Pipeline Testing
-    //TestHardCode();
+        const char* fragmentShaderSource =
+            "#version 330 core\n"
+            "out vec4 FragColor;\n"
+            "in vec3 v_col;\n"
+            "uniform vec4 ourColor;\n"
+            "void main() { FragColor = ourColor+vec4(v_col, 1.0);}\0";
+        FLY_Shader* frag_s = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 1, &fragmentShaderSource, true);
+        frag_s->Compile();
+
+        FLY_Program program;
+        program.Init();
+        program.AttachShader(&vert_s);
+        program.AttachShader(&frag_s);
+        program.Link();
+        
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+        // Mesh Setup-----------------------------------------------------------------------------------
+        float vertices[] = {
+             0.5f,  0.5f, 0.0f,  // top right
+             0.5f, -0.5f, 0.0f,  // bottom right
+            -0.5f, -0.5f, 0.0f,  // bottom left
+            -0.5f,  0.5f, 0.0f   // top left 
+        };
+        unsigned int indices[] = {  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+        };
+
+        FLY_Mesh triangle;
+        triangle.verts = (char*)vertices;
+        triangle.num_verts = 4;
+        triangle.SetDrawMode(FLY_STATIC_DRAW);
+
+        triangle.indices = (char*)indices;
+        triangle.num_index = 6;
+        triangle.SetIndexVarType(FLY_UINT);
+
+        FLY_Attribute* p = new FLY_Attribute();
+        p->SetNumComponents(3);
+        p->SetVarType(FLY_FLOAT);
+        p->SetNormalize(false);
+        p->SetOffset(0);
+        /*FLY_Attribute* c = new FLY_Attribute();
+        c->SetNumComponents(3);
+        c->SetVarType(FLY_FLOAT);
+        c->SetNormalize(false);
+        c->SetOffset(p->GetSize());
+        */
+        triangle.GiveAttribute(&p);
+        //triangle.GiveAttribute(&c);
+        triangle.Prepare();
+        triangle.SendToGPU();
+        triangle.SetLocationsInOrder();
+
+        
+        program.Use();
+        program.DeclareUniform("ourColor");
+        program.SetupUniformLocations();
+        ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
+        FLY_Timer t;
+        while (state == MAIN_UPDATE)
+        {
+            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+            FLYRENDER_Clear(NULL, &col);
+            program.Use();
+            float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
+            program.SetFloat4("ourColor", float4(0,green,0,1));
+            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+            program.DrawIndices(&triangle);
+            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+            FLYDISPLAY_SwapAllBuffers();
 
 
-    float* verts = new float[18]{
-        // positions         // colors
-         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
-    };
-    FLY_Mesh mesh;
-    mesh.SetDrawMode(FLY_STATIC_DRAW);
-    mesh.Prepare();
-    mesh.verts = (char*)verts;
-    mesh.num_verts = 3;
+            FLYINPUT_Process(0);
+            if (FLYDISPLAY_ShouldWindowClose(0))
+            {
+                FLYLOG(FLY_LogType::LT_INFO, "Checked Window to Close");
+                state = MAIN_FINISH;
+            }
 
-    FLY_Attribute* pos = new FLY_Attribute();
-    FLY_Attribute* color = new FLY_Attribute();
-    pos->SetName("v_pos");
-    color->SetName("v_color");
-    pos->SetVarType(FLY_FLOAT);
-    color->SetVarType(FLY_FLOAT);
-    pos->SetNumComponents(3);
-    color->SetNumComponents(3);
-    pos->SetNormalize(false);
-    color->SetNormalize(false);
-    
-    mesh.GiveAttribute(&pos);
-    mesh.GiveAttribute(&color);
-    mesh.SetOffsetsInOrder();
-    mesh.SetLocationsInOrder();
-    mesh.SendToGPU();
 
-    // Test Triangle Shader
-    FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER,1, &vertexShaderSource, true);
-    FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER,1, &fragmentShaderSource, true);
-    v_shader->Compile();
-    f_shader->Compile();
-    FLY_Program* prog = FLYSHADER_CreateProgram(NULL);
-    prog->AttachShader(&v_shader);
-    prog->AttachShader(&f_shader);
-    prog->Link();
-    
-    // Uniform Color for testing shader
-    FLY_Uniform* ourColor = new FLY_Uniform();
-    ourColor->name = "unfColor";
-    prog->uniform.push_back(ourColor);
-    prog->SetupUniformLocations();
-    
+        }
+    }
+
     // For Testing timer and android keyboard
-    FLY_Timer t;
-    t.Start();
+    
     FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {
-        ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
-        FLYRENDER_Clear(NULL, &col);        
-        
-        prog->Use();
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-        float time_val = t.ReadMilliSec()/1000.;
-        float green = sin(time_val) + .5f;
-        prog->SetFloat4(ourColor->name, float4(0,green,0,1));
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-        prog->DrawRawVertices(&mesh);
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-        uint16 w, h;
-        FLYDISPLAY_GetSize(0, &w, &h);
-
-        ImGui_ImplFlyLib_NewFrame();
-        ImGui::NewFrame();
-        
-        float posx = (t.ReadMilliSec() / 100.f) -  ((int)((t.ReadMilliSec() / 100.f)/w))*w;
-        float posy = (t.ReadMilliSec() / 100.f) -  ((int)((t.ReadMilliSec() / 100.f)/h))*h;
-        ImGui::SetNextWindowPos(ImVec2(posx, posy));
-        ImGui::Begin("Another Window", &ret);
-		ImGui::Text("Hello");
-		ImGui::End();
-        //FLYPRINT(LT_INFO, "WINDOW AT: %.2f, %.2f", posx, posy);
-        if(ImGui::IsMouseDown(0))
-            FLYPRINT(LT_INFO, "Reading ImGui Input:\nMouse Button 0: %d\nMouse POS: %.2f,%.2f",ImGui::IsMouseDown(0), ImGui::GetMousePos().x, ImGui::GetMousePos().y);
-        
-        if(ret)ImGui::ShowDemoWindow(&ret);
-        // Update all modules in specific order
-        
-        // Check for main window for closure, if main window is set to close, close everything
         
 
-        ImGui::Render();
-        ImGui::EndFrame();
         FLYDISPLAY_SwapAllBuffers();
         
 
@@ -189,11 +153,6 @@ int main()
         }
         
         
-    }
-
-    {
-        delete verts;
-        delete prog;
     }
 
     //  Engine CleanUp

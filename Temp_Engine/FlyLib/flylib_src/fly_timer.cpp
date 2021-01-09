@@ -9,7 +9,7 @@
 
 typedef std::chrono::high_resolution_clock::duration high_res_clock;
 
-FLY_Timer::FLY_Timer() : is_stopped(false), is_active(false)
+FLY_Timer::FLY_Timer() : is_stopped(false), is_active(true)
 {
     high_res_clock now = std::chrono::high_resolution_clock::now().time_since_epoch();
     stop_at_ms = start_at_ms = (uint16_t)std::chrono::duration_cast<std::chrono::milliseconds>(now).count();

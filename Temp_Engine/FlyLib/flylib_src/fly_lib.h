@@ -359,7 +359,7 @@ enum FLYSHADER_Layout
 // Render Pipeline
 typedef struct FLY_Attribute
 {
-	uint32 id;
+	int32 id;
 	const char* name;
 	int32 var_type;
 	bool normalize;
@@ -373,13 +373,13 @@ typedef struct FLY_Attribute
 	FL_API void SetNumComponents(uint16 num);
 	FL_API void SetNormalize(bool norm);
 	FL_API void SetOffset(uint32 offset_bytes);
-	FL_API void SetId(uint32 id_);
+	FL_API void SetId(int32 id_);
 	// Getters
 	FL_API uint16 GetSize() const;
 
 	// Usage
-	FL_API void SetAttribute() const;
-	FL_API void SetLocation(uint16 pos);
+	FL_API void SetAttribute(uint16 vert_size) const;
+	FL_API void SetLocation(uint16 pos, uint16 vert_size);
 } FLY_Attribute;
 
 #include <vector> 
@@ -465,7 +465,7 @@ typedef struct FLY_Texture3D
 
 typedef struct FLY_Shader
 {
-	uint32 id = UINT32_MAX;
+	int32 id = INT32_MAX;
 	int32 type;
 	uint16 lines = 0;
 	const char** source;
@@ -483,23 +483,23 @@ FL_API void FLYSHADER_CheckCompileLog(FLY_Shader* fly_shader);
 
 typedef struct FLY_Uniform
 {
-	uint32 id;
+	FLY_Uniform() {};
+	FLY_Uniform(const char*);
+	int32 id = INT32_MAX;
 	const char* name;
 } FLY_Uniform;
 
 #include <vector>
 typedef struct FLY_Program
 {
-	uint32 id = UINT32_MAX;
-	uint16 layout;
-	//uint16 num_shaders = 0;
+	int32 id = INT32_MAX;
 	FLY_Shader* vertex_s = nullptr;
 	FLY_Shader* fragment_s = nullptr;
-	std::vector<FLY_Uniform*> uniform;
+	std::vector<FLY_Uniform*> uniforms;
 	std::vector<FLY_Attribute*> attributes;
 	
 	// Call before doing anything prolly
-	FL_API void Init(uint16 prog_layout);
+	FL_API void Init();
 
 	// Prepare the Program
 	FL_API void AttachShader(FLY_Shader** fly_shader); // Obtains ownership of the shader 
@@ -514,11 +514,13 @@ typedef struct FLY_Program
 	// Attributes
 	//FL_API void EnableMeshAttributes(FLY_Mesh* fly_mesh);
 	FL_API void GiveAttribute(FLY_Attribute** attr);
+	FL_API uint16 GetAttribByteSize() const;
 	FL_API void EnableOwnAttributes();
 	
 	// Passing Uniforms
+	FL_API void DeclareUniform(const char*);
 	FL_API void SetupUniformLocations();
-	FL_API uint32 GetUniformLocation(const char* name) const;
+	FL_API int32 GetUniformLocation(const char* name) const;
 
 	FL_API void SetBool(const char* name, bool value) const;
 	FL_API void SetInt(const char* name, int value) const;

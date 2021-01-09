@@ -151,8 +151,10 @@ int VarGetSize(int type_macro)
         return 1;
     else if (type_macro == FLY_DOUBLE/*add 8 byte types*/)
         return 8;
-    else if (type_macro == FLY_FLOAT/* add 4 byte types*/)
+    else if (type_macro == FLY_FLOAT || type_macro == FLY_UINT || type_macro == FLY_INT/* add 4 byte types*/)
         return 4;
+    else if (type_macro == FLY_USHORT)
+        return 2;
     return 0;
 }
 
@@ -161,27 +163,26 @@ void FLY_Attribute::SetVarType(int32 var) { var_type = var; var_size = VarGetSiz
 void FLY_Attribute::SetNumComponents(uint16 num) { num_comp = num; }
 void FLY_Attribute::SetNormalize(bool norm) { normalize = norm; }
 void FLY_Attribute::SetOffset(uint32 offset_bytes) { offset = offset_bytes; }
-void FLY_Attribute::SetId(uint32 id_) { id = id_; }
+void FLY_Attribute::SetId(int32 id_) { id = id_; }
 uint16 FLY_Attribute::GetSize() const { return num_comp*var_size; }
 
-void FLY_Attribute::SetAttribute() const
+void FLY_Attribute::SetAttribute(uint16 vert_size) const
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glEnableVertexAttribArray(id);
     FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    glVertexAttribPointer(id, num_comp, var_type, normalize, var_size, (void*)offset);
+    glVertexAttribPointer(id, num_comp, var_type, normalize, vert_size, (void*)offset);
     FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 #endif
 }
 
-void FLY_Attribute::SetLocation(uint16 pos)
+void FLY_Attribute::SetLocation(uint16 pos, uint16 vert_size)
 {
     id = pos;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glVertexAttribPointer(pos, num_comp, var_type, normalize, var_size, (void*)offset);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    glVertexAttribPointer(pos, num_comp, var_type, normalize, vert_size, (void*)offset);
     glEnableVertexAttribArray(pos);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    
 #endif
 }
 
@@ -241,13 +242,14 @@ void FLY_Mesh::SetAttributes()
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(attribute_object);
 #endif
+    uint16 vert_size = GetVertSize();
     for (int i = 0; i < size; ++i)
     {
         FLY_Attribute* atr = attributes[i];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
         glEnableVertexAttribArray(atr->id);
 #endif
-        atr->SetAttribute();
+        atr->SetAttribute(vert_size);
     }
 }
 
@@ -258,8 +260,9 @@ void FLY_Mesh::SetLocationsInOrder()
     glBindVertexArray(attribute_object);
     glBindBuffer(GL_ARRAY_BUFFER, vert_id);
 #endif
+    uint16 vert_size = GetVertSize();
     for (int i = 0; i < size; ++i)
-        attributes[i]->SetLocation(i);
+        attributes[i]->SetLocation(i, vert_size);
 }
 
 
@@ -274,7 +277,7 @@ void FLY_Mesh::SendToGPU()
     if (num_index > 0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index * VarGetSize(index_var), indices, draw_mode);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*VarGetSize(index_var), indices, draw_mode);
     }
 #endif
 }

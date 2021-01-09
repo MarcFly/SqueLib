@@ -18,8 +18,6 @@ static FLY_RenderState  fly_backupState;
 static FLY_RenderState  fly_renderState;
 static FLY_Program      fly_shaderProgram;
 static FLY_Mesh         fly_dataHandle;
-static FLY_Uniform      fly_attrTex;
-static FLY_Uniform      fly_attrProjMtx;
 // Save User Render State
 
 // Shaders
@@ -196,7 +194,7 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_shader, true);
     frag->Compile();
 
-    fly_shaderProgram.Init(NULL);
+    fly_shaderProgram.Init();
     fly_shaderProgram.AttachShader(&vert);
     fly_shaderProgram.AttachShader(&frag);
     FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
@@ -208,15 +206,11 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
 
     fly_shaderProgram.Link();
     FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    FLY_Uniform* fly_attrTex = new FLY_Uniform();
-    FLY_Uniform* fly_attrProjMtx = new FLY_Uniform();
-    fly_attrTex->name = "Texture";
-    fly_attrProjMtx->name = "ProjMtx";
-    fly_shaderProgram.uniform.push_back(fly_attrTex);
-    fly_shaderProgram.uniform.push_back(fly_attrProjMtx);
 
-    
+    fly_shaderProgram.DeclareUniform("Texture");
+    fly_shaderProgram.DeclareUniform("ProjMtx");
     fly_shaderProgram.SetupUniformLocations();
+
     fly_shaderProgram.Use();
     fly_shaderProgram.GiveAttribute(&pos);
     fly_shaderProgram.GiveAttribute(&uv);

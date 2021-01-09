@@ -83,24 +83,23 @@ void FLYSHADER_CheckCompileLog(FLY_Shader* shader)
 // PROGRAMS //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+FLY_Uniform::FLY_Uniform(const char* name_)
+{
+    name = name_;
+}
+
 FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags)
 {
     FLY_Program* ret = new FLY_Program();
-
-    SET_FLAG(ret->layout, layout_flags);
-
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     ret->id = glCreateProgram();
 #endif
-
     return ret;
 }
 
-void FLY_Program::Init(uint16 layout_flags)
+void FLY_Program::Init()
 {
-    SET_FLAG(layout, layout_flags);
-
-    if (id == UINT32_MAX)
+    if (id == INT32_MAX)
     {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
         id = glCreateProgram();
@@ -163,37 +162,55 @@ void FLY_Program::GiveAttribute(FLY_Attribute** attr)
 
 //}
 
+uint16 FLY_Program::GetAttribByteSize() const
+{
+    uint16 ret = 0;
+    uint16 size = attributes.size();
+    for (int i = 0; i < size; ++i)
+        ret += attributes[i]->GetSize();
+
+    return ret;
+}
+
 void FLY_Program::EnableOwnAttributes()
 {
     uint16 size = attributes.size();
+    uint16 attrib_size = GetAttribByteSize();
     for (int i = 0; i < size; ++i)
     {
         FLY_Attribute* atr = attributes[i];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
         glEnableVertexAttribArray(atr->id);
-        glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, atr->var_size, (void*)atr->offset);
+        glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, attrib_size, (void*)atr->offset);
 #endif
     }
 }
 
 // Has Errors
+void FLY_Program::DeclareUniform(const char* name)
+{
+    uniforms.push_back(new FLY_Uniform(name));
+}
+
 void FLY_Program::SetupUniformLocations()
 {
-    int size = uniform.size();
+    int size = uniforms.size();
     for (int i = 0; i < size; ++i)
     {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-        uniform[i]->id = glGetUniformLocation(id, uniform[i]->name);
+        uniforms[i]->id = glGetUniformLocation(id, uniforms[i]->name);
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 #endif
     }
 }
 
 #include <cstring>
-uint32 FLY_Program::GetUniformLocation(const char* name) const
+int32 FLY_Program::GetUniformLocation(const char* name) const
 {
-    int size = uniform.size();
+    int size = uniforms.size();
     for (int i = 0; i < size; ++i)
-        if (std::strcmp(name, uniform[i]->name) == 0) return uniform[i]->id;
+        if (std::strcmp(name, uniforms[i]->name) == 0) 
+            return uniforms[i]->id;
 
     return UINT32_MAX;
 }
@@ -206,19 +223,21 @@ void FLY_Program::Use()
 #endif
 }
 
-void FLY_Program::DrawIndices(FLY_Mesh* mesh, int offset_bytes, int count)
+void FLY_Program::DrawIndices(FLY_Mesh* mesh, int32 offset_bytes, int32 count)
 {    
     count = (count == 0) ? mesh->num_index : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->index_id);
     glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)offset_bytes);
 #else
 #endif
 }
 
-void FLY_Program::DrawRawVertices(FLY_Mesh* mesh, int count)
+void FLY_Program::DrawRawVertices(FLY_Mesh* mesh, int32 count)
 {
     count = (count == 0) ? mesh->num_verts : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vert_id);
     glDrawArrays(GL_TRIANGLES, 0, count);
 #endif
 }
@@ -285,11 +304,11 @@ void FLY_Program::CleanUp()
     if(vertex_s != nullptr) delete vertex_s;
     if(fragment_s != nullptr) delete fragment_s;
 
-    int size = uniform.size();
+    int size = uniforms.size();
     for (int i = 0; i < size; ++i)
-        delete uniform[i];
+        delete uniforms[i];
 
-    uniform.clear();
+    uniforms.clear();
 }
 
 void FLYRENDER_CheckProgramLog(FLY_Program* prog)
