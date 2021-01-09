@@ -99,21 +99,26 @@ int main()
          0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
     FLY_Mesh mesh;
-    GLenum err;
-    mesh.PrepareBuffers(1);
-    mesh.buffers[0]->verts = (char*)verts;
-    mesh.buffers[0]->num_verts = 3;
-    mesh.buffers[0]->SetVarTypes(FLY_FLOAT, FLY_FLOAT, NULL, NULL);
-    mesh.buffers[0]->SetComponentSize(3, 3, 0, 0);
-    mesh.buffers[0]->SetToNormalize(false, false,false,false);
-    mesh.buffers[0]->SetDrawMode(FLY_STATIC_DRAW);
-    //mesh.buffers[0]->num_index = 6;
-    /*mesh.buffers[0]->indices = new uint32[6]{
-        0, 1, 3,
-        1, 2, 3        
-    };*/
-    //SET_FLAG(mesh.buffers[0]->layout, FLYSHADER_LAYOUT_HAS_INDICES);
+    mesh.SetDrawMode(FLY_STATIC_DRAW);
+    mesh.Prepare();
+    mesh.verts = (char*)verts;
+    mesh.num_verts = 3;
+
+    FLY_Attribute* pos = new FLY_Attribute();
+    FLY_Attribute* color = new FLY_Attribute();
+    pos->SetName("v_pos");
+    color->SetName("v_color");
+    pos->SetVarType(FLY_FLOAT);
+    color->SetVarType(FLY_FLOAT);
+    pos->SetNumComponents(3);
+    color->SetNumComponents(3);
+    pos->SetNormalize(false);
+    color->SetNormalize(false);
+    
+    mesh.GiveAttribute(&pos);
+    mesh.GiveAttribute(&color);
     mesh.SendToGPU();
+
     FLY_Shader* v_shader = FLYSHADER_Create(FLY_VERTEX_SHADER,1, &vertexShaderSource, true);
     FLY_Shader* f_shader = FLYSHADER_Create(FLY_FRAGMENT_SHADER,1, &fragmentShaderSource, true);
     v_shader->Compile();
@@ -122,7 +127,7 @@ int main()
     prog->AttachShader(&v_shader);
     prog->AttachShader(&f_shader);
     prog->Link();
-    prog->EnableAttributes(mesh.buffers[0]);
+    //prog->EnableAttributes(mesh.buffers[0]);
 
     FLY_Uniform* ourColor = new FLY_Uniform();
     ourColor->name = "unfColor";
@@ -137,11 +142,11 @@ int main()
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLYRENDER_Clear(NULL, &col);        
         
-        prog->Prepare();
+        prog->Use();
         float time_val = t.ReadMilliSec()/1000.;
         float green = sin(time_val) + .5f;
         prog->SetFloat4(ourColor->name, float4(0,green,0,1));
-        prog->Draw(mesh.buffers[0]);
+        prog->DrawRawVertices(&mesh);
         FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         uint16 w, h;
         FLYDISPLAY_GetSize(0, &w, &h);

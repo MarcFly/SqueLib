@@ -142,61 +142,37 @@ void FLY_Program::Link()
 }
 
 // Has Errors
-void FLY_Program::EnableAttributes(FLY_Buffer* buf)
+void FLY_Program::SetAttribute(FLY_Attribute** attr)
 {
-    if (buf == nullptr)
+    if (!attr || !*attr)
     {
-        FLYLOG(LT_WARNING, "Invalid buffer, no attributes enabled");
+        FLYPRINT(LT_WARNING, "Non-existing attribute...");
         return;
     }
-    const int vert_size = buf->GetVertSize();
-    int offset = 0;
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    // PreBind the buffers for modification
-    glBindVertexArray(buf->attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, buf->vert_id);
-    if (buf->num_index > 0) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf->index_id);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    // Vertex Position
-    uint16 size = 0;
-    GLint attr = -1;
-    if ((attr = glGetAttribLocation(id, "v_pos")) != -1)
-    {
-        size = 0; buf->GetPosSize();
-        glEnableVertexAttribArray(attr);
-        glVertexAttribPointer(attr, buf->pos_comp, buf->pos_var, buf->pos_norm, vert_size, (void*)(offset));
-        offset += size;
-    }
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    // Vertex Color
-    if (attr = glGetAttribLocation(id, "v_color"))
-    {
-        size = buf->GetColorSize();
-        glEnableVertexAttribArray(attr);
-        glVertexAttribPointer(attr, buf->color_comp, buf->color_var, buf->color_norm, vert_size, (void*)(offset));
-        offset += size;
-    }    
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    // Vertex UV
-    if ((attr = glGetAttribLocation(id, "v_uv")) != -1)
-    {
-        size = buf->GetUVSize();
-        glEnableVertexAttribArray(attr);
-        glVertexAttribPointer(attr, buf->uv_comp, buf->uv_var, buf->uv_norm, vert_size, (void*)(offset));
-        offset += size;
-    }
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    // Vertex Normals
-    if (attr = glGetAttribLocation(id, "v_normal") != -1)
-    {
-        size = buf->GetNormalSize();
-        glEnableVertexAttribArray(attr);
-        glVertexAttribPointer(attr, buf->normal_comp, buf->normal_var, buf->normal_norm, vert_size, (void*)(offset));
-        offset += size;
-    }
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    attributes.push_back(*attr);
+    *attr = nullptr;
+
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
 
 #endif
+}
+
+//void FLY_Program::UpdateAttribute(const char* name)
+//{
+
+//}
+
+void FLY_Program::EnableOwnAttributes()
+{
+    uint16 size = attributes.size();
+    for (int i = 0; i < size; ++i)
+    {
+        FLY_Attribute* atr = attributes[i];
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+        glEnableVertexAttribArray(atr->id);
+        glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, atr->var_size, (void*)atr->offset);
+#endif
+    }
 }
 
 // Has Errors
@@ -221,7 +197,7 @@ uint32 FLY_Program::GetUniformLocation(const char* name) const
     return UINT32_MAX;
 }
 
-void FLY_Program::Prepare()
+void FLY_Program::Use()
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     glUseProgram(id);
@@ -229,32 +205,21 @@ void FLY_Program::Prepare()
 #endif
 }
 
-void FLY_Program::Draw(FLY_Buffer* buf, int offset_bytes, int count)
+void FLY_Program::DrawIndices(FLY_Mesh* mesh, int offset_bytes, int count)
+{    
+    count = (count == 0) ? mesh->num_index : count;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)offset_bytes);
+#else
+#endif
+}
+
+void FLY_Program::DrawRawVertices(FLY_Mesh* mesh, int count)
 {
-    
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glUseProgram(id);
-    glBindVertexArray(buf->attribute_object);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-#endif
-    EnableAttributes(buf);
-    if (buf->num_index > 0)
-    {
-        count = (count == 0) ? buf->num_index : count;
+    count = (count == 0) ? mesh->num_verts : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        glDrawElements(GL_TRIANGLES, count, buf->index_var, (void*)offset_bytes);
-#else
+    glDrawArrays(GL_TRIANGLES, 0, count);
 #endif
-    }
-    else
-    {
-        count = (count == 0) ? buf->num_verts : count;
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        glDrawArrays(GL_TRIANGLES, 0, count);
-#else
-#endif
-    }
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

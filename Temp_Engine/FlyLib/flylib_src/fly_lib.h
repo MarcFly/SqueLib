@@ -357,38 +357,43 @@ enum FLYSHADER_Layout
 };
 
 // Render Pipeline
-typedef struct FLY_Buffer
+typedef struct FLY_Attribute
+{
+	uint32 id;
+	const char* name;
+	int32 var_type;
+	bool normalize;
+	uint16 var_size;
+	uint16 num_comp;
+	uint32 offset;
+	uint16 location;
+	// Initialization
+	FL_API void SetName(const char* str);
+	FL_API void SetVarType(int32 var);
+	FL_API void SetNumComponents(uint16 num);
+	FL_API void SetNormalize(bool norm);
+
+	// Getters
+	FL_API uint16 GetSize() const;
+
+	// Usage
+	FL_API void SetAttribute() const;
+} FLY_Attribute;
+
+#include <vector> 
+// Maybe Swap to a custom array handler for specific sizes
+// I want to hav e afast search on less than 100 objects, probably a full array is good enough
+typedef struct FLY_Mesh
 {	
-	uint16 layout = NULL;
 	int32 draw_mode = FLY_STATIC_DRAW;
 	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
 	
+	// Vertex Data
 	uint32 vert_id = UINT32_MAX;
 	uint16 num_verts = 0;
 	char* verts = nullptr;
-	// Size of the vertex attributes
-	int32 pos_var		= INT32_MAX;
-	int32 color_var		= INT32_MAX;
-	int32 uv_var		= INT32_MAX;
-	int32 normal_var	= INT32_MAX;
-
-	uint16 pos_comp		= 0;
-	uint16 color_comp	= 0;
-	uint16 uv_comp		= 0;
-	uint16 normal_comp	= 0;
-
-	uint16 pos_size		= 0;
-	uint16 color_size	= 0;
-	uint16 uv_size		= 0;
-	uint16 normal_size	= 0;
-
-	bool pos_norm		= false;
-	bool color_norm		= false;
-	bool uv_norm		= false;
-	bool normal_norm	= false;
-
-	// tangent, bitangent,... whatever needed later on
-	// this might be variable, each might not map to a float (color will be 4 values of byte, but can be 4floats instea of uchars,...
+	std::vector<FLY_Attribute*> attributes;
+	
 	// Indices for the buffer
 	uint32 index_id		= UINT32_MAX;
 	uint16 num_index	= 0;
@@ -397,31 +402,22 @@ typedef struct FLY_Buffer
 
 	// add other parts of the buffer
 
-	// Usage Funcs
-	FL_API void SetVarTypes(int32 position, int32 color, int32 uv, int32 normal);
-	FL_API void SetIndexVarType(int32 index);
-	FL_API void SetComponentSize(uint16 position, uint16 color, uint16 uv, uint16 normal);
-	FL_API void SetToNormalize(bool position, bool color, bool uv, bool normal);
+	// Initialization
+	FL_API void Prepare();
 	FL_API void SetDrawMode(int32 draw_mode);
+	FL_API void SetIndexVarType(int32 var);
+	FL_API void GiveAttribute(FLY_Attribute** attribute);
+	FL_API void SetLocations();
+
+	// Getters
+	FL_API uint16 GetVertSize();	
+	FL_API uint16 GetAttribSize(const char* name) const;
+
+	// Usage
 	FL_API void SetAttributes();
-
-	FL_API uint16 GetVertSize() const;	
-	
-	FL_API uint16 GetPosSize() const;
-	FL_API uint16 GetColorSize() const;
-	FL_API uint16 GetUVSize() const;
-	FL_API uint16 GetNormalSize() const;
-} FLY_Buffer;
-
-typedef struct FLY_Mesh
-{
-	uint16 num_ids = UINT32_MAX;
-	uint32* ids = nullptr;
-	FLY_Buffer** buffers = nullptr;
-
-	FL_API void PrepareBuffers(uint16 num_buffers);
 	FL_API void SendToGPU();
 } FLY_Mesh;
+
 
 typedef struct FLY_Texture2D
 {
@@ -497,23 +493,30 @@ typedef struct FLY_Program
 	FLY_Shader* vertex_s = nullptr;
 	FLY_Shader* fragment_s = nullptr;
 	std::vector<FLY_Uniform*> uniform;
+	std::vector<FLY_Attribute*> attributes;
 	
 	// Call before doing anything prolly
 	FL_API void Init(uint16 prog_layout);
 
-	// Flow/Helper Functions
-	FL_API void CompileShaders();
-
-	// Program Usage Functions
+	// Prepare the Program
 	FL_API void AttachShader(FLY_Shader** fly_shader); // Obtains ownership of the shader 
+	FL_API void CompileShaders();
 	FL_API void Link();
-	FL_API void EnableAttributes(FLY_Buffer* fly_buffer);
-	FL_API void SetupUniformLocations();
-	FL_API uint32 GetUniformLocation(const char* name) const;
-	FL_API void Prepare();
-	FL_API void Draw(FLY_Buffer* buf, int offset_bytes = 0, int count = 0);
+	
+	// Drawing
+	FL_API void Use();
+	FL_API void DrawIndices(FLY_Mesh* mesh, int32 offset_bytes = 0, int32 count = 0);
+	FL_API void DrawRawVertices(FLY_Mesh* mesh, int32 count = 0);
+
+	// Attributes
+	//FL_API void EnableMeshAttributes(FLY_Mesh* fly_mesh);
+	FL_API void SetAttribute(FLY_Attribute** attr);
+	FL_API void EnableOwnAttributes();
 	
 	// Passing Uniforms
+	FL_API void SetupUniformLocations();
+	FL_API uint32 GetUniformLocation(const char* name) const;
+
 	FL_API void SetBool(const char* name, bool value) const;
 	FL_API void SetInt(const char* name, int value) const;
 	FL_API void SetFloat(const char* name, float value) const;
