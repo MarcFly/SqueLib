@@ -81,19 +81,41 @@ typedef unsigned char uchar;
 
 typedef struct float4 
 {
+	float4() {};
 	float4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {};
 	float x, y, z, w;
 } float4;
 typedef struct float3 
 { 
+	float3() {};
 	float3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {};
 	float x, y, z;
 } float3;
 typedef struct float2 
 { 
+	float2() {};
 	float2(float x_, float y_) : x(x_), y(y_) {}; 
 	float x, y;
 } float2;
+
+typedef struct int4
+{
+	int4() {};
+	int4(int32 x_, int32 y_, int32 z_, int32 w_) : x(x_), y(y_), z(z_), w(w_) {};
+	int32 x, y, z, w;
+} int4;
+typedef struct int3
+{
+	int3() {};
+	int3(int32 x_, int32 y_, int32 z_) : x(x_), y(y_), z(z_) {};
+	int32 x, y, z;
+} int3;
+typedef struct int2
+{
+	int2() {};
+	int2(int32 x_, int32 y_) : x(x_), y(y_) {};
+	int32 x, y;
+} int2;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -312,15 +334,16 @@ typedef struct ColorRGBA {
 
 typedef struct FLY_RenderState
 {
-	int32 last_program, last_texture, last_array_buffer, last_element_array_buffer;
-	
+	int32 program, texture, vertex_array_buffer, element_array_buffer;
+	int32 attribute_object;
 	int32 blend_equation_rgb, blend_equation_alpha;
 	
 	int32 blend_func_src_rgb, blend_func_dst_rgb;
 	int32 blend_func_src_alpha, blend_func_dst_alpha;
 
-	int last_vp[4];
-
+	int4 viewport;
+	int4 scissor_box;
+	int2 polygon_mode;
 	bool blend, cull_faces, depth_test, scissor_test;
 
 	FL_API void SetUp();
@@ -400,6 +423,7 @@ typedef struct FLY_Mesh
 	uint32 index_id		= UINT32_MAX;
 	uint16 num_index	= 0;
 	uint32 index_var	= FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices
+	uint16 index_var_size = 0;
 	char* indices		= nullptr;
 
 	// add other parts of the buffer
@@ -439,7 +463,7 @@ typedef struct FLY_Texture2D
 	FL_API void SendToGPU();
 };
 
-FL_API void FLYRENDER_BindExternalTexture(int tex_type, int32 id);
+FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32 id);
 
 // FLY_Texture3D??...
 typedef struct FLY_Texture3D

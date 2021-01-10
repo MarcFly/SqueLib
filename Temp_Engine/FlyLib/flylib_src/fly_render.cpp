@@ -17,16 +17,19 @@
 void FLY_RenderState::SetUp()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUseProgram(last_program);
-    glBindTexture(GL_TEXTURE_2D, last_texture);
-    glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
-
+    glUseProgram(program);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_array_buffer);
+    glBindVertexArray(attribute_object);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
     glBlendEquationSeparate(blend_equation_rgb, blend_equation_alpha);
     glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
-    
-    glViewport(last_vp[0], last_vp[1], last_vp[2], last_vp[3]);
 
+    glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+    glScissor(scissor_box.x, scissor_box.y, scissor_box.z, scissor_box.w);
+#ifdef GL_POLYGON_MODE
+    glPolygonMode(polygon_mode.x, polygon_mode.y);
+#endif
     if (blend) glEnable(GL_BLEND);
     else glDisable(GL_BLEND);
     if (cull_faces) glEnable(GL_CULL_FACE);
@@ -41,10 +44,11 @@ void FLY_RenderState::SetUp()
 void FLY_RenderState::BackUp()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
-    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &last_element_array_buffer);
+    glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture);
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_array_buffer);
+    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_array_buffer);
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &attribute_object);
 
     glGetIntegerv(GL_BLEND_EQUATION_RGB, &blend_equation_rgb);
     glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blend_equation_alpha);
@@ -54,8 +58,10 @@ void FLY_RenderState::BackUp()
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
 
-    glGetIntegerv(GL_VIEWPORT, last_vp);
-
+    glGetIntegerv(GL_VIEWPORT, &viewport.x);
+    glGetIntegerv(GL_SCISSOR_BOX, &scissor_box.x);
+    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.y);
+    polygon_mode.x = FLY_FRONT_AND_BACK;
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
     depth_test = glIsEnabled(GL_DEPTH_TEST);
@@ -192,7 +198,7 @@ void FLY_Attribute::SetLocation(uint16 pos, uint16 vert_size)
 
 // Initialization
 void FLY_Mesh::SetDrawMode(int32 d_m) { draw_mode = d_m; }
-void FLY_Mesh::SetIndexVarType(int32 var) { index_var = var; };
+void FLY_Mesh::SetIndexVarType(int32 var) { index_var = var; index_var_size = VarGetSize(index_var); };
 void FLY_Mesh::GiveAttribute(FLY_Attribute** atr)
 {
     if (atr == nullptr || *atr == nullptr)
@@ -324,7 +330,7 @@ void FLY_Texture2D::SendToGPU()
 #endif
 }
 
-void FLYRENDER_BindExternalTexture(int tex_type, int32 id)
+void FLYRENDER_BindExternalTexture(int tex_type, uint32 id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindTexture(tex_type, id);

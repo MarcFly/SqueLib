@@ -33,6 +33,15 @@ int main()
         if (ret) { FLYLOG(FLY_LogType::LT_INFO, "Entering Update Loop..."); }
         else FLYLOG(FLY_LogType::LT_WARNING, "Error Initializing Engine...");
     }
+    // ImGui Init and Testing
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        ImGui::StyleColorsDark();
+
+        ImGui_ImplFlyLib_Init();
+    }
 
     // Follow LeanOpenGL
     {
@@ -111,19 +120,24 @@ int main()
         program.SetupUniformLocations();
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLY_Timer t;
+        bool window = true;
         while (state == MAIN_UPDATE)
         {
+            ImGui_ImplFlyLib_NewFrame();
+            ImGui::NewFrame();
+
             FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
             FLYRENDER_Clear(NULL, &col);
             program.Use();
             float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
             program.SetFloat4("ourColor", float4(0,green,0,1));
             FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-            program.DrawIndices(&triangle);
+            program.DrawIndices(&triangle, 0, 6);
             FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+            ImGui::ShowDemoWindow(&window);
+            ImGui::Render();
+            //ImGui::EndFrame();
             FLYDISPLAY_SwapAllBuffers();
-
-
             FLYINPUT_Process(0);
             if (FLYDISPLAY_ShouldWindowClose(0))
             {

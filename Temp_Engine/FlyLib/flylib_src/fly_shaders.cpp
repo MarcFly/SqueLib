@@ -175,13 +175,13 @@ uint16 FLY_Program::GetAttribByteSize() const
 void FLY_Program::EnableOwnAttributes()
 {
     uint16 size = attributes.size();
-    uint16 attrib_size = GetAttribByteSize();
+    uint16 stride = GetAttribByteSize();
     for (int i = 0; i < size; ++i)
     {
         FLY_Attribute* atr = attributes[i];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
         glEnableVertexAttribArray(atr->id);
-        glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, attrib_size, (void*)atr->offset);
+        glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, stride, (void*)atr->offset);
 #endif
     }
 }
@@ -227,8 +227,8 @@ void FLY_Program::DrawIndices(FLY_Mesh* mesh, int32 offset_bytes, int32 count)
 {    
     count = (count == 0) ? mesh->num_index : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->index_id);
-    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)offset_bytes);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->index_id);
+    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)(mesh->index_var_size * offset_bytes));
 #else
 #endif
 }
@@ -237,7 +237,7 @@ void FLY_Program::DrawRawVertices(FLY_Mesh* mesh, int32 count)
 {
     count = (count == 0) ? mesh->num_verts : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vert_id);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vert_id);
     glDrawArrays(GL_TRIANGLES, 0, count);
 #endif
 }

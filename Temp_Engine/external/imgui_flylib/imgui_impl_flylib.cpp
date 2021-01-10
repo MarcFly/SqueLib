@@ -23,8 +23,8 @@ static FLY_Mesh         fly_dataHandle;
 // Shaders
 const char* vertex_shader =
     "in vec2 v_pos;\n"
-    "in vec4 v_color;\n"
-    "in vec2 v_uv;\n"    
+    "in vec2 v_uv;\n"
+    "in vec4 v_color;\n"    
     "out vec2 Frag_UV;\n"
     "out vec4 Frag_Color;\n"
     "uniform mat4 ProjMtx;\n"
@@ -85,65 +85,86 @@ static float		fly_MouseWheelH = 0.0f;
 // RENDERING
 void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    // BackUp State
-    if (glGetError() > 0)
-    {
-        bool break_here = 0;
-    }
-    fly_backupState.BackUp();
-    // Apply new state
-    fly_renderState.SetUp();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
-    draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+    // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+    int32 fb_width = (int32)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
+    int32 fb_height = (int32)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
+    if (fb_width <= 0 || fb_height <= 0)
+        return;
 
-    // Setup Ortho Projection Matrix
-    FLYRENDER_ChangeViewPortSize(io.DisplaySize.x, io.DisplaySize.y);
+    // Backup User State
+    fly_backupState.BackUp();
+    // Setup ImGui Render State
+    fly_renderState.viewport = int4(0, 0, fb_width, fb_height);
+    fly_renderState.SetUp();
+    // Modify according to ImGui Framebuffer Space
+    ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
+    ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+
+        // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
+    bool clip_origin_lower_left = true;
+
+    // Set the Shader Program State accordingly
+    float L = draw_data->DisplayPos.x;
+    float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
+    float T = draw_data->DisplayPos.y;
+    float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
+    if (!clip_origin_lower_left) { float tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
     const float ortho_projection[4][4] =
     {
-        { 2.0f / io.DisplaySize.x, 0.0f,                   0.0f, 0.0f },
-        { 0.0f,                  2.0f / -io.DisplaySize.y, 0.0f, 0.0f },
-        { 0.0f,                  0.0f,                  -1.0f, 0.0f },
-        {-1.0f,                  1.0f,                   0.0f, 1.0f },
+        { 2.0f / (R - L),   0.0f,         0.0f,   0.0f },
+        { 0.0f,         2.0f / (T - B),   0.0f,   0.0f },
+        { 0.0f,         0.0f,        -1.0f,   0.0f },
+        { (R + L) / (L - R),  (T + B) / (B - T),  0.0f,   1.0f },
     };
 
     fly_shaderProgram.Use();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_shaderProgram.SetInt("Texture", 0);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    // Draw Loop
     for (int i = 0; i < draw_data->CmdListsCount; ++i)
     {
         const ImDrawList* cmd_list = draw_data->CmdLists[i];
-        const ImDrawIdx* idx_buffer_offset = 0;
-
         fly_dataHandle.verts = (char*)cmd_list->VtxBuffer.Data;
-        fly_dataHandle.num_verts = cmd_list->VtxBuffer.size();
+        fly_dataHandle.num_verts = cmd_list->VtxBuffer.Size;
         fly_dataHandle.indices = (char*)cmd_list->IdxBuffer.Data;
-        fly_dataHandle.num_index = cmd_list->IdxBuffer.size();
+        fly_dataHandle.num_index = cmd_list->IdxBuffer.Size;
 
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         fly_dataHandle.SendToGPU();
+        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         fly_shaderProgram.EnableOwnAttributes();
         FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-        for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
+        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
         {
-            if (pcmd->UserCallback)
-                pcmd->UserCallback(cmd_list, pcmd);
+            const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+            if (pcmd->UserCallback != NULL)
+            {
+                if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
+                {
+                    // ?
+                }
+                else
+                    pcmd->UserCallback(cmd_list, pcmd);
+            }
             else
             {
-                FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
-                FLYRENDER_Scissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
+                ImVec4 clip_rect;
+                clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
+                clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
+                clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
+                clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
+                if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
+                {
+                    FLYRENDER_Scissor((int)clip_rect.x, 
+                                      (int)(fb_height - clip_rect.w), 
+                                      (int)(clip_rect.z - clip_rect.x), 
+                                      (int)(clip_rect.w - clip_rect.y));
+                    FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
+                    fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
+                }
             }
-            idx_buffer_offset += pcmd->ElemCount;
-            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
         }
     }
-
-    // Regain State
+    // Regain User State
     fly_backupState.SetUp();
 }
 
@@ -186,9 +207,11 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     fly_dataHandle.GiveAttribute(&pos_);
     fly_dataHandle.GiveAttribute(&uv_);
     fly_dataHandle.GiveAttribute(&color_);
+    fly_dataHandle.Prepare();
+    //fly_dataHandle.SetLocationsInOrder();
     // Initialize the Shaders
-    const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader_core};
-    const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader_core };
+    const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader};
+    const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader};
     FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_shader, true);
     vert->Compile();
     FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_shader, true);
@@ -197,7 +220,7 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     fly_shaderProgram.Init();
     fly_shaderProgram.AttachShader(&vert);
     fly_shaderProgram.AttachShader(&frag);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     /*
     fly_shaderProgram.AttachShader(&FLYSHADER_Create(FLYSHADER_VERTEX, vertex_shader));
     fly_shaderProgram.AttachShader(&FLYSHADER_Create(FLYSHADER_VERTEX, fragment_shader));
@@ -205,7 +228,7 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     */
 
     fly_shaderProgram.Link();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
     fly_shaderProgram.DeclareUniform("Texture");
     fly_shaderProgram.DeclareUniform("ProjMtx");
@@ -226,17 +249,18 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 {
     ImGuiIO& io = ImGui::GetIO();
 
+    fly_backupState.BackUp();
+
     // Build Texture Atlas
     fly_fontTexture.Init(FLY_RGBA);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
     // Create the Texture
-    fly_backupState.BackUp();
     fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_fontTexture.SendToGPU();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
     // ImGui stores texture_id
     io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
@@ -335,12 +359,11 @@ bool ImGui_ImplFlyLib_Init()
     fly_renderState.cull_faces = false;
     fly_renderState.depth_test = false;
     fly_renderState.scissor_test = true;
+    fly_renderState.polygon_mode = int2(FLY_FRONT_AND_BACK, FLY_FILL);
 
     io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
     ImGui_ImplFlyLib_CreateShaderProgram();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     ImGui_ImplFlyLib_CreateFontsTexture();
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     return ret;
 }
 
