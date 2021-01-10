@@ -349,7 +349,8 @@ typedef struct FLY_RenderState
 	FL_API void SetUp();
 	FL_API void BackUp();
 };
-
+FL_API void CheckForRenderErrors(const char* file, int line);
+#define FLY_CHECK_RENDER_ERRORS() FL_MACRO CheckForRenderErrors(__FILE__, __LINE__)
 FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);
 FL_API bool FLYRENDER_Init();
 FL_API void FLYRENDER_Close();

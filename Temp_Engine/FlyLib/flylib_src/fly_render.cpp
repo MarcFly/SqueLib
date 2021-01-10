@@ -269,6 +269,7 @@ void FLY_Mesh::SetAttributes()
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(attribute_object);
 #endif
+    Bind();
     uint16 vert_size = GetVertSize();
     for (int i = 0; i < size; ++i)
         attributes[i]->SetAttribute(vert_size);
@@ -298,7 +299,7 @@ void FLY_Mesh::SendToGPU()
     if (num_index > 0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*VarGetSize(index_var), indices, draw_mode);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*index_var_size, indices, draw_mode);
     }
 #endif
 }
@@ -356,7 +357,21 @@ void FLYRENDER_BindExternalTexture(int tex_type, uint32 id)
 // DEBUG... //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GetGLError()
+#ifdef _WIN32
+#   include <Windows.h>
+#   define FOLDER_ENDING '\\'
+#else
+#   define FOLDER_ENDING '/'
+#   ifdef ANDROID
+#       include<android/log.h>
+#   endif
+#endif
+
+void CheckForRenderErrors(const char* file, int line)
 {
-    FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    int32 errcode = 0;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    while ((errcode = glGetError()) != 0)
+        FLYLOG(LT_WARNING, "%s(%d): OpenGL Error %d", strrchr(file, FOLDER_ENDING), line, errcode);
+#endif
 }

@@ -76,7 +76,7 @@ void FLYSHADER_CheckCompileLog(FLY_Shader* shader)
     glGetShaderInfoLog(shader->id, 512, NULL, infoLog);
 
 #endif
-    FLYPRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
+    if(!success) FLYPRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,5 +336,5 @@ void FLYRENDER_CheckProgramLog(FLY_Program* prog)
     glGetProgramInfoLog(prog->id, 512, NULL, infoLog);
 
 #endif
-    FLYLOG(LT_WARNING, "Program Linkage Info: %s", infoLog);
+    if(!success) FLYLOG(LT_WARNING, "Program Linkage Info: %s", infoLog);
 }

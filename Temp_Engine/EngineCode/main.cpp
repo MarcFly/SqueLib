@@ -34,6 +34,7 @@ int main()
         else FLYLOG(FLY_LogType::LT_WARNING, "Error Initializing Engine...");
     }
     // ImGui Init and Testing
+    gladLoadGL();
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -45,7 +46,7 @@ int main()
 
     // Follow LeanOpenGL
     {
-        gladLoadGL();
+        
         // Shader Setup
         const char* vertexShaderSource = 
             "#version 330 core\n"
@@ -75,7 +76,7 @@ int main()
         program.AttachShader(&frag_s);
         program.Link();
         
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+        FLY_CHECK_RENDER_ERRORS();
         // Mesh Setup-----------------------------------------------------------------------------------
         float vertices[] = {
              0.5f,  0.5f, 0.0f,  // top right
@@ -126,14 +127,13 @@ int main()
             ImGui_ImplFlyLib_NewFrame();
             ImGui::NewFrame();
 
-            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
             FLYRENDER_Clear(NULL, &col);
             program.Use();
             float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
             program.SetFloat4("ourColor", float4(0,green,0,1));
-            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
             program.DrawIndices(&triangle, 0, 6);
-            FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+
+            // ImGui Testing
             ImGui::ShowDemoWindow(&window);
             {
                 ImGui::Begin("Another Window", &window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)

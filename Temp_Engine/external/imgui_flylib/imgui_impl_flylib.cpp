@@ -9,6 +9,42 @@
 // Timing
 static FLY_Timer    fly_Time;
 static float        fly_lastTime = 0;
+// Input Variables
+static bool			fly_KeyCtrl = false;
+static bool			fly_KeyShift = false;
+static bool			fly_KeyAlt = false;
+static bool			fly_KeySuper = false;
+static ImVec2		fly_MousePos = { -FLT_MAX, -FLT_MAX };
+static bool			fly_NoButtonActiveLast = false;
+static bool         fly_MousePressed_last[5] = { false, false, false, false, false };
+static bool         fly_MousePressed[5] = { false, false, false, false, false };
+static float        fly_MouseWheel = 0.0f;
+static float		fly_MouseWheelH = 0.0f;
+// Shaders
+const char* vertex_shader_source =
+    "layout (location = 0) in vec2 Position;\n"
+    "layout (location = 1) in vec2 UV;\n"
+    "layout (location = 2) in vec4 Color;\n"
+	"uniform mat4 ProjMtx;\n"
+    "out vec3 v_col;\n"
+    "out vec2 uv;\n"
+    "void main()\n"
+    "{\n"
+    "   uv = UV;\n"
+    "   v_col = Color.xyz;\n"
+    "   gl_Position = ProjMtx * vec4(Position.xy, 0, 1);\n"
+    "}\0";
+
+const char* frag_shader_source =
+    "out vec4 FragColor;\n"
+	"uniform sampler2D Texture;\n"
+    "in vec3 v_col;\n"
+    "in vec2 uv;\n"
+    "void main()\n"
+	"{\n"
+	"	FragColor = vec4(v_col, 1.0)*texture(Texture, uv.st);\n"
+	"}\0";
+
 // Drawing Variables
 static uint16           fly_displayWidth = 0;
 static uint16           fly_displayHeight = 0;
@@ -18,40 +54,7 @@ static FLY_RenderState  fly_backupState;
 static FLY_RenderState  fly_renderState;
 static FLY_Program      fly_shaderProgram;
 static FLY_Mesh         fly_dataHandle;
-// Save User Render State
 
-// Shaders
-const char* vertex_shader_source =
-    "layout (location = 0) in vec2 aPos;\n"
-    "layout (location = 1) in vec2 aUV;\n"
-    "layout (location = 2) in vec4 aColor;\n"
-    "out vec3 v_col;\n"
-    "out vec2 uv;\n"
-    "void main()\n"
-    "{\n"
-    "   uv = aUV;\n"
-    "   v_col = aColor.xyz;\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, 0., 1.0);\n"
-    "}\0";
-
-const char* frag_shader_source =
-    "out vec4 FragColor;\n"
-    "in vec3 v_col;\n"
-    "in vec2 uv;\n"
-    "uniform vec4 ourColor;\n"
-    "void main() { FragColor = ourColor+vec4(v_col, 1.0)+vec4(uv,0.,1.);}\0";
-
-// Input Variables
-static bool			fly_KeyCtrl = false;
-static bool			fly_KeyShift = false;
-static bool			fly_KeyAlt = false;
-static bool			fly_KeySuper = false;
-static ImVec2		fly_MousePos = {-FLT_MAX, -FLT_MAX};
-static bool			fly_NoButtonActiveLast = false;
-static bool         fly_MousePressed_last[5] = { false, false, false, false, false };
-static bool         fly_MousePressed[5] = { false, false, false, false, false };
-static float        fly_MouseWheel = 0.0f;
-static float		fly_MouseWheelH = 0.0f;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ORGANIZATION FUNCTIONS ////////////////////////////////////////////////////////////////////////////////
@@ -59,22 +62,141 @@ static float		fly_MouseWheelH = 0.0f;
 // RENDERING
 void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 {
+	// Check last errors
+	FLY_CHECK_RENDER_ERRORS();
 
+
+	fly_backupState.BackUp();
+
+	fly_renderState.SetUp();
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
+	draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+
+	FLYRENDER_ChangeViewPortSize(io.DisplaySize.x, io.DisplaySize.y);
+
+	const float ortho_projection[4][4] =
+	{
+		{ 2.0f / io.DisplaySize.x, 0.0f,                   0.0f, 0.0f },
+		{ 0.0f,                  2.0f / -io.DisplaySize.y, 0.0f, 0.0f },
+		{ 0.0f,                  0.0f,                  -1.0f, 0.0f },
+		{-1.0f,                  1.0f,                   0.0f, 1.0f },
+	};
+
+	fly_shaderProgram.Use();
+	fly_shaderProgram.SetInt("Texture", 0);
+	fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
+
+	for (int i = 0; i < draw_data->CmdListsCount; ++i)
+	{
+		const ImDrawList* cmd_list = draw_data->CmdLists[i];
+		uint32 idx_buffer_offset = 0;
+
+		fly_dataHandle.verts = (char*)&cmd_list->VtxBuffer.front();
+		fly_dataHandle.num_verts = cmd_list->VtxBuffer.size();
+		fly_dataHandle.indices = (char*)&cmd_list->IdxBuffer.front();
+		fly_dataHandle.num_index = cmd_list->IdxBuffer.size();
+
+		fly_dataHandle.SendToGPU();
+		fly_dataHandle.SetAttributes();
+
+		for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
+		{
+			if (pcmd->UserCallback)
+				pcmd->UserCallback(cmd_list, pcmd);
+			else
+			{
+				FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
+				FLYRENDER_Scissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+				fly_shaderProgram.DrawIndices(&fly_dataHandle, idx_buffer_offset, pcmd->ElemCount);
+			}
+			idx_buffer_offset += pcmd->ElemCount;
+		}
+	}
+
+	fly_backupState.SetUp();
+
+	// Check last errors
+	FLY_CHECK_RENDER_ERRORS();
 }
 
 void ImGui_ImplFlyLib_PrepareBuffers()
 {
-    
+	fly_backupState.BackUp();
+
+	fly_dataHandle.SetIndexVarType(FLY_USHORT);
+	fly_dataHandle.Prepare();
+	FLY_Attribute* pos = new FLY_Attribute();
+	FLY_Attribute* uv = new FLY_Attribute();
+	FLY_Attribute* color = new FLY_Attribute();
+	
+	pos->SetName("Position");
+	uv->SetName("UV");
+	color->SetName("Color");
+
+	pos->SetVarType(FLY_FLOAT);
+	uv->SetVarType(FLY_FLOAT);
+	color->SetVarType(FLY_UBYTE);
+
+	pos->SetNumComponents(2);
+	uv->SetNumComponents(2);
+	color->SetNumComponents(4);
+
+	pos->SetNormalize(false);
+	uv->SetNormalize(false);
+	color->SetNormalize(true);
+
+	pos->SetOffset(0);
+	uv->SetOffset(pos->GetSize());
+	color->SetOffset(pos->GetSize() + uv->GetSize());
+	fly_dataHandle.GiveAttribute(&pos);
+	fly_dataHandle.GiveAttribute(&uv);
+	fly_dataHandle.GiveAttribute(&color);
+	fly_dataHandle.EnableAttributesForProgram(fly_shaderProgram.id);
+	fly_dataHandle.SetAttributes();
+
+	fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_CreateShaderProgram()
 {
+	fly_backupState.BackUp();
 
+	const char* vert_raw[2] = { FLYRENDER_GetGLSLVer(), vertex_shader_source };
+	const char* frag_raw[2] = { FLYRENDER_GetGLSLVer(), frag_shader_source };
+	FLY_Shader* vert_s = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_raw, true);
+	FLY_Shader* frag_s = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_raw, true);
+	vert_s->Compile();
+	frag_s->Compile();
+
+	fly_shaderProgram.Init();
+	fly_shaderProgram.AttachShader(&vert_s);
+	fly_shaderProgram.AttachShader(&frag_s);
+	fly_shaderProgram.Link();
+
+	fly_shaderProgram.DeclareUniform("Texture");
+	fly_shaderProgram.DeclareUniform("ProjMtx");
+
+	fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_CreateFontsTexture()
 {
+	fly_backupState.BackUp();
+
+	ImGuiIO& io = ImGui::GetIO();
 	
+	fly_fontTexture.Init(FLY_RGBA);
+	io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
+	fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
+	fly_fontTexture.SendToGPU();
+	FLY_CHECK_RENDER_ERRORS();
+
+	io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
+
+	fly_backupState.SetUp();
 }
 
 
@@ -167,12 +289,12 @@ bool ImGui_ImplFlyLib_Init()
     fly_renderState.blend_func_dst_alpha = FLY_ONE_MINUS_SRC_ALPHA;
     fly_renderState.cull_faces = false;
     fly_renderState.depth_test = false;
-    fly_renderState.scissor_test = true;
+    fly_renderState.scissor_test = false;
     fly_renderState.polygon_mode = int2(FLY_FRONT_AND_BACK, FLY_FILL);
 
     io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
-    ImGui_ImplFlyLib_PrepareBuffers();
-    ImGui_ImplFlyLib_CreateShaderProgram();
+	ImGui_ImplFlyLib_CreateShaderProgram();
+    ImGui_ImplFlyLib_PrepareBuffers();    
     ImGui_ImplFlyLib_CreateFontsTexture();
     return ret;
 }
