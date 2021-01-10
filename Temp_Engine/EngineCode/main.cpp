@@ -34,7 +34,6 @@ int main()
         else FLYLOG(FLY_LogType::LT_WARNING, "Error Initializing Engine...");
     }
     // ImGui Init and Testing
-    gladLoadGL();
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -175,6 +174,8 @@ int main()
 
 
         }
+        triangle.verts = NULL;
+        triangle.indices = NULL;
     }
 
     // For Testing timer and android keyboard

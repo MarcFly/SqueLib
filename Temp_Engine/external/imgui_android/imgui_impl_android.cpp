@@ -425,3 +425,82 @@ void ImGui_ImplAndroidGLES2_NewFrame(int width, int height, unsigned int millis)
 	while((code = FLYINPUT_GetCharFromBuffer()) != -1)
 		io.AddInputCharacter(code);
 }
+
+
+/* RENDER DRAW LISTS
+{
+	// Bind the required stat (minus scissor right now)
+
+	glActiveTexture(texture_id);
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
+	draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+
+	FLYRENDER_ChangeViewPortSize(io.DisplaySize.x, io.DisplaySize.y);
+
+float L = draw_data->DisplayPos.x;
+    float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
+    float T = draw_data->DisplayPos.y;
+    float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
+	const float ortho_projection[4][4] =
+    {
+        { 2.0f/(R-L),   0.0f,         0.0f,   0.0f },
+        { 0.0f,         2.0f/(T-B),   0.0f,   0.0f },
+        { 0.0f,         0.0f,        -1.0f,   0.0f },
+        { (R+L)/(L-R),  (T+B)/(B-T),  0.0f,   1.0f },
+    };
+
+	glUseProgram(shdaerProgram);
+	// Set Uniform Int 0 for variable Texture
+	glUniformMatrix4fv(GetUniformLocation(ProjMtx), 1, false, &ortho_project[0][0]);
+
+	// Mesh->Bind() // Binds all of the mesh
+	glBindVertexArray(attribute_object);
+	glBindBuffer(GL_ARRAY_BUFFER, vert_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id); // Maybe binding the element array makes the attributes be counted on index?
+
+	glEnableVertexAttribArray(pos_id);
+	glVertexAttribPointer(pos_id, 2, float, false, vert_size, (void*)0);
+	glEnableVertexAttribArray(uv_id);
+	glVertexAttribPointer(uv_id, 2, float, false, vert_size, (void*)8);
+	glEnableVertexAttribArray(color_id);
+	glVertexAttribPointer(color_id, 4, ubyte, true, vert_size, (void*)16);
+
+	for (int i = 0; i < draw_data->CmdListsCount; ++i)
+	{
+		const ImDrawList* cmd_list = draw_data->CmdLists[i];
+		uint32 idx_buffer_offset = 0;
+
+		// This is setting the vertices and indices to point to the required buffer for the cmd_list 
+		fly_dataHandle.verts = (char*)&cmd_list->VtxBuffer.front();
+		fly_dataHandle.num_verts = cmd_list->VtxBuffer.size();
+		fly_dataHandle.indices = (char*)&cmd_list->IdxBuffer.front();
+		fly_dataHandle.num_index = cmd_list->IdxBuffer.size();
+
+		glBindVertexArray(attribute_object);
+    	glBindBuffer(GL_ARRAY_BUFFER, vert_id);
+		glBufferData(GL_ARRAY_BUFFER, vert_size * num_verts, verts, GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*index_var_size, indices, GL_STREAM_DRAW); (2 byte var size technically)
+
+		
+		for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
+		{
+			if (pcmd->UserCallback)
+				pcmd->UserCallback(cmd_list, pcmd);
+			else
+			{
+				glBindTexture(GL_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
+				glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->index_id);
+    			glDrawElements(GL_TRIANGLES, pcmd->ElemCount, GL_UNSIGNED_SHORT, (void*)(mesh->index_var_size * idx_buffer_offset));
+			}
+			idx_buffer_offset += pcmd->ElemCount;
+		}
+	}
+
+	// setup backup state
+}
+*/

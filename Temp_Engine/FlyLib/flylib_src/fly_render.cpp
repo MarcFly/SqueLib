@@ -107,14 +107,14 @@ bool FLYRENDER_Init()
 
     FLYLOG(FLY_LogType::LT_INFO, "GLAD Initialized!");
 #ifdef USE_OPENGL
-    FLYLOG(FLY_LogType::LT_INFO, "OpenGL/ES Version: %d.%d", GLVersion.major, GLVersion.minor);
+    FLYLOG(FLY_LogType::LT_INFO, "OpenGL Core Version: %d.%d", GLVersion.major, GLVersion.minor);
 #elif defined USE_OPENGLES
     FLYLOG(FLY_LogType::LT_INFO, "OpenGLES Version: %d.%d", GLVersion.major, GLVersion.minor);
 #endif
     // Generate Viewport with window size
     uint16 w, h;
     FLYDISPLAY_GetSize(0, &w, &h);
-    glViewport(0, 0, w, h);
+    FLYRENDER_ChangeViewPortSize(w, h);
     FLYLOG(FLY_LogType::LT_INFO, "Main Viewport init...");
     return ret;
 }
@@ -130,14 +130,29 @@ void FLYRENDER_Clear(int clear_flags, ColorRGBA* color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+#if defined(USE_OPENGL) ||defined(USE_OPENGLES)
+int32 GetGLVer()
+{
+    return GLVersion.major * 100 + GLVersion.minor * 10;
+}
+#endif
+
 const char* FLYRENDER_GetGLSLVer()
 {
-#if defined(USE_OPENGL)
-    return "#version 330\n";
-#else if defined(USE_OPENGLES)
-    return "#version 320 es\nprecision mediump float;"
+    const char* ret = "";
+#if defined(USE_OPENGL) ||defined(USE_OPENGLES)
+    int ver = GLVersion.major * 100 + GLVersion.minor * 10;
+    if (ver > 320)
+#if defined(USE_OPENGLES)
+        return "#version 320 es\nprecision mediump float;\n";
+#else
+        return "#version 330 core\n";
 #endif
-        return "#Please update this function properly, saving opengl versions and such";
+    else
+        return "#version 100 es";
+#endif
+
+    return ret;
 }
 
 void FLYRENDER_Scissor(int x, int y, int w, int h)
@@ -263,6 +278,14 @@ void FLY_Mesh::Bind()
 #endif
 }
 
+void FLY_Mesh::BindNoIndices()
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindVertexArray(attribute_object);
+    glBindBuffer(GL_ARRAY_BUFFER, vert_id);
+#endif
+}
+
 void FLY_Mesh::SetAttributes()
 {
     uint16 size = attributes.size();
@@ -304,6 +327,16 @@ void FLY_Mesh::SendToGPU()
 #endif
 }
 
+// CleanUp
+FLY_Mesh::~FLY_Mesh() { CleanUp(); }
+void FLY_Mesh::CleanUp()
+{
+    if (verts != NULL) { delete[num_verts*GetVertSize()] verts; verts = NULL; }
+    if (indices != NULL) { delete[num_index*index_var_size] indices; indices = NULL; }
+    for (int i = 0; i < attributes.size(); ++i)
+        delete attributes[i];
+    attributes.clear();
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE MANAGEMENT ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -345,11 +378,23 @@ void FLY_Texture2D::SendToGPU()
     glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, pixels);
 #endif
 }
-
+void FLYRENDER_ActiveTexture(int32 texture_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glActiveTexture(texture_id);
+#endif
+}
 void FLYRENDER_BindExternalTexture(int tex_type, uint32 id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindTexture(tex_type, id);
+#endif
+}
+
+void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    if(GetGLVer() >= 330)glBindSampler(texture_locator, sampler_id);
 #endif
 }
 

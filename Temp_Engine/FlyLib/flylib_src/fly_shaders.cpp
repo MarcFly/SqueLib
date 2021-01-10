@@ -311,13 +311,20 @@ void FLY_Program::SetMatrix4(const char* name, const float* value, uint16 number
 FLY_Program::~FLY_Program() { CleanUp(); }
 void FLY_Program::CleanUp()
 {
-    if(vertex_s != nullptr) delete vertex_s;
-    if(fragment_s != nullptr) delete fragment_s;
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    if (vertex_s != NULL && id && vertex_s->id) { glDetachShader(id, vertex_s->id); }
+    if (fragment_s != NULL && id && fragment_s->id) { glDetachShader(id, fragment_s->id);}
+    if (vertex_s != NULL && vertex_s->id) { glDeleteShader(vertex_s->id); vertex_s->id = 0; }
+    if (fragment_s != NULL &&  fragment_s->id) { glDeleteShader(fragment_s->id); fragment_s->id = 0; }
+    if (id) { glDeleteProgram(id); id = 0; }
+#endif
+
+    if (vertex_s != NULL) { delete vertex_s; vertex_s = NULL; }
+    if (fragment_s != NULL) { delete fragment_s; fragment_s = NULL; }
 
     int size = uniforms.size();
     for (int i = 0; i < size; ++i)
         delete uniforms[i];
-
     uniforms.clear();
 }
 

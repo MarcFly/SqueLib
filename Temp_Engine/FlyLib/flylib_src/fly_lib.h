@@ -123,7 +123,7 @@ typedef struct int2
 #include <cstdarg>
 #include <cstddef>
 
-#define LOGSIZE 512
+#define LOGSIZE 1024
 typedef enum FLY_LogType
 {
 	LT_INFO = 4,
@@ -163,16 +163,16 @@ typedef struct FLY_Timer
 	FL_API void Kill();
 	FL_API bool IsStopped();
 	FL_API bool IsActive();
-	FL_API uint16 ReadMilliSec();
+	FL_API uint32 ReadMilliSec();
 	FL_API uint32 ReadMicroSec();
 	FL_API uint32 ReadNanoSec();
 	
 private:
-	uint16 start_at_ms;
+	uint32 start_at_ms;
 	uint32 start_at_ns;
 	uint32 start_at_us;
 	
-	uint16 stop_at_ms;
+	uint32 stop_at_ms;
 	uint32 stop_at_ns;
 	uint32 stop_at_us;
 
@@ -418,7 +418,7 @@ typedef struct FLY_Mesh
 	// Vertex Data
 	uint32 vert_id = UINT32_MAX;
 	uint16 num_verts = 0;
-	char* verts = nullptr;
+	char* verts = NULL;
 	std::vector<FLY_Attribute*> attributes;
 	
 	// Indices for the buffer
@@ -444,9 +444,14 @@ typedef struct FLY_Mesh
 
 	// Usage
 	FL_API void Bind();
+	FL_API void BindNoIndices();
 	FL_API void SetAttributes();
 	FL_API void SetLocationsInOrder();
 	FL_API void SendToGPU();
+
+	// CleanUp
+	FL_API ~FLY_Mesh();
+	FL_API void CleanUp();
 } FLY_Mesh;
 
 
@@ -467,7 +472,9 @@ typedef struct FLY_Texture2D
 	FL_API void SendToGPU();
 };
 
+FL_API void FLYRENDER_ActiveTexture(int32 texture_id);
 FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32 id);
+FL_API void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id);
 
 // FLY_Texture3D??...
 typedef struct FLY_Texture3D

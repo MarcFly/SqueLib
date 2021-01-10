@@ -26,23 +26,24 @@ const char* vertex_shader_source =
     "layout (location = 1) in vec2 UV;\n"
     "layout (location = 2) in vec4 Color;\n"
 	"uniform mat4 ProjMtx;\n"
-    "out vec3 v_col;\n"
+    "out vec4 v_col;\n"
     "out vec2 uv;\n"
     "void main()\n"
     "{\n"
     "   uv = UV;\n"
-    "   v_col = Color.xyz;\n"
+    "   v_col = Color;\n"
     "   gl_Position = ProjMtx * vec4(Position.xy, 0, 1);\n"
     "}\0";
 
 const char* frag_shader_source =
     "out vec4 FragColor;\n"
 	"uniform sampler2D Texture;\n"
-    "in vec3 v_col;\n"
-    "in vec2 uv;\n"
+    "in vec4 v_col;\n"
+    "in vec2 v_uv;\n"
     "void main()\n"
 	"{\n"
-	"	FragColor = vec4(v_col, 1.0)*texture(Texture, uv.st);\n"
+	"	FragColor = v_col*texture(Texture, v_uv.st);\n"
+	//"	FragColor = vec4(0.,1.,0., 1.0);\n"
 	"}\0";
 
 // Drawing Variables
@@ -69,7 +70,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 	fly_backupState.BackUp();
 
 	fly_renderState.SetUp();
-
+	FLYRENDER_ActiveTexture(FLY_TEXTURE0);
 	ImGuiIO& io = ImGui::GetIO();
 
 	float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
@@ -77,45 +78,68 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 
 	FLYRENDER_ChangeViewPortSize(io.DisplaySize.x, io.DisplaySize.y);
 
+	float L = draw_data->DisplayPos.x;
+	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
+	float T = draw_data->DisplayPos.y;
+	float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
 	const float ortho_projection[4][4] =
 	{
-		{ 2.0f / io.DisplaySize.x, 0.0f,                   0.0f, 0.0f },
-		{ 0.0f,                  2.0f / -io.DisplaySize.y, 0.0f, 0.0f },
-		{ 0.0f,                  0.0f,                  -1.0f, 0.0f },
-		{-1.0f,                  1.0f,                   0.0f, 1.0f },
+		{ 2.0f/(R-L),	0.0f,         0.0f,   0.0f },
+		{ 0.0f,         2.0f/(T-B),   0.0f,   0.0f },
+		{ 0.0f,         0.0f,        -1.0f,   0.0f },
+		{ (R+L)/(L-R),	(T+B)/(B-T),  0.0f,   1.0f },
 	};
 
 	fly_shaderProgram.Use();
 	fly_shaderProgram.SetInt("Texture", 0);
 	fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
 
+	FLYRENDER_BindSampler(0, 0);
+	FLY_CHECK_RENDER_ERRORS();
+	fly_dataHandle.BindNoIndices();
+	FLY_CHECK_RENDER_ERRORS();
+	fly_dataHandle.SetAttributes();
+	FLY_CHECK_RENDER_ERRORS();
+	ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
+	ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+
 	for (int i = 0; i < draw_data->CmdListsCount; ++i)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
 		uint32 idx_buffer_offset = 0;
 
-		fly_dataHandle.verts = (char*)&cmd_list->VtxBuffer.front();
+		fly_dataHandle.verts = (char*)&cmd_list->VtxBuffer.Data;
 		fly_dataHandle.num_verts = cmd_list->VtxBuffer.size();
-		fly_dataHandle.indices = (char*)&cmd_list->IdxBuffer.front();
+		fly_dataHandle.indices = (char*)&cmd_list->IdxBuffer.Data;
 		fly_dataHandle.num_index = cmd_list->IdxBuffer.size();
 
 		fly_dataHandle.SendToGPU();
-		fly_dataHandle.SetAttributes();
-
-		for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); ++pcmd)
+		FLY_CHECK_RENDER_ERRORS();
+		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
+			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
 			if (pcmd->UserCallback)
 				pcmd->UserCallback(cmd_list, pcmd);
 			else
 			{
+				ImVec4 clip_rect;
+				clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
+				clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
+				clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
+				clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
+
 				FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
-				FLYRENDER_Scissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+				FLY_CHECK_RENDER_ERRORS();
+				//FLYRENDER_Scissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
 				fly_shaderProgram.DrawIndices(&fly_dataHandle, idx_buffer_offset, pcmd->ElemCount);
+				FLY_CHECK_RENDER_ERRORS();
 			}
 			idx_buffer_offset += pcmd->ElemCount;
 		}
 	}
 
+	fly_dataHandle.verts = NULL;
+	fly_dataHandle.indices = NULL;
 	fly_backupState.SetUp();
 
 	// Check last errors
@@ -274,8 +298,8 @@ bool ImGui_ImplFlyLib_Init()
 	uint16 w, h; FLYDISPLAY_GetSize(0, &w, &h);
 	uint16 bigger = (w > h) ? w : h;
 	float scale = (bigger / dpi)*.8;
-	io.FontGlobalScale = scale;
-	ImGui::GetStyle().ScaleAllSizes(scale);
+	//io.FontGlobalScale = scale;
+	//ImGui::GetStyle().ScaleAllSizes(scale);
 
     // BackendFlags and things...
     //io.BackendFlags &= ~ImGuiBackendFlags_HasMouseCursors;
