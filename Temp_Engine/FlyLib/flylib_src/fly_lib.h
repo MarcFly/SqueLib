@@ -397,12 +397,13 @@ typedef struct FLY_Attribute
 	FL_API void SetNormalize(bool norm);
 	FL_API void SetOffset(uint32 offset_bytes);
 	FL_API void SetId(int32 id_);
+	FL_API void EnableAsAttribute(int32 prog_id);
 	// Getters
 	FL_API uint16 GetSize() const;
 
 	// Usage
 	FL_API void SetAttribute(uint16 vert_size) const;
-	FL_API void SetLocation(uint16 pos, uint16 vert_size);
+	FL_API void SetLocation(int32 pos, uint16 vert_size);
 } FLY_Attribute;
 
 #include <vector> 
@@ -433,6 +434,7 @@ typedef struct FLY_Mesh
 	FL_API void SetIndexVarType(int32 var);
 	FL_API void GiveAttribute(FLY_Attribute** attribute);
 	FL_API void SetOffsetsInOrder();
+	FL_API void EnableAttributesForProgram(int32 prog_id);
 	FL_API void Prepare();	
 
 	// Getters
@@ -545,7 +547,6 @@ typedef struct FLY_Program
 	
 	// Passing Uniforms
 	FL_API void DeclareUniform(const char*);
-	FL_API void SetupUniformLocations();
 	FL_API int32 GetUniformLocation(const char* name) const;
 
 	FL_API void SetBool(const char* name, bool value) const;

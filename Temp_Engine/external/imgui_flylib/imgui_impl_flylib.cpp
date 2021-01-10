@@ -21,43 +21,25 @@ static FLY_Mesh         fly_dataHandle;
 // Save User Render State
 
 // Shaders
-const char* vertex_shader =
-    "in vec2 v_pos;\n"
-    "in vec2 UV;\n"
-    "in vec4 COLOR;\n"
+const char* vertex_shader_source =
+    "layout (location = 0) in vec2 aPos;\n"
+    "layout (location = 1) in vec2 aUV;\n"
+    "layout (location = 2) in vec4 aColor;\n"
+    "out vec3 v_col;\n"
+    "out vec2 uv;\n"
     "void main()\n"
     "{\n"
-    "	gl_Position = vec4(v_pos.xy, 0, 1);\n"
-    "}\n";
+    "   uv = aUV;\n"
+    "   v_col = aColor.xyz;\n"
+    "   gl_Position = vec4(aPos.x, aPos.y, 0., 1.0);\n"
+    "}\0";
 
-const char* fragment_shader =
-    "void main()\n"
-    "{\n"
-    "	gl_FragColor = vec4(0.,0.,0.,1.);\n"
-    "}\n";
-
-const char* vertex_shader_core =
-"layout (location = 0) in vec2 v_pos;\n"
-"layout (location = 1) in vec4 v_color;\n"
-"layout (location = 2) in vec2 v_uv;\n"
-"out vec2 Frag_UV;\n"
-"out vec4 Frag_Color;\n"
-"uniform mat4 ProjMtx;\n"
-"void main()\n"
-"{\n"
-"	Frag_UV = v_uv;\n"
-"	Frag_Color = v_color;\n"
-"	gl_Position = ProjMtx * vec4(v_pos.xy, 0, 1);\n"
-"}\n";
-
-const char* fragment_shader_core =
-"in vec2 Frag_UV;\n"
-"in vec4 Frag_Color;\n"
-"uniform sampler2D Texture;\n"
-"void main()\n"
-"{\n"
-"	gl_FragColor = Frag_Color;# * texture2D( Texture, Frag_UV.st);\n"
-"}\n";
+const char* frag_shader_source =
+    "out vec4 FragColor;\n"
+    "in vec3 v_col;\n"
+    "in vec2 uv;\n"
+    "uniform vec4 ourColor;\n"
+    "void main() { FragColor = ourColor+vec4(v_col, 1.0)+vec4(uv,0.,1.);}\0";
 
 // Input Variables
 static bool			fly_KeyCtrl = false;
@@ -77,175 +59,22 @@ static float		fly_MouseWheelH = 0.0f;
 // RENDERING
 void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 {
-    // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
-    int32 fb_width = (int32)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
-    int32 fb_height = (int32)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
-    if (fb_width <= 0 || fb_height <= 0)
-        return;
 
-    // Backup User State
-    fly_backupState.BackUp();
-    // Setup ImGui Render State
-    fly_renderState.viewport = int4(0, 0, fb_width, fb_height);
-    fly_renderState.SetUp();
-    // Modify according to ImGui Framebuffer Space
-    ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
-    ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
-
-        // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
-    bool clip_origin_lower_left = true;
-
-    // Set the Shader Program State accordingly
-    float L = draw_data->DisplayPos.x;
-    float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
-    float T = draw_data->DisplayPos.y;
-    float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
-    if (!clip_origin_lower_left) { float tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
-    const float ortho_projection[4][4] =
-    {
-        { 2.0f / (R - L),   0.0f,         0.0f,   0.0f },
-        { 0.0f,         2.0f / (T - B),   0.0f,   0.0f },
-        { 0.0f,         0.0f,        -1.0f,   0.0f },
-        { (R + L) / (L - R),  (T + B) / (B - T),  0.0f,   1.0f },
-    };
-
-    fly_shaderProgram.Use();
-    //fly_shaderProgram.SetInt("Texture", 0);
-    //fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
-    // Draw Loop
-    for (int i = 0; i < draw_data->CmdListsCount; ++i)
-    {
-        const ImDrawList* cmd_list = draw_data->CmdLists[i];
-        fly_dataHandle.verts = (char*)cmd_list->VtxBuffer.Data;
-        fly_dataHandle.num_verts = cmd_list->VtxBuffer.Size;
-        fly_dataHandle.indices = (char*)cmd_list->IdxBuffer.Data;
-        fly_dataHandle.num_index = cmd_list->IdxBuffer.Size;
-
-        fly_dataHandle.SendToGPU();
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-        fly_shaderProgram.EnableOwnAttributes();
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
-        {
-            const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-            if (pcmd->UserCallback != NULL)
-            {
-                if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
-                {
-                    // ?
-                }
-                else
-                    pcmd->UserCallback(cmd_list, pcmd);
-            }
-            else
-            {
-                ImVec4 clip_rect;
-                clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
-                clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
-                clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
-                clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
-                if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
-                {
-                    FLYRENDER_Scissor((int)clip_rect.x, 
-                                      (int)(fb_height - clip_rect.w), 
-                                      (int)(clip_rect.z - clip_rect.x), 
-                                      (int)(clip_rect.w - clip_rect.y));
-                    FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
-                    fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
-                }
-            }
-        }
-    }
-    // Regain User State
-    fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_PrepareBuffers()
 {
-    // Copy State
-    fly_backupState.BackUp();
-
-    fly_dataHandle.SetDrawMode(FLY_STREAM_DRAW);
-    fly_dataHandle.SetIndexVarType((sizeof(ImDrawIdx) == 2) ? FLY_USHORT : FLY_UINT);
-
-    // Initialize the Attributes
-    FLY_Attribute* pos = new FLY_Attribute();
-    pos->SetName("v_pos");
-    pos->SetVarType(FLY_FLOAT);
-    pos->SetNumComponents(2);
-    pos->SetNormalize(false);
     
-    FLY_Attribute* uv = new FLY_Attribute();
-    uv->SetName("UV");
-    uv->SetVarType(FLY_FLOAT);
-    uv->SetNumComponents(2);
-    uv->SetNormalize(false);
-    uv->SetOffset(pos->GetSize());
-    
-    FLY_Attribute* color = new FLY_Attribute();
-    color->SetName("COLOR");
-    color->SetVarType(FLY_UBYTE);
-    color->SetNumComponents(4);
-    color->SetNormalize(true);
-    color->SetOffset(pos->GetSize() + uv->GetSize());
-
-    fly_dataHandle.GiveAttribute(&pos);
-    fly_dataHandle.GiveAttribute(&uv);
-    fly_dataHandle.GiveAttribute(&color);
-    fly_dataHandle.Prepare();
-
-    fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_CreateShaderProgram()
 {
-    // Copy State
-    fly_backupState.BackUp();
-        
-    // Initialize the Shaders
-    const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader};
-    const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader};
-    FLY_Shader* vert = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_shader, true);
-    vert->Compile();
-    FLY_Shader* frag = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_shader, true);
-    frag->Compile();
 
-    fly_shaderProgram.Init();
-    fly_shaderProgram.AttachShader(&vert);
-    fly_shaderProgram.AttachShader(&frag);
-    fly_shaderProgram.Link();
-
-    /*
-    fly_shaderProgram.DeclareUniform("Texture");
-    fly_shaderProgram.DeclareUniform("ProjMtx");
-    fly_shaderProgram.SetupUniformLocations();
-    */
-    // Initialize the Attributes
-
-    fly_shaderProgram.GiveAttributesFromMesh(&fly_dataHandle);
-
-    // Go back to the latest State
-    fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_CreateFontsTexture()
 {
-    ImGuiIO& io = ImGui::GetIO();
-
-    fly_backupState.BackUp();
-
-    // Build Texture Atlas
-    fly_fontTexture.Init(FLY_RGBA);
-    io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
-
-    // Create the Texture
-    fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
-    fly_fontTexture.SendToGPU();
-
-    // ImGui stores texture_id
-    io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
-
-    fly_backupState.SetUp();
+	
 }
 
 

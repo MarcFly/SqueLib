@@ -207,19 +207,11 @@ void FLY_Program::EnableOwnAttributes()
 // Has Errors
 void FLY_Program::DeclareUniform(const char* name)
 {
-    uniforms.push_back(new FLY_Uniform(name));
-}
-
-void FLY_Program::SetupUniformLocations()
-{
-    int size = uniforms.size();
-    for (int i = 0; i < size; ++i)
-    {
+    FLY_Uniform* uni = new FLY_Uniform(name);
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-        uniforms[i]->id = glGetUniformLocation(id, uniforms[i]->name);
-        FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
+    uni->id = glGetUniformLocation(id, uni->name);
 #endif
-    }
+    uniforms.push_back(uni);
 }
 
 #include <cstring>

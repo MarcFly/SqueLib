@@ -117,7 +117,7 @@ int main()
         
         program.Use();
         program.DeclareUniform("ourColor");
-        program.SetupUniformLocations();
+
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLY_Timer t;
         bool window = true;
@@ -135,6 +135,34 @@ int main()
             program.DrawIndices(&triangle, 0, 6);
             FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
             ImGui::ShowDemoWindow(&window);
+            {
+                ImGui::Begin("Another Window", &window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                ImGui::Text("Hello from another window!");
+                if (ImGui::Button("Close Me"))
+                    window = false;
+                ImGui::End();
+            }
+            {
+                ImGui::Begin("Another Window", &window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                ImGui::Text("Hello from another window!");
+                if (ImGui::Button("Close Me"))
+                    window = false;
+                ImGui::End();
+            }
+            {
+                ImGui::Begin("Another Window", &window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                ImGui::Text("Hello from another window!");
+                if (ImGui::Button("Close Me"))
+                    window = false;
+                ImGui::End();
+            }
+            {
+                ImGui::Begin("Another Window", &window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                ImGui::Text("Hello from another window!");
+                if (ImGui::Button("Close Me"))
+                    window = false;
+                ImGui::End();
+            }
             ImGui::Render();
             //ImGui::EndFrame();
             FLYDISPLAY_SwapAllBuffers();
