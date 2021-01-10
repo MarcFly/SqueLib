@@ -242,6 +242,15 @@ uint16 FLY_Mesh::GetVertSize()
 }
 
 // Usage
+void FLY_Mesh::Bind()
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindVertexArray(attribute_object);
+    //glBindBuffer(GL_ARRAY_BUFFER, vert_id);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
+#endif
+}
+
 void FLY_Mesh::SetAttributes()
 {
     uint16 size = attributes.size();

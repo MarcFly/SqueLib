@@ -141,6 +141,24 @@ void FLY_Program::Link()
 }
 
 // Has Errors
+void FLY_Program::GiveAttributesFromMesh(FLY_Mesh* mesh)
+{
+    uint16 size = mesh->attributes.size();
+    Use();
+    mesh->Bind();
+    uint16 vert_size = mesh->GetVertSize();
+    for (int i = 0; i < size; ++i)
+    {
+        FLY_Attribute* atr = mesh->attributes[i];
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+        atr->SetId(glGetAttribLocation(id, atr->name));
+#endif
+        atr->SetAttribute(vert_size);
+        GiveAttribute(&atr);
+        bool test1 = mesh->attributes[i] == nullptr;
+        bool test2 = false;
+    }
+}
 void FLY_Program::GiveAttribute(FLY_Attribute** attr)
 {
     if (!attr || !*attr)

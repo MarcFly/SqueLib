@@ -23,25 +23,17 @@ static FLY_Mesh         fly_dataHandle;
 // Shaders
 const char* vertex_shader =
     "in vec2 v_pos;\n"
-    "in vec2 v_uv;\n"
-    "in vec4 v_color;\n"    
-    "out vec2 Frag_UV;\n"
-    "out vec4 Frag_Color;\n"
-    "uniform mat4 ProjMtx;\n"
+    "in vec2 UV;\n"
+    "in vec4 COLOR;\n"
     "void main()\n"
     "{\n"
-    "	Frag_UV = v_uv;\n"
-    "	Frag_Color = v_color;\n"
-    "	gl_Position = ProjMtx * vec4(v_pos.xy, 0, 1);\n"
+    "	gl_Position = vec4(v_pos.xy, 0, 1);\n"
     "}\n";
 
 const char* fragment_shader =
-    "in vec2 Frag_UV;\n"
-    "in vec4 Frag_Color;\n"
-    "uniform sampler2D Texture;\n"
     "void main()\n"
     "{\n"
-    "	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV.st);\n"
+    "	gl_FragColor = vec4(0.,0.,0.,1.);\n"
     "}\n";
 
 const char* vertex_shader_core =
@@ -64,7 +56,7 @@ const char* fragment_shader_core =
 "uniform sampler2D Texture;\n"
 "void main()\n"
 "{\n"
-"	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV.st);\n"
+"	gl_FragColor = Frag_Color;# * texture2D( Texture, Frag_UV.st);\n"
 "}\n";
 
 // Input Variables
@@ -118,8 +110,8 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
     };
 
     fly_shaderProgram.Use();
-    fly_shaderProgram.SetInt("Texture", 0);
-    fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
+    //fly_shaderProgram.SetInt("Texture", 0);
+    //fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
     // Draw Loop
     for (int i = 0; i < draw_data->CmdListsCount; ++i)
     {
@@ -168,47 +160,48 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
     fly_backupState.SetUp();
 }
 
-void ImGui_ImplFlyLib_CreateShaderProgram()
+void ImGui_ImplFlyLib_PrepareBuffers()
 {
     // Copy State
     fly_backupState.BackUp();
-    
 
     fly_dataHandle.SetDrawMode(FLY_STREAM_DRAW);
     fly_dataHandle.SetIndexVarType((sizeof(ImDrawIdx) == 2) ? FLY_USHORT : FLY_UINT);
-    fly_dataHandle.Prepare();
+
     // Initialize the Attributes
     FLY_Attribute* pos = new FLY_Attribute();
     pos->SetName("v_pos");
     pos->SetVarType(FLY_FLOAT);
     pos->SetNumComponents(2);
     pos->SetNormalize(false);
-    FLY_Attribute* pos_ = new FLY_Attribute();
-    *pos_ = *pos;
-
+    
     FLY_Attribute* uv = new FLY_Attribute();
-    uv->SetName("v_uv");
+    uv->SetName("UV");
     uv->SetVarType(FLY_FLOAT);
     uv->SetNumComponents(2);
     uv->SetNormalize(false);
     uv->SetOffset(pos->GetSize());
-    FLY_Attribute* uv_ = new FLY_Attribute();
-    *uv_ = *uv;
-
+    
     FLY_Attribute* color = new FLY_Attribute();
-    color->SetName("v_color");
+    color->SetName("COLOR");
     color->SetVarType(FLY_UBYTE);
     color->SetNumComponents(4);
     color->SetNormalize(true);
-    color->SetOffset(uv->offset + uv->GetSize());
-    FLY_Attribute* color_ = new FLY_Attribute();
-    *color_ = *color;
-    
-    fly_dataHandle.GiveAttribute(&pos_);
-    fly_dataHandle.GiveAttribute(&uv_);
-    fly_dataHandle.GiveAttribute(&color_);
+    color->SetOffset(pos->GetSize() + uv->GetSize());
+
+    fly_dataHandle.GiveAttribute(&pos);
+    fly_dataHandle.GiveAttribute(&uv);
+    fly_dataHandle.GiveAttribute(&color);
     fly_dataHandle.Prepare();
-    //fly_dataHandle.SetLocationsInOrder();
+
+    fly_backupState.SetUp();
+}
+
+void ImGui_ImplFlyLib_CreateShaderProgram()
+{
+    // Copy State
+    fly_backupState.BackUp();
+        
     // Initialize the Shaders
     const char* vert_shader[2] = {FLYRENDER_GetGLSLVer(),vertex_shader};
     const char* frag_shader[2] = {FLYRENDER_GetGLSLVer(), fragment_shader};
@@ -220,26 +213,16 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
     fly_shaderProgram.Init();
     fly_shaderProgram.AttachShader(&vert);
     fly_shaderProgram.AttachShader(&frag);
-    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
-    /*
-    fly_shaderProgram.AttachShader(&FLYSHADER_Create(FLYSHADER_VERTEX, vertex_shader));
-    fly_shaderProgram.AttachShader(&FLYSHADER_Create(FLYSHADER_VERTEX, fragment_shader));
-    fly_shaderProgram.CompileShaders();
-    */
-
     fly_shaderProgram.Link();
-    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
+    /*
     fly_shaderProgram.DeclareUniform("Texture");
     fly_shaderProgram.DeclareUniform("ProjMtx");
     fly_shaderProgram.SetupUniformLocations();
+    */
+    // Initialize the Attributes
 
-    fly_shaderProgram.Use();
-    fly_shaderProgram.GiveAttribute(&pos);
-    fly_shaderProgram.GiveAttribute(&uv);
-    fly_shaderProgram.GiveAttribute(&color);
-
-    //fly_shaderProgram.EnableAttributes(fly_dataHandle.buffers[0]);
+    fly_shaderProgram.GiveAttributesFromMesh(&fly_dataHandle);
 
     // Go back to the latest State
     fly_backupState.SetUp();
@@ -253,14 +236,11 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 
     // Build Texture Atlas
     fly_fontTexture.Init(FLY_RGBA);
-    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
     // Create the Texture
     fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
-    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
     fly_fontTexture.SendToGPU();
-    //FLYLOG(LT_WARNING, "OpenGL ERROR: %d", glGetError());
 
     // ImGui stores texture_id
     io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
@@ -362,6 +342,7 @@ bool ImGui_ImplFlyLib_Init()
     fly_renderState.polygon_mode = int2(FLY_FRONT_AND_BACK, FLY_FILL);
 
     io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
+    ImGui_ImplFlyLib_PrepareBuffers();
     ImGui_ImplFlyLib_CreateShaderProgram();
     ImGui_ImplFlyLib_CreateFontsTexture();
     return ret;

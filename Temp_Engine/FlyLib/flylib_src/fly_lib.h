@@ -440,6 +440,7 @@ typedef struct FLY_Mesh
 	FL_API uint16 GetAttribSize(const char* name) const;
 
 	// Usage
+	FL_API void Bind();
 	FL_API void SetAttributes();
 	FL_API void SetLocationsInOrder();
 	FL_API void SendToGPU();
@@ -537,6 +538,7 @@ typedef struct FLY_Program
 
 	// Attributes
 	//FL_API void EnableMeshAttributes(FLY_Mesh* fly_mesh);
+	FL_API void GiveAttributesFromMesh(FLY_Mesh* fly_mesh);
 	FL_API void GiveAttribute(FLY_Attribute** attr);
 	FL_API uint16 GetAttribByteSize() const;
 	FL_API void EnableOwnAttributes();
