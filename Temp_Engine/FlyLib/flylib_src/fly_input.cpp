@@ -132,7 +132,7 @@ int FLYINPUT_GetCharFromBuffer()
 
 FLYINPUT_Actions FLYINPUT_GetMouseButton(int button)
 {
-    if(button > MAX_MOUSE_BUTTONS) return FLY_ACTION_UNKNOWN;
+    if(button >= MAX_MOUSE_BUTTONS) return FLY_ACTION_UNKNOWN;
     return (FLYINPUT_Actions)mouse.mbuttons[button].state;
 }
 
@@ -140,6 +140,12 @@ void FLYINPUT_GetMousePos(float* x, float* y)
 {
     *x = mouse.x;
     *y = mouse.y;
+}
+
+void FLYINPUT_GetMouseWheel(float* v, float* h)
+{
+    if (v != NULL) *v = mouse.scrolly;
+    if (h != NULL) *h = mouse.scrollx;
 }
 
 void FLYINPUT_UpdateMouseFromPointer(float xpos, float ypos, int state, int num_pointers)
@@ -361,7 +367,7 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
         keyboard[key].prev_state = keyboard[key].state;
         keyboard[key].state = action;
         keyboard[key].key_callback(key, keyboard[key].prev_state, keyboard[key].state);
-        //printf("Keyboard Key %i: %i\n", key, action);
+        if(action > 0) char_buffer.push_back(key);
     }
 
     static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)

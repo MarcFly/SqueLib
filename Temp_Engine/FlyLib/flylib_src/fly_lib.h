@@ -37,6 +37,12 @@
 #	define USE_OPENGL
 #endif
 
+#ifdef _WIN32
+#   define FOLDER_ENDING '\\'
+#else
+#   define FOLDER_ENDING '/'
+#endif
+
 #include <fly_remap_macros.h>
 
 FL_API unsigned int FLYLIB_GetVersion(void);
@@ -77,6 +83,8 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef short int16;
 typedef int int32;
+typedef long long double64;
+typedef unsigned long long udouble64;
 typedef unsigned char uchar;
 
 typedef struct float4 
@@ -168,13 +176,13 @@ typedef struct FLY_Timer
 	FL_API uint32 ReadNanoSec();
 	
 private:
-	uint32 start_at_ms;
-	uint32 start_at_ns;
-	uint32 start_at_us;
+	udouble64 start_at_ms;
+	udouble64 start_at_ns;
+	udouble64 start_at_us;
 	
-	uint32 stop_at_ms;
-	uint32 stop_at_ns;
-	uint32 stop_at_us;
+	udouble64 stop_at_ms;
+	udouble64 stop_at_ns;
+	udouble64 stop_at_us;
 
 	std::atomic<bool> is_stopped;
 	std::atomic<bool> is_active;
@@ -320,6 +328,7 @@ FL_API void FLYINPUT_Process(uint16 window);
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
 FL_API FLYINPUT_Actions FLYINPUT_GetMouseButton(int button);
 FL_API void FLYINPUT_GetMousePos(float* x, float* y);
+FL_API void FLYINPUT_GetMouseWheel(float* v = NULL, float* h = NULL);
 FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
 FL_API int FLYINPUT_GetCharFromBuffer();
 
@@ -334,7 +343,9 @@ typedef struct ColorRGBA {
 
 typedef struct FLY_RenderState
 {
-	int32 program, texture, vertex_array_buffer, element_array_buffer;
+	bool backed_up = false;
+	int32 bound_texture, active_texture_unit;
+	int32 program, vertex_array_buffer, element_array_buffer;
 	int32 attribute_object;
 	int32 blend_equation_rgb, blend_equation_alpha;
 	
@@ -345,6 +356,7 @@ typedef struct FLY_RenderState
 	int4 scissor_box;
 	int2 polygon_mode;
 	bool blend, cull_faces, depth_test, scissor_test;
+	bool texture2d;
 
 	FL_API void SetUp();
 	FL_API void BackUp();
@@ -418,7 +430,7 @@ typedef struct FLY_Mesh
 	// Vertex Data
 	uint32 vert_id = UINT32_MAX;
 	uint16 num_verts = 0;
-	char* verts = NULL;
+	void* verts = NULL;
 	std::vector<FLY_VertAttrib*> attributes;
 	
 	// Indices for the buffer
@@ -426,17 +438,20 @@ typedef struct FLY_Mesh
 	uint16 num_index	= 0;
 	uint32 index_var	= FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices
 	uint16 index_var_size = 0;
-	char* indices		= nullptr;
+	void* indices		= nullptr;
 
 	// add other parts of the buffer
 
 	// Initialization
 	FL_API void SetDrawMode(int32 draw_mode);
 	FL_API void SetIndexVarType(int32 var);
+	FL_API void Init();
+
+	// Location and Vertex attributes
 	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attribute = NULL);
 	FL_API void SetOffsetsInOrder();
 	FL_API void EnableAttributesForProgram(int32 prog_id);
-	FL_API void Prepare();	
+	
 
 	// Getters
 	FL_API uint16 GetVertSize();	
@@ -474,16 +489,24 @@ typedef struct FLY_Texture2D
 {
 	uint32 id		= 0;
 	int32 format	= 0;
-	int w = 0, h = 0;
-	uchar* pixels	= NULL;
-
+	int32 w = 0, h = 0;
+	int32 channel_num = 0;
+	void* pixels	= NULL;
 	std::vector<FLY_TexAttrib*> attributes;
 
+	// Initialization
 	FL_API void Init(int32 tex_format);
 	FL_API FLY_TexAttrib* AddParameter(FLY_TexAttrib* tex_attrib = NULL);
 	FL_API void SetParameters();
+	
+	// Usage
 	FL_API void Bind();
+	FL_API void BindToUnit(int32 texture_unit);
 	FL_API void SendToGPU();
+
+	// CleanUp
+	FL_API ~FLY_Texture2D();
+	FL_API void CleanUp();
 } FLY_Texture2D;
 
 FL_API void FLYRENDER_ActiveTexture(int32 texture_id);
@@ -551,6 +574,7 @@ typedef struct FLY_Program
 	FL_API void Init();
 
 	// Prepare the Program
+	// FL_API FLY_Shader* AddShadder(int32 type,... initializers);
 	FL_API void AttachShader(FLY_Shader** fly_shader); // Obtains ownership of the shader 
 	FL_API void CompileShaders();
 	FL_API void Link();

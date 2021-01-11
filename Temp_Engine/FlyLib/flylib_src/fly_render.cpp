@@ -18,18 +18,23 @@ void FLY_RenderState::SetUp()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUseProgram(program);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_array_buffer);
+    glBindTexture(GL_TEXTURE_2D, bound_texture);
+    glActiveTexture(active_texture_unit);
+
     glBindVertexArray(attribute_object);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_array_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
+
     glBlendEquationSeparate(blend_equation_rgb, blend_equation_alpha);
     glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
 
     glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     glScissor(scissor_box.x, scissor_box.y, scissor_box.z, scissor_box.w);
+
 #ifdef GL_POLYGON_MODE
-    glPolygonMode(polygon_mode.x, polygon_mode.y);
+    glPolygonMode(FLY_FRONT_AND_BACK, (GLenum)polygon_mode.x);
 #endif
+
     if (blend) glEnable(GL_BLEND);
     else glDisable(GL_BLEND);
     if (cull_faces) glEnable(GL_CULL_FACE);
@@ -38,14 +43,18 @@ void FLY_RenderState::SetUp()
     else glDisable(GL_DEPTH_TEST);
     if (scissor_test) glEnable(GL_SCISSOR_TEST);
     else glDisable(GL_SCISSOR_TEST);
+    if (texture2d) glEnable(GL_TEXTURE_2D);
+    else glDisable(GL_TEXTURE_2D);
 #endif
 }
 
 void FLY_RenderState::BackUp()
 {
+    backed_up = true;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture);
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound_texture);
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture_unit);
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_array_buffer);
     glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_array_buffer);
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &attribute_object);
@@ -60,12 +69,15 @@ void FLY_RenderState::BackUp()
 
     glGetIntegerv(GL_VIEWPORT, &viewport.x);
     glGetIntegerv(GL_SCISSOR_BOX, &scissor_box.x);
-    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.y);
-    polygon_mode.x = FLY_FRONT_AND_BACK;
+    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.x);
+
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
     depth_test = glIsEnabled(GL_DEPTH_TEST);
     scissor_test = glIsEnabled(GL_SCISSOR_TEST);
+    texture2d = glIsEnabled(GL_TEXTURE_2D);
+    /*lighting = glIsEnabled(GL_LIGHTING);
+    alpha_test = glIsEnabled(GL_ALPHA_TEST);*/
 #endif
 }
 
@@ -245,7 +257,7 @@ void FLY_Mesh::EnableAttributesForProgram(int32 prog_id)
         attributes[i]->EnableAsAttribute(prog_id);
 }
 
-void FLY_Mesh::Prepare()
+void FLY_Mesh::Init()
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     glGenBuffers(1, &vert_id);
@@ -352,7 +364,6 @@ void FLY_TexAttrib::SetParameter(int32 tex_id)
     else
         glTexParameteriv(FLY_TEXTURE_2D, id, (const int32*)data);
 #endif
-    FLY_CHECK_RENDER_ERRORS();
 }
 void FLY_Texture2D::Init(int32 tex_format)
 {
@@ -387,14 +398,38 @@ void FLY_Texture2D::Bind()
     glBindTexture(GL_TEXTURE_2D, id);
 #endif
 }
+
+void FLY_Texture2D::BindToUnit(int32 texture_unit)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glActiveTexture(texture_unit);
+    glBindTexture(GL_TEXTURE_2D, id);
+#endif
+}
+
 void FLY_Texture2D::SendToGPU()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     // DataType will be revised if needed, UBYTE seems quite standard...
     glBindTexture(GL_TEXTURE_2D, id);
     glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, pixels);
+    //glGenerateMipmap(GL_TEXTURE_2D);
+    // TODO: Learn about Mipmaps - glGenerateMipmaps and handle them in texture
 #endif
 }
+
+FLY_Texture2D::~FLY_Texture2D() { CleanUp(); }
+void FLY_Texture2D::CleanUp()
+{
+    if (id != 0)
+    {
+#if defined (USE_OPENGL) || (USE_OPENGLES)
+        glDeleteTextures(1, &id);
+#endif
+    }
+    id = 0;
+}
+
 void FLYRENDER_ActiveTexture(int32 texture_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)

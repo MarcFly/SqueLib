@@ -9,15 +9,11 @@
 
 
 // Folder Ending On Windows can be '/' but it is not recognized that way using FS functions
-#ifdef _WIN32
+#if defined(_WIN32)
 #   include <Windows.h>
-#   define FOLDER_ENDING '\\'
-#else
-#   define FOLDER_ENDING '/'
-#   ifdef ANDROID
+#elif defined(ANDROID)
 #       include<android/log.h>
 #   endif
-#endif
 
 // Var Define
 
