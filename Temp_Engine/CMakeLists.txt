@@ -38,8 +38,6 @@ if(USE_IMGUI)
         ${imgui_include}/imgui_draw.cpp
         ${imgui_include}/imgui_widgets.cpp
         ${imgui_include}/imgui.cpp
-        # Implementation Files
-        ${imgui_include}/examples/imgui_impl_opengl3.cpp
     )
     set(imgui_flylib ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_flylib)
     list(APPEND imgui_src ${imgui_flylib}/imgui_impl_flylib.cpp)    

@@ -97,19 +97,18 @@ int main()
         triangle.num_index = 6;
         triangle.SetIndexVarType(FLY_UINT);
 
-        FLY_Attribute* p = new FLY_Attribute();
+        FLY_VertAttrib* p = triangle.AddAttribute();
         p->SetNumComponents(3);
         p->SetVarType(FLY_FLOAT);
         p->SetNormalize(false);
         p->SetOffset(0);
-        /*FLY_Attribute* c = new FLY_Attribute();
+        /*FLY_VertAttrib* c = new FLY_VertAttrib();
         c->SetNumComponents(3);
         c->SetVarType(FLY_FLOAT);
         c->SetNormalize(false);
         c->SetOffset(p->GetSize());
         */
-        triangle.GiveAttribute(&p);
-        //triangle.GiveAttribute(&c);
+
         triangle.Prepare();
         triangle.SendToGPU();
         triangle.SetLocationsInOrder();

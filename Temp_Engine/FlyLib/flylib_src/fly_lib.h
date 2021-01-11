@@ -81,38 +81,38 @@ typedef unsigned char uchar;
 
 typedef struct float4 
 {
-	float4() {};
+	float4() : x(0), y(0), z(0), w(0) {};
 	float4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {};
 	float x, y, z, w;
 } float4;
 typedef struct float3 
 { 
-	float3() {};
+	float3() : x(0), y(0), z(0) {};
 	float3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {};
 	float x, y, z;
 } float3;
 typedef struct float2 
 { 
-	float2() {};
+	float2() : x(0), y(0) {};
 	float2(float x_, float y_) : x(x_), y(y_) {}; 
 	float x, y;
 } float2;
 
 typedef struct int4
 {
-	int4() {};
+	int4() : x(0), y(0), z(0), w(0) {};
 	int4(int32 x_, int32 y_, int32 z_, int32 w_) : x(x_), y(y_), z(z_), w(w_) {};
 	int32 x, y, z, w;
 } int4;
 typedef struct int3
 {
-	int3() {};
+	int3() : x(0), y(0), z(0) {};
 	int3(int32 x_, int32 y_, int32 z_) : x(x_), y(y_), z(z_) {};
 	int32 x, y, z;
 } int3;
 typedef struct int2
 {
-	int2() {};
+	int2() : x(0), y(0) {};
 	int2(int32 x_, int32 y_) : x(x_), y(y_) {};
 	int32 x, y;
 } int2;
@@ -348,7 +348,7 @@ typedef struct FLY_RenderState
 
 	FL_API void SetUp();
 	FL_API void BackUp();
-};
+} FLY_RenderState;
 FL_API void CheckForRenderErrors(const char* file, int line);
 #define FLY_CHECK_RENDER_ERRORS() FL_MACRO CheckForRenderErrors(__FILE__, __LINE__)
 FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);
@@ -381,7 +381,7 @@ enum FLYSHADER_Layout
 };
 
 // Render Pipeline
-typedef struct FLY_Attribute
+typedef struct FLY_VertAttrib
 {
 	int32 id;
 	const char* name;
@@ -405,7 +405,7 @@ typedef struct FLY_Attribute
 	// Usage
 	FL_API void SetAttribute(uint16 vert_size) const;
 	FL_API void SetLocation(int32 pos, uint16 vert_size);
-} FLY_Attribute;
+} FLY_VertAttrib;
 
 #include <vector> 
 // Maybe Swap to a custom array handler for specific sizes
@@ -419,7 +419,7 @@ typedef struct FLY_Mesh
 	uint32 vert_id = UINT32_MAX;
 	uint16 num_verts = 0;
 	char* verts = NULL;
-	std::vector<FLY_Attribute*> attributes;
+	std::vector<FLY_VertAttrib*> attributes;
 	
 	// Indices for the buffer
 	uint32 index_id		= UINT32_MAX;
@@ -433,7 +433,7 @@ typedef struct FLY_Mesh
 	// Initialization
 	FL_API void SetDrawMode(int32 draw_mode);
 	FL_API void SetIndexVarType(int32 var);
-	FL_API void GiveAttribute(FLY_Attribute** attribute);
+	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attribute = NULL);
 	FL_API void SetOffsetsInOrder();
 	FL_API void EnableAttributesForProgram(int32 prog_id);
 	FL_API void Prepare();	
@@ -454,23 +454,37 @@ typedef struct FLY_Mesh
 	FL_API void CleanUp();
 } FLY_Mesh;
 
+typedef struct FLY_TexAttrib
+{
+	int32 id = INT32_MAX;
+	int32 var_type = INT32_MAX;
+	void* data = NULL;
 
+	// Initialization
+	FL_API void Set(int32 id_, int32 var_, void* data_);
+	FL_API void SetID(int32 id_);
+	FL_API void SetVarType(int32 var);
+	FL_API void SetData(void* data_);
+
+	// Usage
+	FL_API void SetParameter(int32 tex_id);
+
+} FLY_TexAttrib;
 typedef struct FLY_Texture2D
 {
 	uint32 id		= 0;
 	int32 format	= 0;
-	int w, h;
-	uchar* pixels	= nullptr;
+	int w = 0, h = 0;
+	uchar* pixels	= NULL;
 
-	int32 min_filter	= INT32_MAX;
-	int32 mag_filter	= INT32_MAX;
-	int32 wrap_s		= INT32_MAX;
-	int32 wrap_t		= INT32_MAX;
+	std::vector<FLY_TexAttrib*> attributes;
 
 	FL_API void Init(int32 tex_format);
-	FL_API void SetFiltering(int32 min = FLY_LINEAR, int32 mag = FLY_LINEAR, int32 wraps = FLY_CLAMP, int32 wrapt = FLY_CLAMP);
+	FL_API FLY_TexAttrib* AddParameter(FLY_TexAttrib* tex_attrib = NULL);
+	FL_API void SetParameters();
+	FL_API void Bind();
 	FL_API void SendToGPU();
-};
+} FLY_Texture2D;
 
 FL_API void FLYRENDER_ActiveTexture(int32 texture_id);
 FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32 id);
@@ -492,7 +506,7 @@ typedef struct FLY_Texture3D
 	FL_API void Init(int32 tex_format);
 	FL_API void SetFiltering(int32 min = INT32_MAX, int32 mag = INT32_MAX, int32 wraps = INT32_MAX, int32 wrapt = INT32_MAX);
 	FL_API void SendToGPU();
-};
+} FLY_Texture3D;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHADERS ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -521,7 +535,7 @@ typedef struct FLY_Uniform
 	FLY_Uniform() {};
 	FLY_Uniform(const char*);
 	int32 id = INT32_MAX;
-	const char* name;
+	const char* name = "";
 } FLY_Uniform;
 
 #include <vector>
@@ -531,7 +545,7 @@ typedef struct FLY_Program
 	FLY_Shader* vertex_s = nullptr;
 	FLY_Shader* fragment_s = nullptr;
 	std::vector<FLY_Uniform*> uniforms;
-	std::vector<FLY_Attribute*> attributes;
+	std::vector<FLY_VertAttrib*> attributes;
 	
 	// Call before doing anything prolly
 	FL_API void Init();
@@ -549,8 +563,9 @@ typedef struct FLY_Program
 	// Attributes
 	//FL_API void EnableMeshAttributes(FLY_Mesh* fly_mesh);
 	FL_API void GiveAttributesFromMesh(FLY_Mesh* fly_mesh);
-	FL_API void GiveAttribute(FLY_Attribute** attr);
+	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attr);
 	FL_API uint16 GetAttribByteSize() const;
+	FL_API void SetAttribLocations();
 	FL_API void EnableOwnAttributes();
 	
 	// Passing Uniforms

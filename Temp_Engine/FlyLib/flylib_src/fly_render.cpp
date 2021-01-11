@@ -179,15 +179,15 @@ int VarGetSize(int type_macro)
     return 0;
 }
 
-void FLY_Attribute::SetName(const char* str) { name = str; }
-void FLY_Attribute::SetVarType(int32 var) { var_type = var; var_size = VarGetSize(var_type); }
-void FLY_Attribute::SetNumComponents(uint16 num) { num_comp = num; }
-void FLY_Attribute::SetNormalize(bool norm) { normalize = norm; }
-void FLY_Attribute::SetOffset(uint32 offset_bytes) { offset = offset_bytes; }
-void FLY_Attribute::SetId(int32 id_) { id = id_; }
-uint16 FLY_Attribute::GetSize() const { return num_comp*var_size; }
+void FLY_VertAttrib::SetName(const char* str) { name = str; }
+void FLY_VertAttrib::SetVarType(int32 var) { var_type = var; var_size = VarGetSize(var_type); }
+void FLY_VertAttrib::SetNumComponents(uint16 num) { num_comp = num; }
+void FLY_VertAttrib::SetNormalize(bool norm) { normalize = norm; }
+void FLY_VertAttrib::SetOffset(uint32 offset_bytes) { offset = offset_bytes; }
+void FLY_VertAttrib::SetId(int32 id_) { id = id_; }
+uint16 FLY_VertAttrib::GetSize() const { return num_comp*var_size; }
 
-void FLY_Attribute::EnableAsAttribute(int32 prog_id)
+void FLY_VertAttrib::EnableAsAttribute(int32 prog_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     id = glGetAttribLocation(prog_id, name);
@@ -195,7 +195,7 @@ void FLY_Attribute::EnableAsAttribute(int32 prog_id)
 #endif
 }
 
-void FLY_Attribute::SetAttribute(uint16 vert_size) const
+void FLY_VertAttrib::SetAttribute(uint16 vert_size) const
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glEnableVertexAttribArray(id);
@@ -203,7 +203,7 @@ void FLY_Attribute::SetAttribute(uint16 vert_size) const
 #endif
 }
 
-void FLY_Attribute::SetLocation(int32 pos, uint16 vert_size)
+void FLY_VertAttrib::SetLocation(int32 pos, uint16 vert_size)
 {
     id = pos;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
@@ -219,15 +219,12 @@ void FLY_Attribute::SetLocation(int32 pos, uint16 vert_size)
 // Initialization
 void FLY_Mesh::SetDrawMode(int32 d_m) { draw_mode = d_m; }
 void FLY_Mesh::SetIndexVarType(int32 var) { index_var = var; index_var_size = VarGetSize(index_var); };
-void FLY_Mesh::GiveAttribute(FLY_Attribute** atr)
+FLY_VertAttrib* FLY_Mesh::AddAttribute(FLY_VertAttrib* atr)
 {
-    if (atr == nullptr || *atr == nullptr)
-    {
-        FLYPRINT(LT_WARNING, "Non-existent attribute passed...");
-        return;
-    }
-    attributes.push_back(*atr);
-    *atr = nullptr;
+    FLY_VertAttrib* ret = atr;
+    if (atr == NULL) ret = new FLY_VertAttrib();
+    attributes.push_back(ret);
+    return ret;
 }
 
 void FLY_Mesh::SetOffsetsInOrder()
@@ -318,11 +315,11 @@ void FLY_Mesh::SendToGPU()
     glBindVertexArray(attribute_object);
     glBindBuffer(GL_ARRAY_BUFFER, vert_id);
     int buffer_size = GetVertSize() * num_verts;
-    glBufferData(GL_ARRAY_BUFFER, buffer_size, verts, draw_mode);
+    glBufferData(GL_ARRAY_BUFFER, buffer_size, (const void*)verts, draw_mode);
     if (num_index > 0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*index_var_size, indices, draw_mode);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*index_var_size, (const void*)indices, draw_mode);
     }
 #endif
 }
@@ -341,6 +338,22 @@ void FLY_Mesh::CleanUp()
 // TEXTURE MANAGEMENT ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void FLY_TexAttrib::SetID(int32 id_) { id = id_; }
+void FLY_TexAttrib::SetVarType(int32 var) { var_type = var; }
+void FLY_TexAttrib::SetData(void* data_) { data = data_; }
+void FLY_TexAttrib::Set(int32 id_, int32 var_, void* data_) { id = id_; var_type = var_, data = data_; }
+void FLY_TexAttrib::SetParameter(int32 tex_id)
+{
+    if (tex_id < 1 || var_type == INT32_MAX || id == INT32_MAX || data == NULL)
+        return;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    if (var_type == FLY_FLOAT)
+        glTexParameterfv(FLY_TEXTURE_2D, id, (const float*)data);
+    else
+        glTexParameteriv(FLY_TEXTURE_2D, id, (const int32*)data);
+#endif
+    FLY_CHECK_RENDER_ERRORS();
+}
 void FLY_Texture2D::Init(int32 tex_format)
 {
     format = tex_format;
@@ -353,23 +366,27 @@ void FLY_Texture2D::Init(int32 tex_format)
 // Probably generating Macros depending on API WILL BE WAAAY Better but more cumbersome
 // example, generate a fly_rendermacros.h and add there the macros separately, just include if necessary
 // INSTEAD of using enums and switches...
-
-void FLY_Texture2D::SetFiltering(int32 min, int32 mag, int32 wraps, int32 wrapt)
+FLY_TexAttrib* FLY_Texture2D::AddParameter(FLY_TexAttrib* tex_attrib)
 {
-    min_filter = min;
-    mag_filter = mag;
-    wrap_s = wraps;
-    wrap_t = wrapt;
-
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindTexture(GL_TEXTURE_2D, id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
-#endif
+    FLY_TexAttrib* ret = tex_attrib;
+    if (ret == NULL) ret = new FLY_TexAttrib();
+    attributes.push_back(ret);
+    return ret;
+}
+void FLY_Texture2D::SetParameters()
+{
+    Bind();
+    uint16 size = attributes.size();
+    for (int i = 0; i < size; ++i)
+        attributes[i]->SetParameter(id);
 }
 
+void FLY_Texture2D::Bind()
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindTexture(GL_TEXTURE_2D, id);
+#endif
+}
 void FLY_Texture2D::SendToGPU()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)

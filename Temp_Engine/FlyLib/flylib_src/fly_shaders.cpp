@@ -149,30 +149,26 @@ void FLY_Program::GiveAttributesFromMesh(FLY_Mesh* mesh)
     uint16 vert_size = mesh->GetVertSize();
     for (int i = 0; i < size; ++i)
     {
-        FLY_Attribute* atr = mesh->attributes[i];
+        FLY_VertAttrib* attr = mesh->attributes[i];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        atr->SetId(glGetAttribLocation(id, atr->name));
+        attr->SetId(glGetAttribLocation(id, attr->name));
 #endif
-        atr->SetAttribute(vert_size);
-        GiveAttribute(&atr);
-        bool test1 = mesh->attributes[i] == nullptr;
-        bool test2 = false;
+        attr->SetAttribute(vert_size);
+        AddAttribute(attr);
     }
 }
-void FLY_Program::GiveAttribute(FLY_Attribute** attr)
+FLY_VertAttrib* FLY_Program::AddAttribute(FLY_VertAttrib* attr)
 {
-    if (!attr || !*attr)
+    FLY_VertAttrib* ret = attr;
+    if (ret == NULL) ret = new FLY_VertAttrib();
+    else
     {
-        FLYPRINT(LT_WARNING, "Non-existing attribute...");
-        return;
-    }
-    attributes.push_back(*attr);
-
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    int test = glGetAttribLocation(id, (*attr)->name);
-    (*attr)->SetId(glGetAttribLocation(id, (*attr)->name));
+        attr->SetId(glGetAttribLocation(id, attr->name));
 #endif
-    *attr = nullptr;
+    }
+    attributes.push_back(attr);
+    return ret;
 }
 
 //void FLY_Program::UpdateAttribute(const char* name)
@@ -190,13 +186,24 @@ uint16 FLY_Program::GetAttribByteSize() const
     return ret;
 }
 
+void FLY_Program::SetAttribLocations()
+{
+    uint16 size = attributes.size();
+    for (int i = 0; i < size; ++i)
+    {
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+        attributes[i]->SetId(glGetAttribLocation(id, attributes[i]->name));
+#endif
+    }
+}
+
 void FLY_Program::EnableOwnAttributes()
 {
     uint16 size = attributes.size();
     uint16 stride = GetAttribByteSize();
     for (int i = 0; i < size; ++i)
     {
-        FLY_Attribute* atr = attributes[i];
+        FLY_VertAttrib* atr = attributes[i];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
         glEnableVertexAttribArray(atr->id);
         glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, stride, (void*)atr->offset);
@@ -238,7 +245,7 @@ void FLY_Program::DrawIndices(FLY_Mesh* mesh, int32 offset_bytes, int32 count)
     count = (count == 0) ? mesh->num_index : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->index_id);
-    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)(mesh->index_var_size * offset_bytes));
+    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)(intptr_t)(((int32)mesh->index_var_size) * offset_bytes));
 #else
 #endif
 }

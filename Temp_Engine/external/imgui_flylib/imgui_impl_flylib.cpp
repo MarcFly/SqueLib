@@ -66,17 +66,19 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 	// Check last errors
 	FLY_CHECK_RENDER_ERRORS();
 
-
 	fly_backupState.BackUp();
 
+	ImGuiIO& io = ImGui::GetIO();
+
+	fly_renderState.blend_equation_rgb = fly_backupState.blend_equation_rgb;
+	fly_renderState.blend_func_src_rgb = fly_backupState.blend_func_src_rgb;
+	fly_renderState.blend_func_src_alpha = fly_backupState.blend_func_src_alpha;
+	fly_renderState.viewport = int4(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 	fly_renderState.SetUp();
 	FLYRENDER_ActiveTexture(FLY_TEXTURE0);
-	ImGuiIO& io = ImGui::GetIO();
 
 	float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
 	draw_data->ScaleClipRects(io.DisplayFramebufferScale);
-
-	FLYRENDER_ChangeViewPortSize(io.DisplaySize.x, io.DisplaySize.y);
 
 	float L = draw_data->DisplayPos.x;
 	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
@@ -96,8 +98,9 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 
 	FLYRENDER_BindSampler(0, 0);
 	FLY_CHECK_RENDER_ERRORS();
-	fly_dataHandle.BindNoIndices();
+	//fly_dataHandle.BindNoIndices();
 	FLY_CHECK_RENDER_ERRORS();
+	fly_dataHandle.Bind();
 	fly_dataHandle.SetAttributes();
 	FLY_CHECK_RENDER_ERRORS();
 	ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
@@ -113,7 +116,11 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 		fly_dataHandle.indices = (char*)&cmd_list->IdxBuffer.Data;
 		fly_dataHandle.num_index = cmd_list->IdxBuffer.size();
 
+		fly_dataHandle.SetOffsetsInOrder();
 		fly_dataHandle.SendToGPU();
+		fly_dataHandle.SetLocationsInOrder();
+		fly_dataHandle.SetAttributes();
+		//fly_dataHandle.Bind();
 		FLY_CHECK_RENDER_ERRORS();
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
@@ -130,8 +137,9 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 
 				FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
 				FLY_CHECK_RENDER_ERRORS();
-				//FLYRENDER_Scissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
+				FLYRENDER_Scissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
 				fly_shaderProgram.DrawIndices(&fly_dataHandle, idx_buffer_offset, pcmd->ElemCount);
+				//fly_shaderProgram.DrawRawVertices(&fly_dataHandle, pcmd->ElemCount);
 				FLY_CHECK_RENDER_ERRORS();
 			}
 			idx_buffer_offset += pcmd->ElemCount;
@@ -152,9 +160,9 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 
 	fly_dataHandle.SetIndexVarType(FLY_USHORT);
 	fly_dataHandle.Prepare();
-	FLY_Attribute* pos = new FLY_Attribute();
-	FLY_Attribute* uv = new FLY_Attribute();
-	FLY_Attribute* color = new FLY_Attribute();
+	FLY_VertAttrib* pos = fly_dataHandle.AddAttribute();
+	FLY_VertAttrib* uv = fly_dataHandle.AddAttribute();
+	FLY_VertAttrib* color = fly_dataHandle.AddAttribute();
 	
 	pos->SetName("Position");
 	uv->SetName("UV");
@@ -172,14 +180,10 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 	uv->SetNormalize(false);
 	color->SetNormalize(true);
 
-	pos->SetOffset(0);
-	uv->SetOffset(pos->GetSize());
-	color->SetOffset(pos->GetSize() + uv->GetSize());
-	fly_dataHandle.GiveAttribute(&pos);
-	fly_dataHandle.GiveAttribute(&uv);
-	fly_dataHandle.GiveAttribute(&color);
+	fly_dataHandle.SetOffsetsInOrder();
+	fly_dataHandle.SetLocationsInOrder();
 	fly_dataHandle.EnableAttributesForProgram(fly_shaderProgram.id);
-	fly_dataHandle.SetAttributes();
+	//fly_dataHandle.SetAttributes();
 
 	fly_backupState.SetUp();
 }
@@ -212,13 +216,22 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 
 	ImGuiIO& io = ImGui::GetIO();
 	
-	fly_fontTexture.Init(FLY_RGBA);
+	
 	io.Fonts->GetTexDataAsRGBA32(&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
-	fly_fontTexture.SetFiltering(FLY_LINEAR, FLY_LINEAR);
+	fly_fontTexture.Init(FLY_RGBA);
+
+	FLY_TexAttrib* min_filter = fly_fontTexture.AddParameter();
+	min_filter->Set(FLY_MIN_FILTER, FLY_INT, new int32(FLY_LINEAR));
+
+	FLY_TexAttrib* mag_filter = fly_fontTexture.AddParameter();
+	mag_filter->Set(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	
+	fly_fontTexture.SetParameters();
+
 	fly_fontTexture.SendToGPU();
 	FLY_CHECK_RENDER_ERRORS();
 
-	io.Fonts->TexID = (void*)(intptr_t)fly_fontTexture.id;
+	io.Fonts->TexID = (ImTextureID)(intptr_t)fly_fontTexture.id;
 
 	fly_backupState.SetUp();
 }
@@ -308,7 +321,7 @@ bool ImGui_ImplFlyLib_Init()
 
     // Setup Renderer
     fly_renderState.blend = true;
-    fly_renderState.blend_equation_rgb = fly_renderState.blend_equation_alpha = FLY_FUNC_ADD;
+	fly_renderState.blend_equation_alpha = FLY_FUNC_ADD;
     fly_renderState.blend_func_src_alpha = FLY_SRC_ALPHA;
     fly_renderState.blend_func_dst_alpha = FLY_ONE_MINUS_SRC_ALPHA;
     fly_renderState.cull_faces = false;
