@@ -367,7 +367,11 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
         keyboard[key].prev_state = keyboard[key].state;
         keyboard[key].state = action;
         keyboard[key].key_callback(key, keyboard[key].prev_state, keyboard[key].state);
-        if(action > 0) char_buffer.push_back(key);
+    }
+
+    static void GLFW_CharCallback(GLFWwindow* window, uint32 codepoint)
+    {
+        char_buffer.push_back(codepoint);
     }
 
     static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)
@@ -419,6 +423,7 @@ bool FLYINPUT_Init(uint16 window)
     glfwSetCursorPosCallback(glfw_windows[window], GLFW_MousePosCallback);
     glfwSetMouseButtonCallback(glfw_windows[window], GLFW_MouseButtonCallback);
     glfwSetScrollCallback(glfw_windows[window], GLFW_MouseScrollCallback);
+    glfwSetCharCallback(glfw_windows[window], GLFW_CharCallback);
 #endif
 
     return ret;

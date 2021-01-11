@@ -356,7 +356,6 @@ typedef struct FLY_RenderState
 	int4 scissor_box;
 	int2 polygon_mode;
 	bool blend, cull_faces, depth_test, scissor_test;
-	bool texture2d;
 
 	FL_API void SetUp();
 	FL_API void BackUp();

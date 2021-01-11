@@ -106,9 +106,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 		fly_dataHandle.indices = (void*)cmd_list->IdxBuffer.Data;
 		fly_dataHandle.num_verts = cmd_list->VtxBuffer.Size;
 		fly_dataHandle.num_index = cmd_list->IdxBuffer.Size;
-		FLY_CHECK_RENDER_ERRORS();
 		fly_dataHandle.SendToGPU();
-		FLY_CHECK_RENDER_ERRORS();
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
 			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
@@ -126,7 +124,6 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 				{
 					FLYRENDER_Scissor((int32)clip_rect.x, (int32)(fb_height - clip_rect.w), (int32)(clip_rect.z - clip_rect.x), (int32)(clip_rect.w - clip_rect.y));
 					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)pcmd->TextureId);
-					FLY_CHECK_RENDER_ERRORS();
 					fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
 				}
 			}
@@ -138,11 +135,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 	fly_dataHandle.num_verts = 0;
 	fly_dataHandle.num_index = 0;
 
-
-
 	fly_backupState.SetUp();
-
-	FLY_CHECK_RENDER_ERRORS();
 }
 
 void ImGui_ImplFlyLib_PrepareBuffers()
@@ -245,7 +238,6 @@ void ImGui_ImplFlyLib_StaticRenderState()
 	fly_renderState.blend_func_dst_rgb = FLY_ONE_MINUS_SRC_ALPHA;
 	fly_renderState.blend_func_src_rgb = FLY_SRC_ALPHA;
 	fly_renderState.polygon_mode = int2(FLY_FILL, FLY_FILL);
-	fly_renderState.texture2d = true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

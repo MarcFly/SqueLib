@@ -43,8 +43,6 @@ void FLY_RenderState::SetUp()
     else glDisable(GL_DEPTH_TEST);
     if (scissor_test) glEnable(GL_SCISSOR_TEST);
     else glDisable(GL_SCISSOR_TEST);
-    if (texture2d) glEnable(GL_TEXTURE_2D);
-    else glDisable(GL_TEXTURE_2D);
 #endif
 }
 
@@ -75,9 +73,6 @@ void FLY_RenderState::BackUp()
     cull_faces = glIsEnabled(GL_CULL_FACE);
     depth_test = glIsEnabled(GL_DEPTH_TEST);
     scissor_test = glIsEnabled(GL_SCISSOR_TEST);
-    texture2d = glIsEnabled(GL_TEXTURE_2D);
-    /*lighting = glIsEnabled(GL_LIGHTING);
-    alpha_test = glIsEnabled(GL_ALPHA_TEST);*/
 #endif
 }
 
