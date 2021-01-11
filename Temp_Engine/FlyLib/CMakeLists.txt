@@ -186,6 +186,7 @@ target_include_directories(FlyLib PUBLIC
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
+target_compile_options(FlyLib BEFORE PUBLIC -fpermissive)
 set_target_properties(FlyLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"

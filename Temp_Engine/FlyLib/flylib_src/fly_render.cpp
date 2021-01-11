@@ -335,8 +335,8 @@ void FLY_Mesh::SendToGPU()
 FLY_Mesh::~FLY_Mesh() { CleanUp(); }
 void FLY_Mesh::CleanUp()
 {
-    if (verts != NULL) { delete[num_verts*GetVertSize()] verts; verts = NULL; }
-    if (indices != NULL) { delete[num_index*index_var_size] indices; indices = NULL; }
+    if (verts != NULL) { delete[] verts; verts = NULL; }
+    if (indices != NULL) { delete[] indices; indices = NULL; }
     for (int i = 0; i < attributes.size(); ++i)
         delete attributes[i];
     attributes.clear();
@@ -459,6 +459,7 @@ void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id)
 #   endif
 #endif
 
+#include <cstring>
 void CheckForRenderErrors(const char* file, int line)
 {
     int32 errcode = 0;
