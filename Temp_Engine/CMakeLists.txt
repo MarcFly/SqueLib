@@ -117,7 +117,7 @@ endif()
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
-target_compile_options(TempEngine BEFORE PUBLIC -fpermissive)
+target_compile_options(FlyLib BEFORE PUBLIC -fpermissive -funsafe-math-optimizations)
 set_target_properties(TempEngine
     PROPERTIES 
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"

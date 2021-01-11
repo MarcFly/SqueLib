@@ -15,7 +15,7 @@
     extern struct android_app* app;
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
-#elif defined _WIN32 || defined __linux__
+#elif defined (_WIN32) || defined (__linux__)
 
 #endif
 
@@ -502,7 +502,7 @@ void FLYDISPLAY_SwapAllBuffers()
     eglSwapBuffers(egl_display, egl_surface);
     fly_windows[0]->width = ANativeWindow_getWidth( egl_window );
 	fly_windows[0]->height = ANativeWindow_getHeight( egl_window );
-	FLYRENDER_ViewportSizeCallback(fly_windows[0]->width, fly_windows[0]->height);
+	FLYRENDER_ChangeViewPortSize(fly_windows[0]->width, fly_windows[0]->height);
 #endif
 
 

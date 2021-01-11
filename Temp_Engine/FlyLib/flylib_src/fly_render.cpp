@@ -78,7 +78,7 @@ void FLY_RenderState::BackUp()
 
 void FLYRENDER_ChangeViewPortSize(int width, int height)
 {
-#if defined(USE_OPENGL) || (USE_OPENGLES)
+#if defined(USE_OPENGL) || defined (USE_OPENGLES)
     glViewport(0, 0, width, height);
 #endif
 }
@@ -418,7 +418,7 @@ void FLY_Texture2D::CleanUp()
 {
     if (id != 0)
     {
-#if defined (USE_OPENGL) || (USE_OPENGLES)
+#if defined (USE_OPENGL) || defined (USE_OPENGLES)
         glDeleteTextures(1, &id);
 #endif
     }

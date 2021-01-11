@@ -123,7 +123,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 				if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
 				{
 					FLYRENDER_Scissor((int32)clip_rect.x, (int32)(fb_height - clip_rect.w), (int32)(clip_rect.z - clip_rect.x), (int32)(clip_rect.w - clip_rect.y));
-					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)pcmd->TextureId);
+					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
 					fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
 				}
 			}
