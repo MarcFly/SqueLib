@@ -5,11 +5,22 @@
 #endif
 
 #include <vector>
-std::vector<VoidFun> on_resume_callbacks;
-std::vector<VoidFun> on_go_background_callbacks;
+VoidFun on_resume_callback = NULL;
+VoidFun on_go_background_callback = NULL;
 
-void FLYINPUT_AddOnResumeCallback(VoidFun fun) { on_resume_callbacks.push_back(fun); }
-void FLYINPUT_AddOnGoBackgroundCallback(VoidFun fun) { on_go_background_callbacks.push_back(fun); }
+VoidFun FLYINPUT_AddOnResumeCallback(VoidFun fun) 
+{
+    VoidFun ret = on_resume_callback;
+    on_resume_callback = fun;
+    return ret;
+
+}
+VoidFun FLYINPUT_AddOnGoBackgroundCallback(VoidFun fun) 
+{ 
+    VoidFun ret = on_go_background_callback;
+    on_go_background_callback = fun; 
+    return ret;
+}
 
 #ifdef ANDROID
 
@@ -29,8 +40,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             else
             {
                 FLYLIB_Init();
-                for (int i = 0; i < on_resume_callbacks.size(); ++i)
-                    on_resume_callbacks[i]();
+                on_resume_callback();
             }
             break;
         case APP_CMD_TERM_WINDOW:
@@ -65,8 +75,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             break;
         case APP_CMD_SAVE_STATE:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
-            for (int i = 0; i < on_go_background_callbacks.size(); ++i)
-                on_go_background_callbacks[i]();
+            on_go_background_callback();
             break;
         case APP_CMD_PAUSE:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_PAUSE");
@@ -110,14 +119,26 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 #endif
 void EmptyKey(int32 code, int32 state) { FLYPRINT(LT_INFO, "Key %c: %d", code, state); }
 KeyCallback key_fun = EmptyKey;
-void FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn) { key_fun = fly_key_fn; }
+KeyCallback FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn) 
+{ 
+    KeyCallback ret = key_fun;
+    key_fun = fly_key_fn; 
+    return ret;
+}
 
 FLY_Mouse mouse;
 void EmptyMouseFloatCallback(float x, float y) { FLYPRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
-void FLYINPUT_SetMouseCallbacks(MouseFloatCallback position, MouseFloatCallback scroll)
+MouseFloatCallback FLYINPUT_SetMousePosCallback(MouseFloatCallback position)
 {
+    MouseFloatCallback ret = mouse.pos_callback;
     mouse.pos_callback = position;
+    return ret;
+}
+MouseFloatCallback FLYINPUT_SetMouseScrollCallback(MouseFloatCallback scroll)
+{
+    MouseFloatCallback ret = mouse.scroll_callback;
     mouse.scroll_callback = scroll;
+    return ret;
 }
 FLY_Key keyboard[MAX_KEYS];
 #include <list>

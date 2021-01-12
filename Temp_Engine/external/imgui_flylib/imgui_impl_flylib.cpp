@@ -20,6 +20,12 @@ static bool         fly_MousePressed_last[5] = { false, false, false, false, fal
 static bool         fly_MousePressed[5] = { false, false, false, false, false };
 static float        fly_MouseWheel = 0.0f;
 static float		fly_MouseWheelH = 0.0f;
+
+static KeyCallback			fly_PrevKeyboardCallback;
+static MouseFloatCallback	fly_PrevMousePosCallback;
+static MouseFloatCallback	fly_PrevMouseScrollCallback;
+static VoidFun				fly_PrevOnResumeCallback;
+static VoidFun				fly_PrevOnGoBackgroundCallback;
 // Shaders
 const GLchar* vertex_shader =
 	"layout (location = 0) in vec2 Position;\n"
@@ -250,13 +256,13 @@ void ImGui_ImplFlyLib_MousePosCallback(float x, float y)
 {
 	fly_MousePos.x = x;
 	fly_MousePos.y = y;
-	// Call previous callback
+	fly_PrevMousePosCallback(x, y);
 }
 void ImGui_ImplFlyLib_MouseScrollCallback(float x, float y)
 {
 	fly_MouseWheel = y;
 	fly_MouseWheelH = x;
-	// Call previous callback
+	fly_PrevMouseScrollCallback(x, y);
 }
 
 void ImGui_ImplFlyLib_UpdateMouseButtons()
@@ -275,6 +281,7 @@ void ImGui_ImplFlyLib_KeyboardCallback(int key, int state)
 {
 	ImGuiIO& io = ImGui::GetIO();
 	io.KeysDown[key] = (state > FLY_RELEASED) ? true : false;
+	fly_PrevKeyboardCallback(key, state);
 }
 
 const char* ImGui_ImplFlyLib_GetClipboardText()
@@ -285,6 +292,19 @@ const char* ImGui_ImplFlyLib_GetClipboardText()
 void ImGui_ImplFlyLib_SetClipboardText(const char* text)
 {
 
+}
+
+void ImGui_ImplFlyLib_Resume()
+{
+	ImGui_ImplFlyLib_Init();
+	if (fly_PrevOnResumeCallback != NULL) fly_PrevOnResumeCallback();
+}
+
+void ImGui_ImplFlyLib_GoBackground()
+{
+
+	ImGui_ImplFlyLib_Shutdown();
+	if (fly_PrevOnGoBackgroundCallback != NULL) fly_PrevOnGoBackgroundCallback();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,14 +323,14 @@ void ImGui_ImplFlyLib_Init()
 
 	if(!init_registered)
 	{
-		FLYINPUT_SetMouseCallbacks(ImGui_ImplFlyLib_MousePosCallback, ImGui_ImplFlyLib_MouseScrollCallback);
-		FLYINPUT_SetKeyCallback(ImGui_ImplFlyLib_KeyboardCallback);
-		FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
-		FLYINPUT_AddOnGoBackgroundCallback(ImGui_ImplFlyLib_Shutdown);
+		fly_PrevMousePosCallback = FLYINPUT_SetMousePosCallback(ImGui_ImplFlyLib_MousePosCallback);
+		fly_PrevMouseScrollCallback = FLYINPUT_SetMouseScrollCallback(ImGui_ImplFlyLib_MouseScrollCallback);
+		fly_PrevKeyboardCallback = FLYINPUT_SetKeyCallback(ImGui_ImplFlyLib_KeyboardCallback);
+		fly_PrevOnResumeCallback = FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
+		fly_PrevOnGoBackgroundCallback = FLYINPUT_AddOnGoBackgroundCallback(ImGui_ImplFlyLib_Shutdown);
 		init_registered = true;
 	}
 	
-
     ImGuiIO &io = ImGui::GetIO();
 	io.Fonts->AddFontDefault();
     // Init KeyMap
@@ -366,7 +386,7 @@ void ImGui_ImplFlyLib_Init()
 	//... continue
 
 	io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
-
+	if(fly_PrevOnResumeCallback != NULL) fly_PrevOnResumeCallback();
 }
 
 void ImGui_ImplFlyLib_Shutdown()

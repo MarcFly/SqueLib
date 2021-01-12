@@ -388,11 +388,12 @@ FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
 FL_API int FLYINPUT_GetCharFromBuffer();
 
 // Callback Setters
-FL_API void FLYINPUT_AddOnResumeCallback(VoidFun fn);
-FL_API void FLYINPUT_AddOnGoBackgroundCallback(VoidFun fn);
-FL_API void FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn);
-FL_API void FLYINPUT_SetMouseCallbacks(MouseFloatCallback position, MouseFloatCallback scroll);
-FL_API void FLYINPUT_SetMouseButtonCallbacks(int button, KeyCallback key_callback);
+FL_API VoidFun FLYINPUT_AddOnResumeCallback(VoidFun fn);
+FL_API VoidFun FLYINPUT_AddOnGoBackgroundCallback(VoidFun fn);
+FL_API KeyCallback FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn);
+FL_API MouseFloatCallback FLYINPUT_SetMousePosCallback(MouseFloatCallback position);
+FL_API MouseFloatCallback FLYINPUT_SetMouseScrollCallback(MouseFloatCallback scroll);
+FL_API KeyCallback FLYINPUT_SetMouseButtonCallbacks(int button, KeyCallback key_callback);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
