@@ -4,92 +4,13 @@
 #   include "fly_lib.h"
 #endif
 
-#include <vector>
-VoidFun on_resume_callback = NULL;
-VoidFun on_go_background_callback = NULL;
-
-VoidFun FLYINPUT_AddOnResumeCallback(VoidFun fun) 
-{
-    VoidFun ret = on_resume_callback;
-    on_resume_callback = fun;
-    return ret;
-
-}
-VoidFun FLYINPUT_AddOnGoBackgroundCallback(VoidFun fun) 
-{ 
-    VoidFun ret = on_go_background_callback;
-    on_go_background_callback = fun; 
-    return ret;
-}
 
 #ifdef ANDROID
 
 // Strong Case to Make non input/Key things, part of core
 #include <android_native_app_glue.h>
 
-int OGLESStarted = 0;
-extern struct android_app* my_app;
-void HandleAndroidCMD(struct android_app* app, int32_t cmd)
-{
-    switch(cmd)
-    {
-        case APP_CMD_INIT_WINDOW:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_INIT_WINDOW");
-            my_app = app;
-            if(!OGLESStarted) OGLESStarted = 1;
-            else
-            {
-                FLYLIB_Init();
-                on_resume_callback();
-            }
-            break;
-        case APP_CMD_TERM_WINDOW:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_TERM_WINDOW");
-            break;
-        case APP_CMD_WINDOW_RESIZED:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_RESIZED");
-            break;
-        case APP_CMD_WINDOW_REDRAW_NEEDED:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_REDRAW_NEEDED");
-            break;
-        case APP_CMD_CONTENT_RECT_CHANGED:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_CONTENT_RECT_CHANGED");
-            break;
-        case APP_CMD_GAINED_FOCUS:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_GAINED_FOCUS");
-            break;
-        case APP_CMD_LOST_FOCUS:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_LOST_FOCUS");
-            break;
-        case APP_CMD_CONFIG_CHANGED:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_CONFIG_CHANGED");
-            break;
-        case APP_CMD_LOW_MEMORY:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_LOW_MEMORY");
-            break;
-        case APP_CMD_START:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_START");
-            break;
-        case APP_CMD_RESUME:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_RESUME");
-            break;
-        case APP_CMD_SAVE_STATE:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
-            on_go_background_callback();
-            break;
-        case APP_CMD_PAUSE:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_PAUSE");
-            // Register Go To Background functions and call them
-            break;
-        case APP_CMD_STOP:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_STOP");
-            break;
-        case APP_CMD_DESTROY:
-            FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_DESTROY");
-            FLYDISPLAY_SetWindowClose(0); // Set to Close main window and end execution
-            break;
-    } 
-}
+
 
 // This should not be core
 int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev);

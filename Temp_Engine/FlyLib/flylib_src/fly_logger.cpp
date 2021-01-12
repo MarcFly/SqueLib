@@ -8,12 +8,11 @@
 
 
 
-// Folder Ending On Windows can be '/' but it is not recognized that way using FS functions
-#if defined(_WIN32)
-#   include <Windows.h>
-#elif defined(ANDROID)
-#       include<android/log.h>
-#   endif
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 // Var Define
 
@@ -37,12 +36,45 @@ static bool DUMPDATA = true;
 #include <algorithm>
 #include <cstring>
 
-// Log Output Functions
-#ifdef ANDROID
-#   include <android/log.h>
-#elif _WIN32
-//#   include <Windows.h>
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(_WIN32)
+#   include <Windows.h> // really only necessary to print to outputdebugstring, which is practical
+#elif defined(ANDROID)
+#       include<android/log.h>
 #endif
+
+#ifndef ANDROID
+#   include <filesystem> // Will probably be superseeded by flylib import/export/read/write
+#endif
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// INITIALIZATION AND STATE MANAGEMENT ///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool FLYLOGGER_Init(bool dumpdata)
+{
+    bool ret = true;
+
+    DUMPDATA = dumpdata;
+
+    return ret;
+}
+
+void FLYLOGGER_Close()
+{
+    if (DUMPDATA) DumpData();
+
+    Push_LogKeys.clear();
+    Get_LogKeys.clear();
+    logs.clear();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// FUNCTION USAGE ////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FLY_ConsolePrint(int lt, const char* log)
 {
@@ -56,72 +88,6 @@ void FLY_ConsolePrint(int lt, const char* log)
 
 #endif
 }
-
-#ifndef ANDROID
-#   include <filesystem>
-#endif
-
-void DumpData()
-{
-    // Replace by how asset manager does it
-#ifndef ANDROID
-    std::filesystem::create_directory("Logs");
-#else
-
-#endif
-    std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
-    std::string filename("./Logs/");
-    filename += std::ctime(&current);
-    filename = filename.substr(0, filename.length() - 1);
-    filename += ".log";
-
-    std::replace(filename.begin(), filename.end(), ':', '-');
-
-    std::fstream write_file;
-    write_file.open(filename.c_str(), std::fstream::out | std::fstream::binary);
-
-
-    int buf_size = (LOGSIZE+1)* logs.size();
-    char* data = new char[buf_size];
-    char* cursor = data;
-
-    std::string header("");
-    for (int i = 0; i < logs.size(); ++i)
-    {
-        memcpy(cursor, logs[i].second.log, LOGSIZE+1);
-        cursor += LOGSIZE;
-        memcpy(cursor, "\n", 1);
-        cursor += 1;
-    }
-
-    write_file.write(data, buf_size);
-    write_file.close();
-
-    delete[] data;
-    
-}
-
-bool FLYLOGGER_Init(bool dumpdata)
-{
-    bool ret = true;
-
-    DUMPDATA = dumpdata; 
-
-    return ret;
-}
-
-void FLYLOGGER_Close()
-{
-    if(DUMPDATA) DumpData();
-
-    Push_LogKeys.clear();
-    Get_LogKeys.clear();
-    logs.clear();
-}
-
-
-
 
 void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...)
 {
@@ -146,7 +112,7 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
     int len = vsnprintf(tmp, calc_logsize, format, ap);
     va_end(ap);
 
-    // For now let's just not take care of logs with bigger total size than 512
+    // For now let's just not take care of logs with bigger size, i think it crashes
     if(len > (calc_logsize)) 
         FLYLOGGER_PrintVargs(lt, file, line, tmp);
 
@@ -181,4 +147,44 @@ void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const cha
 
     delete tmp;
     delete print;
+}
+
+void DumpData()
+{
+    // Replace by how asset manager does it
+#ifndef ANDROID
+    std::filesystem::create_directory("Logs");
+#else
+
+#endif
+    std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    std::string filename("./Logs/");
+    filename += std::ctime(&current);
+    filename = filename.substr(0, filename.length() - 1);
+    filename += ".log";
+
+    std::replace(filename.begin(), filename.end(), ':', '-');
+
+    std::fstream write_file;
+    write_file.open(filename.c_str(), std::fstream::out | std::fstream::binary);
+
+
+    int buf_size = (LOGSIZE + 1) * logs.size();
+    char* data = new char[buf_size];
+    char* cursor = data;
+
+    std::string header("");
+    for (int i = 0; i < logs.size(); ++i)
+    {
+        memcpy(cursor, logs[i].second.log, LOGSIZE + 1);
+        cursor += LOGSIZE;
+        memcpy(cursor, "\n", 1);
+        cursor += 1;
+    }
+
+    write_file.write(data, buf_size);
+    write_file.close();
+
+    delete[] data;
 }
