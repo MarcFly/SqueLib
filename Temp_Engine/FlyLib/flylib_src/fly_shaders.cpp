@@ -99,12 +99,10 @@ FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags)
 
 void FLY_Program::Init()
 {
-    if (id == INT32_MAX)
-    {
+    if (id == INT32_MAX || id >0) CleanUp();
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        id = glCreateProgram();
+    id = glCreateProgram();
 #endif
-    }
 }
 
 void FLY_Program::AttachShader(FLY_Shader** shader)
@@ -150,10 +148,13 @@ void FLY_Program::GiveAttributesFromMesh(FLY_Mesh* mesh)
     for (int i = 0; i < size; ++i)
     {
         FLY_VertAttrib* attr = mesh->attributes[i];
+        FLYPRINT(LT_INFO, "Enabling %s: %d %d %d %d %d", attr->name, attr->num_comp, attr->var_type, attr->normalize, vert_size, attr->offset);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
         attr->SetId(glGetAttribLocation(id, attr->name));
 #endif
+        FLY_CHECK_RENDER_ERRORS();
         attr->SetAttribute(vert_size);
+        FLY_CHECK_RENDER_ERRORS();
         AddAttribute(attr);
     }
 }
@@ -203,11 +204,13 @@ void FLY_Program::EnableOwnAttributes()
     uint16 stride = GetAttribByteSize();
     for (int i = 0; i < size; ++i)
     {
-        FLY_VertAttrib* atr = attributes[i];
+        FLY_VertAttrib* attr = attributes[i];
+        FLYPRINT(LT_INFO, "Enabling %s: %d %d %d %d %d", attr->name, attr->num_comp, attr->var_type, attr->normalize, stride, attr->offset);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-        glEnableVertexAttribArray(atr->id);
-        glVertexAttribPointer(atr->id, atr->num_comp, atr->var_type, atr->normalize, stride, (void*)atr->offset);
+        glEnableVertexAttribArray(attr->id);
+        glVertexAttribPointer(attr->id, attr->num_comp, attr->var_type, attr->normalize, stride, (void*)attr->offset);
 #endif
+    FLY_CHECK_RENDER_ERRORS();
     }
 }
 
@@ -324,8 +327,9 @@ void FLY_Program::CleanUp()
     if (fragment_s != NULL && id && fragment_s->id) { glDetachShader(id, fragment_s->id);}
     if (vertex_s != NULL && vertex_s->id) { glDeleteShader(vertex_s->id); vertex_s->id = 0; }
     if (fragment_s != NULL &&  fragment_s->id) { glDeleteShader(fragment_s->id); fragment_s->id = 0; }
-    if (id) { glDeleteProgram(id); id = 0; }
+    if (id != INT32_MAX) { glDeleteProgram(id); id = INT32_MAX; }
 #endif
+    FLY_CHECK_RENDER_ERRORS();
 
     if (vertex_s != NULL) { delete vertex_s; vertex_s = NULL; }
     if (fragment_s != NULL) { delete fragment_s; fragment_s = NULL; }

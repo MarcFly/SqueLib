@@ -47,7 +47,6 @@ const GLchar* fragment_shader =
 // Drawing Variables
 static uint16           fly_displayWidth = 0;
 static uint16           fly_displayHeight = 0;
-static uint32           fly_FontTexture = 0;
 static FLY_Texture2D    fly_fontTexture;
 static FLY_RenderState  fly_backupState;
 static FLY_RenderState  fly_renderState;
@@ -145,59 +144,63 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 	fly_dataHandle.SetDrawMode(FLY_STREAM_DRAW);
 	fly_dataHandle.SetIndexVarType(FLY_USHORT);
 	fly_dataHandle.Init();
-
+FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* p = fly_dataHandle.AddAttribute();
 	p->SetName("Position");
 	p->SetNormalize(false);
 	p->SetNumComponents(2);
 	p->SetVarType(FLY_FLOAT);
-	
+	FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* uv = fly_dataHandle.AddAttribute();
 	uv->SetName("UV");
 	uv->SetNormalize(true);
 	uv->SetNumComponents(2);
 	uv->SetVarType(FLY_FLOAT);
-
+FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* c = fly_dataHandle.AddAttribute();
 	c->SetName("Color");
 	c->SetNormalize(true);
 	c->SetNumComponents(4);
 	c->SetVarType(FLY_UBYTE);
-
+FLY_CHECK_RENDER_ERRORS();
 	fly_dataHandle.SetOffsetsInOrder();
+	FLY_CHECK_RENDER_ERRORS();
 	fly_dataHandle.SetLocationsInOrder();
-
+FLY_CHECK_RENDER_ERRORS();
 	fly_backupState.SetUp();
 }
 
 void ImGui_ImplFlyLib_CreateShaderProgram()
 {
 	fly_backupState.BackUp();
-
+FLY_CHECK_RENDER_ERRORS();
 	const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertex_shader };
 	FLY_Shader* vert_s = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_source, true);
 	vert_s->Compile();
-
+FLY_CHECK_RENDER_ERRORS();
 	const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragment_shader };
 	FLY_Shader* frag_s = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_source, true);
 	frag_s->Compile();
-
+FLY_CHECK_RENDER_ERRORS();
 	// Remember to revise attach shader to AddShader (like attributes)
 	fly_shaderProgram.Init();
+	FLY_CHECK_RENDER_ERRORS();
 	fly_shaderProgram.AttachShader(&vert_s);
 	fly_shaderProgram.AttachShader(&frag_s);
 	// Compile Shaders with AddShader syntax
 	fly_shaderProgram.Link();
-
+FLY_CHECK_RENDER_ERRORS();
 	fly_shaderProgram.DeclareUniform("Texture");
 	fly_shaderProgram.DeclareUniform("ProjMtx");
+	FLY_CHECK_RENDER_ERRORS();
 	// Attributes Here, first buffers?, buffers after?...
 
 	ImGui_ImplFlyLib_PrepareBuffers();
-
+	FLY_CHECK_RENDER_ERRORS();
 	fly_shaderProgram.GiveAttributesFromMesh(&fly_dataHandle);
-	fly_shaderProgram.EnableOwnAttributes();
-
+	FLY_CHECK_RENDER_ERRORS();
+	//fly_shaderProgram.EnableOwnAttributes();
+	FLY_CHECK_RENDER_ERRORS();
 	fly_backupState.SetUp();
 }
 
@@ -292,7 +295,13 @@ void ImGui_ImplFlyLib_Init()
 {
     fly_Time.Start();
 
-	FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
+	if(!init_registered)
+	{
+		FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
+		FLYINPUT_AddOnGoBackgroundCallback(ImGui_ImplFlyLib_Shutdown);
+		init_registered = true;
+	}
+	
 
     ImGuiIO &io = ImGui::GetIO();
 	io.Fonts->AddFontDefault();
@@ -356,6 +365,10 @@ void ImGui_ImplFlyLib_Shutdown()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->TexID = 0;
+
+	fly_shaderProgram.CleanUp();
+	fly_dataHandle.CleanUp();
+	fly_fontTexture.CleanUp();
 
 }
 

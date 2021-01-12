@@ -347,6 +347,9 @@ void FLY_Mesh::CleanUp()
 {
     if (verts != NULL) { delete[] verts; verts = NULL; }
     if (indices != NULL) { delete[] indices; indices = NULL; }
+    num_verts = 0;
+    num_index = 0;
+    FLYPRINT(LT_INFO, "Deleted Attributes from mesh...");
     for (int i = 0; i < attributes.size(); ++i)
         delete attributes[i];
     attributes.clear();
