@@ -238,8 +238,7 @@ void ImGui_ImplFlyLib_StaticRenderState()
 	fly_renderState.active_texture_unit = FLY_TEXTURE0;
 	fly_renderState.blend_func_dst_alpha = FLY_ONE_MINUS_SRC_ALPHA;
 	fly_renderState.blend_func_src_alpha = FLY_SRC_ALPHA;
-	fly_renderState.blend_func_dst_rgb = FLY_ONE_MINUS_SRC_ALPHA;
-	fly_renderState.blend_func_src_rgb = FLY_SRC_ALPHA;
+	fly_renderState.blend_func_separate = false;
 	fly_renderState.polygon_mode = int2(FLY_FILL, FLY_FILL);
 }
 
@@ -247,20 +246,21 @@ void ImGui_ImplFlyLib_StaticRenderState()
 // INPUT FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
+void ImGui_ImplFlyLib_MousePosCallback(float x, float y)
 {
-	// Update Position
-	// Get if window is focused and so something about it
-	FLYINPUT_GetMousePos(&fly_MousePos.x, &fly_MousePos.y);
+	fly_MousePos.x = x;
+	fly_MousePos.y = y;
+	// Call previous callback
+}
+void ImGui_ImplFlyLib_MouseScrollCallback(float x, float y)
+{
+	fly_MouseWheel = y;
+	fly_MouseWheelH = x;
+	// Call previous callback
+}
 
-	// Update Wheel
-	FLYINPUT_GetMouseWheel(&fly_MouseWheel, &fly_MouseWheelH);
-
-	// Update Modifiers
-	fly_KeyCtrl = false;
-	fly_KeyShift = false;
-	fly_KeyAlt = false;
-	fly_KeySuper = false;
+void ImGui_ImplFlyLib_UpdateMouseButtons()
+{
 
 	// Update Mouse / Pointer / MouseButtons / ScrollWheel
 	for(int i = 0; i < IM_ARRAYSIZE(fly_MousePressed); ++i)
@@ -269,6 +269,12 @@ void ImGui_ImplFlyLib_UpdateMousePosAndButtons()
 		fly_MousePressed_last[i] = fly_MousePressed[i];
 		fly_MousePressed[i] = !(state == FLY_ACTION_RELEASE || state == FLY_ACTION_UNKNOWN);
 	}
+}
+
+void ImGui_ImplFlyLib_KeyboardCallback(int key, int state)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	io.KeysDown[key] = (state > FLY_RELEASED) ? true : false;
 }
 
 const char* ImGui_ImplFlyLib_GetClipboardText()
@@ -297,6 +303,8 @@ void ImGui_ImplFlyLib_Init()
 
 	if(!init_registered)
 	{
+		FLYINPUT_SetMouseCallbacks(ImGui_ImplFlyLib_MousePosCallback, ImGui_ImplFlyLib_MouseScrollCallback);
+		FLYINPUT_SetKeyCallback(ImGui_ImplFlyLib_KeyboardCallback);
 		FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
 		FLYINPUT_AddOnGoBackgroundCallback(ImGui_ImplFlyLib_Shutdown);
 		init_registered = true;
@@ -387,7 +395,7 @@ void ImGui_ImplFlyLib_NewFrame()
     fly_lastTime = curr_time;
 
     // Update Mouse
-    ImGui_ImplFlyLib_UpdateMousePosAndButtons();
+	ImGui_ImplFlyLib_UpdateMouseButtons();
 
     for(int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i)
 		io.MouseDown[i] = fly_MousePressed[i];
@@ -396,7 +404,8 @@ void ImGui_ImplFlyLib_NewFrame()
 	
     io.MouseWheel   = fly_MouseWheel;
 	io.MouseWheelH  = fly_MouseWheelH;
-	
+	fly_MouseWheel = fly_MouseWheelH = 0;
+
     io.KeyCtrl  = io.KeysDown[FLY_KEY_LEFT_CTRL] || io.KeysDown[FLY_KEY_RIGHT_CTRL]; 
 	io.KeyShift = io.KeysDown[FLY_KEY_LEFT_SHIFT] || io.KeysDown[FLY_KEY_RIGHT_SHIFT];
 	io.KeyAlt   = io.KeysDown[FLY_KEY_LEFT_ALT] || io.KeysDown[FLY_KEY_RIGHT_ALT];

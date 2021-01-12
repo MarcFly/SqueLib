@@ -13,6 +13,7 @@ void FLYINPUT_AddOnGoBackgroundCallback(VoidFun fun) { on_go_background_callback
 
 #ifdef ANDROID
 
+// Strong Case to Make non input/Key things, part of core
 #include <android_native_app_glue.h>
 
 int OGLESStarted = 0;
@@ -81,6 +82,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
     } 
 }
 
+// This should not be core
 int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev);
 int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev);
 
@@ -106,36 +108,17 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 }
 
 #endif
-
-
-void EmptyKeyCallback(int key, const int prev_state, const int state) 
-{
-    FLYPRINT(LT_INFO, "Key %c: %d", key, state);
-}
-
-typedef struct FLY_Key
-{
-    //int key;
-    int prev_state = -1;
-    int state = -1;
-    void (*key_callback)(const int key, const int prev_state, const int state) = EmptyKeyCallback;
-} FLY_Key;
-
-typedef struct FLY_Mouse
-{
-    float prev_y, prev_x;
-    float x, y;
-    
-    float prev_delta_y, prev_delta_x;
-    
-    double prev_scrollx, prev_scrolly;
-    double scrollx, scrolly;
-
-    FLY_Key mbuttons[MAX_MOUSE_BUTTONS];
-    
-} FLY_Mouse;
+void EmptyKey(int32 code, int32 state) { FLYPRINT(LT_INFO, "Key %c: %d", code, state); }
+KeyCallback key_fun = EmptyKey;
+void FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn) { key_fun = fly_key_fn; }
 
 FLY_Mouse mouse;
+void EmptyMouseFloatCallback(float x, float y) { FLYPRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
+void FLYINPUT_SetMouseCallbacks(MouseFloatCallback position, MouseFloatCallback scroll)
+{
+    mouse.pos_callback = position;
+    mouse.scroll_callback = scroll;
+}
 FLY_Key keyboard[MAX_KEYS];
 #include <list>
 std::list<int> char_buffer;
@@ -167,37 +150,16 @@ void FLYINPUT_GetMouseWheel(float* v, float* h)
 
 void FLYINPUT_UpdateMouseFromPointer(float xpos, float ypos, int state, int num_pointers)
 {
-    mouse.prev_delta_x = mouse.x - mouse.prev_x;
-    mouse.prev_delta_y = mouse.y - mouse.prev_y;
     mouse.prev_x = mouse.x;
     mouse.prev_y = mouse.y;
     mouse.x = xpos;
     mouse.y = ypos;
+    mouse.pos_callback(mouse.x, mouse.y);
 
     mouse.mbuttons[0].prev_state = mouse.mbuttons[0].state;
     mouse.mbuttons[0].state =  state;
-    mouse.mbuttons[0].key_callback(0, mouse.mbuttons[0].prev_state, mouse.mbuttons[0].state);
+    mouse.mbuttons[0].callback(0, mouse.mbuttons[0].state);
 }
-
-typedef struct FLY_Gesture
-{
-    FLY_Timer timer;
-
-    float start_x, start_y;
-    float midpoints[MAX_MIDPOINTS][2];
-    float end_x, end_y;
-
-    float refresh_bucket;
-} FLY_Gesture;
-
-typedef struct FLY_Pointer
-{
-    bool active = false;
-    int32_t id;
-    FLY_Timer timer;
-    FLY_Gesture gesture;
-
-} FLY_Pointer;
 
 FLY_Pointer fly_pointers[MAX_POINTERS];
 
@@ -361,9 +323,10 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
 
     if(unicode && unicode < MAX_KEYS)
     {
-        keyboard[unicode].prev_state = keyboard[unicode].state;
-        keyboard[unicode].state = AKeyEvent_getAction(ev);
-        keyboard[unicode].key_callback(unicode, keyboard[unicode].prev_state, keyboard[unicode].state);
+        keyboard[code].prev_state = keyboard[code].state;
+        keyboard[code].state = AKeyEvent_getAction(ev);
+        keyboard[code].key_callback(unicode, keyboard[code].prev_state, keyboard[code].state);
+        key_fun(keyboard[code]);
     }
     else
     {
@@ -383,7 +346,8 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     {
         keyboard[key].prev_state = keyboard[key].state;
         keyboard[key].state = action;
-        keyboard[key].key_callback(key, keyboard[key].prev_state, keyboard[key].state);
+        keyboard[key].callback(key, keyboard[key].state);
+        key_fun(key, keyboard[key].state);
     }
 
     static void GLFW_CharCallback(GLFWwindow* window, uint32 codepoint)
@@ -403,18 +367,17 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
 
     static void GLFW_MousePosCallback(GLFWwindow* window, double xpos, double ypos)
     {
-        mouse.prev_delta_x = mouse.x - mouse.prev_x;
-        mouse.prev_delta_y = mouse.y - mouse.prev_y;
         mouse.prev_x = mouse.x;
         mouse.prev_y = mouse.y;
         mouse.x = xpos;
         mouse.y = ypos;
+        mouse.pos_callback(mouse.x, mouse.y);
     }
     static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
     {
         mouse.mbuttons[button].prev_state = mouse.mbuttons[button].state;
         mouse.mbuttons[button].state = action;
-        mouse.mbuttons[button].key_callback(button, mouse.mbuttons[button].prev_state, mouse.mbuttons[button].state);
+        mouse.mbuttons[button].callback(button, mouse.mbuttons[button].state);
     }
 
     static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -423,6 +386,7 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
         mouse.prev_scrolly = mouse.scrolly;
         mouse.scrollx = xoffset;
         mouse.scrolly = yoffset;
+        mouse.scroll_callback(mouse.scrollx, mouse.scrolly);
     }
 
 #endif

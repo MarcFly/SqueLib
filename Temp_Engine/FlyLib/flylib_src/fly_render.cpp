@@ -26,8 +26,10 @@ void FLY_RenderState::SetUp()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
 
     glBlendEquationSeparate(blend_equation_rgb, blend_equation_alpha);
-    glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
-
+    if (blend_func_separate)
+        glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
+    else
+        glBlendFunc(blend_func_src_alpha, blend_func_dst_alpha);
     glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     glScissor(scissor_box.x, scissor_box.y, scissor_box.z, scissor_box.w);
 

@@ -324,18 +324,75 @@ enum FLYINPUT_Actions
 	FLY_ACTION_MAX
 };
 
+// Structs for Handling Data
+
+typedef void(*KeyCallback)(int32 code, int32 state);
+void EmptyKey(int32 code, int32 state);
+typedef struct FLY_Key
+{
+	//int key;
+	int prev_state = -1;
+	int state = -1;
+	KeyCallback callback = EmptyKey;
+} FLY_Key;
+
+typedef void(*MouseFloatCallback)(float x, float y);
+void EmptyMouseFloatCallback(float x, float y);
+typedef struct FLY_Mouse
+{
+	float prev_y = INT32_MAX, prev_x = INT32_MAX;
+	float x = INT32_MAX, y = INT32_MAX;
+	MouseFloatCallback pos_callback = EmptyMouseFloatCallback;
+
+	float prev_scrollx = INT32_MAX, prev_scrolly = INT32_MAX;
+	float scrollx = INT32_MAX, scrolly = INT32_MAX;
+	MouseFloatCallback scroll_callback = EmptyMouseFloatCallback;
+
+	FLY_Key mbuttons[MAX_MOUSE_BUTTONS];
+
+} FLY_Mouse;
+
+
+// Touch Display Oriented - But will implement mouse based gestures and callback based key gestures
+typedef struct FLY_Gesture
+{
+	FLY_Timer timer;
+
+	float start_x, start_y;
+	float midpoints[MAX_MIDPOINTS][2];
+	float end_x, end_y;
+
+	float refresh_bucket;
+} FLY_Gesture;
+
+typedef struct FLY_Pointer
+{
+	bool active = false;
+	int32_t id;
+	FLY_Timer timer;
+	FLY_Gesture gesture;
+
+} FLY_Pointer;
+
+// Initialization / State Control Functions
 FL_API bool FLYINPUT_Init(uint16 window);
 FL_API bool FLYINPUT_Close();
 FL_API void FLYINPUT_Process(uint16 window);
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
+
+// Getters
 FL_API FLYINPUT_Actions FLYINPUT_GetMouseButton(int button);
 FL_API void FLYINPUT_GetMousePos(float* x, float* y);
 FL_API void FLYINPUT_GetMouseWheel(float* v = NULL, float* h = NULL);
 FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
 FL_API int FLYINPUT_GetCharFromBuffer();
 
+// Callback Setters
 FL_API void FLYINPUT_AddOnResumeCallback(VoidFun fn);
 FL_API void FLYINPUT_AddOnGoBackgroundCallback(VoidFun fn);
+FL_API void FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn);
+FL_API void FLYINPUT_SetMouseCallbacks(MouseFloatCallback position, MouseFloatCallback scroll);
+FL_API void FLYINPUT_SetMouseButtonCallbacks(int button, KeyCallback key_callback);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,6 +411,7 @@ typedef struct FLY_RenderState
 	int32 attribute_object;
 	int32 blend_equation_rgb, blend_equation_alpha;
 	
+	bool blend_func_separate = false;
 	int32 blend_func_src_rgb, blend_func_dst_rgb;
 	int32 blend_func_src_alpha, blend_func_dst_alpha;
 
@@ -375,26 +433,6 @@ FL_API const char* FLYRENDER_GetGLSLVer();
 
 // Function Passtrhough of ones I don't know
 FL_API void FLYRENDER_Scissor(int x, int y, int w, int h);
-
-enum FLYSHADER_Layout
-{
-	FLYSHADER_LAYOUT_NONE = 0, // We Assume that EVERY Mesh has vertices, if incorrect later, well crap
-	FLYSHADER_LAYOUT_HAS_INDICES = BITSET1,
-	FLYSHADER_LAYOUT_HAS_NORMALS = BITSET2,
-	FLYSHADER_LAYOUT_HAS_VERT_COLOR = BITSET3,
-	FLYSHADER_LAYOUT_HAS_UV = BITSET4,
-	FLYSHADER_LAYOUT_HAS_TANGET = BITSET5,
-	FLYSHADER_LAYOUT_HAS_BITANGENT = BITSET6,
-
-	// Sizes of vertex components
-	FLYSHADER_SIZE_POS_2 = BITSET7,
-	FLYSHADER_SIZE_COL_1 = BITSET8,
-	FLYSHADER_SIZE_COL_4 = BITSET9,
-	FLYSHADER_SIZE_UV_3	= BITSET10,
-	FLYSHADER_SIZE_NORMAL_2 = BITSET11,
-
-	FLYBUFFER_MAX = BITSET16
-};
 
 // Render Pipeline
 typedef struct FLY_VertAttrib
