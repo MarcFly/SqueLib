@@ -286,11 +286,13 @@ void ImGui_ImplFlyLib_SetClipboardText(const char* text)
 #include <string>
 extern int global_argc;
 extern char** global_argv;
-bool ImGui_ImplFlyLib_Init()
+
+bool init_registered = false;
+void ImGui_ImplFlyLib_Init()
 {
-	
     fly_Time.Start();
-    bool ret = true;
+
+	FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
 
     ImGuiIO &io = ImGui::GetIO();
 	io.Fonts->AddFontDefault();
@@ -348,8 +350,6 @@ bool ImGui_ImplFlyLib_Init()
 
 	io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
 
-	
-    return ret;
 }
 
 void ImGui_ImplFlyLib_Shutdown()

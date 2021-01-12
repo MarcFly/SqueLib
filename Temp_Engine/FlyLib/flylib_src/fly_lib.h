@@ -87,6 +87,8 @@ typedef long long double64;
 typedef unsigned long long udouble64;
 typedef unsigned char uchar;
 
+typedef void(*VoidFun)();
+
 typedef struct float4 
 {
 	float4() : x(0), y(0), z(0), w(0) {};
@@ -331,6 +333,9 @@ FL_API void FLYINPUT_GetMousePos(float* x, float* y);
 FL_API void FLYINPUT_GetMouseWheel(float* v = NULL, float* h = NULL);
 FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
 FL_API int FLYINPUT_GetCharFromBuffer();
+
+FL_API void FLYINPUT_AddOnResumeCallback(VoidFun fn);
+FL_API void FLYINPUT_AddOnGoBackgroundCallback(VoidFun fn);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////

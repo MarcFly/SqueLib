@@ -4,6 +4,13 @@
 #   include "fly_lib.h"
 #endif
 
+#include <vector>
+std::vector<VoidFun> on_resume_callbacks;
+std::vector<VoidFun> on_go_background_callbacks;
+
+void FLYINPUT_AddOnResumeCallback(VoidFun fun) { on_resume_callbacks.push_back(fun); }
+void FLYINPUT_AddOnGoBackgroundCallback(VoidFun fun) { on_go_background_callbacks.push_back(fun); }
+
 #ifdef ANDROID
 
 #include <android_native_app_glue.h>
@@ -18,7 +25,12 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_INIT_WINDOW");
             my_app = app;
             if(!OGLESStarted) OGLESStarted = 1;
-            else FLYLIB_Init();
+            else
+            {
+                FLYLIB_Init();
+                for (int i = 0; i < on_resume_callbacks.size(); ++i)
+                    on_resume_callbacks[i]();
+            }
             break;
         case APP_CMD_TERM_WINDOW:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_TERM_WINDOW");
@@ -49,10 +61,11 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             break;
         case APP_CMD_RESUME:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_RESUME");
-                // Register Resume Functions and call them
             break;
         case APP_CMD_SAVE_STATE:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
+            for (int i = 0; i < on_go_background_callbacks.size(); ++i)
+                on_go_background_callbacks[i]();
             break;
         case APP_CMD_PAUSE:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_PAUSE");
