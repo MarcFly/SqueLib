@@ -429,16 +429,16 @@ typedef struct FLY_VertAttrib
 typedef struct FLY_Mesh
 {	
 	int32 draw_mode = FLY_STATIC_DRAW;
-	uint32 attribute_object = UINT32_MAX; // VAO in OpenGL, index to holder of attributes
+	uint32 attribute_object = 0; // VAO in OpenGL, index to holder of attributes
 	
 	// Vertex Data
-	uint32 vert_id = UINT32_MAX;
+	uint32 vert_id = 0;
 	uint16 num_verts = 0;
 	void* verts = NULL;
 	std::vector<FLY_VertAttrib*> attributes;
 	
 	// Indices for the buffer
-	uint32 index_id		= UINT32_MAX;
+	uint32 index_id		= 0;
 	uint16 num_index	= 0;
 	uint32 index_var	= FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices
 	uint16 index_var_size = 0;
@@ -475,8 +475,8 @@ typedef struct FLY_Mesh
 
 typedef struct FLY_TexAttrib
 {
-	int32 id = INT32_MAX;
-	int32 var_type = INT32_MAX;
+	int32 id = 0;
+	int32 var_type = 0;
 	void* data = NULL;
 
 	// Initialization
@@ -491,7 +491,7 @@ typedef struct FLY_TexAttrib
 } FLY_TexAttrib;
 typedef struct FLY_Texture2D
 {
-	uint32 id		= 0;
+	uint32 id		= UINT32_MAX;
 	int32 format	= 0;
 	int32 w = 0, h = 0;
 	int32 channel_num = 0;
@@ -525,14 +525,7 @@ typedef struct FLY_Texture3D
 	int w, h;
 	uchar** pixels = nullptr;
 
-	int min_filter = INT32_MAX;
-	int mag_filter = INT32_MAX;
-	int wrap_s = INT32_MAX;
-	int wrap_t = INT32_MAX;
-
-	FL_API void Init(int32 tex_format);
-	FL_API void SetFiltering(int32 min = INT32_MAX, int32 mag = INT32_MAX, int32 wraps = INT32_MAX, int32 wrapt = INT32_MAX);
-	FL_API void SendToGPU();
+// Cp[y from FLY_Texture2D
 } FLY_Texture3D;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -541,7 +534,7 @@ typedef struct FLY_Texture3D
 
 typedef struct FLY_Shader
 {
-	int32 id = INT32_MAX;
+	int32 id = 0;
 	int32 type;
 	uint16 lines = 0;
 	const char** source;
@@ -549,9 +542,6 @@ typedef struct FLY_Shader
 	// Shader Usage Functions
 	FL_API void Compile();
 
-	// CleanUp
-	//FL_API void CleanUp();
-	//FL_API ~FLY_Shader() { CleanUp; }
 } FLY_Shader;
 
 FL_API FLY_Shader* FLYSHADER_Create(int32 type, uint16 strs, const char** file, bool raw_string = false);
@@ -568,7 +558,7 @@ typedef struct FLY_Uniform
 #include <vector>
 typedef struct FLY_Program
 {
-	int32 id = INT32_MAX;
+	int32 id = 0;
 	FLY_Shader* vertex_s = nullptr;
 	FLY_Shader* fragment_s = nullptr;
 	std::vector<FLY_Uniform*> uniforms;
@@ -589,7 +579,6 @@ typedef struct FLY_Program
 	FL_API void DrawRawVertices(FLY_Mesh* mesh, int32 count = 0);
 
 	// Attributes
-	//FL_API void EnableMeshAttributes(FLY_Mesh* fly_mesh);
 	FL_API void GiveAttributesFromMesh(FLY_Mesh* fly_mesh);
 	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attr);
 	FL_API uint16 GetAttribByteSize() const;
@@ -622,10 +611,5 @@ typedef struct FLY_Program
 // OpenGL marks by ids and it would be better to just sent the id, but other may differ and require more
 FL_API FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags);
 FL_API void FLYRENDER_CheckProgramLog(FLY_Program* fly_program);
-
-// Debugging Functions
-
-FL_API void FLYRENDER_TestRender(FLY_Program& prog, FLY_Mesh& mesh);
-FL_API void GetGLError();
 
 #endif // _FLY_LIB_

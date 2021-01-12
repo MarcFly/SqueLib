@@ -157,6 +157,8 @@ void ImGuiImplFlyLibTest()
         FLYDISPLAY_SwapAllBuffers();
         FLYINPUT_Process(0);
     }
+
+    ImGui_ImplFlyLib_Shutdown();
 }
 int global_argc;
 char** global_argv;

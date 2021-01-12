@@ -99,7 +99,7 @@ FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags)
 
 void FLY_Program::Init()
 {
-    if (id == INT32_MAX || id >0) CleanUp();
+    if (id >0 && id != INT32_MAX) CleanUp();
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     id = glCreateProgram();
 #endif
@@ -319,17 +319,17 @@ void FLY_Program::SetMatrix4(const char* name, const float* value, uint16 number
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PROGRAM CLEANUP ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-FLY_Program::~FLY_Program() { CleanUp(); }
+FLY_Program::~FLY_Program() { if(id>0) CleanUp(); }
 void FLY_Program::CleanUp()
 {
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    if (vertex_s != NULL && id && vertex_s->id) { glDetachShader(id, vertex_s->id); }
-    if (fragment_s != NULL && id && fragment_s->id) { glDetachShader(id, fragment_s->id);}
-    if (vertex_s != NULL && vertex_s->id) { glDeleteShader(vertex_s->id); vertex_s->id = 0; }
-    if (fragment_s != NULL &&  fragment_s->id) { glDeleteShader(fragment_s->id); fragment_s->id = 0; }
-    if (id != INT32_MAX) { glDeleteProgram(id); id = INT32_MAX; }
-#endif
     FLY_CHECK_RENDER_ERRORS();
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    if (vertex_s != NULL && vertex_s->id) { glDeleteShader(vertex_s->id); }
+    if (fragment_s != NULL && fragment_s->id) { glDeleteShader(fragment_s->id); }
+    if (vertex_s != NULL && id && vertex_s->id) { glDetachShader(id, vertex_s->id); vertex_s->id = 0; }
+    if (fragment_s != NULL && id && fragment_s->id) { glDetachShader(id, fragment_s->id); fragment_s->id = 0; }
+    if (id > 0) { glDeleteProgram(id); id = 0; }
+#endif
 
     if (vertex_s != NULL) { delete vertex_s; vertex_s = NULL; }
     if (fragment_s != NULL) { delete fragment_s; fragment_s = NULL; }

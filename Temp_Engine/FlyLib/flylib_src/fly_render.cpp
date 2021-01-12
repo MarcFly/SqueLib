@@ -342,7 +342,7 @@ void FLY_Mesh::SendToGPU()
 }
 
 // CleanUp
-FLY_Mesh::~FLY_Mesh() { CleanUp(); }
+FLY_Mesh::~FLY_Mesh() { if(vert_id > 0) CleanUp(); }
 void FLY_Mesh::CleanUp()
 {
     if (verts != NULL) { delete[] verts; verts = NULL; }
@@ -364,7 +364,7 @@ void FLY_TexAttrib::SetData(void* data_) { data = data_; }
 void FLY_TexAttrib::Set(int32 id_, int32 var_, void* data_) { id = id_; var_type = var_, data = data_; }
 void FLY_TexAttrib::SetParameter(int32 tex_id)
 {
-    if (tex_id < 1 || var_type == INT32_MAX || id == INT32_MAX || data == NULL)
+    if (tex_id < 1 || var_type < 0 || id == UINT32_MAX || data == NULL)
         return;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     if (var_type == FLY_FLOAT)
