@@ -31,10 +31,6 @@ void FLY_RenderState::SetUp()
     glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     glScissor(scissor_box.x, scissor_box.y, scissor_box.z, scissor_box.w);
 
-#ifdef GL_POLYGON_MODE
-    glPolygonMode(FLY_FRONT_AND_BACK, (GLenum)polygon_mode.x);
-#endif
-
     if (blend) glEnable(GL_BLEND);
     else glDisable(GL_BLEND);
     if (cull_faces) glEnable(GL_CULL_FACE);
@@ -43,7 +39,14 @@ void FLY_RenderState::SetUp()
     else glDisable(GL_DEPTH_TEST);
     if (scissor_test) glEnable(GL_SCISSOR_TEST);
     else glDisable(GL_SCISSOR_TEST);
+
+    // OpenGL Version Specific Code
+#   ifdef USE_OPENGL
+    glPolygonMode(FLY_FRONT_AND_BACK, (GLenum)polygon_mode.x);
+#   endif
 #endif
+
+    FLY_CHECK_RENDER_ERRORS();
 }
 
 void FLY_RenderState::BackUp()
@@ -67,13 +70,20 @@ void FLY_RenderState::BackUp()
 
     glGetIntegerv(GL_VIEWPORT, &viewport.x);
     glGetIntegerv(GL_SCISSOR_BOX, &scissor_box.x);
-    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.x);
 
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
     depth_test = glIsEnabled(GL_DEPTH_TEST);
     scissor_test = glIsEnabled(GL_SCISSOR_TEST);
+
+    // OpenGL Version Specific Code
+#   ifdef USE_OPENGL
+    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.x);
+#   endif
+
 #endif
+
+    FLY_CHECK_RENDER_ERRORS();
 }
 
 void FLYRENDER_ChangeViewPortSize(int width, int height)
@@ -149,16 +159,16 @@ const char* FLYRENDER_GetGLSLVer()
     const char* ret = "";
 #if defined(USE_OPENGL) ||defined(USE_OPENGLES)
     int ver = GLVersion.major * 100 + GLVersion.minor * 10;
-    if (ver > 320)
+    if (ver >= 320)
 #if defined(USE_OPENGLES)
-        return "#version 320 es\nprecision mediump float;\n";
+        ret = "#version 320 es\nprecision mediump float;\n";
 #else
-        return "#version 330 core\n";
+        ret = "#version 330 core\n";
 #endif
     else
-        return "#version 100 es";
+        ret = "#version 100";
 #endif
-
+    FLYPRINT(LT_INFO, "%s", ret);
     return ret;
 }
 

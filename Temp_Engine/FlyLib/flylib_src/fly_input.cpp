@@ -9,14 +9,16 @@
 #include <android_native_app_glue.h>
 
 int OGLESStarted = 0;
-extern struct android_app* app;
+extern struct android_app* my_app;
 void HandleAndroidCMD(struct android_app* app, int32_t cmd)
 {
     switch(cmd)
     {
         case APP_CMD_INIT_WINDOW:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_INIT_WINDOW");
+            my_app = app;
             if(!OGLESStarted) OGLESStarted = 1;
+            else FLYLIB_Init();
             break;
         case APP_CMD_TERM_WINDOW:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_TERM_WINDOW");
@@ -47,12 +49,14 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             break;
         case APP_CMD_RESUME:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_RESUME");
+                // Register Resume Functions and call them
             break;
         case APP_CMD_SAVE_STATE:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
             break;
         case APP_CMD_PAUSE:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_PAUSE");
+            // Register Go To Background functions and call them
             break;
         case APP_CMD_STOP:
             FLY_ConsolePrint(FLY_LogType::LT_INFO, "APP_CMD_STOP");
@@ -314,8 +318,8 @@ int AndroidGetUnicodeChar(int key_code, int meta_state)
     // Get Java Environment
     JNIEnv * env = 0;
 	JNIEnv ** env_ptr = &env;
-	JavaVM ** jnii_ptr = &app->activity->vm;
-	JavaVM * jnii = app->activity->vm;
+	JavaVM ** jnii_ptr = &my_app->activity->vm;
+	JavaVM * jnii = my_app->activity->vm;
     
     jnii->AttachCurrentThread( env_ptr, NULL);
 	env = (*env_ptr);
@@ -446,7 +450,7 @@ void FLYINPUT_Process(uint16 window)
     {
         if(source!=NULL)
         {
-            source->process(app, source);
+            source->process(my_app, source);
         }
     }
 #elif defined USE_GLFW
@@ -463,13 +467,13 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
     // Get Java Environment
     JNIEnv * env = 0;
 	JNIEnv ** env_ptr = &env;
-	JavaVM ** jnii_ptr = &app->activity->vm;
+	JavaVM ** jnii_ptr = &my_app->activity->vm;
 	JavaVM * jnii = *jnii_ptr;
     
     jnii->AttachCurrentThread( env_ptr, NULL);
 	env = (*env_ptr);
     jclass activity_class = env->FindClass("android/app/NativeActivity");
-    jobject lnative_activity = app->activity->clazz;
+    jobject lnative_activity = my_app->activity->clazz;
 
     // Retrieves Context.INPUT_METHOD_SERVICE.
     jclass class_context = env->FindClass("android/content/Context");

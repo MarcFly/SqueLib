@@ -330,17 +330,20 @@ bool ImGui_ImplFlyLib_Init()
 	io.BackendPlatformName = "imgui_impl_flylib";
 	
 	// Testing custom font...
-	io.Fonts->Clear();
+	/*io.Fonts->Clear();
 	std::string argv = global_argv[global_argc - 1];
 	std::string exe = strrchr(global_argv[global_argc - 1], FOLDER_ENDING);
 	size_t v = argv.find(std::string_view(exe));
 	argv = argv.substr(0, argv.length() - exe.length()) + FOLDER_ENDING + std::string("Roboto-Medium.ttf");
-	io.Fonts->AddFontFromFileTTF(argv.c_str(), 13.f);
+	io.Fonts->AddFontFromFileTTF(argv.c_str(), 13.f);*/
 	// Does not solve font rendering issue
-
+	FLYPRINT(LT_INFO, "Testing Crash...");
 	ImGui_ImplFlyLib_StaticRenderState();
+	FLYPRINT(LT_INFO, "Testing Crash...");
 	ImGui_ImplFlyLib_CreateFontsTexture();
+	FLYPRINT(LT_INFO, "Testing Crash...");
 	ImGui_ImplFlyLib_CreateShaderProgram();
+	FLYPRINT(LT_INFO, "Testing Crash...");
 	//... continue
 
 	io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;

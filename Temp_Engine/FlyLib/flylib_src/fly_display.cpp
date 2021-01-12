@@ -12,7 +12,7 @@
 // Define which API Backend to USE
 #ifdef ANDROID
     extern int OGLESStarted;
-    extern struct android_app* app;
+    extern struct android_app* my_app;
 #   include <android/native_activity.h>
 #   include <android_native_app_glue.h>
 #elif defined (_WIN32) || defined (__linux__)
@@ -149,8 +149,8 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
         {
             if(source != NULL)
             {
-                FLYLOG(LT_INFO, "Processing Init Inputs: Source %d, App %d", source, app);
-                source->process(app, source);
+                FLYLOG(LT_INFO, "Processing Init Inputs: Source %d, App %d", source, my_app);
+                source->process(my_app, source);
             }
         }
              
@@ -194,14 +194,14 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
     FLYLOG(FLY_LogType::LT_INFO, "Created EGL Context!");
 
 #ifdef ANDROID
-    if( egl_window && !app->window)
+    if( egl_window && !my_app->window)
     {
         FLYLOG(FLY_LogType::LT_WARNING, "App restarted without creating window, stopping...");
         exit(0);
     }
 #endif
     FLYLOG(FLY_LogType::LT_INFO, "Getting EGL Surface..");
-    egl_window = app->window;
+    egl_window = my_app->window;
     if(!egl_window)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "EGL Window got dereferenced!");
@@ -211,7 +211,7 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
 #ifdef ANDROID
     init_window->width = ANativeWindow_getWidth(egl_window);
     init_window->height= ANativeWindow_getHeight(egl_window);
-    egl_surface = eglCreateWindowSurface(egl_display, config, app->window, window_attribute_list);
+    egl_surface = eglCreateWindowSurface(egl_display, config, my_app->window, window_attribute_list);
     FLYLOG(FLY_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", init_window->width, init_window->height);
 #endif
 
@@ -286,7 +286,7 @@ int32 FLYDISPLAY_GetDPIDensity(uint16 window)
 {
 #ifdef ANDROID
     AConfiguration* config = AConfiguration_new();
-    AConfiguration_fromAssetManager(config, app->activity->assetManager);
+    AConfiguration_fromAssetManager(config, my_app->activity->assetManager);
     int32_t density = AConfiguration_getDensity(config);
     AConfiguration_delete(config);
     return density;

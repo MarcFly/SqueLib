@@ -152,9 +152,7 @@ void ImGuiImplFlyLibTest()
         FLYRENDER_Clear(NULL, &col);
         ImGui_ImplFlyLib_NewFrame();
         ImGui::NewFrame();
-
         ImGui::ShowDemoWindow(&show_demo_window);
-
         ImGui::Render();
         FLYDISPLAY_SwapAllBuffers();
         FLYINPUT_Process(0);
@@ -186,14 +184,15 @@ int main(int argc, char**argv)
     }
 
     //LearnOpenGLTest();
-
+    FLYPRINT(LT_INFO, "Testing Crash...");
     ImGuiImplFlyLibTest();
     // For Testing timer and android keyboard
     
     FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {
-        state = MAIN_FINISH;
+        if(FLYDISPLAY_ShouldWindowClose(0))
+            state = MAIN_FINISH;
     }
 
     //  Engine CleanUp

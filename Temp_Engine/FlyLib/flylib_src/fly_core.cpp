@@ -4,6 +4,32 @@
 // CORE LIBRARY FUNCTIONS ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ANDROID
+
+// Putting the android entry point under window module because in
+// android you acquire a native_app as if it were the window to act upon.
+#include <android_native_app_glue.h>
+
+extern void HandleAndroidCMD(struct android_app* app, int32_t cmd);
+extern int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev);
+extern int main(int argc, char** argv);
+struct android_app* my_app;
+void android_main(struct android_app* app)
+{
+    my_app = app;
+    #ifndef FLYLOGGER_OUT
+    FLY_ConsolePrint(FLY_LogType::LT_INFO, "FLYLIB - Android Flylib Start...");
+    #endif
+
+    app->onAppCmd = HandleAndroidCMD;
+    app->onInputEvent = HandleAndroidInput;
+    char *argv[] = {"AppMain", 0};
+    FLY_ConsolePrint(FLY_LogType::LT_INFO, "FLYLIB - Calling App Main...");
+    main(2, argv);
+    //app->destroyRequested = 0;
+    FLY_ConsolePrint(FLY_LogType::LT_INFO, "FLYLIB - Finished executing App...");
+}
+#endif
 
 bool FLYLIB_Init(/* flags */)
 {
@@ -31,6 +57,10 @@ bool FLYLIB_Close(/* flags */)
     // Unrelated Helpers that are still required
     FLYLOGGER_Close();
 
+    #ifdef ANDROID
+    ANativeActivity_finish(my_app->activity);
+    #endif
+
     return ret;
 }
 unsigned int FLGetVersion(void)
@@ -43,30 +73,3 @@ int FLIsCompatibleDLL(void)
     uint32_t major = FLGetVersion() >> 16;
     return major == FL_VERSION_MAJOR;
 }
-
-#ifdef ANDROID
-
-// Putting the android entry point under window module because in
-// android you acquire a native_app as if it were the window to act upon.
-#include <android_native_app_glue.h>
-
-extern void HandleAndroidCMD(struct android_app* app, int32_t cmd);
-extern int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev);
-extern int main();
-struct android_app* app;
-void android_main(struct android_app* gapp)
-{
-    app = gapp;
-    #ifndef FLYLOGGER_OUT
-    FLY_ConsolePrint(FLY_LogType::LT_INFO, "FLYLIB - Android Flylib Start...");
-    #endif
-
-    app->onAppCmd = HandleAndroidCMD;
-    app->onInputEvent = HandleAndroidInput;
-    //char *argv[] = {"AppMain", 0};
-    FLY_ConsolePrint(FLY_LogType::LT_INFO, "FLYLIB - Calling App Main...");
-    main();
-    //app->destroyRequested = 0;
-    FLY_ConsolePrint(FLY_LogType::LT_INFO, "FLYLIB - Finished executing App...");
-}
-#endif
