@@ -249,7 +249,7 @@ void FLY_Program::DrawIndices(FLY_Mesh* mesh, int32 offset_bytes, int32 count)
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(mesh->attribute_object);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->index_id);
-    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)(intptr_t)((double64)((int32)mesh->index_var_size) * offset_bytes));
+    glDrawElements(GL_TRIANGLES, count, mesh->index_var, (void*)(intptr_t)((int64)((int32)mesh->index_var_size) * offset_bytes));
 #else
 #endif
 }

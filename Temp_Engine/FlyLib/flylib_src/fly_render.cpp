@@ -132,7 +132,7 @@ bool FLYRENDER_Init()
 #endif
     // Generate Viewport with window size
     uint16 w, h;
-    FLYDISPLAY_GetSize(0, &w, &h);
+    FLYDISPLAY_GetWindowSize(0, &w, &h);
     FLYRENDER_ChangeViewPortSize(w, h);
     FLYLOG(FLY_LogType::LT_INFO, "Main Viewport init...");
     return ret;

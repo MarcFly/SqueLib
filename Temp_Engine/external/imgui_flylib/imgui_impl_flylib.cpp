@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Timing
 static FLY_Timer    fly_Time;
-static float        fly_lastTime = 0;
+static double        fly_lastTime = 0;
 // Input Variables
 static bool			fly_KeyCtrl = false;
 static bool			fly_KeyShift = false;
@@ -311,10 +311,6 @@ void ImGui_ImplFlyLib_GoBackground()
 // PUBLIC USAGE FUNCTIONS ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Has Errors
-#include <cstring>
-#include <string>
-extern int global_argc;
-extern char** global_argv;
 
 bool init_registered = false;
 void ImGui_ImplFlyLib_Init()
@@ -357,32 +353,22 @@ void ImGui_ImplFlyLib_Init()
 
     // Init Scale Based on DPI (have to tune it)
     uint16 dpi = FLYDISPLAY_GetDPIDensity();
-	uint16 w, h; FLYDISPLAY_GetSize(0, &w, &h);
+	uint16 w, h; FLYDISPLAY_GetSize(w, h);
 	uint16 bigger = (w > h) ? w : h;
 	float scale = (bigger / dpi)*.8;
 	//io.FontGlobalScale = scale;
 	//ImGui::GetStyle().ScaleAllSizes(scale);
 
     // BackendFlags and things...
-    //io.BackendFlags &= ~ImGuiBackendFlags_HasMouseCursors;
+    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
 	io.BackendPlatformName = "imgui_impl_flylib";
 	
-	// Testing custom font...
-	/*io.Fonts->Clear();
-	std::string argv = global_argv[global_argc - 1];
-	std::string exe = strrchr(global_argv[global_argc - 1], FOLDER_ENDING);
-	size_t v = argv.find(std::string_view(exe));
-	argv = argv.substr(0, argv.length() - exe.length()) + FOLDER_ENDING + std::string("Roboto-Medium.ttf");
-	io.Fonts->AddFontFromFileTTF(argv.c_str(), 13.f);*/
-	// Does not solve font rendering issue
-	FLYPRINT(LT_INFO, "Testing Crash...");
+	// Initialize Render State...
 	ImGui_ImplFlyLib_StaticRenderState();
-	FLYPRINT(LT_INFO, "Testing Crash...");
 	ImGui_ImplFlyLib_CreateFontsTexture();
-	FLYPRINT(LT_INFO, "Testing Crash...");
 	ImGui_ImplFlyLib_CreateShaderProgram();
-	FLYPRINT(LT_INFO, "Testing Crash...");
+
 	//... continue
 
 	io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
@@ -405,13 +391,15 @@ void ImGui_ImplFlyLib_NewFrame()
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup display size (every frame to accommodate for window resizing)
-	FLYDISPLAY_GetSize(0, &fly_displayWidth, &fly_displayHeight);
-    io.DisplaySize = ImVec2(fly_displayWidth, fly_displayHeight);
-	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+    io.DisplaySize = ImVec2(fly_backupState.viewport.z, fly_backupState.viewport.w);
+	uint16 w, h;
+	FLYDISPLAY_GetWindowSize(0, &w, &h); 
+	//io.DisplayFramebufferScale = ImVec2((float)io.DisplaySize.x / (float)w, (float)io.DisplaySize.y / (float)h);
 
     // Setup Time Step
-    float curr_time = (fly_Time.ReadMilliSec() / 1000.f);
-    io.DeltaTime = curr_time - fly_lastTime;
+	double read = fly_Time.ReadMilliSec();
+    double curr_time = (read / 1000);
+    io.DeltaTime = (curr_time - fly_lastTime)+0.000001;
     fly_lastTime = curr_time;
 
     // Update Mouse
@@ -420,6 +408,7 @@ void ImGui_ImplFlyLib_NewFrame()
     for(int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i)
 		io.MouseDown[i] = fly_MousePressed[i];
 
+	
 	io.MousePos = fly_MousePos;
 	
     io.MouseWheel   = fly_MouseWheel;

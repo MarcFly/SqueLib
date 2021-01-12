@@ -54,26 +54,26 @@ bool FLY_Timer::IsActive()
     return is_active;
 }
 
-uint32 FLY_Timer::ReadMilliSec()
+double FLY_Timer::ReadMilliSec()
 {
     if (is_stopped || !is_active)
         return stop_at_ms - start_at_ms;
-    udouble64 now = (udouble64)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    double now = (double)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     return now - start_at_ms;
 }
 
-uint32 FLY_Timer::ReadMicroSec()
+double FLY_Timer::ReadMicroSec()
 {
     if (is_stopped || !is_active)
         return stop_at_us - start_at_us;
-    udouble64 now = (udouble64)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    double now = (double)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     return now - start_at_us;
 }
 
-uint32 FLY_Timer::ReadNanoSec()
+double FLY_Timer::ReadNanoSec()
 {
     if (is_stopped || !is_active)
         return stop_at_ns - start_at_ns;
-    udouble64 now = (udouble64)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    double now = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     return now - start_at_us;
 }

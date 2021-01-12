@@ -243,7 +243,7 @@ FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
     if(!FLYDISPLAY_OpenWindow(init_window)) return false;
     FLYLOG(FLY_LogType::LT_INFO, "Opened main GLFW window!");
     FLYDISPLAY_MakeContextMain(0);
-    FLYDISPLAY_SetVSYNC(1); // Swap Interval
+    FLYDISPLAY_SetVSYNC(0); // Swap Interval
 #endif
     
     return ret;
@@ -303,6 +303,18 @@ int32 FLYDISPLAY_GetDPIDensity(uint16 window)
 
 }
 
+void FLYDISPLAY_GetSize(uint16& w, uint16& h)
+{
+#ifdef USE_GLFW
+    const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
+    w = mode->width;
+    h = mode->height;
+#else
+    w = fly_windows[0]->width;
+    h = fly_windows[0]->height;
+#endif
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONTROL SPECIFIC WINDOWS //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -320,7 +332,7 @@ void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h)
 
 }
 
-void FLYDISPLAY_GetSize(uint16 window, uint16* x, uint16* y)
+void FLYDISPLAY_GetWindowSize(uint16 window, uint16* x, uint16* y)
 {
     uint16 size = fly_windows.size();
     if (size > window && x != NULL & y != NULL)
@@ -469,6 +481,9 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
 
 #elif defined USE_GLFW
     GLFWwindow* glfw_window = glfwCreateWindow(w, h, window->title, NULL, NULL);
+    glfwGetWindowSize(glfw_window, &w, &h);
+    window->width = w;
+    window->height = h;
     if(!glfw_window) return false;
     glfw_windows.push_back(glfw_window);
     glfwSetWindowCloseCallback(glfw_window, GLFW_CloseCallback);
@@ -485,6 +500,16 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     FLYINPUT_Init(fly_windows.size() - 1);
 
     return true;
+}
+
+void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y)
+{
+#ifdef USE_GLFW
+    glfwGetWindowPos(glfw_windows[window], &x, &y);
+#else
+    x = 0; 
+    y = 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

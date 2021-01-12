@@ -83,8 +83,8 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef short int16;
 typedef int int32;
-typedef long long double64;
-typedef unsigned long long udouble64;
+typedef long long int64;
+typedef unsigned long long uint64;
 typedef unsigned char uchar;
 
 typedef void(*VoidFun)();
@@ -173,18 +173,18 @@ typedef struct FLY_Timer
 	FL_API void Kill();
 	FL_API bool IsStopped();
 	FL_API bool IsActive();
-	FL_API uint32 ReadMilliSec();
-	FL_API uint32 ReadMicroSec();
-	FL_API uint32 ReadNanoSec();
+	FL_API double ReadMilliSec();
+	FL_API double ReadMicroSec();
+	FL_API double ReadNanoSec();
 	
 private:
-	udouble64 start_at_ms;
-	udouble64 start_at_ns;
-	udouble64 start_at_us;
+	double start_at_ms;
+	double start_at_ns;
+	double start_at_us;
 	
-	udouble64 stop_at_ms;
-	udouble64 stop_at_ns;
-	udouble64 stop_at_us;
+	double stop_at_ms;
+	double stop_at_ns;
+	double stop_at_us;
 
 	std::atomic<bool> is_stopped;
 	std::atomic<bool> is_active;
@@ -219,15 +219,17 @@ FL_API bool FLYDISPLAY_Init(uint16 flags, const char* title = "", uint16 w = 0, 
 FL_API bool FLYDISPLAY_Close();
 FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);
 FL_API int32 FLYDISPLAY_GetDPIDensity(uint16 window = 0);
+FL_API void FLYDISPLAY_GetSize(uint16& w, uint16& h);
 // Control Specific Windows
 FL_API void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h);
-FL_API void FLYDISPLAY_GetSize(uint16 window, uint16* w, uint16* h);
+FL_API void FLYDISPLAY_GetWindowSize(uint16 window, uint16* w, uint16* h);
 FL_API void FLYDISPLAY_GetAmountWindows(uint16* windows);
 FL_API void FLYDISPLAY_SetWindowClose(uint16 window);
 FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);
 FL_API void FLYDISPLAY_CloseWindow(uint16 window);
 FL_API void FLYDISPLAY_DestroyWindow(uint16 window);
 FL_API bool FLYDISPLAY_OpenWindow(FLY_Window* window = NULL, uint16 monitor = 0);
+FL_API void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y);
 // Controlling Contexts
 FL_API void FLYDISPLAY_Clean();
 FL_API void FLYDISPLAY_SwapAllBuffers();
@@ -386,6 +388,9 @@ FL_API void FLYINPUT_GetMousePos(float* x, float* y);
 FL_API void FLYINPUT_GetMouseWheel(float* v = NULL, float* h = NULL);
 FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
 FL_API int FLYINPUT_GetCharFromBuffer();
+
+// Setters
+FL_API void FLYINPUT_SetMousePos(float x, float y);
 
 // Callback Setters
 FL_API VoidFun FLYINPUT_AddOnResumeCallback(VoidFun fn);

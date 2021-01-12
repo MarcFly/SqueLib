@@ -390,8 +390,8 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     {
         mouse.prev_x = mouse.x;
         mouse.prev_y = mouse.y;
-        mouse.x = xpos;
-        mouse.y = ypos;
+        mouse.x = (float)xpos;
+        mouse.y = (float)ypos;
         mouse.pos_callback(mouse.x, mouse.y);
     }
     static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
@@ -413,13 +413,19 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
 #endif
 
 
-
+void FLYINPUT_SetMousePos(float x, float y)
+{
+#ifdef USE_GLFW
+    //glfwSetCursor(glfw_windows[0], );
+#endif
+}
     
 bool FLYINPUT_Init(uint16 window)
 {
     bool ret = true;
 #ifdef ANDROID
 #elif defined USE_GLFW
+    glfwSetInputMode(glfw_windows[window], GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     glfwSetKeyCallback(glfw_windows[window], GLFW_KeyCallback);
     glfwSetCursorEnterCallback(glfw_windows[window], GLFW_MouseEnterLeaveCallback);
     glfwSetCursorPosCallback(glfw_windows[window], GLFW_MousePosCallback);
@@ -517,7 +523,7 @@ FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p)
     int16 delta_x = p.gesture.end_x - p.gesture.start_x;
     int16 delta_y = p.gesture.end_y - p.gesture.start_y;
     uint16 screen_w, screen_h;
-    FLYDISPLAY_GetSize(0, &screen_w, &screen_h);
+    FLYDISPLAY_GetWindowSize(0, &screen_w, &screen_h);
 
     uint16 abs_delta_x = delta_x;
     uint16 abs_delta_y = delta_y;
