@@ -11,11 +11,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-// Var Define
-
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -26,9 +21,6 @@ static std::unordered_map<std::string, int> Push_LogKeys;
 static std::unordered_map<int, std::string*> Get_LogKeys;
 static std::vector<PairLOG> logs;
 static bool DUMPDATA = true;
-
-// Function Definitions
-
 
 #include <ctime>
 #include <chrono>
@@ -65,7 +57,7 @@ bool FLYLOGGER_Init(bool dumpdata)
 
 void FLYLOGGER_Close()
 {
-    if (DUMPDATA) DumpData();
+    if (DUMPDATA) FLYLOGGER_DumpData();
 
     Push_LogKeys.clear();
     Get_LogKeys.clear();
@@ -79,7 +71,7 @@ void FLYLOGGER_Close()
 void FLY_ConsolePrint(int lt, const char* log)
 {
     printf("FLY_LogType-%d: %s\n", lt, log);
-#ifdef _WIN32
+#if defined(_WIN32)
     OutputDebugString(log);
     OutputDebugString("\n");
 #elif defined ANDROID
@@ -149,7 +141,7 @@ void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const cha
     delete print;
 }
 
-void DumpData()
+void FLYLOGGER_DumpData()
 {
     // Replace by how asset manager does it
 #ifndef ANDROID

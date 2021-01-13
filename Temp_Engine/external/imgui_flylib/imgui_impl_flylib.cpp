@@ -82,9 +82,9 @@ void ImGui_ImplFlyLib_VariableRenderState(ImDrawData* draw_data, int32  fb_width
 		{ (R + L) / (L - R),	(T + B) / (B - T),  0.0f,   1.0f }
 	};
 
-	fly_shaderProgram.Use();
-	fly_shaderProgram.SetInt("Texture", 0);
-	fly_shaderProgram.SetMatrix4("ProjMtx", &ortho_projection[0][0]);
+	FLYRENDER_UseProgram(fly_shaderProgram);
+	SetInt(fly_shaderProgram, "Texture", 0);
+	SetMatrix4(fly_shaderProgram, "ProjMtx", &ortho_projection[0][0]);
 	FLYRENDER_BindSampler(0, 0);
 }
 
@@ -111,7 +111,9 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 		fly_dataHandle.indices = (void*)cmd_list->IdxBuffer.Data;
 		fly_dataHandle.num_verts = cmd_list->VtxBuffer.Size;
 		fly_dataHandle.num_index = cmd_list->IdxBuffer.Size;
-		fly_dataHandle.SendToGPU();
+		
+		FLY_SendMeshToGPU(fly_dataHandle);
+
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
 			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
@@ -129,7 +131,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 				{
 					FLYRENDER_Scissor((int32)clip_rect.x, (int32)(fb_height - clip_rect.w), (int32)(clip_rect.z - clip_rect.x), (int32)(clip_rect.w - clip_rect.y));
 					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
-					fly_shaderProgram.DrawIndices(&fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
+					FLYRENDER_DrawIndices(fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
 				}
 			}
 		}
@@ -147,32 +149,36 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 {
 	fly_backupState.BackUp();
 
-	fly_dataHandle.SetDrawMode(FLY_STREAM_DRAW);
-	fly_dataHandle.SetIndexVarType(FLY_USHORT);
-	fly_dataHandle.Init();
+	FLY_GenerateMeshBuffer(&fly_dataHandle);
+	fly_dataHandle.draw_config = FLY_TRIANGLES;
+	fly_dataHandle.draw_mode = FLY_STREAM_DRAW;
+	fly_dataHandle.index_var = FLY_USHORT;	
+	fly_dataHandle.index_var_size = FLY_VarGetSize(FLY_USHORT);
 FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* p = fly_dataHandle.AddAttribute();
-	p->SetName("Position");
-	p->SetNormalize(false);
-	p->SetNumComponents(2);
-	p->SetVarType(FLY_FLOAT);
+	p->name = "Position";
+	p->normalize = false;
+	p->num_comp = 2;
+	p->var_type = FLY_FLOAT;
+	p->var_size = FLY_VarGetSize(FLY_FLOAT);
 	FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* uv = fly_dataHandle.AddAttribute();
-	uv->SetName("UV");
-	uv->SetNormalize(true);
-	uv->SetNumComponents(2);
-	uv->SetVarType(FLY_FLOAT);
+	uv->name = "UV";
+	uv->normalize = false;
+	uv->num_comp = 2;
+	uv->var_type = FLY_FLOAT;
+	uv->var_size = FLY_VarGetSize(FLY_FLOAT);
 FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* c = fly_dataHandle.AddAttribute();
-	c->SetName("Color");
-	c->SetNormalize(true);
-	c->SetNumComponents(4);
-	c->SetVarType(FLY_UBYTE);
+	c->name = "Color";
+	c->normalize = true;
+	c->num_comp = 4;
+	c->var_type = FLY_UBYTE;
+	c->var_size = FLY_VarGetSize(FLY_UBYTE);
 FLY_CHECK_RENDER_ERRORS();
-	fly_dataHandle.SetOffsetsInOrder();
-	FLY_CHECK_RENDER_ERRORS();
 	fly_dataHandle.SetLocationsInOrder();
 FLY_CHECK_RENDER_ERRORS();
+
 	fly_backupState.SetUp();
 }
 
@@ -181,20 +187,20 @@ void ImGui_ImplFlyLib_CreateShaderProgram()
 	fly_backupState.BackUp();
 FLY_CHECK_RENDER_ERRORS();
 	const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertex_shader };
-	FLY_Shader* vert_s = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_source, true);
+
+	FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
 	vert_s->Compile();
 FLY_CHECK_RENDER_ERRORS();
 	const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragment_shader };
-	FLY_Shader* frag_s = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_source, true);
+	FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
 	frag_s->Compile();
 FLY_CHECK_RENDER_ERRORS();
-	// Remember to revise attach shader to AddShader (like attributes)
-	fly_shaderProgram.Init();
+	FLYRENDER_CreateProgram(&fly_shaderProgram);
 	FLY_CHECK_RENDER_ERRORS();
-	fly_shaderProgram.AttachShader(&vert_s);
-	fly_shaderProgram.AttachShader(&frag_s);
+	fly_shaderProgram.AttachShader(vert_s);
+	fly_shaderProgram.AttachShader(frag_s);
 	// Compile Shaders with AddShader syntax
-	fly_shaderProgram.Link();
+	FLYRENDER_LinkProgram(fly_shaderProgram);
 FLY_CHECK_RENDER_ERRORS();
 	fly_shaderProgram.DeclareUniform("Texture");
 	fly_shaderProgram.DeclareUniform("ProjMtx");
@@ -202,11 +208,9 @@ FLY_CHECK_RENDER_ERRORS();
 	// Attributes Here, first buffers?, buffers after?...
 
 	ImGui_ImplFlyLib_PrepareBuffers();
+
 	FLY_CHECK_RENDER_ERRORS();
-	fly_shaderProgram.GiveAttributesFromMesh(&fly_dataHandle);
-	FLY_CHECK_RENDER_ERRORS();
-	//fly_shaderProgram.EnableOwnAttributes();
-	FLY_CHECK_RENDER_ERRORS();
+
 	fly_backupState.SetUp();
 }
 
@@ -215,17 +219,20 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 	fly_backupState.BackUp();
 
 	ImGuiIO& io = ImGui::GetIO();
-	fly_fontTexture.Init(FLY_RGBA);
+	FLY_GenTextureData(&fly_fontTexture);
+	fly_fontTexture.var_type = FLY_UBYTE;
+	fly_fontTexture.var_size = 1;
+	fly_fontTexture.format = FLY_RGBA;
 	io.Fonts->GetTexDataAsRGBA32((uchar**)&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
-	FLY_TexAttrib* min_filter = fly_fontTexture.AddParameter();
-	min_filter->Set(FLY_MIN_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	fly_fontTexture.SetParameter(min_filter);
 
-	FLY_TexAttrib* mag_filter = fly_fontTexture.AddParameter();
-	mag_filter->Set(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	fly_fontTexture.SetParameter(mag_filter);
 
-	fly_fontTexture.SetParameters();
-	fly_fontTexture.SendToGPU();
+	fly_fontTexture.ApplyParameters();
+	FLY_SendTextureToGPU(fly_fontTexture);
 
 	io.Fonts->TexID = (ImTextureID)(intptr_t)fly_fontTexture.id;
 
@@ -353,7 +360,7 @@ void ImGui_ImplFlyLib_Init()
 
     // Init Scale Based on DPI (have to tune it)
     uint16 dpi = FLYDISPLAY_GetDPIDensity();
-	uint16 w, h; FLYDISPLAY_GetSize(w, h);
+	uint16 w, h; FLYDISPLAY_GetMainDisplaySize(w, h);
 	uint16 bigger = (w > h) ? w : h;
 	float scale = (bigger / dpi)*.8;
 	//io.FontGlobalScale = scale;

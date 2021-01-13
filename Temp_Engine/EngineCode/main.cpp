@@ -15,7 +15,7 @@ enum main_states
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
+/*
 void LearnOpenGLTest()
 {
     // Shader Setup
@@ -135,7 +135,7 @@ void LearnOpenGLTest()
     triangle.verts = NULL;
     triangle.indices = NULL;
 }
-
+*/
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
 void ImGuiImplFlyLibTest()
@@ -171,7 +171,7 @@ int main(int argc, char**argv)
 
     // Helpers Initialization
     {
-        ret = FLYLIB_Init(/*flags*/);
+        FLYLIB_Init(/*flags*/);
     }
 
     // Engine Initialization

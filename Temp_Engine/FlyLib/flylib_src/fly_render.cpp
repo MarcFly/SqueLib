@@ -182,270 +182,129 @@ void FLYRENDER_Scissor(int x, int y, int w, int h)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ATTRIBUTE MANAGEMENT //////////////////////////////////////////////////////////////////////////////////
+// DATA MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int VarGetSize(int type_macro)
-{
-    if (type_macro == FLY_BYTE || type_macro == FLY_UBYTE /*add 1byte types*/)
-        return 1;
-    else if (type_macro == FLY_DOUBLE/*add 8 byte types*/)
-        return 8;
-    else if (type_macro == FLY_FLOAT || type_macro == FLY_UINT || type_macro == FLY_INT/* add 4 byte types*/)
-        return 4;
-    else if (type_macro == FLY_USHORT)
-        return 2;
-    return 0;
-}
-
-void FLY_VertAttrib::SetName(const char* str) { name = str; }
-void FLY_VertAttrib::SetVarType(int32 var) { var_type = var; var_size = VarGetSize(var_type); }
-void FLY_VertAttrib::SetNumComponents(uint16 num) { num_comp = num; }
-void FLY_VertAttrib::SetNormalize(bool norm) { normalize = norm; }
-void FLY_VertAttrib::SetOffset(uint32 offset_bytes) { offset = offset_bytes; }
-void FLY_VertAttrib::SetId(int32 id_) { id = id_; }
-uint16 FLY_VertAttrib::GetSize() const { return num_comp*var_size; }
-
-void FLY_VertAttrib::EnableAsAttribute(int32 prog_id)
+void FLY_GenerateMeshBuffer(FLY_Mesh* mesh)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    id = glGetAttribLocation(prog_id, name);
-    glEnableVertexAttribArray(id);
+    glGenBuffers(1, &mesh->vert_id);
+    glGenBuffers(1, &mesh->index_id);
+    glGenVertexArrays(1, &mesh->attribute_object);
 #endif
 }
 
-void FLY_VertAttrib::SetAttribute(uint16 vert_size) const
+void FLY_BindMeshBuffer(const FLY_Mesh& mesh)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glEnableVertexAttribArray(id);
-    glVertexAttribPointer(id, num_comp, var_type, normalize, vert_size, (void*)offset);
+    glBindVertexArray(mesh.attribute_object);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);
+    if(mesh.num_index > 0) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_id);
 #endif
 }
 
-void FLY_VertAttrib::SetLocation(int32 pos, uint16 vert_size)
+void FLY_SendMeshToGPU(FLY_Mesh& mesh)
 {
-    id = pos;
+    int buffer_size = mesh.GetVertSize() * mesh.num_index;
+    FLY_BindMeshBuffer(mesh);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glEnableVertexAttribArray(pos);
-    glVertexAttribPointer(pos, num_comp, var_type, normalize, vert_size, (void*)offset);        
+    glBufferData(GL_ARRAY_BUFFER, buffer_size, (const void*)mesh.verts, mesh.draw_mode);
+    if (mesh.num_index > 0)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+                    mesh.num_index * mesh.index_var_size, 
+                    (const void*)mesh.indices, 
+                    mesh.draw_mode);
 #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESH MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
+// VERTEX ATTRIBUTE MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Initialization
-void FLY_Mesh::SetDrawMode(int32 d_m) { draw_mode = d_m; }
-void FLY_Mesh::SetIndexVarType(int32 var) { index_var = var; index_var_size = VarGetSize(index_var); };
-FLY_VertAttrib* FLY_Mesh::AddAttribute(FLY_VertAttrib* atr)
-{
-    FLY_VertAttrib* ret = atr;
-    if (atr == NULL) ret = new FLY_VertAttrib();
-    attributes.push_back(ret);
-    return ret;
-}
-
-void FLY_Mesh::SetOffsetsInOrder()
-{
-    uint16 size = attributes.size();
-    uint32 offset = 0;
-    for (int i = 0; i < size; ++i)
-    {
-        attributes[i]->SetOffset(offset);
-        offset += attributes[i]->GetSize();
-    }
-}
-
-void FLY_Mesh::EnableAttributesForProgram(int32 prog_id)
-{
-    uint16 size = attributes.size();
-    for (int i = 0; i < size; ++i)
-        attributes[i]->EnableAsAttribute(prog_id);
-}
-
-void FLY_Mesh::Init()
-{
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glGenBuffers(1, &vert_id);
-    glGenBuffers(1, &index_id);
-    glGenVertexArrays(1, &attribute_object);
-#endif
-}
-
-// Getters
-uint16 FLY_Mesh::GetVertSize()
-{
-    uint16 size = 0;
-    int attrs = attributes.size();
-    for (int i = 0; i < attributes.size(); ++i)
-        size += attributes[i]->GetSize();
-
-    return size;
-}
-
-// Usage
-void FLY_Mesh::Bind()
+void FLY_EnableProgramAttribute(const FLY_Program& prog,  FLY_VertAttrib* attr)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindVertexArray(attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, vert_id);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
+    attr->id = glGetAttribLocation(prog.id, attr->name);
+    glEnableVertexAttribArray(attr->id);
 #endif
 }
 
-void FLY_Mesh::BindNoIndices()
+// For a location, set the ID to the location and SendToGPU
+void FLY_SendAttributeToGPU(const FLY_VertAttrib& attr)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindVertexArray(attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, vert_id);
+    glEnableVertexAttribArray(attr.id);
+    glVertexAttribPointer(attr.id, attr.num_comp, 
+                        attr.var_type, 
+                        attr.normalize, 
+                        attr.vert_size, 
+                        (void*)attr.offset);
 #endif
 }
 
-void FLY_Mesh::SetAttributes()
+void FLY_EnableBufferAttribute(int32 location, uint16 vert_size, FLY_VertAttrib* attr)
 {
-    uint16 size = attributes.size();
+    attr->id = location;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindVertexArray(attribute_object);
+    glEnableVertexAttribArray(attr->id);
+    glVertexAttribPointer(attr->id, 
+                        attr->num_comp, 
+                        attr->var_type, 
+                        attr->normalize, 
+                        vert_size, 
+                        (void*)attr->offset);
 #endif
-    Bind();
-    uint16 vert_size = GetVertSize();
-    for (int i = 0; i < size; ++i)
-        attributes[i]->SetAttribute(vert_size);
 }
 
-void FLY_Mesh::SetLocationsInOrder()
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FLY_SetTextureParameters(const FLY_Texture2D& tex, const FLY_TexAttrib& attr)
 {
-    uint16 size = attributes.size();
+    if (tex.id < 1 || attr.var_type < 0 || attr.id == UINT32_MAX || attr.data == NULL)
+        return;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindVertexArray(attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, vert_id);
-#endif
-    uint16 vert_size = GetVertSize();
-    for (int i = 0; i < size; ++i)
-        attributes[i]->SetLocation(i, vert_size);
-}
-
-
-
-void FLY_Mesh::SendToGPU()
-{
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glBindVertexArray(attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, vert_id);
-    int buffer_size = GetVertSize() * num_verts;
-    glBufferData(GL_ARRAY_BUFFER, buffer_size, (const void*)verts, draw_mode);
-    if (num_index > 0)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_index*index_var_size, (const void*)indices, draw_mode);
-    }
+    if (attr.var_type == FLY_FLOAT)
+        glTexParameterfv(FLY_TEXTURE_2D, attr.id, (const float*)attr.data);
+    else
+        glTexParameteriv(FLY_TEXTURE_2D, attr.id, (const int32*)attr.data);
 #endif
 }
 
-// CleanUp
-FLY_Mesh::~FLY_Mesh() { if(vert_id > 0) CleanUp(); }
-void FLY_Mesh::CleanUp()
-{
-    if (verts != NULL) { delete[] verts; verts = NULL; }
-    if (indices != NULL) { delete[] indices; indices = NULL; }
-    num_verts = 0;
-    num_index = 0;
-    FLYPRINT(LT_INFO, "Deleted Attributes from mesh...");
-    for (int i = 0; i < attributes.size(); ++i)
-        delete attributes[i];
-    attributes.clear();
-}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE MANAGEMENT ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void FLY_TexAttrib::SetID(int32 id_) { id = id_; }
-void FLY_TexAttrib::SetVarType(int32 var) { var_type = var; }
-void FLY_TexAttrib::SetData(void* data_) { data = data_; }
-void FLY_TexAttrib::Set(int32 id_, int32 var_, void* data_) { id = id_; var_type = var_, data = data_; }
-void FLY_TexAttrib::SetParameter(int32 tex_id)
-{
-    if (tex_id < 1 || var_type < 0 || id == UINT32_MAX || data == NULL)
-        return;
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    if (var_type == FLY_FLOAT)
-        glTexParameterfv(FLY_TEXTURE_2D, id, (const float*)data);
-    else
-        glTexParameteriv(FLY_TEXTURE_2D, id, (const int32*)data);
-#endif
-}
-void FLY_Texture2D::Init(int32 tex_format)
-{
-    format = tex_format;
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenTextures(1, &id);
-#endif
-}
-
-// THIS HAS TO BE REVISED
-// Probably generating Macros depending on API WILL BE WAAAY Better but more cumbersome
-// example, generate a fly_rendermacros.h and add there the macros separately, just include if necessary
-// INSTEAD of using enums and switches...
-FLY_TexAttrib* FLY_Texture2D::AddParameter(FLY_TexAttrib* tex_attrib)
-{
-    FLY_TexAttrib* ret = tex_attrib;
-    if (ret == NULL) ret = new FLY_TexAttrib();
-    attributes.push_back(ret);
-    return ret;
-}
-void FLY_Texture2D::SetParameters()
-{
-    Bind();
-    uint16 size = attributes.size();
-    for (int i = 0; i < size; ++i)
-        attributes[i]->SetParameter(id);
-}
-
-void FLY_Texture2D::Bind()
+void FLY_GenTextureData(FLY_Texture2D* tex)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindTexture(GL_TEXTURE_2D, id);
+    glGenTextures(1, &tex->id);
 #endif
 }
 
-void FLY_Texture2D::BindToUnit(int32 texture_unit)
+void FLY_BindTexture(const FLY_Texture2D& tex)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glActiveTexture(texture_unit);
-    glBindTexture(GL_TEXTURE_2D, id);
+    glBindTexture(GL_TEXTURE_2D, tex.id);
 #endif
 }
 
-void FLY_Texture2D::SendToGPU()
+void FLY_SetActiveTextureUnit(int32 unit)
+{
+#if defined(USE_OPENGL) | defined(USE_OPENGLES)
+    glActiveTexture(unit);
+#endif
+}
+
+void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32 mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    // DataType will be revised if needed, UBYTE seems quite standard...
-    glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, pixels);
-    //glGenerateMipmap(GL_TEXTURE_2D);
-    // TODO: Learn about Mipmaps - glGenerateMipmaps and handle them in texture
+    glBindTexture(GL_TEXTURE_2D, tex.id);
+    // TODO: read about texture border, uses...
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, tex.format, tex.w, tex.h, 0, tex.format, tex.var_type, tex.pixels);
 #endif
 }
 
-FLY_Texture2D::~FLY_Texture2D() { CleanUp(); }
-void FLY_Texture2D::CleanUp()
-{
-    if (id != 0)
-    {
-#if defined (USE_OPENGL) || defined (USE_OPENGLES)
-        glDeleteTextures(1, &id);
-#endif
-    }
-    id = 0;
-}
-
-void FLYRENDER_ActiveTexture(int32 texture_id)
-{
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glActiveTexture(texture_id);
-#endif
-}
 void FLYRENDER_BindExternalTexture(int tex_type, uint32 id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
@@ -459,6 +318,61 @@ void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id)
     if(GetGLVer() >= 330)glBindSampler(texture_locator, sampler_id);
 #endif
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADER MANAGEMENT /////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADER PROGRAM MANAGEMENT /////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FLYRENDER_CreateProgram(FLY_Program* prog)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    prog->id = glCreateProgram();
+#endif
+}
+
+void FLYRENDER_LinkProgram(const FLY_Program& prog)
+{
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    glLinkProgram(prog.id);
+#endif
+    FLYRENDER_CheckProgramLog(prog);
+}
+
+void FLYRENDER_UseProgram(const FLY_Program& prog)
+{
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    glUseProgram(prog.id);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices, int32 count)
+{
+    count = (count == 0) ? mesh.num_index : count;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindVertexArray(mesh.attribute_object);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_id);
+    glDrawElements(mesh.draw_config, count, mesh.index_var, (void*)(intptr_t)((int64)((int32)mesh.index_var_size) * offset_indices));
+#else
+#endif
+}
+
+void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32 count)
+{
+    count = (count == 0) ? mesh.num_verts : count;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);
+    glDrawArrays(mesh.draw_config, 0, count);
+#endif
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DEBUG... //////////////////////////////////////////////////////////////////////////////////////////////

@@ -55,7 +55,9 @@
 FL_API void FLYLIB_Init(/* flags */);																									
 FL_API void FLYLIB_Close();																									
 FL_API unsigned int FLYLIB_GetVersion(void);																							
-FL_API int FLYLIB_IsCompatibleDLL(void);																								
+FL_API int FLYLIB_IsCompatibleDLL(void);		
+
+FL_API int FLY_VarGetSize(int type_macro);
 																																		
 // Callback Setters - Flow Management //////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API VoidFun FLYINPUT_AddOnResumeCallback(VoidFun fn);																				
@@ -156,11 +158,11 @@ typedef struct FLY_Window
 } FLY_Window;																															
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API bool FLYDISPLAY_Init(uint16 flags, const char* title = "", uint16 w = 0, uint16 h = 0);											
-FL_API bool FLYDISPLAY_Close();																											
+FL_API void FLYDISPLAY_Init(uint16 flags, const char* title = "", uint16 w = 0, uint16 h = 0);											
+FL_API void FLYDISPLAY_Close();																											
 FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);																						
 FL_API int32 FLYDISPLAY_GetDPIDensity(uint16 window = 0);																				
-FL_API void FLYDISPLAY_GetSize(uint16& w, uint16& h);																					
+FL_API void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h);
 																																		
 // Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h);																		
@@ -168,13 +170,12 @@ FL_API void FLYDISPLAY_GetWindowSize(uint16 window, uint16* w, uint16* h);
 FL_API void FLYDISPLAY_GetAmountWindows(uint16* windows);																				
 FL_API void FLYDISPLAY_SetWindowClose(uint16 window);																					
 FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);																				
-FL_API void FLYDISPLAY_CloseWindow(uint16 window);																						
-FL_API void FLYDISPLAY_DestroyWindow(uint16 window);																					
+FL_API uint16 FLYDISPLAY_CloseWindow(uint16 window);																																											
 FL_API bool FLYDISPLAY_OpenWindow(FLY_Window* window = NULL, uint16 monitor = 0);														
 FL_API void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y);																	
 																																		
-// Controlling Contexts ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API void FLYDISPLAY_Clean();																											
+// Controlling Contexts ////////////////////////////////////////////////////////////////////////////////////////////////////////////////																										
+FL_API void FLYDISPLAY_SwapBuffer(uint16 window);
 FL_API void FLYDISPLAY_SwapAllBuffers();																								
 FL_API void FLYDISPLAY_MakeContextMain(uint16 window);																					
 																																		
@@ -319,23 +320,235 @@ FL_API bool FLYINPUT_Init(uint16 window);
 FL_API bool FLYINPUT_Close();																											
 FL_API void FLYINPUT_Process(uint16 window);																							
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);																				
-																																		
-// Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API FLYINPUT_Actions FLYINPUT_GetMouseButton(int button);																			
-FL_API void FLYINPUT_GetMousePos(float* x, float* y);																					
-FL_API void FLYINPUT_GetMouseWheel(float* v = NULL, float* h = NULL);																	
-FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();																							
-FL_API int FLYINPUT_GetCharFromBuffer();																								
-																																		
+															
+// Usage / Utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);
+FL_API FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p);
+FL_API FLYINPUT_Actions FLYINPUT_EvalGesture();
+
 // Setters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLYINPUT_SetMousePos(float x, float y);																						
-																																		
+
+// Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API FLYINPUT_Actions FLYINPUT_GetMouseButton(int button);
+FL_API void FLYINPUT_GetMousePos(float* x, float* y);
+FL_API void FLYINPUT_GetMouseWheel(float* v = NULL, float* h = NULL);
+FL_API int FLYINPUT_GetCharFromBuffer();
+
 // Callback Setters ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API KeyCallback FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn);																		
 FL_API MouseFloatCallback FLYINPUT_SetMousePosCallback(MouseFloatCallback position);													
 FL_API MouseFloatCallback FLYINPUT_SetMouseScrollCallback(MouseFloatCallback scroll);													
 FL_API KeyCallback FLYINPUT_SetMouseButtonCallbacks(int button, KeyCallback key_callback);												
-																																		
+	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESHES //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+typedef struct FLY_VertAttrib
+{
+	// Constructors / Destructors
+	FL_API FLY_VertAttrib();
+	FL_API FLY_VertAttrib(const char* name_, int32 var_type, bool normalize, uint16 num_components);
+
+	// Variables
+	int32 id;
+	int32 var_type;
+	uint16 num_comp;
+	bool normalize;
+	uint16 var_size;
+	uint16 vert_size;
+	uint16 offset;
+	const char* name;
+
+	// Usage functions	
+	FL_API uint16 GetSize() const;
+
+} FLY_VertAttrib;
+
+#include <vector> 																														
+// Maybe Swap to a custom array handler for specific sizes																				
+// I want to hav e afast search on less than 100 objects, probably a full array is good enough											
+struct FLY_Program;
+typedef struct FLY_Mesh
+{
+	// Constructors / Destructors
+	FL_API FLY_Mesh();
+	FL_API FLY_Mesh(int32 draw_config, int32 draw_mode, int32 index_var);
+
+	FL_API ~FLY_Mesh();
+
+	// Variables
+	int32 draw_config;
+	int32 draw_mode = FLY_STATIC_DRAW;
+	uint32 attribute_object = 0;
+
+	// Vertex Data																														
+	uint32 vert_id = 0;
+	uint32 num_verts = 0;
+	void* verts = NULL;
+	// Indices for the buffer																											
+	uint32 index_id = 0;
+	uint16 num_index = 0;
+	uint32 index_var = FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
+	uint16 index_var_size = 0;
+	void* indices = nullptr;
+
+	// Usage Functions
+		// Location and Vertex attributes																									
+	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attribute = NULL);
+	FL_API void EnableAttributesForProgram(const FLY_Program& program);
+	FL_API void SetLocationsInOrder();
+	FL_API void SetAttributeLocation(const char* name, const int32 location);
+
+	// Getters																															
+	FL_API uint16 GetVertSize() const;
+	FL_API uint16 GetAttribSize(const char* name) const;
+
+	// CleanUp
+	FL_API void CleanUp();
+
+
+
+private:
+	// Private Variables
+	std::vector<FLY_VertAttrib*> attributes;
+
+	// Private Usage Functions
+	void SetOffsetsInOrder();
+
+} FLY_Mesh;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																		
+typedef struct FLY_TexAttrib
+{
+	// Constructors / Destructor
+	FL_API FLY_TexAttrib();
+	FL_API FLY_TexAttrib(int32 parameter_id, int32 var_type, void* data);
+	// Variables
+	int32 id;
+	int32 var_type;
+	void* data;
+
+	// Usage Functions																															
+
+} FLY_TexAttrib;
+
+typedef struct FLY_Texture2D
+{
+	// Constructors / Destructor
+	FL_API FLY_Texture2D();
+	FL_API FLY_Texture2D(int32 format, int32 var_type);
+	FL_API ~FLY_Texture2D();
+
+	// Variables
+	uint32 id;
+	int32 format;
+	int32 var_type;
+	uint16 var_size;
+	int32 w, h;
+	int32 channel_num;
+	void* pixels;
+	std::vector<FLY_TexAttrib*> attributes;
+
+	// Usage Functions																																																			
+	FL_API void SetParameter(FLY_TexAttrib* tex_attrib = NULL);
+	FL_API void ApplyParameters();
+
+	FL_API void CleanUp();
+
+} FLY_Texture2D;
+
+
+// FLY_Texture3D??...																													
+typedef struct FLY_Texture3D
+{
+	uint32 id = 0;
+	int32 format = 0;
+	int w, h;
+	uchar** pixels = nullptr;
+
+	// Cp[y from FLY_Texture2D																												
+} FLY_Texture3D;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+typedef struct FLY_Shader
+{
+// Constructor / Destructor
+	FL_API FLY_Shader();
+	FL_API FLY_Shader(int32 type, uint16 strs, const char** data);
+
+	FL_API ~FLY_Shader();
+// Variables
+	int32 id = 0;
+	int32 type;
+	uint16 lines = 0;
+	const char** source;
+
+// Usage Functions
+	FL_API void Compile();
+} FLY_Shader;
+
+typedef struct FLY_Uniform
+{
+// Constructors / Destructors
+	FL_API FLY_Uniform();
+	FL_API FLY_Uniform(const char*);
+	FL_API ~FLY_Uniform();
+
+// Variables
+	int32 id = INT32_MAX;
+	const char* name = "";
+} FLY_Uniform;
+
+// Usage Functions
+FL_API void SetBool(const FLY_Program& prog, const char* name, bool value);
+FL_API void SetInt(const FLY_Program& prog, const char* name, int value);
+FL_API void SetInt2(const FLY_Program& prog, const char* name, int2 value);
+FL_API void SetInt3(const FLY_Program& prog, const char* name, int3 value);
+FL_API void SetInt4(const FLY_Program& prog, const char* name, int4 value);
+FL_API void SetFloat(const FLY_Program& prog, const char* name, float value);
+FL_API void SetFloat2(const FLY_Program& prog, const char* name, float2 value);
+FL_API void SetFloat3(const FLY_Program& prog, const char* name, float3 value);
+FL_API void SetFloat4(const FLY_Program& prog, const char* name, float4 value);
+// ... add a matrix/array passer...																									
+FL_API void SetMatrix4(const FLY_Program& prog, const char* name, const float* matrix, uint16 number_of_matrices = 1, bool transpose = false);
+
+#include <vector>																														
+typedef struct FLY_Program
+{
+
+// Constructors / Destructors
+	FL_API FLY_Program();
+	
+	FL_API ~FLY_Program();
+// Variables
+	int32 id = 0;
+
+// Usage Functions																		
+	FL_API FLY_Shader* AttachShader(FLY_Shader* fly_shader);
+	FL_API void FreeShadersFromGPU(); // Not required, but saves space after linking
+
+	FL_API void DeclareUniform(const char*);
+	FL_API int32 GetUniformLocation(const char* name) const;
+
+	FL_API void CleanUp();
+	
+private:
+	FLY_Shader* vertex_s;
+	FLY_Shader* fragment_s;
+	// Compute, Tesselation, Geometry,...
+	std::vector<FLY_Uniform*> uniforms;
+
+} FLY_Program;
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -376,233 +589,46 @@ FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL
 FL_API const char* FLYRENDER_GetGLSLVer();																								
 																																		
 // Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API void FLYRENDER_Scissor(int x, int y, int w, int h);																				
-																																		
-// Debugging																															
+FL_API void FLYRENDER_Scissor(int x, int y, int w, int h);		
+// Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLY_GenerateMeshBuffer(FLY_Mesh* mesh);
+FL_API void FLY_BindMeshBuffer(const FLY_Mesh& mesh);
+FL_API void FLY_SendMeshToGPU(FLY_Mesh& mesh);
+// Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLY_EnableProgramAttribute(const FLY_Program& prog, FLY_VertAttrib* attr);
+FL_API void FLY_SendAttributeToGPU(const FLY_VertAttrib& attr);
+void FLY_EnableBufferAttribute(int32 location, uint16 vert_size, FLY_VertAttrib* attr);
+
+// Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLY_SetTextureParameters(const FLY_Texture2D& tex, const FLY_TexAttrib& attr);
+// Overload for Texture3D or at some point try to go back to C?
+
+// Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLY_GenTextureData(FLY_Texture2D* tex);
+FL_API void FLY_BindTexture(const FLY_Texture2D& tex);
+FL_API void FLY_SetActiveTextureUnit(int32 unit);
+FL_API void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32 mipmap_level = 0);
+
+FL_API void FLYRENDER_ActiveTexture(int32 texture_id);
+FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32 id);
+FL_API void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id);
+
+// Shader Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Shader Program Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLYRENDER_CreateProgram(FLY_Program* prog);
+FL_API void FLYRENDER_LinkProgram(const FLY_Program& prog);
+FL_API void FLYRENDER_UseProgram(const FLY_Program& prog);
+
+// RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices = 0, int32 count = 0);
+FL_API void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32 count = 0);
+
+// Debugging
+FL_API void FLYSHADER_CheckCompileLog(const FLY_Shader& fly_shader);
+FL_API void FLYRENDER_CheckProgramLog(const FLY_Program& fly_program);
 FL_API void CheckForRenderErrors(const char* file, int line);																			
 #define FLY_CHECK_RENDER_ERRORS() FL_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
 																																		
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESHES //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct FLY_VertAttrib																											
-{																																		
-	int32 id;																															
-	const char* name;																													
-	int32 var_type;																														
-	bool normalize;																														
-	uint16 var_size;																													
-	uint16 num_comp;																													
-	uint32 offset;																														
-	uint16 location;																													
-	// Initialization																													
-	FL_API void SetName(const char* str);																								
-	FL_API void SetVarType(int32 var);																									
-	FL_API void SetNumComponents(uint16 num);																							
-	FL_API void SetNormalize(bool norm);																								
-	FL_API void SetOffset(uint32 offset_bytes);																							
-	FL_API void SetId(int32 id_);																										
-	FL_API void EnableAsAttribute(int32 prog_id);																						
-	// Getters																															
-	FL_API uint16 GetSize() const;																										
-																																		
-	// Usage																															
-	FL_API void SetAttribute(uint16 vert_size) const;																					
-	FL_API void SetLocation(int32 pos, uint16 vert_size);																				
-} FLY_VertAttrib;																														
-																																		
-#include <vector> 																														
-// Maybe Swap to a custom array handler for specific sizes																				
-// I want to hav e afast search on less than 100 objects, probably a full array is good enough											
-typedef struct FLY_Mesh																													
-{																																		
-	int32 draw_mode = FLY_STATIC_DRAW;																									
-	uint32 attribute_object = 0; // VAO in OpenGL, index to holder of attributes														
-																																		
-	// Vertex Data																														
-	uint32 vert_id = 0;																													
-	uint16 num_verts = 0;																												
-	void* verts = NULL;																													
-	std::vector<FLY_VertAttrib*> attributes;																							
-																																		
-	// Indices for the buffer																											
-	uint32 index_id		= 0;																											
-	uint16 num_index	= 0;																											
-	uint32 index_var	= FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
-	uint16 index_var_size = 0;																											
-	void* indices		= nullptr;																										
-																																		
-	// add other parts of the buffer																									
-																																		
-	// Initialization																													
-	FL_API void SetDrawMode(int32 draw_mode);																							
-	FL_API void SetIndexVarType(int32 var);																								
-	FL_API void Init();																													
-																																		
-	// Location and Vertex attributes																									
-	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attribute = NULL);																
-	FL_API void SetOffsetsInOrder();																									
-	FL_API void EnableAttributesForProgram(int32 prog_id);																				
-																																		
-																																		
-	// Getters																															
-	FL_API uint16 GetVertSize();																										
-	FL_API uint16 GetAttribSize(const char* name) const;																				
-																																		
-	// Usage																															
-	FL_API void Bind();																													
-	FL_API void BindNoIndices();																										
-	FL_API void SetAttributes();																										
-	FL_API void SetLocationsInOrder();																									
-	FL_API void SendToGPU();																											
-																																		
-	// CleanUp																															
-	FL_API ~FLY_Mesh();																													
-	FL_API void CleanUp();																												
-} FLY_Mesh;																																
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																		
-typedef struct FLY_TexAttrib																											
-{																																		
-	int32 id = 0;																														
-	int32 var_type = 0;																													
-	void* data = NULL;																													
-																																		
-	// Initialization																													
-	FL_API void Set(int32 id_, int32 var_, void* data_);																				
-	FL_API void SetID(int32 id_);																										
-	FL_API void SetVarType(int32 var);																									
-	FL_API void SetData(void* data_);																									
-																																		
-	// Usage																															
-	FL_API void SetParameter(int32 tex_id);																								
-																																		
-} FLY_TexAttrib;																														
-typedef struct FLY_Texture2D																											
-{																																		
-	uint32 id		= UINT32_MAX;																										
-	int32 format	= 0;																												
-	int32 w = 0, h = 0;																													
-	int32 channel_num = 0;																												
-	void* pixels	= NULL;																												
-	std::vector<FLY_TexAttrib*> attributes;																								
-																																		
-	// Initialization																													
-	FL_API void Init(int32 tex_format);																									
-	FL_API FLY_TexAttrib* AddParameter(FLY_TexAttrib* tex_attrib = NULL);																
-	FL_API void SetParameters();																										
-																																		
-	// Usage																															
-	FL_API void Bind();																													
-	FL_API void BindToUnit(int32 texture_unit);																							
-	FL_API void SendToGPU();																											
-																																		
-	// CleanUp																															
-	FL_API ~FLY_Texture2D();																											
-	FL_API void CleanUp();																												
-} FLY_Texture2D;																														
-																																		
-																																		
-// FLY_Texture3D??...																													
-typedef struct FLY_Texture3D																											
-{																																		
-	uint32 id = 0;																														
-	int32 format = 0;																													
-	int w, h;																															
-	uchar** pixels = nullptr;																											
-																																		
-// Cp[y from FLY_Texture2D																												
-} FLY_Texture3D;
-
-// Usage Functions
-FL_API void FLYRENDER_ActiveTexture(int32 texture_id);																					
-FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32 id);																		
-FL_API void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id);																
-																																		
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-																																		
-// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct FLY_Shader																												
-{																																		
-	int32 id = 0;																														
-	int32 type;																															
-	uint16 lines = 0;																													
-	const char** source;																												
-																																		
-	// Shader Usage Functions																											
-	FL_API void Compile();																												
-																																		
-} FLY_Shader;																															
-																																		
-FL_API FLY_Shader* FLYSHADER_Create(int32 type, uint16 strs, const char** file, bool raw_string = false);								
-FL_API void FLYSHADER_CheckCompileLog(FLY_Shader* fly_shader);																			
-																																		
-typedef struct FLY_Uniform																												
-{																																		
-	FLY_Uniform() {};																													
-	FLY_Uniform(const char*);																											
-	int32 id = INT32_MAX;																												
-	const char* name = "";																												
-} FLY_Uniform;																															
-																																		
-#include <vector>																														
-typedef struct FLY_Program																												
-{																																		
-	int32 id = 0;																														
-	FLY_Shader* vertex_s = nullptr;																										
-	FLY_Shader* fragment_s = nullptr;																									
-	std::vector<FLY_Uniform*> uniforms;																									
-	std::vector<FLY_VertAttrib*> attributes;																							
-																																		
-	// Call before doing anything prolly																								
-	FL_API void Init();																													
-																																		
-	// Prepare the Program																												
-	// FL_API FLY_Shader* AddShadder(int32 type,... initializers);																		
-	FL_API void AttachShader(FLY_Shader** fly_shader); // Obtains ownership of the shader 												
-	FL_API void CompileShaders();																										
-	FL_API void Link();																													
-																																		
-	// Drawing																															
-	FL_API void Use();																													
-	FL_API void DrawIndices(FLY_Mesh* mesh, int32 offset_bytes = 0, int32 count = 0);													
-	FL_API void DrawRawVertices(FLY_Mesh* mesh, int32 count = 0);																		
-																																		
-	// Attributes																														
-	FL_API void GiveAttributesFromMesh(FLY_Mesh* fly_mesh);																				
-	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attr);																			
-	FL_API uint16 GetAttribByteSize() const;																							
-	FL_API void SetAttribLocations();																									
-	FL_API void EnableOwnAttributes();																									
-																																		
-	// Passing Uniforms																													
-	FL_API void DeclareUniform(const char*);																							
-	FL_API int32 GetUniformLocation(const char* name) const;																			
-																																		
-	FL_API void SetBool(const char* name, bool value) const;																			
-	FL_API void SetInt(const char* name, int value) const;																				
-	FL_API void SetFloat(const char* name, float value) const;																			
-	FL_API void SetFloat2(const char* name, float2 value) const;																		
-	FL_API void SetFloat3(const char* name, float3 value) const;																		
-	FL_API void SetFloat4(const char* name, float4 value) const;																		
-	// ... add a matrix/array passer...																									
-	FL_API void SetMatrix4(const char* name, const float* matrix, uint16 number = 1, bool transpose = false) const;						
-																																		
-	// CleanUp																															
-	FL_API void CleanUp();																												
-	FL_API ~FLY_Program();																												
-																																		
-																																		
-																																		
-} FLY_Program;																															
-																																		
-																																		
-// I will send the hwole pointer because i don't know how other libs will try to access data											
-// OpenGL marks by ids and it would be better to just sent the id, but other may differ and require more								
-FL_API FLY_Program* FLYSHADER_CreateProgram(uint16 layout_flags);																		
-FL_API void FLYRENDER_CheckProgramLog(FLY_Program* fly_program);																		
-																																		
+																																	
 #endif // _FLY_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

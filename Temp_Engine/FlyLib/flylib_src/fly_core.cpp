@@ -1,12 +1,24 @@
 #include "fly_lib.h"
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 VoidFun on_resume_callback = NULL;
 VoidFun on_go_background_callback = NULL;
+
+int FLY_VarGetSize(int type_macro)
+{
+    if (type_macro == FLY_BYTE || type_macro == FLY_UBYTE /*add 1byte types*/)
+        return 1;
+    else if (type_macro == FLY_DOUBLE/*add 8 byte types*/)
+        return 8;
+    else if (type_macro == FLY_FLOAT || type_macro == FLY_UINT || type_macro == FLY_INT/* add 4 byte types*/)
+        return 4;
+    else if (type_macro == FLY_USHORT)
+        return 2;
+    return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +30,7 @@ VoidFun on_go_background_callback = NULL;
 // android you acquire a native_app as if it were the window to act upon.
 #include <android_native_app_glue.h>
 
-int OGLESStarted = 0;
+int graphics_backend_started = 0;
 struct android_app* my_app;
 
 void HandleAndroidCMD(struct android_app* app, int32_t cmd)
@@ -28,7 +40,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
     case APP_CMD_INIT_WINDOW:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_INIT_WINDOW");
         my_app = app;
-        if (!OGLESStarted) OGLESStarted = 1;
+        if (!graphics_backend_started) graphics_backend_started = 1;
         else
         {
             FLYLIB_Init();
