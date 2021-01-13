@@ -585,7 +585,7 @@ FL_API bool FLYRENDER_Init();
 FL_API void FLYRENDER_Close();																											
 																																		
 FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);																		
-FL_API void FLYRENDER_Clear(int clear_flags = NULL, ColorRGBA* color_rgba = NULL);														
+FL_API void FLYRENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();																								
 																																		
 // Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -593,7 +593,7 @@ FL_API void FLYRENDER_Scissor(int x, int y, int w, int h);
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLY_GenerateMeshBuffer(FLY_Mesh* mesh);
 FL_API void FLY_BindMeshBuffer(const FLY_Mesh& mesh);
-FL_API void FLY_SendMeshToGPU(FLY_Mesh& mesh);
+FL_API void FLY_SendMeshToGPU(const FLY_Mesh& mesh);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLY_EnableProgramAttribute(const FLY_Program& prog, FLY_VertAttrib* attr);
 FL_API void FLY_SendAttributeToGPU(const FLY_VertAttrib& attr);
@@ -621,7 +621,7 @@ FL_API void FLYRENDER_LinkProgram(const FLY_Program& prog);
 FL_API void FLYRENDER_UseProgram(const FLY_Program& prog);
 
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices = 0, int32 count = 0);
+FL_API void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices = 0, int32 count = -1);
 FL_API void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32 count = 0);
 
 // Debugging

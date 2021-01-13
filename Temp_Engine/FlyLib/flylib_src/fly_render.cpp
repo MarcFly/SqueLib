@@ -143,13 +143,15 @@ void FLYRENDER_Close()
 
 }
 
-void FLYRENDER_Clear(int clear_flags, ColorRGBA* color)
+void FLYRENDER_Clear(const ColorRGBA& color, int clear_flags)
 {
-    if(color != NULL) glClearColor(color->r, color->g, color->b, color->a);
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
 }
 
-#if defined(USE_OPENGL) ||defined(USE_OPENGLES)
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
 int32 GetGLVer()
 {
     return GLVersion.major * 100 + GLVersion.minor * 10;
@@ -203,9 +205,9 @@ void FLY_BindMeshBuffer(const FLY_Mesh& mesh)
 #endif
 }
 
-void FLY_SendMeshToGPU(FLY_Mesh& mesh)
+void FLY_SendMeshToGPU(const FLY_Mesh& mesh)
 {
-    int buffer_size = mesh.GetVertSize() * mesh.num_index;
+    int buffer_size = mesh.GetVertSize() * mesh.num_verts;
     FLY_BindMeshBuffer(mesh);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBufferData(GL_ARRAY_BUFFER, buffer_size, (const void*)mesh.verts, mesh.draw_mode);
@@ -355,11 +357,11 @@ void FLYRENDER_UseProgram(const FLY_Program& prog)
 
 void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices, int32 count)
 {
-    count = (count == 0) ? mesh.num_index : count;
+    count = (count < 0) ? mesh.num_index : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(mesh.attribute_object);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_id);
-    glDrawElements(mesh.draw_config, count, mesh.index_var, (void*)(intptr_t)((int64)((int32)mesh.index_var_size) * offset_indices));
+    glDrawElements(mesh.draw_config, count, mesh.index_var, (void*)(mesh.index_var_size * offset_indices));
 #else
 #endif
 }

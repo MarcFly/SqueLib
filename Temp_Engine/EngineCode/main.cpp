@@ -149,12 +149,14 @@ void ImGuiImplFlyLibTest()
     bool show_demo_window = true;
     while(!FLYDISPLAY_ShouldWindowClose(0))
     {
-        FLYRENDER_Clear(NULL, &col);
+        
         ImGui_ImplFlyLib_NewFrame();
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow(&show_demo_window);
+        if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
         ImGui::Render();
+        
         FLYDISPLAY_SwapAllBuffers();
+        FLYRENDER_Clear(col);
         FLYINPUT_Process(0);
     }
 
