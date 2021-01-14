@@ -91,18 +91,23 @@ void FLY_RenderState::BackUp()
     FLY_CHECK_RENDER_ERRORS();
 }
 
-void FLYRENDER_ChangeViewPortSize(int width, int height)
+void FLYRENDER_ChangeViewPortSize(int x, int y, int width, int height)
 {
 #if defined(USE_OPENGL) || defined (USE_OPENGLES)
-    glViewport(0, 0, width, height);
+    glViewport(x, y, width, height);
 #endif
 }
 
 #ifdef USE_GLFW
 #   include <GLFW/glfw3.h>
+extern std::vector<GLFWwindow*> glfw_windows;
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    FLYRENDER_ChangeViewPortSize(width, height);
+    int x=0, y=0;
+    for(int i = 0; i < glfw_windows.size();++i)
+        if(glfw_windows[i] = window) FLYDISPLAY_GetWindowPos(i,x,y);
+    FLYRENDER_ChangeViewPortSize(x,y,width, height);
+    FLYPRINT(LT_INFO, "Test %d,%d",width,height);
 }
 
 #endif
@@ -135,9 +140,9 @@ bool FLYRENDER_Init()
 #endif
     // Generate Viewport with window size
     uint16 w, h;
-    FLYDISPLAY_MakeContextMain(0);
+    /*FLYDISPLAY_MakeContextMain(0);
     FLYDISPLAY_GetWindowSize(0, &w, &h);
-    FLYRENDER_ChangeViewPortSize(w, h);
+    FLYRENDER_ChangeViewPortSize(w, h);*/
     FLYLOG(FLY_LogType::LT_INFO, "Main Viewport init...");
     return ret;
 }
@@ -162,13 +167,15 @@ int32 GetGLVer()
 }
 #endif
 
+// should it?
+#include <stdio.h>
 const char* FLYRENDER_GetGLSLVer()
 {
     const char* ret = "";
 #if defined(USE_OPENGL) ||defined(USE_OPENGLES)
     char* str = NULL;
     int ver = GLVersion.major * 100 + GLVersion.minor * 10;
-    int16 size = 13;
+    int16 size = 16;
     if (ver >= 320)
     {        
         const char* gles = "\n";

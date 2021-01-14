@@ -418,13 +418,19 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
     window->width = (window->width != 0) ? window->width : w;
     window->height = (window->height != 0) ? window->height : h;
-
+    FLYPRINT(LT_INFO, "Test %d,%d",w,h);
+#ifndef __linux__
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
-    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);*/
-
+#else
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#endif
     GLFWwindow* glfw_window = glfwCreateWindow(w, h, window->title, NULL, NULL);
+    glfwGetFramebufferSize(glfw_window, &w, &h);
+    FLYPRINT(LT_INFO, "Test %d,%d",w,h);
     glfwGetWindowSize(glfw_window, &w, &h);
+    FLYPRINT(LT_INFO, "Test %d,%d",w,h);
     window->width = w;
     window->height = h;
     if (!glfw_window) return false;
@@ -479,7 +485,9 @@ void FLYDISPLAY_SwapAllBuffers()
 #elif defined(USE_GLFW)
         glfwSwapBuffers(glfw_windows[i]);
 #endif
-        FLYRENDER_ChangeViewPortSize(fly_windows[i]->width, fly_windows[i]->height);
+        int x=0,y=0;
+        FLYDISPLAY_GetWindowPos(i, x, y);
+        FLYRENDER_ChangeViewPortSize(x,y,fly_windows[i]->width, fly_windows[i]->height);
     }
 }
 

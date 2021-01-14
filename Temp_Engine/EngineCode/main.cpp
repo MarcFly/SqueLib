@@ -208,7 +208,7 @@ int main(int argc, char**argv)
     FLYPRINT(LT_INFO, "Testing Crash...");
     ImGuiImplFlyLibTest();
     // For Testing timer and android keyboard
-    
+    FLYPRINT(LT_INFO, "Testing Crash...");
     FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {

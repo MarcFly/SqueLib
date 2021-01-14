@@ -68,7 +68,9 @@ void ImGui_ImplFlyLib_VariableRenderState(ImDrawData* draw_data, int32  fb_width
 {
 	fly_renderState.viewport.z = fb_width;
 	fly_renderState.viewport.w = fb_height;
-
+	int32 x,y;
+	FLYDISPLAY_GetWindowPos(0,x,y);
+	draw_data->DisplayPos = ImVec2(x,y);
 	float L = draw_data->DisplayPos.x;
 	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
 	float T = draw_data->DisplayPos.y;

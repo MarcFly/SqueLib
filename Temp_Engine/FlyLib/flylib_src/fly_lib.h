@@ -588,7 +588,7 @@ typedef struct FLY_RenderState
 FL_API bool FLYRENDER_Init();																											
 FL_API void FLYRENDER_Close();																											
 																																		
-FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);																		
+FL_API void FLYRENDER_ChangeViewPortSize(int x, int y, int width, int height);																		
 FL_API void FLYRENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();																								
 																																		
