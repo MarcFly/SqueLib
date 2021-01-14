@@ -39,7 +39,11 @@
 #   define USE_EGL																														
 #	define USE_OPENGLES																													
 #elif defined _WIN32 || defined __linux__																								
-#   define USE_GLFW																														
+#   define USE_GLFW	
+#	if defined(_WIN32)
+#       define GLFW_EXPOSE_NATIVE_WIN32
+#	else
+#endif
 #	define USE_OPENGL																													
 #endif																																	
 																																		
@@ -152,7 +156,7 @@ enum FLY_WindowFlags ///////////////////////////////////////////////////////////
 typedef struct FLY_Window																												
 {																																		
 	const char* title = "";																												
-	uint16 width=0, height=0;																											
+	int32 width=0, height=0;																											
 	uint16 flags;																														
 	int mouse_in = -1;																													
 } FLY_Window;																															
@@ -163,10 +167,12 @@ FL_API void FLYDISPLAY_Close();
 FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);																						
 FL_API int32 FLYDISPLAY_GetDPIDensity(uint16 window = 0);																				
 FL_API void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h);
+
 																																		
 // Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FL_API void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window);
 FL_API void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h);																		
-FL_API void FLYDISPLAY_GetWindowSize(uint16 window, uint16* w, uint16* h);																
+FL_API void FLYDISPLAY_GetWindowSize(uint16 window, int32* w, int32* h);																
 FL_API void FLYDISPLAY_GetAmountWindows(uint16* windows);																				
 FL_API void FLYDISPLAY_SetWindowClose(uint16 window);																					
 FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);																				
@@ -588,7 +594,8 @@ typedef struct FLY_RenderState
 FL_API bool FLYRENDER_Init();																											
 FL_API void FLYRENDER_Close();																											
 																																		
-FL_API void FLYRENDER_ChangeViewPortSize(int x, int y, int width, int height);																		
+FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);		
+FL_API void FLYRENDER_GetFramebufferSize(uint16 window, int32* width, int32* height);
 FL_API void FLYRENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();																								
 																																		

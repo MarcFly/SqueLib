@@ -298,6 +298,20 @@ void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONTROL SPECIFIC WINDOWS //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include <GLFW/glfw3native.h>
+
+void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window)
+{
+#if defined(USE_GLFW)
+#   if defined(_WIN32)
+    return (void*)glfwGetWin32Window(glfw_windows[window]);
+#   endif
+#else
+#endif
+
+    return nullptr;
+}
+
 void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h)
 {
     if(window >= fly_windows.size()) return;
@@ -315,7 +329,7 @@ void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h)
 }
 
 // Unsure if this returns content rect or actual window size on GLFW, because it resizes to content rect I think
-void FLYDISPLAY_GetWindowSize(uint16 window, uint16* x, uint16* y)
+void FLYDISPLAY_GetWindowSize(uint16 window, int32* x, int32* y)
 {
     uint16 size = fly_windows.size();
     if (size > window && x != NULL && y != NULL)
@@ -377,11 +391,11 @@ void FLYDISPLAY_NextWindowOptions(uint16 flags)
 #if defined(USE_EGL)
     // Here use the flags to save the array of options!!
 #elif defined(USE_GLFW)
-    (flags & FLYWINDOW_NOT_RESIZABLE) ? glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE) : glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    /*(flags & FLYWINDOW_NOT_RESIZABLE) ? glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE) : glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     (flags & FLYWINDOW_NOT_DECORATED) ? glfwWindowHint(GLFW_DECORATED, GLFW_FALSE) : glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     (flags & FLYWINDOW_ALWAYS_TOP) ? glfwWindowHint(GLFW_FLOATING, GLFW_TRUE) : glfwWindowHint(GLFW_FLOATING, GLFW_FALSE);
     (flags & FLYWINDOW_MAXIMIZED) ? glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE) : glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
-
+    */
 
     // Private Options
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
@@ -416,17 +430,16 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
 
 #elif defined(USE_GLFW)
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
-    window->width = (window->width != 0) ? window->width : w;
-    window->height = (window->height != 0) ? window->height : h;
+    window->width = (window->width != 0) ? window->width*.7 : w;
+    window->height = (window->height != 0) ? window->height*.7 : h;
     FLYPRINT(LT_INFO, "Test %d,%d",w,h);
-#ifndef __linux__
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
-#else
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#endif
-    GLFWwindow* glfw_window = glfwCreateWindow(w, h, window->title, NULL, NULL);
+
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* glfw_window = glfwCreateWindow(1200, 700, window->title, NULL, NULL);
     glfwGetFramebufferSize(glfw_window, &w, &h);
     FLYPRINT(LT_INFO, "Test %d,%d",w,h);
     glfwGetWindowSize(glfw_window, &w, &h);
@@ -485,9 +498,6 @@ void FLYDISPLAY_SwapAllBuffers()
 #elif defined(USE_GLFW)
         glfwSwapBuffers(glfw_windows[i]);
 #endif
-        int x=0,y=0;
-        FLYDISPLAY_GetWindowPos(i, x, y);
-        FLYRENDER_ChangeViewPortSize(x,y,fly_windows[i]->width, fly_windows[i]->height);
     }
 }
 

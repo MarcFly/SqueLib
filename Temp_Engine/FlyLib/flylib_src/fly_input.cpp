@@ -346,7 +346,7 @@ FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p)
     // Evaluate what the pointer has done during the time it was tracked
     int16 delta_x = p.gesture.end_x - p.gesture.start_x;
     int16 delta_y = p.gesture.end_y - p.gesture.start_y;
-    uint16 screen_w, screen_h;
+    int32 screen_w, screen_h;
     FLYDISPLAY_GetWindowSize(0, &screen_w, &screen_h);
 
     uint16 abs_delta_x = delta_x;

@@ -68,9 +68,8 @@ void ImGui_ImplFlyLib_VariableRenderState(ImDrawData* draw_data, int32  fb_width
 {
 	fly_renderState.viewport.z = fb_width;
 	fly_renderState.viewport.w = fb_height;
-	int32 x,y;
-	FLYDISPLAY_GetWindowPos(0,x,y);
-	draw_data->DisplayPos = ImVec2(x,y);
+	fly_renderState.SetUp();
+
 	float L = draw_data->DisplayPos.x;
 	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
 	float T = draw_data->DisplayPos.y;
@@ -99,8 +98,6 @@ void ImGui_ImplFlyLib_Render(ImDrawData* draw_data)
 	int32 fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
 	int32 fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
 	if (fb_width <= 0 || fb_height <= 0) return;
-
-	fly_renderState.SetUp();
 
 	ImGui_ImplFlyLib_VariableRenderState(draw_data, fb_width, fb_height);
 
@@ -370,6 +367,8 @@ void ImGui_ImplFlyLib_Init()
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
 	io.BackendPlatformName = "imgui_impl_flylib";
 	
+
+	io.ImeWindowHandle = FLYDISPLAY_GetPlatformWindowHandle(0);
 	// Initialize Render State...
 	ImGui_ImplFlyLib_StaticRenderState();
 	ImGui_ImplFlyLib_CreateFontsTexture();
@@ -396,10 +395,14 @@ void ImGui_ImplFlyLib_NewFrame()
 	IM_ASSERT(io.Fonts->IsBuilt());
 
     // Setup display size (every frame to accommodate for window resizing)
-    io.DisplaySize = ImVec2(fly_backupState.viewport.z, fly_backupState.viewport.w);
-	uint16 w, h;
+    //io.DisplaySize = ImVec2(fly_backupState.viewport.z, fly_backupState.viewport.w);
+	
+	
+	int32 w, h;
 	FLYDISPLAY_GetWindowSize(0, &w, &h); 
-	//io.DisplayFramebufferScale = ImVec2((float)io.DisplaySize.x / (float)w, (float)io.DisplaySize.y / (float)h);
+	io.DisplaySize = ImVec2(w, h);
+	FLYRENDER_GetFramebufferSize(0, &w, &h);
+	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
 
     // Setup Time Step
 	double read = fly_Time.ReadMilliSec();

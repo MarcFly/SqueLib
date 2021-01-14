@@ -128,6 +128,7 @@ void ImGuiImplFlyLibTest()
     bool show_another_window = true;
     while(!FLYDISPLAY_ShouldWindowClose(0))
     {
+        FLYINPUT_Process(0);
      //---------------------------   
         FLYRENDER_UseProgram(program);
         float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
@@ -164,13 +165,16 @@ void ImGuiImplFlyLibTest()
             ImGui::End();
         }
         ImGui::Render();
-        ImGui::EndFrame();
+
+        int32 x, y;
+        FLYRENDER_GetFramebufferSize(0, &x, & y);
+        FLYRENDER_ChangeViewPortSize(x, y);
         
         FLYRENDER_Clear(col);
         ImGui_ImplFlyLib_Render(ImGui::GetDrawData());
         FLYDISPLAY_SwapAllBuffers();
         
-        FLYINPUT_Process(0);
+        
     }
 
     //----------------------

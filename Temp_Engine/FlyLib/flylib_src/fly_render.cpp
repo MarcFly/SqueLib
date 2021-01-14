@@ -91,11 +91,24 @@ void FLY_RenderState::BackUp()
     FLY_CHECK_RENDER_ERRORS();
 }
 
-void FLYRENDER_ChangeViewPortSize(int x, int y, int width, int height)
+void FLYRENDER_ChangeViewPortSize(int width, int height)
 {
-#if defined(USE_OPENGL) || defined (USE_OPENGLES)
-    glViewport(x, y, width, height);
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glViewport(0, 0, width, height);
 #endif
+}
+
+void FLYRENDER_GetFramebufferSize(uint16 window, int32* width, int32* height)
+{
+    FLYDISPLAY_MakeContextMain(window);
+    int4 size;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    
+    glGetIntegerv(GL_VIEWPORT, &size.x);
+#endif
+
+    *width = size.z;
+    *height = size.w;
 }
 
 #ifdef USE_GLFW
@@ -103,10 +116,8 @@ void FLYRENDER_ChangeViewPortSize(int x, int y, int width, int height)
 extern std::vector<GLFWwindow*> glfw_windows;
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    int x=0, y=0;
-    for(int i = 0; i < glfw_windows.size();++i)
-        if(glfw_windows[i] = window) FLYDISPLAY_GetWindowPos(i,x,y);
-    FLYRENDER_ChangeViewPortSize(x,y,width, height);
+    FLYRENDER_ChangeViewPortSize(width, height);
+    FLYDISPLAY_Resize(0, width, height);
     FLYPRINT(LT_INFO, "Test %d,%d",width,height);
 }
 
