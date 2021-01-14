@@ -2,9 +2,8 @@
 #define FLY_REMAP_MACROS
 
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-#if defined(USE_OPENGL)
 #include<glad/glad.h>
-#else
+#if defined(USE_OPENGLES)
 #include<GLES3/gl32.h>
 #endif
 // Render State

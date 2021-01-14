@@ -45,6 +45,7 @@ void FLY_RenderState::SetUp()
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
     glPolygonMode(FLY_FRONT_AND_BACK, (GLenum)polygon_mode.x);
+    glBindSampler(0, sampler);
 #   endif
 #endif
 
@@ -54,6 +55,7 @@ void FLY_RenderState::SetUp()
 void FLY_RenderState::BackUp()
 {
     backed_up = true;
+    FLY_CHECK_RENDER_ERRORS();
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound_texture);
@@ -61,26 +63,27 @@ void FLY_RenderState::BackUp()
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_array_buffer);
     glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_array_buffer);
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &attribute_object);
-
+    FLY_CHECK_RENDER_ERRORS();
     glGetIntegerv(GL_BLEND_EQUATION_RGB, &blend_equation_rgb);
     glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blend_equation_alpha);
-
+    FLY_CHECK_RENDER_ERRORS();
     glGetIntegerv(GL_BLEND_SRC_RGB, &blend_func_src_rgb);
     glGetIntegerv(GL_BLEND_DST_RGB, &blend_func_dst_rgb);
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
-
+    FLY_CHECK_RENDER_ERRORS();
     glGetIntegerv(GL_VIEWPORT, &viewport.x);
     glGetIntegerv(GL_SCISSOR_BOX, &scissor_box.x);
-
+    FLY_CHECK_RENDER_ERRORS();
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
     depth_test = glIsEnabled(GL_DEPTH_TEST);
     scissor_test = glIsEnabled(GL_SCISSOR_TEST);
-
+    FLY_CHECK_RENDER_ERRORS();
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
     glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.x);
+    glGetIntegerv(GL_SAMPLER_BINDING, &sampler);
 #   endif
 
 #endif
@@ -186,7 +189,7 @@ const char* FLYRENDER_GetGLSLVer()
 
 void FLYRENDER_Scissor(int x, int y, int w, int h)
 {
-#if defined(USE_OPENL) || defined(USE_OPENGLES)
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glScissor(x, y, w, h);
 #endif
 }
@@ -372,8 +375,10 @@ void FLYRENDER_UseProgram(const FLY_Program& prog)
 void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices, int32 count)
 {
     count = (count < 0) ? mesh.num_index : count;
+    FLY_BindMeshBuffer(mesh);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(mesh.attribute_object);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_id);
     glDrawElements(mesh.draw_config, count, mesh.index_var, (void*)(mesh.index_var_size * offset_indices));
 #else
@@ -409,7 +414,7 @@ void CheckForRenderErrors(const char* file, int line)
 {
     int32 errcode = 0;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    while ((errcode = glGetError()) != 0)
+    while ((errcode = glGetError()) != GL_NO_ERROR)
         FLYLOG(LT_WARNING, "%s(%d): OpenGL Error %d", strrchr(file, FOLDER_ENDING), line, errcode);
 #endif
 }

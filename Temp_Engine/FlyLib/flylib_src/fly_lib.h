@@ -371,13 +371,13 @@ typedef struct FLY_VertAttrib
 struct FLY_Program;
 typedef struct FLY_Mesh
 {
-	// Constructors / Destructors
+// Constructors / Destructors
 	FL_API FLY_Mesh();
 	FL_API FLY_Mesh(int32 draw_config, int32 draw_mode, int32 index_var);
 
 	FL_API ~FLY_Mesh();
 
-	// Variables
+// Variables
 	int32 draw_config;
 	int32 draw_mode = FLY_STATIC_DRAW;
 	uint32 attribute_object = 0;
@@ -393,8 +393,12 @@ typedef struct FLY_Mesh
 	uint16 index_var_size = 0;
 	void* indices = nullptr;
 
-	// Usage Functions
-		// Location and Vertex attributes																									
+// Usage Functions
+	// Changing the data dynamically (good for stream/dynamic draw)
+	FL_API void ChangeVertData(int32 num_verts_, void* verts_);
+	FL_API void ChangeIndexData(int32 num_index_, void* indices_);
+
+	// Location and Vertex attributes																									
 	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attribute = NULL);
 	FL_API void EnableAttributesForProgram(const FLY_Program& program);
 	FL_API void SetLocationsInOrder();
@@ -406,8 +410,6 @@ typedef struct FLY_Mesh
 
 	// CleanUp
 	FL_API void CleanUp();
-
-
 
 private:
 	// Private Variables
@@ -561,8 +563,10 @@ typedef struct ColorRGBA {
 																																		
 typedef struct FLY_RenderState																											
 {																																		
-	bool backed_up = false;																												
-	int32 bound_texture, active_texture_unit;																							
+	bool backed_up = false;	
+	// Have to change into a vector similar to attributes...
+	int32 bound_texture, active_texture_unit;
+	int32 sampler;
 	int32 program, vertex_array_buffer, element_array_buffer;																			
 	int32 attribute_object;																												
 	int32 blend_equation_rgb, blend_equation_alpha;																						

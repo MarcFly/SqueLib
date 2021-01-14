@@ -15,142 +15,130 @@ enum main_states
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-/*
-void LearnOpenGLTest()
-{
-    // Shader Setup
-    const char* vertexShaderSource =
-        "layout (location = 0) in vec3 aPos;\n"
-        "layout (location = 1) in vec3 aCol;\n"
-        "layout (location = 2) in vec2 aTexCoord;\n"
-        "out vec3 v_col;\n"
-        "out vec2 v_uv;\n"
-        "void main()\n"
-        "{\n"
-        "   v_uv = aTexCoord;\n"
-        "   v_col = aCol;\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-    const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertexShaderSource };
-    FLY_Shader* vert_s = FLYSHADER_Create(FLY_VERTEX_SHADER, 2, vert_source, true);
-    vert_s->Compile();
 
-    const char* fragmentShaderSource =
-        "out vec4 FragColor;\n"
-        "in vec2 v_uv;\n"
-        "in vec3 v_col;\n"
-        "uniform vec4 ourColor;\n"
-        "uniform sampler2D ourTexture;\n"
-        "void main() { FragColor = ourColor+vec4(v_col, 1.0)+texture(ourTexture, v_uv);}\0";
-    const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragmentShaderSource };
-    FLY_Shader* frag_s = FLYSHADER_Create(FLY_FRAGMENT_SHADER, 2, frag_source, true);
-    frag_s->Compile();
-
-    FLY_Program program;
-    program.Init();
-    program.AttachShader(&vert_s);
-    program.AttachShader(&frag_s);
-    program.Link();
-
-    FLY_CHECK_RENDER_ERRORS();
-    // Texture Setup--------------------------------------------------------------------------------
-    FLY_Texture2D tex;
-    tex.Init(FLY_RGB);
-    FLY_TexAttrib* wrap_s = tex.AddParameter();
-    wrap_s->Set(FLY_WRAP_S, FLY_INT, new int32(FLY_MIRROR));
-    FLY_TexAttrib* wrap_t = tex.AddParameter();
-    wrap_t->Set(FLY_WRAP_T, FLY_INT, new int32(FLY_MIRROR));
-    //FLY_TexAttrib* border_color = tex.AddParameter();
-    //border_color->Set(FLY_BORDER_COLOR,FLY_FLOAT, new float4(1.0f, 1.0f, 0.0f, 1.0f));
-
-    FLY_TexAttrib* min_filter = tex.AddParameter();
-    min_filter->Set(FLY_MIN_FILTER, FLY_INT, new int32(FLY_NEAREST));
-    FLY_TexAttrib* mag_filter = tex.AddParameter();
-    mag_filter->Set(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
-    tex.SetParameters();
-
-    tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
-    tex.SendToGPU();
-    stbi_image_free(tex.pixels);
-
-    // Mesh Setup-----------------------------------------------------------------------------------
-    float vertices[] = {
-        // positions          // colors           // texture coords
-         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-    };
-    unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
-    };
-    FLY_Mesh triangle;
-    triangle.verts = (char*)vertices;
-    triangle.num_verts = 4;
-    triangle.SetDrawMode(FLY_STATIC_DRAW);
-    triangle.indices = (char*)indices;
-    triangle.SetIndexVarType(FLY_UINT);
-    triangle.num_index = 6;
-
-    FLY_VertAttrib* p = triangle.AddAttribute();
-    p->SetNumComponents(3);
-    p->SetVarType(FLY_FLOAT);
-    p->SetNormalize(false);
-
-    FLY_VertAttrib* c = triangle.AddAttribute();
-    c->SetNumComponents(3);
-    c->SetVarType(FLY_FLOAT);
-    c->SetNormalize(false);
-
-    FLY_VertAttrib* uv = triangle.AddAttribute();
-    uv->SetNumComponents(2);
-    uv->SetVarType(FLY_FLOAT);
-    uv->SetNormalize(false);
-
-    triangle.SetOffsetsInOrder();
-    triangle.Init();
-    triangle.SendToGPU();
-    triangle.SetLocationsInOrder();
-
-
-    program.Use();
-    program.DeclareUniform("ourColor");
-
-    ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
-    FLY_Timer t;
-    bool window = true;
-    while (!FLYDISPLAY_ShouldWindowClose(0))
-    {
-        FLYRENDER_Clear(NULL, &col);
-        program.Use();
-        float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
-        program.SetFloat4("ourColor", float4(0, green, 0, 1));
-        tex.BindToUnit(FLY_TEXTURE0);
-        program.DrawIndices(&triangle);
-
-        FLYDISPLAY_SwapAllBuffers();
-        FLYINPUT_Process(0);
-    }
-    triangle.verts = NULL;
-    triangle.indices = NULL;
-}
-*/
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
 void ImGuiImplFlyLibTest()
 {
+    
+        // Shader Setup
+        const char* vertexShaderSource =
+            "layout (location = 0) in vec3 aPos;\n"
+            "layout (location = 1) in vec3 aCol;\n"
+            "layout (location = 2) in vec2 aTexCoord;\n"
+            "out vec3 v_col;\n"
+            "out vec2 v_uv;\n"
+            "void main()\n"
+            "{\n"
+            "   v_uv = aTexCoord;\n"
+            "   v_col = aCol;\n"
+            "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+            "}\0";
+        const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertexShaderSource };
+        FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
+        vert_s->Compile();
+        FLY_CHECK_RENDER_ERRORS();
+        const char* fragmentShaderSource =
+            "out vec4 FragColor;\n"
+            "in vec2 v_uv;\n"
+            "in vec3 v_col;\n"
+            "uniform vec4 ourColor;\n"
+            "uniform sampler2D ourTexture;\n"
+            "void main() { FragColor = ourColor+vec4(v_col, 1.0)+texture(ourTexture, v_uv);}\0";
+        const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragmentShaderSource };
+        FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
+        frag_s->Compile();
+        FLY_CHECK_RENDER_ERRORS();
+        FLY_Program program;
+        FLYRENDER_CreateProgram(&program);
+        program.AttachShader(vert_s);
+        program.AttachShader(frag_s);
+        FLYRENDER_LinkProgram(program);
+        FLY_CHECK_RENDER_ERRORS();
+        FLY_CHECK_RENDER_ERRORS();
+        // Texture Setup--------------------------------------------------------------------------------
+        FLY_Texture2D tex;
+        FLY_GenTextureData(&tex);
+        tex.format = FLY_RGB;
+        tex.var_type = FLY_UBYTE;
+        FLY_TexAttrib* wrap_s = new FLY_TexAttrib(FLY_WRAP_S, FLY_INT, new int32(FLY_MIRROR));
+        tex.SetParameter(wrap_s);
+
+        FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32(FLY_MIRROR));
+        tex.SetParameter(wrap_t);
+        //FLY_TexAttrib* border_color = tex.AddParameter();
+        //border_color->Set(FLY_BORDER_COLOR,FLY_FLOAT, new float4(1.0f, 1.0f, 0.0f, 1.0f));
+
+        FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32(FLY_LINEAR));
+        tex.SetParameter(min_filter);
+        FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
+        tex.SetParameter(mag_filter);
+        tex.ApplyParameters();
+#ifdef _WIN32
+        tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
+        FLY_SendTextureToGPU(tex);
+        stbi_image_free(tex.pixels);
+#endif
+        // Mesh Setup-----------------------------------------------------------------------------------
+        float vertices[] = {
+            // positions          // colors           // texture coords
+             0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+             0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+        };
+        unsigned int indices[] = {  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+        };
+        FLY_Mesh triangle;
+
+        triangle.verts = (char*)vertices;
+        triangle.num_verts = 4;
+        triangle.draw_config = FLY_TRIANGLES;
+        triangle.draw_mode = FLY_STATIC_DRAW;
+        triangle.indices = (char*)indices;
+        triangle.index_var = FLY_UINT;
+        triangle.index_var_size = 4;
+        triangle.num_index = 6;
+
+        triangle.AddAttribute(new FLY_VertAttrib("aPos", FLY_FLOAT, false, 3));
+        triangle.AddAttribute(new FLY_VertAttrib("aCol", FLY_FLOAT, false, 3));
+        triangle.AddAttribute(new FLY_VertAttrib("aTexCoord", FLY_FLOAT, false, 2));
+
+        FLY_GenerateMeshBuffer(&triangle);
+        FLY_BindMeshBuffer(triangle);
+        FLY_SendMeshToGPU(triangle);
+        triangle.SetLocationsInOrder();
+
+        FLYRENDER_UseProgram(program);
+        program.DeclareUniform("ourColor");
+
+        ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
+        FLY_Timer t;
+    //-------------------------------------------------------------------
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     ImGui::StyleColorsDark();
     ImGui_ImplFlyLib_Init();
-    ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
+    //ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
     bool show_demo_window = true;
     bool show_another_window = true;
     while(!FLYDISPLAY_ShouldWindowClose(0))
     {
-        
+     //---------------------------   
+        FLYRENDER_UseProgram(program);
+        float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
+        SetFloat4(program, "ourColor", float4(0, green, 0, 1));
+#ifdef _WIN32
+        FLY_SetActiveTextureUnit(FLY_TEXTURE0);
+        FLY_BindTexture(tex);
+#endif
+        FLYRENDER_DrawIndices(triangle);
+        //----------------------
+
         ImGui_ImplFlyLib_NewFrame();
         ImGui::NewFrame();
         if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
@@ -178,12 +166,17 @@ void ImGuiImplFlyLibTest()
         ImGui::Render();
         ImGui::EndFrame();
         
+        FLYRENDER_Clear(col);
         ImGui_ImplFlyLib_Render(ImGui::GetDrawData());
         FLYDISPLAY_SwapAllBuffers();
-        FLYRENDER_Clear(col);
+        
         FLYINPUT_Process(0);
     }
 
+    //----------------------
+    triangle.verts = NULL;
+    triangle.indices = NULL;
+    //----------------------
     ImGui_ImplFlyLib_Shutdown();
 }
 int global_argc;

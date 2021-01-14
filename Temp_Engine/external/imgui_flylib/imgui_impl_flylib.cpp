@@ -109,14 +109,10 @@ void ImGui_ImplFlyLib_Render(ImDrawData* draw_data)
 	for (int i = 0; i < draw_data->CmdListsCount; ++i)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
-		fly_dataHandle.verts = (void*)cmd_list->VtxBuffer.Data;
-		fly_dataHandle.indices = (void*)cmd_list->IdxBuffer.Data;
-		fly_dataHandle.num_verts = cmd_list->VtxBuffer.Size;
-		fly_dataHandle.num_index = cmd_list->IdxBuffer.Size;
+		fly_dataHandle.ChangeVertData(cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data);
+		fly_dataHandle.ChangeIndexData(cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
 		
 		FLY_SendMeshToGPU(fly_dataHandle);
-		//glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * (int)sizeof(ImDrawVert), (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
-		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * (int)sizeof(ImDrawIdx), (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
 
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
@@ -136,16 +132,13 @@ void ImGui_ImplFlyLib_Render(ImDrawData* draw_data)
 					FLYRENDER_Scissor((int32)clip_rect.x, (int32)(fb_height - clip_rect.w), (int32)(clip_rect.z - clip_rect.x), (int32)(clip_rect.w - clip_rect.y));
 					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
 					FLYRENDER_DrawIndices(fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
-					//glDrawElements(fly_dataHandle.draw_config, pcmd->ElemCount, fly_dataHandle.index_var, (void*)(fly_dataHandle.index_var_size * pcmd->IdxOffset));
 				}
 			}
 		}
 
 	}
-	fly_dataHandle.verts = NULL;
-	fly_dataHandle.indices = NULL;
-	fly_dataHandle.num_verts = 0;
-	fly_dataHandle.num_index = 0;
+	fly_dataHandle.ChangeVertData(0, NULL);
+	fly_dataHandle.ChangeIndexData(0, NULL);
 
 	fly_backupState.SetUp();
 }
@@ -159,30 +152,29 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 	fly_dataHandle.draw_mode = FLY_STREAM_DRAW;
 	fly_dataHandle.index_var = FLY_USHORT;	
 	fly_dataHandle.index_var_size = FLY_VarGetSize(FLY_USHORT);
-	FLY_CHECK_RENDER_ERRORS();
+
 	FLY_VertAttrib* p = fly_dataHandle.AddAttribute();
 	p->name = "Position";
 	p->normalize = false;
 	p->num_comp = 2;
 	p->var_type = FLY_FLOAT;
 	p->var_size = FLY_VarGetSize(FLY_FLOAT);
-	FLY_CHECK_RENDER_ERRORS();
+
 	FLY_VertAttrib* uv = fly_dataHandle.AddAttribute();
 	uv->name = "UV";
 	uv->normalize = false;
 	uv->num_comp = 2;
 	uv->var_type = FLY_FLOAT;
 	uv->var_size = FLY_VarGetSize(FLY_FLOAT);
-	FLY_CHECK_RENDER_ERRORS();
+
 	FLY_VertAttrib* c = fly_dataHandle.AddAttribute();
 	c->name = "Color";
 	c->normalize = true;
 	c->num_comp = 4;
 	c->var_type = FLY_UBYTE;
 	c->var_size = FLY_VarGetSize(FLY_UBYTE);
-	FLY_CHECK_RENDER_ERRORS();
+
 	fly_dataHandle.SetLocationsInOrder();
-	FLY_CHECK_RENDER_ERRORS();
 
 	fly_backupState.SetUp();
 }
@@ -190,31 +182,24 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 void ImGui_ImplFlyLib_CreateShaderProgram()
 {
 	fly_backupState.BackUp();
-FLY_CHECK_RENDER_ERRORS();
-	const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertex_shader };
 
+	const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertex_shader };
 	FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
 	vert_s->Compile();
-FLY_CHECK_RENDER_ERRORS();
+
 	const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragment_shader };
 	FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
 	frag_s->Compile();
-FLY_CHECK_RENDER_ERRORS();
+
 	FLYRENDER_CreateProgram(&fly_shaderProgram);
-	FLY_CHECK_RENDER_ERRORS();
 	fly_shaderProgram.AttachShader(vert_s);
 	fly_shaderProgram.AttachShader(frag_s);
-	// Compile Shaders with AddShader syntax
+
 	FLYRENDER_LinkProgram(fly_shaderProgram);
-FLY_CHECK_RENDER_ERRORS();
 	fly_shaderProgram.DeclareUniform("Texture");
 	fly_shaderProgram.DeclareUniform("ProjMtx");
-	FLY_CHECK_RENDER_ERRORS();
-	// Attributes Here, first buffers?, buffers after?...
 
 	ImGui_ImplFlyLib_PrepareBuffers();
-
-	FLY_CHECK_RENDER_ERRORS();
 
 	fly_backupState.SetUp();
 }
@@ -257,9 +242,11 @@ void ImGui_ImplFlyLib_StaticRenderState()
 	fly_renderState.depth_test = false;
 	fly_renderState.scissor_test = true;
 	fly_renderState.active_texture_unit = FLY_TEXTURE0;
-	fly_renderState.blend_func_dst_alpha = FLY_ONE_MINUS_SRC_ALPHA;
-	fly_renderState.blend_func_src_alpha = FLY_SRC_ALPHA;
-	fly_renderState.blend_func_separate = false;
+	fly_renderState.blend_func_dst_alpha = FLY_ONE;
+	fly_renderState.blend_func_src_alpha = FLY_ONE;
+	fly_renderState.blend_func_dst_rgb = FLY_ONE_MINUS_SRC_ALPHA;
+	fly_renderState.blend_func_src_rgb = FLY_SRC_ALPHA;
+	fly_renderState.blend_func_separate = true;
 	fly_renderState.polygon_mode = int2(FLY_FILL, FLY_FILL);
 
 	fly_backupState.SetUp();
@@ -332,9 +319,7 @@ void ImGui_ImplFlyLib_GoBackground()
 bool init_registered = false;
 void ImGui_ImplFlyLib_Init()
 {
-	// Tempoiral
-	gladLoadGL();
-    fly_Time.Start();
+	fly_Time.Start();
 
 	if(!init_registered)
 	{

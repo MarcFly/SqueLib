@@ -15,8 +15,8 @@ FLY_VertAttrib::FLY_VertAttrib() :
 {}
 
 FLY_VertAttrib::FLY_VertAttrib(const char* name_, int32 var_type_, bool normalize_, uint16 num_components) :
-    id(0),  var_type(var_type_),    num_comp(num_components), normalize(normalize_),   vert_size(0),
-    offset(0),  name(name)
+    id(0), var_type(var_type_), num_comp(num_components), 
+    normalize(normalize_), vert_size(0), offset(0), name(name)
 {   
     var_size = FLY_VarGetSize(var_type);
 }
@@ -29,11 +29,9 @@ uint16 FLY_VertAttrib::GetSize() const { return var_size * num_comp; }
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLY_Mesh::FLY_Mesh() : draw_mode(FLY_STATIC_DRAW),
-    attribute_object(0), vert_id(0), num_verts(0),
-    verts(NULL), index_id(0), num_index(0),
-    index_var(FLY_UINT), index_var_size(4),
-    indices(NULL)
+FLY_Mesh::FLY_Mesh() : draw_config(FLY_POINTS), draw_mode(FLY_STATIC_DRAW),
+    attribute_object(0), vert_id(0), num_verts(0), verts(NULL), index_id(0),
+    num_index(0), index_var(FLY_UINT), index_var_size(4), indices(NULL)
 {}
 
 FLY_Mesh::FLY_Mesh(int32 draw_config_, int32 draw_mode_, int32 index_var_) :
@@ -50,6 +48,19 @@ FLY_Mesh::~FLY_Mesh() { if(vert_id > 0) CleanUp(); }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CHANGING DATA DYNAMICALLY /////////////////////////////////////////////////////////////////////////////
+void FLY_Mesh::ChangeVertData(int32 num_verts_, void* verts_)
+{
+    num_verts = num_verts_;
+    verts = verts_;
+}
+
+void FLY_Mesh::ChangeIndexData(int32 num_index_, void* indices_)
+{
+    num_index = num_index_;
+    indices = indices_;
+}
+
 // LOCATIONS AND VERTEX ATTRIBUTES ///////////////////////////////////////////////////////////////////////
 FLY_VertAttrib* FLY_Mesh::AddAttribute(FLY_VertAttrib* attr)
 {
