@@ -108,13 +108,13 @@ bool FLYRENDER_Init()
 {
     bool ret = true;
 
-#ifdef USE_OPENGL
+#if defined(USE_OPENGL)
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
         return false;
     }
-#elif defined USE_OPENGLES
+#elif defined(USE_OPENGLES)
     if(!gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress))
     {
         FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
@@ -132,6 +132,7 @@ bool FLYRENDER_Init()
 #endif
     // Generate Viewport with window size
     uint16 w, h;
+    FLYDISPLAY_MakeContextMain(0);
     FLYDISPLAY_GetWindowSize(0, &w, &h);
     FLYRENDER_ChangeViewPortSize(w, h);
     FLYLOG(FLY_LogType::LT_INFO, "Main Viewport init...");
@@ -162,15 +163,22 @@ const char* FLYRENDER_GetGLSLVer()
 {
     const char* ret = "";
 #if defined(USE_OPENGL) ||defined(USE_OPENGLES)
+    char* str = NULL;
     int ver = GLVersion.major * 100 + GLVersion.minor * 10;
+    int16 size = 13;
     if (ver >= 320)
+    {        
+        const char* gles = "\n";
 #if defined(USE_OPENGLES)
-        ret = "#version 320 es\nprecision mediump float;\n";
-#else
-        ret = "#version 330 core\n";
+        size + = 42;
+        gles = " es\nprecision mediump float;\n";
 #endif
+        str = new char[size];
+        sprintf(str, "#version %d %s", ver, gles);            
+        ret = str;
+    }
     else
-        ret = "#version 100";
+        ret = "";
 #endif
     FLYPRINT(LT_INFO, "%s", ret);
     return ret;
@@ -228,6 +236,11 @@ void FLY_EnableProgramAttribute(const FLY_Program& prog,  FLY_VertAttrib* attr)
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     attr->id = glGetAttribLocation(prog.id, attr->name);
     glEnableVertexAttribArray(attr->id);
+    glVertexAttribPointer(attr->id, attr->num_comp,
+        attr->var_type,
+        attr->normalize,
+        attr->vert_size,
+        (void*)attr->offset);
 #endif
 }
 
@@ -247,6 +260,7 @@ void FLY_SendAttributeToGPU(const FLY_VertAttrib& attr)
 void FLY_EnableBufferAttribute(int32 location, uint16 vert_size, FLY_VertAttrib* attr)
 {
     attr->id = location;
+    attr->vert_size = vert_size;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glEnableVertexAttribArray(attr->id);
     glVertexAttribPointer(attr->id, 

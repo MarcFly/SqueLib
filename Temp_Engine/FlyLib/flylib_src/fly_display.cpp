@@ -384,11 +384,8 @@ void FLYDISPLAY_NextWindowOptions(uint16 flags)
 
 
     // Private Options
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, );
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, );
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_REVISION, );
+    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+    //glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
 #endif
 }
 
@@ -422,10 +419,7 @@ bool FLYDISPLAY_OpenWindow(FLY_Window* window, uint16 monitor)
     window->width = (window->width != 0) ? window->width : w;
     window->height = (window->height != 0) ? window->height : h;
 
-    glfwWindowHint(
-        GLFW_OPENGL_PROFILE,
-        GLFW_OPENGL_CORE_PROFILE
-    );
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -476,15 +470,16 @@ void FLYDISPLAY_SwapBuffer(uint16 window)
 void FLYDISPLAY_SwapAllBuffers()
 {
     for(int i = 0; i < fly_windows.size(); ++i)
-    {        
+    {   
+        FLYDISPLAY_MakeContextMain(i);
 #if defined(USE_EGL)
         eglSwapBuffers(egl_display, egl_surface);
         fly_windows[i]->width = ANativeWindow_getWidth(egl_window);
         fly_windows[i]->height = ANativeWindow_getHeight(egl_window);
-        FLYRENDER_ChangeViewPortSize(fly_windows[i]->width, fly_windows[i]->height);
 #elif defined(USE_GLFW)
         glfwSwapBuffers(glfw_windows[i]);
 #endif
+        FLYRENDER_ChangeViewPortSize(fly_windows[i]->width, fly_windows[i]->height);
     }
 }
 

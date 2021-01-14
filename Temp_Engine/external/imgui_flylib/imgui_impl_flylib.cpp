@@ -27,7 +27,7 @@ static MouseFloatCallback	fly_PrevMouseScrollCallback;
 static VoidFun				fly_PrevOnResumeCallback;
 static VoidFun				fly_PrevOnGoBackgroundCallback;
 // Shaders
-const GLchar* vertex_shader =
+const char* vertex_shader =
 	"layout (location = 0) in vec2 Position;\n"
 	"layout (location = 1) in vec2 UV;\n"
 	"layout (location = 2) in vec4 Color;\n"
@@ -40,10 +40,10 @@ const GLchar* vertex_shader =
 	"    Frag_Color = Color;\n"
 	"    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
 	"}\n";
-const GLchar* fragment_shader =
-	"uniform sampler2D Texture;\n"
+const char* fragment_shader =
 	"in vec2 Frag_UV;\n"
 	"in vec4 Frag_Color;\n"
+	"uniform sampler2D Texture;\n"
 	"layout (location = 0) out vec4 Out_Color;\n"
 	"void main()\n"
 	"{\n"
@@ -85,16 +85,18 @@ void ImGui_ImplFlyLib_VariableRenderState(ImDrawData* draw_data, int32  fb_width
 	FLYRENDER_UseProgram(fly_shaderProgram);
 	SetInt(fly_shaderProgram, "Texture", 0);
 	SetMatrix4(fly_shaderProgram, "ProjMtx", &ortho_projection[0][0]);
-	FLYRENDER_BindSampler(0, 0);
+	
+	/*FLY_BindMeshBuffer(fly_dataHandle);
+	fly_dataHandle.EnableAttributesForProgram(fly_shaderProgram);*/
 }
 
-void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
+void ImGui_ImplFlyLib_Render(ImDrawData* draw_data)
 {
+	fly_backupState.BackUp();
+
 	int32 fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
 	int32 fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
-	if (fb_width <= 0 || fb_height <= 0)	return;
-
-	fly_backupState.BackUp();
+	if (fb_width <= 0 || fb_height <= 0) return;
 
 	fly_renderState.SetUp();
 
@@ -113,6 +115,8 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 		fly_dataHandle.num_index = cmd_list->IdxBuffer.Size;
 		
 		FLY_SendMeshToGPU(fly_dataHandle);
+		//glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * (int)sizeof(ImDrawVert), (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
+		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * (int)sizeof(ImDrawIdx), (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
 
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
@@ -132,6 +136,7 @@ void ImGui_ImplFlyLib_RenderDrawListsFn(ImDrawData* draw_data)
 					FLYRENDER_Scissor((int32)clip_rect.x, (int32)(fb_height - clip_rect.w), (int32)(clip_rect.z - clip_rect.x), (int32)(clip_rect.w - clip_rect.y));
 					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
 					FLYRENDER_DrawIndices(fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
+					//glDrawElements(fly_dataHandle.draw_config, pcmd->ElemCount, fly_dataHandle.index_var, (void*)(fly_dataHandle.index_var_size * pcmd->IdxOffset));
 				}
 			}
 		}
@@ -154,7 +159,7 @@ void ImGui_ImplFlyLib_PrepareBuffers()
 	fly_dataHandle.draw_mode = FLY_STREAM_DRAW;
 	fly_dataHandle.index_var = FLY_USHORT;	
 	fly_dataHandle.index_var_size = FLY_VarGetSize(FLY_USHORT);
-FLY_CHECK_RENDER_ERRORS();
+	FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* p = fly_dataHandle.AddAttribute();
 	p->name = "Position";
 	p->normalize = false;
@@ -168,16 +173,16 @@ FLY_CHECK_RENDER_ERRORS();
 	uv->num_comp = 2;
 	uv->var_type = FLY_FLOAT;
 	uv->var_size = FLY_VarGetSize(FLY_FLOAT);
-FLY_CHECK_RENDER_ERRORS();
+	FLY_CHECK_RENDER_ERRORS();
 	FLY_VertAttrib* c = fly_dataHandle.AddAttribute();
 	c->name = "Color";
 	c->normalize = true;
 	c->num_comp = 4;
 	c->var_type = FLY_UBYTE;
 	c->var_size = FLY_VarGetSize(FLY_UBYTE);
-FLY_CHECK_RENDER_ERRORS();
+	FLY_CHECK_RENDER_ERRORS();
 	fly_dataHandle.SetLocationsInOrder();
-FLY_CHECK_RENDER_ERRORS();
+	FLY_CHECK_RENDER_ERRORS();
 
 	fly_backupState.SetUp();
 }
@@ -241,10 +246,13 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 
 void ImGui_ImplFlyLib_StaticRenderState()
 {
+	fly_backupState.BackUp();
+
 	fly_renderState.BackUp();
 
 	fly_renderState.blend = true;
-	fly_renderState.blend_equation_rgb = fly_renderState.blend_equation_alpha = FLY_FUNC_ADD;
+	fly_renderState.blend_equation_rgb = FLY_FUNC_ADD;
+	fly_renderState.blend_equation_alpha = FLY_FUNC_ADD;
 	fly_renderState.cull_faces = false;
 	fly_renderState.depth_test = false;
 	fly_renderState.scissor_test = true;
@@ -253,6 +261,8 @@ void ImGui_ImplFlyLib_StaticRenderState()
 	fly_renderState.blend_func_src_alpha = FLY_SRC_ALPHA;
 	fly_renderState.blend_func_separate = false;
 	fly_renderState.polygon_mode = int2(FLY_FILL, FLY_FILL);
+
+	fly_backupState.SetUp();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -322,6 +332,8 @@ void ImGui_ImplFlyLib_GoBackground()
 bool init_registered = false;
 void ImGui_ImplFlyLib_Init()
 {
+	// Tempoiral
+	gladLoadGL();
     fly_Time.Start();
 
 	if(!init_registered)
@@ -367,7 +379,7 @@ void ImGui_ImplFlyLib_Init()
 	//ImGui::GetStyle().ScaleAllSizes(scale);
 
     // BackendFlags and things...
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+    //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
 	io.BackendPlatformName = "imgui_impl_flylib";
 	
@@ -376,10 +388,7 @@ void ImGui_ImplFlyLib_Init()
 	ImGui_ImplFlyLib_CreateFontsTexture();
 	ImGui_ImplFlyLib_CreateShaderProgram();
 
-	//... continue
-
-	io.RenderDrawListsFn = ImGui_ImplFlyLib_RenderDrawListsFn;
-	if(fly_PrevOnResumeCallback != NULL) fly_PrevOnResumeCallback();
+	if(init_registered && fly_PrevOnResumeCallback != NULL) fly_PrevOnResumeCallback();
 }
 
 void ImGui_ImplFlyLib_Shutdown()
@@ -396,6 +405,8 @@ void ImGui_ImplFlyLib_Shutdown()
 void ImGui_ImplFlyLib_NewFrame()
 {
     ImGuiIO& io = ImGui::GetIO();
+
+	IM_ASSERT(io.Fonts->IsBuilt());
 
     // Setup display size (every frame to accommodate for window resizing)
     io.DisplaySize = ImVec2(fly_backupState.viewport.z, fly_backupState.viewport.w);
