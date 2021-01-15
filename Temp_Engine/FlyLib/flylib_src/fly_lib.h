@@ -55,18 +55,23 @@
 #define FL_VERSION_MAJOR 2020																											
 #define FL_VERSION_MINOR 1																												
 #define FL_VERSION ((FL_VERSION_MAJOR << 16) | FL_VERSION_MINOR)																		
-																																		
+
+// FLYLIB should not have an init/close
+// User should do that with specifics per module really
 FL_API void FLYLIB_Init(/* flags */);																									
 FL_API void FLYLIB_Close();																									
-FL_API unsigned int FLYLIB_GetVersion(void);																							
-FL_API int FLYLIB_IsCompatibleDLL(void);		
+FL_API unsigned int FLYLIB_GetVersion();																							
+FL_API int FLYLIB_IsCompatibleDLL();		
 
 FL_API int FLY_VarGetSize(int type_macro);
-																																		
+FL_API void FLY_ConsolePrint(int lt, const char* log);
+FL_API void FLY_PrintVargs(FLY_LogType lt, const char file[], int line, const char* format, ...);
+#define FLYPRINT(LogType, format,...) FL_MACRO FLY_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)					
+
 // Callback Setters - Flow Management //////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API VoidFun FLYINPUT_AddOnResumeCallback(VoidFun fn);																				
 FL_API VoidFun FLYINPUT_AddOnGoBackgroundCallback(VoidFun fn);																			
-																																		
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,14 +80,7 @@ FL_API VoidFun FLYINPUT_AddOnGoBackgroundCallback(VoidFun fn);
 																																		
 // Types / Strucs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define LOGSIZE 1024																													
-typedef enum FLY_LogType																												
-{																																		
-	LT_INFO = 4,																														
-	LT_WARNING,																															
-	LT_ERROR,																															
-	LT_CRITICAL																															
-																																		
-} FLY_LogType;																															
+																														
 typedef struct FLY_Log																													
 {																																		
 	int type = -1;																														
@@ -96,13 +94,11 @@ FL_API void FLYLOGGER_Close();
 																																																														
 // Function Usage //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLY_ConsolePrint(int lt, const char* log);																																														
-FL_API void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...);										
-FL_API void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const char* format, ...);									
+FL_API void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...);																		
 FL_API void FLYLOGGER_DumpData();
 
 // EASY Usage //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define FLYLOG(LogType,format,...) FL_MACRO FLYLOGGER_Log(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)								
-#define FLYPRINT(LogType, format,...) FL_MACRO FLYLOGGER_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)					
 																																		
 																																		
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,55 +138,56 @@ private:
 // DISPLAY /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 																																		
-// Flag setting and unsettign using FLAG MACROS in fly_simple_types.h																	
-enum FLY_WindowFlags ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{																																		
-	FLYWINDOW_NOT_RESIZABLE = BITSET1,																									
-	FLYWINDOW_NOT_DECORATED = BITSET2,																									
-	FLYWINDOW_ALWAYS_TOP 	= BITSET3,																									
-	FLYWINDOW_MAXIMIZED 	= BITSET4,																									
-	FLYWINDOW_TO_CLOSE 		= BITSET5,																									
-};																																		
-																																		
-// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct FLY_Window																												
-{																																		
-	const char* title = "";																												
-	int32 width=0, height=0;																											
-	uint16 flags;																														
-	int mouse_in = -1;																													
-} FLY_Window;																															
-																																		
+// Flag setting and unsettign using FLAG MACROS in fly_simple_types.h 																																	
+enum FLY_WindowFlags
+{
+	FLYWINDOW_MOUSE_IN = BITSET1,
+	FLYWINDOW_TO_MAXIMIZE = BITSET4,
+	FLYWINDOW_TO_CLOSE = BITSET5,
+	
+};																																	
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API void FLYDISPLAY_Init(uint16 flags, const char* title = "", uint16 w = 0, uint16 h = 0);											
+FL_API void FLYDISPLAY_Init();
 FL_API void FLYDISPLAY_Close();																											
 FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);																						
 FL_API int32 FLYDISPLAY_GetDPIDensity(uint16 window = 0);																				
 FL_API void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h);
 
 																																		
-// Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window);
-FL_API void FLYDISPLAY_Resize(uint16 window, uint16 w, uint16 h);																		
-FL_API void FLYDISPLAY_GetWindowSize(uint16 window, int32* w, int32* h);																
-FL_API void FLYDISPLAY_GetAmountWindows(uint16* windows);																				
-FL_API void FLYDISPLAY_SetWindowClose(uint16 window);																					
-FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);																				
+// Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+// I don't like having user setup a FLY_Window directly
+FL_API void FLYDISPLAY_NextWindow_BufferHints(int2* options, int32 size);
+FL_API void FLYDISPLAY_NextWindow_ContextHints(int2* options, int32 size);
+FL_API void FLYDISPLAY_NextWindow_WindowHints(int2* options, int32 size);
+
+FL_API void FLYDISPLAY_OpenWindow(const char* title, int32 width=0, int32 height=0, uint16 monitor = 0);
+FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);
+
+// Setters
+FL_API void FLYDISPLAY_SetWindowClose(uint16 window);																																									
 FL_API uint16 FLYDISPLAY_CloseWindow(uint16 window);																																											
-FL_API bool FLYDISPLAY_OpenWindow(FLY_Window* window = NULL, uint16 monitor = 0);														
+FL_API void FLYDISPLAY_ResizeWindow(uint16 window, uint16 w, uint16 h);
+
+// Getters
+FL_API uint16 FLYDISPLAY_GetAmountWindows();
 FL_API void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y);																	
-																																		
+FL_API void FLYDISPLAY_GetWindowSize(uint16 window, int32* w, int32* h);
+FL_API void FLYDISPLAY_GetViewportSize(uint16 window, int32* w, int32* h);
+FL_API void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window);
+
 // Controlling Contexts ////////////////////////////////////////////////////////////////////////////////////////////////////////////////																										
 FL_API void FLYDISPLAY_SwapBuffer(uint16 window);
 FL_API void FLYDISPLAY_SwapAllBuffers();																								
-FL_API void FLYDISPLAY_MakeContextMain(uint16 window);																					
+FL_API void FLYDISPLAY_MakeContextMain(uint16 window);
+FL_API ResizeCallback FLYDISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb);
+FL_API ViewportSizeCallback FLYDISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb);
 																																		
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INPUT ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 																																		
 // Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-enum FLY_InputState																														
+enum FLY_InputState
 {																																		
 	FLY_UNKNOWN = -1,																													
 	FLY_RELEASED,																														
@@ -198,7 +195,7 @@ enum FLY_InputState
 	FLY_HELD																															
 };																																		
 																																		
-enum FLY_KeyboardKeys																													
+enum FLY_KeyboardKeys
 {																																		
 	FLY_KEY_UNKNWON = -1,																												
 	// 1 Initial key																													
@@ -322,7 +319,8 @@ typedef struct FLY_Pointer
 } FLY_Pointer;																															
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API bool FLYINPUT_Init(uint16 window);																								
+FL_API void FLYINPUT_Init();
+FL_API void FLYINPUT_InitForWindow(uint16 window);
 FL_API bool FLYINPUT_Close();																											
 FL_API void FLYINPUT_Process(uint16 window);																							
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);																				
@@ -594,8 +592,8 @@ typedef struct FLY_RenderState
 FL_API bool FLYRENDER_Init();																											
 FL_API void FLYRENDER_Close();																											
 																																		
-FL_API void FLYRENDER_ChangeViewPortSize(int width, int height);		
-FL_API void FLYRENDER_GetFramebufferSize(uint16 window, int32* width, int32* height);
+FL_API void FLYRENDER_ChangeFramebufferSize(int32 width, int32 height);		
+FL_API void FLYRENDER_GetFramebufferSize(int32* width, int32* height);
 FL_API void FLYRENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();																								
 																																		

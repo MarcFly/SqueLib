@@ -1,5 +1,18 @@
 #include "fly_lib.h"
 
+// really want to stop using these includes,.... will do my own simplified string and types?
+#include <string>
+
+#if defined(_DEBUG)
+
+#   if defined(_WIN32)
+#      include <Windows.h> // really only necessary to print to outputdebugstring, which is practical
+#   elif defined(ANDROID)
+#          include<android/log.h>
+#   endif
+
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,9 +137,26 @@ void android_main(struct android_app* app)
 void FLYLIB_Init(/* flags */)
 {
     // Call Init for all loaded modules and with required flags
+    // Logger Lib
     FLYLOGGER_Init(true);
-    FLYDISPLAY_Init(FLYWINDOW_MAXIMIZED, "FlyLib Test Window");
+    
+    // Display Lib
+    FLYDISPLAY_SetViewportResizeCallback(FLYRENDER_ChangeFramebufferSize);
+    FLYDISPLAY_SetViewportSizeCallback(FLYRENDER_GetFramebufferSize);
+    FLYDISPLAY_Init();
+    //FLYDISPLAY_NextWindow;
+    FLYDISPLAY_OpenWindow("FlyLib Test Window");
+
+    // For testing
+    FLYDISPLAY_MakeContextMain(0);
+    FLYDISPLAY_SetVSYNC(1); // Swap Interval
+    // Input Lib
+    FLYINPUT_Init(); // inits window 0 by default    
+
+    // Rendering Lib
     FLYRENDER_Init();
+
+    // If you use core lib, you will get these default initialization states per library
 }
 
 void FLYLIB_Close()
@@ -154,6 +184,47 @@ int FLIsCompatibleDLL(void)
 {
     uint32_t major = FLGetVersion() >> 16;
     return major == FL_VERSION_MAJOR;
+}
+
+void FLY_PrintVargs(FLY_LogType lt, const char file[], int line, const char* format, ...)
+{
+    std::string sttr(strrchr(file, FOLDER_ENDING));
+
+    static va_list ap;
+    char* tmp = new char[1];
+    va_start(ap, format);
+    int len = vsnprintf(tmp, 1, format, ap) + 1;
+    va_end(ap);
+    delete tmp;
+
+    tmp = new char[len];
+    va_start(ap, format);
+    vsnprintf(tmp, len, format, ap);
+    va_end(ap);
+
+    int print_len = len + (sttr.length() + 4 + 4);
+    char* print = new char[print_len];
+    sprintf(print, "%s(%d): %s", sttr.c_str(), line, tmp);
+
+    FLY_ConsolePrint((int)lt, print);
+
+    delete tmp;
+    delete print;
+}
+
+void FLY_ConsolePrint(int lt, const char* log)
+{
+    printf("FLY_LogType-%d: %s\n", lt, log);
+#if defined(_DEBUG)
+#if defined(_WIN32)
+    OutputDebugString(log);
+    OutputDebugString("\n");
+#elif defined ANDROID
+    __android_log_print(lt, "TempEngine", log);
+#elif defined LINUX
+
+#endif
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -167,8 +167,9 @@ void ImGuiImplFlyLibTest()
         ImGui::Render();
 
         int32 x, y;
-        FLYRENDER_GetFramebufferSize(0, &x, & y);
-        FLYRENDER_ChangeViewPortSize(x, y);
+        FLYDISPLAY_GetViewportSize(0, &x, & y);
+        // here we should make the expected window framebuffer the main
+        FLYRENDER_ChangeFramebufferSize(x, y);
         
         FLYRENDER_Clear(col);
         ImGui_ImplFlyLib_Render(ImGui::GetDrawData());

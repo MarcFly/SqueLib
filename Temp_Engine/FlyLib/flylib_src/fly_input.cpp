@@ -18,10 +18,6 @@ void EmptyMouseFloatCallback(float x, float y) { FLYPRINT(LT_INFO, "Mouse %.2f,%
 std::list<int> char_buffer;
 
 FLY_Pointer fly_pointers[MAX_POINTERS];
-
-#include <vector>
-extern std::vector<FLY_Window*> fly_windows;
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,16 +116,6 @@ static void GLFW_CharCallback(GLFWwindow* window, uint32 codepoint)
     char_buffer.push_back(codepoint);
 }
 
-static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)
-{
-    for (int i = 0; i < glfw_windows.size(); ++i)
-        if (glfw_windows[i] == window)
-        {
-            fly_windows[i]->mouse_in = entered;
-            break;
-        }
-}
-
 static void GLFW_MousePosCallback(GLFWwindow* window, double xpos, double ypos)
 {
     mouse.prev_x = mouse.x;
@@ -226,10 +212,14 @@ static int GetPointer(int32_t id)
 // INITIALIZING & STATE MANAGEMENT ///////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool FLYINPUT_Init(uint16 window)
+void FLYINPUT_Init()
 {
-    bool ret = true;
-#ifdef ANDROID
+    FLYINPUT_InitForWindow(0);
+}
+void FLYINPUT_InitForWindow(uint16 window)
+{
+    
+#if defined(ANDROID)
     FLYLOG(LT_INFO, "ANDROID - Waiting of Graphics Backend Initialization...");
     int events;
     while (!graphics_backed_started)
@@ -244,17 +234,23 @@ bool FLYINPUT_Init(uint16 window)
             }
         }
     }
-#elif defined USE_GLFW
+#endif
+
+#if defined USE_GLFW
+    if (window > glfw_windows.size())
+    {
+        FLYPRINT(LT_WARNING, "Tried to Init input for window out of range!");
+        return;
+    }
+
     glfwSetInputMode(glfw_windows[window], GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     glfwSetKeyCallback(glfw_windows[window], GLFW_KeyCallback);
-    glfwSetCursorEnterCallback(glfw_windows[window], GLFW_MouseEnterLeaveCallback);
+    
     glfwSetCursorPosCallback(glfw_windows[window], GLFW_MousePosCallback);
     glfwSetMouseButtonCallback(glfw_windows[window], GLFW_MouseButtonCallback);
     glfwSetScrollCallback(glfw_windows[window], GLFW_MouseScrollCallback);
     glfwSetCharCallback(glfw_windows[window], GLFW_CharCallback);
 #endif
-
-    return ret;
 }
 
 bool FLYINPUT_Close()
@@ -497,7 +493,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.start_y = y;
             p.timer.Start();
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
-            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_PRESS, num_pointers);
+            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_PRESS, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
             FLYPRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
@@ -517,7 +513,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
                     g.end_x = x;
                     g.end_y = y;
                 }
-                if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_REPEAT, num_pointers);
+                if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_REPEAT, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
                 FLYPRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             }
             break;
@@ -528,7 +524,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.timer.Stop();
             p.timer.Kill();
             FLYPRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
-            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_RELEASE, num_pointers);
+            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_RELEASE, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
             break;
         }
         if(motion_ended == true) motion_ended = !p.active;

@@ -91,16 +91,15 @@ void FLY_RenderState::BackUp()
     FLY_CHECK_RENDER_ERRORS();
 }
 
-void FLYRENDER_ChangeViewPortSize(int width, int height)
+void FLYRENDER_ChangeFramebufferSize(int32 width, int32 height)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glViewport(0, 0, width, height);
 #endif
 }
 
-void FLYRENDER_GetFramebufferSize(uint16 window, int32* width, int32* height)
+void FLYRENDER_GetFramebufferSize(int32* width, int32* height)
 {
-    FLYDISPLAY_MakeContextMain(window);
     int4 size;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     
@@ -111,24 +110,12 @@ void FLYRENDER_GetFramebufferSize(uint16 window, int32* width, int32* height)
     *height = size.w;
 }
 
-#ifdef USE_GLFW
-#   include <GLFW/glfw3.h>
-extern std::vector<GLFWwindow*> glfw_windows;
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
-{
-    FLYRENDER_ChangeViewPortSize(width, height);
-    FLYDISPLAY_Resize(0, width, height);
-    FLYPRINT(LT_INFO, "Test %d,%d",width,height);
-}
-
-#endif
-
 bool FLYRENDER_Init()
 {
     bool ret = true;
 
 #if defined(USE_OPENGL)
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if(!gladLoadGL())
     {
         FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
         return false;

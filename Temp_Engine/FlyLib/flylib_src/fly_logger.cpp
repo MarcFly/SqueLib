@@ -32,11 +32,7 @@ static bool DUMPDATA = true;
 // PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(_WIN32)
-#   include <Windows.h> // really only necessary to print to outputdebugstring, which is practical
-#elif defined(ANDROID)
-#       include<android/log.h>
-#endif
+
 
 #ifndef ANDROID
 #   include <filesystem> // Will probably be superseeded by flylib import/export/read/write
@@ -68,19 +64,6 @@ void FLYLOGGER_Close()
 // FUNCTION USAGE ////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLY_ConsolePrint(int lt, const char* log)
-{
-    printf("FLY_LogType-%d: %s\n", lt, log);
-#if defined(_WIN32)
-    OutputDebugString(log);
-    OutputDebugString("\n");
-#elif defined ANDROID
-    __android_log_print(lt, "TempEngine", log);
-#elif defined LINUX
-
-#endif
-}
-
 void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* format, ...)
 {
     std::lock_guard<std::mutex> lk(_mtx);
@@ -106,39 +89,13 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
 
     // For now let's just not take care of logs with bigger size, i think it crashes
     if(len > (calc_logsize)) 
-        FLYLOGGER_PrintVargs(lt, file, line, tmp);
+        FLY_PrintVargs(lt, file, line, tmp);
 
     sprintf(push.log, "%s(%d): %s", sttr.c_str(), line, tmp);
 
     logs.push_back(PairLOG(push.type, push));
 
     FLY_ConsolePrint((int) lt, &push.log[0]);	
-}
-
-void FLYLOGGER_PrintVargs(FLY_LogType lt, const char file[], int line, const char* format,...)
-{   
-    std::string sttr(strrchr(file, FOLDER_ENDING));
-
-    static va_list ap;
-    char* tmp = new char[1];
-    va_start(ap, format);
-    int len = vsnprintf(tmp, 1, format, ap)+1;
-    va_end(ap);
-    delete tmp;
-
-    tmp = new char[len];
-    va_start(ap, format);
-    vsnprintf(tmp, len, format, ap);
-    va_end(ap);
-
-    int print_len = len + (sttr.length() + 4 + 4);
-    char* print = new char[print_len];
-    sprintf(print, "%s(%d): %s", sttr.c_str(), line, tmp);
-
-    FLY_ConsolePrint((int) lt, print);
-
-    delete tmp;
-    delete print;
 }
 
 void FLYLOGGER_DumpData()

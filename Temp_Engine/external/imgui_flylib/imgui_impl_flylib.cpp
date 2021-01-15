@@ -367,8 +367,12 @@ void ImGui_ImplFlyLib_Init()
 	//io.BackendFlags &= ~ImGuiBackendFlags_HasSetMousePos;
 	io.BackendPlatformName = "imgui_impl_flylib";
 	
-
+	// how will it work with multiple windows and multiple viewports?
+	// Do the multiwindows have to share the context?
+	// Does ImGui have to be initialized on a per window basis?
 	io.ImeWindowHandle = FLYDISPLAY_GetPlatformWindowHandle(0);
+	
+	
 	// Initialize Render State...
 	ImGui_ImplFlyLib_StaticRenderState();
 	ImGui_ImplFlyLib_CreateFontsTexture();
@@ -401,7 +405,7 @@ void ImGui_ImplFlyLib_NewFrame()
 	int32 w, h;
 	FLYDISPLAY_GetWindowSize(0, &w, &h); 
 	io.DisplaySize = ImVec2(w, h);
-	FLYRENDER_GetFramebufferSize(0, &w, &h);
+	FLYDISPLAY_GetViewportSize(0, &w, &h);
 	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
 
     // Setup Time Step

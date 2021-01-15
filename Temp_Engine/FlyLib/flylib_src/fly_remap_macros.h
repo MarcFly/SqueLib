@@ -1,6 +1,21 @@
 #ifndef FLY_REMAP_MACROS
 #define FLY_REMAP_MACROS
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SUMMARY ///////////////////////////////////////////////////////////////////////////////////////////////
+// Most apis have an easy way to set or get information through a int/bit system
+// In order to maintain functionality and have an easy way to interact with these systems
+// my idea is to have resettable macros that can be shared across apis
+// Whenever a macro is not setup in another, a NULL value most probably will not throw errors OR
+// I can intercept with a specfic value (INT_MAX for example) and not perform the call to the api
+// That way a single initialization can benefit to all apis... contatn with Jesus about it
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define FLY_INVALID -1
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDER MACROS /////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
 #include<glad/glad.h>
 #if defined(USE_OPENGLES)
@@ -23,8 +38,8 @@
 #define FLY_FRONT_AND_BACK		GL_FRONT_AND_BACK
 #define FLY_FILL				GL_FILL
 #else
-#define FLY_FRONT_AND_BACK		-1
-#define FLY_FILL				-1
+#define FLY_FRONT_AND_BACK		FLY_INVALID
+#define FLY_FILL				FLY_INVALID
 #endif
 // Texture Locators
 #define FLY_TEXTURE_2D	GL_TEXTURE_2D
@@ -102,6 +117,74 @@
 #define FLY_FRAGMENT_SHADER GL_FRAGMENT_SHADER
 #define FLY_COMPUTE_SHADER
 #define FLY_GEOMETRY_SHADER
+#endif
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DISPLAY MACROS ////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GLFW //////////////////////////////////////////////////////////////////////////////////////////////////
+#if defined(USE_GLFW)
+#include <GLFW/glfw3.h>
+#define FLY_DISPLAY_END				FLY_INVALID
+// WINDOW HINTS
+#define FLY_MINIMIZED				GLFW_ICONIFIED
+#define FLY_RESIZABLE				GLFW_RESIZABLE
+#define FLY_VISIBLE					GLFW_VISIBLE
+#define FLY_DECORATED				GLFW_DECORATED
+#define FLY_FLOATING				GLFW_FLOATING
+#define FLY_MAXIMIZED				GLFW_MAXIMIZED
+#define FLY_CENTER_CURSOR			GLFW_CENTER_CURSOR
+// CONTEXT HINTS
+#define FLY_WINDOW_CONTEXT_MAJOR	GLFW_CONTEXT_VERSION_MAJOR
+#define FLY_WINDOW_CONTEXT_MINOR	GLFW_CONTEXT_VERSION_MINOR
+#define FLY_WINDOW_CONTEXT_REVISION	GLFW_CONTEXT_REVISION
+#define FLY_CONTEXT_MAJOR_MIN		3
+// BUFFER HINTS
+#define FLY_RED_BITS				GLFW_RED_BITS
+#define FLY_GREEN_BITS				GLFW_GREEN_BITS
+#define FLY_BLUE_BITS				GLFW_BLUE_BITS
+#define FLY_ALPHA_BITS				GLFW_ALPHA_BITS
+#define FLY_DEPTH_BITS				FLY_INVALID
+#define FLY_STENCIL_BITS			GLFW_STENCIL_BITS
+#define FLY_BUFFER_SIZE				FLY_INVALID
+#define FLY_STEREOSCOPIC			GLFW_STEREO
+#define FLY_MSAA_SAMPLES			GLFW_SAMPLES
+#define FLY_SRGB					GLFW_SRGB_CAPABLE
+#define	FLY_REFRESH_RATE			GLFW_REFRESH_RATE
+#define FLY_DOUBLE_BUFFER			GLFW_DOUBLEBUFFER
+
+
+// EGL //////////////////////////////////////////////////////////////////////////////////////////////////
+#elif defined(USE_EGL)
+#include<EGL/egl.h>
+#define FLY_DISPLAY_END				EGL_NONE
+// WINDOW HINTS
+#define FLY_MINIMIZED				FLY_INVALID
+#define FLY_RESIZABLE				FLY_INVALID
+#define FLY_VISIBLE					FLY_INVALID
+#define FLY_DECORATED				FLY_INVALID
+#define FLY_FLOATING				FLY_INVALID
+#define FLY_MAXIMIZED				FLY_INVALID
+#define FLY_CENTER_CURSOR			FLY_INVALID
+// CONTEXT HINTS
+#define FLY_WINDOW_CONTEXT_MAJOR	EGL_RENDERABLE_TYPE
+#define FLY_WINDOW_CONTEXT_MINOR	FLY_INVALID
+#define FLY_WINDOW_CONTEXT_REVISION FLY_INVALID
+#define FLY_CONTEXT_MAJOR_MIN		EGL_OPENGL_ES3_BIT
+// BUFFER HINTS
+#define FLY_RED_BITS				EGL_RED_SIZE
+#define FLY_GREEN_BITS				EGL_GREEN_SIZE
+#define FLY_BLUE_BITS				EGL_BLUE_SIZE
+#define FLY_ALPHA_BITS				EGL_ALPHA_SIZE
+#define FLY_DEPTH_BITS				EGL_DEPTH_BITS
+#define FLY_STENCIL_BITS			EGL_STENCIL_SIZE
+#define FLY_BUFFER_SIZE				EGL_BUFFER_SIZE
+#define FLY_STEREOSCOPIC			FLY_INVALID
+#define FLY_MSAA_SAMPLES			FLY_INVALID
+#define FLY_SRGB					FLY_INVALID
+#define	FLY_REFRESH_RATE			FLY_INVALID
+#define FLY_DOUBLE_BUFFER			FLY_INVALID
+
 #endif
 
 #endif // FLY_REMAP_MACROS
