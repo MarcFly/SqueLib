@@ -4,11 +4,12 @@
 #   include "fly_lib.h"
 #endif
 
-#include <glad/glad.h>
-
-#ifdef USE_OPENGLES
-#include <GLES3/gl32.h>
-#include <EGL/egl.h>
+#if defined(USE_OPENGL)
+#   include <glad/glad.h>
+#elif defined(USE_OPENGLES)
+#   include <GLES3/gl32.h>
+#   include <GLES3/gl3ext.h>
+#   include <EGL/egl.h>
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE CONTROL //////////////////////////////////////////////////////////////////////
@@ -124,8 +125,8 @@ bool FLYRENDER_Init()
     if(!gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress))
     {
         FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
-        return false;
-        //gladLoadGL();   
+        //return false;
+        gladLoadGL();   
     }
 #endif
     
@@ -178,7 +179,7 @@ const char* FLYRENDER_GetGLSLVer()
     {        
         const char* gles = "\n";
 #if defined(USE_OPENGLES)
-        size + = 42;
+        size += 42;
         gles = " es\nprecision mediump float;\n";
 #endif
         str = new char[size];

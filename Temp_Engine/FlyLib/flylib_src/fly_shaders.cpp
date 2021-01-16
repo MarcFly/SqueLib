@@ -8,6 +8,7 @@
 
 #ifdef USE_OPENGLES
 #include <GLES3/gl32.h>
+#include <GLES3/gl3ext.h>
 #include <EGL/egl.h>
 #endif
 

@@ -35,16 +35,16 @@
 #   define FOLDER_ENDING '/'																											
 #endif																																	
 																																		
-#ifdef ANDROID	// This Ifdef has to be revised, because I am supposed to include more rendering apis...								
+#if defined(ANDROID)	// This Ifdef has to be revised, because I am supposed to include more rendering apis...								
 #   define USE_EGL																														
 #	define USE_OPENGLES																													
 #elif defined _WIN32 || defined __linux__																								
+#	define USE_OPENGL
 #   define USE_GLFW	
 #	if defined(_WIN32)
 #       define GLFW_EXPOSE_NATIVE_WIN32
 #	else
-#endif
-#	define USE_OPENGL																													
+#	endif																						
 #endif																																	
 																																		
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////

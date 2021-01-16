@@ -2,6 +2,7 @@
 
 // really want to stop using these includes,.... will do my own simplified string and types?
 #include <string>
+#include <cstring>
 
 #if defined(_DEBUG)
 
@@ -56,6 +57,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         if (!graphics_backend_started) graphics_backend_started = 1;
         else
         {
+            FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB RE-INIT");
             FLYLIB_Init();
             on_resume_callback();
         }
@@ -111,24 +113,26 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
 extern int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev);
 
 // On Android, This main is first call that will call your defined main
+#include <android/log.h>
 extern int main(int argc, char** argv);
 void android_main(struct android_app* app)
 {
     my_app = app;
-    #ifndef FLYLOGGER_OUT
+
     FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB - Android Flylib Start...");
-    #endif
 
     app->onAppCmd = HandleAndroidCMD;
     app->onInputEvent = HandleAndroidInput;
+
     char *argv[] = {"AppMain", 0};
+
     FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB - Calling App Main...");
     main(2, argv);
+
     //app->destroyRequested = 0;
     FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB - Finished executing App...");
 }
 #endif
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE CONTROL ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,8 +219,8 @@ void FLY_PrintVargs(FLY_LogType lt, const char file[], int line, const char* for
 void FLY_ConsolePrint(int lt, const char* log)
 {
     printf("FLY_LogType-%d: %s\n", lt, log);
-#if defined(_DEBUG)
-#if defined(_WIN32)
+
+#if defined(_WIN32) && defined(_DEBUG)
     OutputDebugString(log);
     OutputDebugString("\n");
 #elif defined ANDROID
@@ -224,7 +228,7 @@ void FLY_ConsolePrint(int lt, const char* log)
 #elif defined LINUX
 
 #endif
-#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -18,9 +18,9 @@ struct FLY_Window
     int32 width = 0, height = 0;
 
     // Initialization Flags
-    int2* window_flags = NULL;
-    int2* context_flags = NULL;
-    int2* buffer_flags = NULL;
+    int32* window_options = NULL;
+    int32* context_options = NULL;
+    int32* buffer_options = NULL;
 
     // Flags for workign with flylib
     uint16 working_flags;
@@ -38,26 +38,14 @@ ResizeCallback viewport_resize_callback = EmptyResizeCallback;
 void EmptyViewportSizeCallback(int32* width, int32* height) { FLYPRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
 ViewportSizeCallback viewport_size_callback = EmptyViewportSizeCallback;
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if defined(ANDROID)
-    extern int graphics_backed_started;
-    extern struct android_app* my_app;
-#   include <android/native_activity.h>
-#   include <android_native_app_glue.h>
-#   #include <android/configuration.h>
-#elif defined (_WIN32) || defined (__linux__)
-
-#endif
-
-static int32 const def_window_options[] =
+static int32 def_window_options[] =
 {
     FLY_DISPLAY_END
 };
 
 static int32 const def_context_options[] =
 {
+    FLY_WINDOW_CONTEXT_MAJOR, FLY_CONTEXT_MAJOR_MIN,
     FLY_DISPLAY_END
 };
 
@@ -68,44 +56,37 @@ static int32 const def_buffer_options[] =
     FLY_BLUE_BITS, 8,
     FLY_ALPHA_BITS, 8,
     FLY_BUFFER_SIZE, 32,
-    FLY_STENCIL_BITS, 8,
+    FLY_STENCIL_BITS, 0,
     FLY_DEPTH_BITS, 24,
-    FLY_WINDOW_CONTEXT_MAJOR,  FLY_CONTEXT_MAJOR_MIN,
+    FLY_RENDERABLE_TYPE, FLY_MIN_RENDERABLE,
     FLY_DISPLAY_END
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if defined(ANDROID)
+    extern int graphics_backend_started;
+    extern struct android_app* my_app;
+#   include <android/native_activity.h>
+#   include <android_native_app_glue.h>
+#   include <android/configuration.h>
+#elif defined (_WIN32) || defined (__linux__)
+
+#endif
 
 #if defined(USE_EGL)
 #   include <EGL/egl.h>
-    std::vector<EGLNativeWindowType> egl_windows; // This is what I call display
-    std::vector<EGLDisplay> egl_displays;   // This is what I call window (egl swaps it <><><><>)
-    
-    std::vector<EGLSurface> egl_surfaces;
-    std::vector<EGLContext> egl_contexts
-    // This should be modifiable accordig to a FLY_RENDER_INIT_VARIABLES (forexample)
-    static EGLint const config_attribute_list[] = {
-        EGL_RED_SIZE, 8, 
-        EGL_GREEN_SIZE, 8, 
-        EGL_BLUE_SIZE, 8,
-        EGL_ALPHA_SIZE, 8,
-        EGL_BUFFER_SIZE, 32,
-        EGL_STENCIL_SIZE, 8,
-        EGL_DEPTH_SIZE, 24,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-        EGL_NONE
-    };
+#   include <GLES3/gl32.h>
+    EGLNativeWindowType egl_window;
+    EGLDisplay egl_display;   // This is what I call window (egl swaps it <><><><>)
+    EGLSurface egl_surface;
+    EGLContext egl_context;
 
-    static EGLint window_attribute_list[] = {
-        EGL_NONE
-    };
-
-    static const EGLint context_attribute_list[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
-    };
 
 #elif defined(USE_GLFW)
 #   include <GLFW/glfw3.h>
+#   include <GLFW/glfw3native.h>
     GLFWmonitor** glfw_monitors;
     std::vector<GLFWwindow*> glfw_windows;
     
@@ -156,12 +137,30 @@ static int32 const def_buffer_options[] =
 
 #endif
 
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZING & STATE MANAGEMENT ///////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FLYDISPLAY_Init()
 {
+    // What if some dipshit calls an Init 2 times?
+    // SHould I have a callback that is dereferenced?
+    // Dereference would throw an error immediately which is good for people to learn
+    // But some things and modules require to be reinitialized after coming back...
+    // Should I have a bool?
+    // think about it.
+    if (!next_window)
+    {
+        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        next_window = new FLY_Window();
+        // Default window hints...
+        next_window->buffer_options = (int32*)def_buffer_options;
+        next_window->context_options = (int32*)def_context_options;
+        next_window->context_options = (int32*)def_window_options;
+    }
+
     FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
 
     // BackEnd Specific Variables
@@ -172,11 +171,23 @@ void FLYDISPLAY_Init()
     glfwSetErrorCallback(GLFW_ErrorCallback);
 #endif
 
+#if defined(ANDROID)
+    FLYLOG(LT_INFO, "ANDROID - Waiting of Graphics Backend Initialization...");
+	int events;
+	while( !graphics_backend_started )
+	{
+		struct android_poll_source* source;
+		if (ALooper_pollAll( 0, 0, &events, (void**)&source) >= 0)
+		{
+			if (source != NULL) source->process(my_app, source);
+		}
+	}
+#endif
 
     FLYLOG(LT_INFO, "Initializing Display Backend...");
 // Backend Initialization
 #if defined(USE_EGL)
-    egl_displays.push_back(eglGetDisplay(EGL_DEFAULT_DISPLAY));
+    egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if(egl_display == EGL_NO_DISPLAY)
     {
         FLYLOG(FLY_LogType::LT_ERROR, "EGL Found no Display!");
@@ -184,7 +195,7 @@ void FLYDISPLAY_Init()
     }
     FLYLOG(FLY_LogType::LT_INFO, "Found main display with EGL!");
 
-    if(!eglInitialize(egl_displays[0], &egl_major, &egl_minor))
+    if(!eglInitialize(egl_display, &egl_major, &egl_minor))
     {
         FLYLOG(FLY_LogType::LT_ERROR, "EGL failed to Initialize!");
         exit(0);
@@ -192,11 +203,63 @@ void FLYDISPLAY_Init()
     FLYLOG(FLY_LogType::LT_INFO, "Successfully Initialized EGL!");
 
     FLYLOG(FLY_LogType::LT_INFO, "EGL_VERSION: \"%s\" \nEGL_VENDOR: \"%s\"\nEGL_EXTENSIONS: \"%s\"",
-        eglQueryString(egl_display[0], EGL_VERSION), 
-        eglQueryString(egl_display[0], EGL_VENDOR), 
-        eglQueryString(egl_display[0], EGL_EXTENSIONS));
-    
+        eglQueryString(egl_display, EGL_VERSION), 
+        eglQueryString(egl_display, EGL_VENDOR), 
+        eglQueryString(egl_display, EGL_EXTENSIONS));
 
+    EGLConfig config;
+    EGLint num_config;
+
+    FLYLOG(FLY_LogType::LT_INFO, "Preparing Config...");
+    eglChooseConfig(egl_display, def_buffer_options, &config, 1, &num_config);
+    FLYLOG(FLY_LogType::LT_INFO, "Using EGL Config %d", num_config);
+
+    FLYLOG(FLY_LogType::LT_INFO, "Creating EGL Context...");
+
+    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, def_context_options);
+    if (egl_context == EGL_NO_CONTEXT)
+    {
+        FLYLOG(FLY_LogType::LT_ERROR, "Could not create EGL Context!");
+        exit(0);
+    }
+    FLYLOG(FLY_LogType::LT_INFO, "Created EGL Context!");
+
+    if (egl_window)
+    {
+#if defined(ANDROID)
+        if (!my_app->window)
+        {
+            FLYLOG(FLY_LogType::LT_WARNING, "App restarted without creating window, stopping...");
+            exit(0);
+        }
+#endif
+    }
+#if defined(ANDROID)
+    FLYLOG(FLY_LogType::LT_INFO, "Creating EGL window = surface");
+    egl_window = my_app->window;
+#endif
+    if (!egl_window)
+    {
+        FLYLOG(FLY_LogType::LT_ERROR, "EGL Window got dereferenced!");
+        exit(0);
+    }
+
+#if defined(ANDROID)
+    int32 width = ANativeWindow_getWidth(egl_window);
+    int32 height = ANativeWindow_getHeight(egl_window);
+    next_window->width = width;
+    next_window->height = height;
+    egl_surface = eglCreateWindowSurface(egl_display, config, my_app->window, def_window_options);
+    FLYLOG(FLY_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
+#else // Other EGL based backends?
+#endif
+
+    if (egl_surface == EGL_NO_SURFACE)
+    {
+        FLYLOG(FLY_LogType::LT_ERROR, "Failed to create EGL Surface!");
+        exit(0);
+    }
+    FLYLOG(FLY_LogType::LT_INFO, "Created EGL Surface!");
 
 #elif defined(USE_GLFW)
     FLYLOG(FLY_LogType::LT_INFO, "Compiled with GLFW Version: %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION);
@@ -240,6 +303,7 @@ void FLYDISPLAY_SetVSYNC(int16 vsync_val)
         return;
     }
 #if defined(USE_EGL)
+    // should pass monitor uint to change refresh rate
     eglSwapInterval(egl_display, vsync_val);
 #elif defined USE_GLFW
     glfwSwapInterval(vsync_val);
@@ -282,8 +346,6 @@ void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONTROL SPECIFIC WINDOWS //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <GLFW/glfw3native.h>
-
 void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window)
 {
 #if defined(USE_GLFW)
@@ -385,85 +447,31 @@ uint16 FLYDISPLAY_CloseWindow(uint16 window)
 
 void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 monitor)
 {
-    // Set to monitor[0] for fullscreen at 4th parameter
-    if (!next_window)
-    {
-        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
-        next_window = new FLY_Window();
-        // Default window hints...
-    }
-
-    next_window->title = title;
-    next_window->working_flags = NULL;
-
-    //FLYDISPLAY_NextWindowOptions(window->flags, window->num_flags);
-
-    int x = 0, y = 0, w = 0, h = 0;
-
-#if defined(USE_EGL)
 #if defined(ANDROID)
-    if (egl_contexts.size() > 0)
+    if(fly_windows.size() > 0)
     {
         FLYPRINT(LT_WARNING, "On Android I am not supporting multiple windows currently...");
         return;
     }
 #endif
 
-    EGLConfig config;
-    EGLint num_config;
-    FLYLOG(FLY_LogType::LT_INFO, "Preparing Config...");
-    eglChooseConfig(egl_display[monitor], next_window->buffer_flags, &config, 1, &num_config);
-    FLYLOG(FLY_LogType::LT_INFO, "Using EGL Config %d", num_config);
-
-    FLYLOG(FLY_LogType::LT_INFO, "Creating EGL Context...");
-
-    egl_contexts.push_back(eglCreateContext(egl_display[monitor], config, EGL_NO_CONTEXT, next_window->context_flags));
-    if (egl_contexts[egl_contexts.size() - 1] == EGL_NO_CONTEXT)
+    // Set to monitor[0] for fullscreen at 4th parameter
+    if (!next_window)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "Could not create EGL Context!");
-        exit(0);
-    }
-    FLYLOG(FLY_LogType::LT_INFO, "Created EGL Context!");
-
-    egl_windows.push_back(EGLNativeWindowType());
-    if (egl_windows[egl_windows.size() - 1])
-    {
-#if defined(ANDROID)
-        if (!my_app->window)
-        {
-            FLYLOG(FLY_LogType::LT_WARNING, "App restarted without creating window, stopping...");
-            exit(0);
-        }
-        else
-        {
-            FLYLOG(FLY_LogType::LT_INFO, "Getting EGL Surface..");
-            egl_windows[egl_windows.size() - 1] = my_app->window;
-        }
-#endif
+        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        next_window = new FLY_Window();
+        // Default window hints...
+        next_window->buffer_options = (int32*)def_buffer_options;
+        next_window->context_options = (int32*)def_context_options;
+        next_window->context_options = (int32*)def_window_options;
     }
 
-    if (!egl_windows[egl_windows.size()-1])
-    {
-        FLYLOG(FLY_LogType::LT_ERROR, "EGL Window got dereferenced!");
-        exit(0);
-    }
+    next_window->title = title;
+    next_window->working_flags = NULL;
 
-#if defined(ANDROID)
-    width = ANativeWindow_getWidth(egl_windows[egl_windows.size()-1]);
-    height = ANativeWindow_getHeight(egl_windows[egl_windows.size() - 1]);
-    egl_surfaces.push_back(eglCreateWindowSurface(egl_displays[monitor], config, my_app->window, next_window->window_options));
-    FLYLOG(FLY_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
-#else // Other EGL based backends?
-#endif
+    int x = 0, y = 0, w = 0, h = 0;
 
-    if (egl_surface == EGL_NO_SURFACE)
-    {
-        FLYLOG(FLY_LogType::LT_ERROR, "Failed to create EGL Surface!");
-        exit(0);
-    }
-    FLYLOG(FLY_LogType::LT_INFO, "Created EGL Surface!");
-
-#elif defined(USE_GLFW)
+#if defined(USE_GLFW)
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
     width = (width != 0) ?width : w * .7;
     height = (height != 0) ? height : h * .7;
@@ -488,10 +496,10 @@ void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 
 
     FLYPRINT(FLY_LogType::LT_INFO, "Window \"%s\" opened correctly", title);
 
-    FLYDISPLAY_MakeContextMain(fly_windows.size()-1);
     next_window->width = width;
     next_window->height = height;
     fly_windows.push_back(next_window);
+    FLYDISPLAY_MakeContextMain(fly_windows.size()-1);
     next_window = NULL;
 }
 
@@ -512,6 +520,11 @@ void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y)
 
 void FLYDISPLAY_SwapBuffer(uint16 window)
 {
+    if(window > fly_windows.size())
+    {
+        FLYPRINT(LT_WARNING, "Out of range window...");
+        return;
+    }
 #if defined(USE_EGL)
     // Revise when i get a multiple window frontend for egl
     eglSwapBuffers(egl_display, egl_surface);
@@ -529,6 +542,7 @@ void FLYDISPLAY_SwapAllBuffers()
         eglSwapBuffers(egl_display, egl_surface);
         fly_windows[i]->width = ANativeWindow_getWidth(egl_window);
         fly_windows[i]->height = ANativeWindow_getHeight(egl_window);
+        return;
 #elif defined(USE_GLFW)
         glfwSwapBuffers(glfw_windows[i]);
 #endif

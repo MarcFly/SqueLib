@@ -89,8 +89,11 @@ void FLYLOGGER_Log(FLY_LogType lt, const char file[], int line, const char* form
 
     // For now let's just not take care of logs with bigger size, i think it crashes
     if(len > (calc_logsize)) 
+    {
         FLY_PrintVargs(lt, file, line, tmp);
-
+        delete tmp;
+        return;
+    }
     sprintf(push.log, "%s(%d): %s", sttr.c_str(), line, tmp);
 
     logs.push_back(PairLOG(push.type, push));

@@ -28,6 +28,9 @@ FLY_Pointer fly_pointers[MAX_POINTERS];
 #include <android_native_app_glue.h>
 #include <jni.h>
 #include <android/native_activity.h>
+extern int graphics_backend_started;
+extern struct android_app* my_app;
+
 // From https://github.com/cntools/rawdraw/blob/master/CNFGEGLDriver.c l(616)
 int AndroidGetUnicodeChar(int key_code, int meta_state)
 {
@@ -67,8 +70,8 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     {
         keyboard[code].prev_state = keyboard[code].state;
         keyboard[code].state = AKeyEvent_getAction(ev);
-        keyboard[code].key_callback(unicode, keyboard[code].prev_state, keyboard[code].state);
-        key_fun(keyboard[code]);
+        keyboard[code].callback(unicode, keyboard[code].state);
+        key_fun(code, keyboard[code].state);
     }
     else
     {
@@ -78,6 +81,7 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     return 1;
 }
 
+int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev);
 int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 {
     int32_t evtype = AInputEvent_getType(ev);
@@ -218,23 +222,6 @@ void FLYINPUT_Init()
 }
 void FLYINPUT_InitForWindow(uint16 window)
 {
-    
-#if defined(ANDROID)
-    FLYLOG(LT_INFO, "ANDROID - Waiting of Graphics Backend Initialization...");
-    int events;
-    while (!graphics_backed_started)
-    {
-        struct android_poll_source* source;
-        if (ALooper_pollAll(0, 0, &events, (void**)&source) >= 0)
-        {
-            if (source != NULL)
-            {
-                FLYLOG(LT_INFO, "Processing Init Inputs: Source %d, App %d", source, my_app);
-                source->process(my_app, source);
-            }
-        }
-    }
-#endif
 
 #if defined USE_GLFW
     if (window > glfw_windows.size())
