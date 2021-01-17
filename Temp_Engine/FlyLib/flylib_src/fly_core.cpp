@@ -46,7 +46,7 @@ int FLY_VarGetSize(int type_macro)
 
 int graphics_backend_started = 0;
 struct android_app* my_app;
-
+bool have_resumed = false;
 void HandleAndroidCMD(struct android_app* app, int32_t cmd)
 {
     switch (cmd)
@@ -60,6 +60,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB RE-INIT");
             FLYLIB_Init();
             on_resume_callback();
+            bool have_resumed = true;
         }
         break;
     case APP_CMD_TERM_WINDOW:

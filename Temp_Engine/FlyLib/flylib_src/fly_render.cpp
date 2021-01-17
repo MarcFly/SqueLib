@@ -50,13 +50,13 @@ void FLY_RenderState::SetUp()
 #   endif
 #endif
 
-    FLY_CHECK_RENDER_ERRORS();
+    //FLY_CHECK_RENDER_ERRORS();
 }
 
 void FLY_RenderState::BackUp()
 {
     backed_up = true;
-    FLY_CHECK_RENDER_ERRORS();
+    //FLY_CHECK_RENDER_ERRORS();
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound_texture);
@@ -64,23 +64,23 @@ void FLY_RenderState::BackUp()
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_array_buffer);
     glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_array_buffer);
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &attribute_object);
-    FLY_CHECK_RENDER_ERRORS();
+
     glGetIntegerv(GL_BLEND_EQUATION_RGB, &blend_equation_rgb);
     glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blend_equation_alpha);
-    FLY_CHECK_RENDER_ERRORS();
+
     glGetIntegerv(GL_BLEND_SRC_RGB, &blend_func_src_rgb);
     glGetIntegerv(GL_BLEND_DST_RGB, &blend_func_dst_rgb);
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
-    FLY_CHECK_RENDER_ERRORS();
+
     glGetIntegerv(GL_VIEWPORT, &viewport.x);
     glGetIntegerv(GL_SCISSOR_BOX, &scissor_box.x);
-    FLY_CHECK_RENDER_ERRORS();
+
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
     depth_test = glIsEnabled(GL_DEPTH_TEST);
     scissor_test = glIsEnabled(GL_SCISSOR_TEST);
-    FLY_CHECK_RENDER_ERRORS();
+
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
     glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.x);
@@ -89,7 +89,7 @@ void FLY_RenderState::BackUp()
 
 #endif
 
-    FLY_CHECK_RENDER_ERRORS();
+    //FLY_CHECK_RENDER_ERRORS();
 }
 
 void FLYRENDER_ChangeFramebufferSize(int32 width, int32 height)
@@ -118,31 +118,31 @@ bool FLYRENDER_Init()
 #if defined(USE_OPENGL)
     if(!gladLoadGL())
     {
-        FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
+        FLYPRINT(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
         return false;
     }
 #elif defined(USE_OPENGLES)
     if(!gladLoadGLES2Loader((GLADloadproc)eglGetProcAddress))
     {
-        FLYLOG(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
+        FLYPRINT(FLY_LogType::LT_CRITICAL, "Couldn't Initialize GLAD...");
         //return false;
         gladLoadGL();   
     }
 #endif
     
 
-    FLYLOG(FLY_LogType::LT_INFO, "GLAD Initialized!");
+    FLYPRINT(FLY_LogType::LT_INFO, "GLAD Initialized!");
 #ifdef USE_OPENGL
-    FLYLOG(FLY_LogType::LT_INFO, "OpenGL Core Version: %d.%d", GLVersion.major, GLVersion.minor);
+    FLYPRINT(FLY_LogType::LT_INFO, "OpenGL Core Version: %d.%d", GLVersion.major, GLVersion.minor);
 #elif defined USE_OPENGLES
-    FLYLOG(FLY_LogType::LT_INFO, "OpenGLES Version: %d.%d", GLVersion.major, GLVersion.minor);
+    FLYPRINT(FLY_LogType::LT_INFO, "OpenGLES Version: %d.%d", GLVersion.major, GLVersion.minor);
 #endif
     // Generate Viewport with window size
     uint16 w, h;
     /*FLYDISPLAY_MakeContextMain(0);
     FLYDISPLAY_GetWindowSize(0, &w, &h);
     FLYRENDER_ChangeViewPortSize(w, h);*/
-    FLYLOG(FLY_LogType::LT_INFO, "Main Viewport init...");
+    FLYPRINT(FLY_LogType::LT_INFO, "Main Viewport init...");
     return ret;
 }
 
@@ -421,6 +421,6 @@ void CheckForRenderErrors(const char* file, int line)
     int32 errcode = 0;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     while ((errcode = glGetError()) != GL_NO_ERROR)
-        FLYLOG(LT_WARNING, "%s(%d): OpenGL Error %d", strrchr(file, FOLDER_ENDING), line, errcode);
+        FLYPRINT(LT_WARNING, "%s(%d): OpenGL Error %d", strrchr(file, FOLDER_ENDING), line, errcode);
 #endif
 }

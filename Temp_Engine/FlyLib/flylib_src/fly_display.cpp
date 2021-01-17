@@ -80,7 +80,7 @@ static int32 const def_buffer_options[] =
 #   include <GLES3/gl32.h>
     EGLNativeWindowType egl_window;
     EGLDisplay egl_display;   // This is what I call window (egl swaps it <><><><>)
-    EGLSurface egl_surface;
+    EGLSurface egl_surface = EGL_NO_SURFACE;
     EGLContext egl_context;
 
 
@@ -92,7 +92,7 @@ static int32 const def_buffer_options[] =
     
     void GLFW_ErrorCallback(int error_code, const char* description)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "GLFW_ERROR-%d: %s", error_code, description);
+        FLYPRINT(FLY_LogType::LT_ERROR, "GLFW_ERROR-%d: %s", error_code, description);
     }
 
     void GLFW_CloseCallback(GLFWwindow* window)
@@ -122,7 +122,7 @@ static int32 const def_buffer_options[] =
         }
         FLYDISPLAY_ResizeWindow(win, width, height);
         
-        FLYLOG(FLY_LogType::LT_INFO, "Resized Window \"%s\": %d %d", fly_windows[win]->title, width, height);    
+        FLYPRINT(FLY_LogType::LT_INFO, "Resized Window \"%s\": %d %d", fly_windows[win]->title, width, height);    
     }
 
     static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)
@@ -153,7 +153,7 @@ void FLYDISPLAY_Init()
     // think about it.
     if (!next_window)
     {
-        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        FLYPRINT(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new FLY_Window();
         // Default window hints...
         next_window->buffer_options = (int32*)def_buffer_options;
@@ -161,7 +161,7 @@ void FLYDISPLAY_Init()
         next_window->context_options = (int32*)def_window_options;
     }
 
-    FLYLOG(LT_INFO, "Declaring Backed Specific Variables...");
+    FLYPRINT(LT_INFO, "Declaring Backed Specific Variables...");
 
     // BackEnd Specific Variables
 #if defined(USE_EGL)
@@ -172,7 +172,7 @@ void FLYDISPLAY_Init()
 #endif
 
 #if defined(ANDROID)
-    FLYLOG(LT_INFO, "ANDROID - Waiting of Graphics Backend Initialization...");
+    FLYPRINT(LT_INFO, "ANDROID - Waiting of Graphics Backend Initialization...");
 	int events;
 	while( !graphics_backend_started )
 	{
@@ -184,25 +184,25 @@ void FLYDISPLAY_Init()
 	}
 #endif
 
-    FLYLOG(LT_INFO, "Initializing Display Backend...");
+    FLYPRINT(LT_INFO, "Initializing Display Backend...");
 // Backend Initialization
 #if defined(USE_EGL)
     egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if(egl_display == EGL_NO_DISPLAY)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "EGL Found no Display!");
+        FLYPRINT(FLY_LogType::LT_ERROR, "EGL Found no Display!");
         exit(0);
     }
-    FLYLOG(FLY_LogType::LT_INFO, "Found main display with EGL!");
+    FLYPRINT(FLY_LogType::LT_INFO, "Found main display with EGL!");
 
     if(!eglInitialize(egl_display, &egl_major, &egl_minor))
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "EGL failed to Initialize!");
+        FLYPRINT(FLY_LogType::LT_ERROR, "EGL failed to Initialize!");
         exit(0);
     }
-    FLYLOG(FLY_LogType::LT_INFO, "Successfully Initialized EGL!");
+    FLYPRINT(FLY_LogType::LT_INFO, "Successfully Initialized EGL!");
 
-    FLYLOG(FLY_LogType::LT_INFO, "EGL_VERSION: \"%s\" \nEGL_VENDOR: \"%s\"\nEGL_EXTENSIONS: \"%s\"",
+    FLYPRINT(FLY_LogType::LT_INFO, "EGL_VERSION: \"%s\" \nEGL_VENDOR: \"%s\"\nEGL_EXTENSIONS: \"%s\"",
         eglQueryString(egl_display, EGL_VERSION), 
         eglQueryString(egl_display, EGL_VENDOR), 
         eglQueryString(egl_display, EGL_EXTENSIONS));
@@ -210,37 +210,37 @@ void FLYDISPLAY_Init()
     EGLConfig config;
     EGLint num_config;
 
-    FLYLOG(FLY_LogType::LT_INFO, "Preparing Config...");
+    FLYPRINT(FLY_LogType::LT_INFO, "Preparing Config...");
     eglChooseConfig(egl_display, def_buffer_options, &config, 1, &num_config);
-    FLYLOG(FLY_LogType::LT_INFO, "Using EGL Config %d", num_config);
+    FLYPRINT(FLY_LogType::LT_INFO, "Using EGL Config %d", num_config);
 
-    FLYLOG(FLY_LogType::LT_INFO, "Creating EGL Context...");
+    FLYPRINT(FLY_LogType::LT_INFO, "Creating EGL Context...");
 
     egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, def_context_options);
     if (egl_context == EGL_NO_CONTEXT)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "Could not create EGL Context!");
+        FLYPRINT(FLY_LogType::LT_ERROR, "Could not create EGL Context!");
         exit(0);
     }
-    FLYLOG(FLY_LogType::LT_INFO, "Created EGL Context!");
+    FLYPRINT(FLY_LogType::LT_INFO, "Created EGL Context!");
 
     if (egl_window)
     {
 #if defined(ANDROID)
         if (!my_app->window)
         {
-            FLYLOG(FLY_LogType::LT_WARNING, "App restarted without creating window, stopping...");
+            FLYPRINT(FLY_LogType::LT_WARNING, "App restarted without creating window, stopping...");
             exit(0);
         }
 #endif
     }
 #if defined(ANDROID)
-    FLYLOG(FLY_LogType::LT_INFO, "Creating EGL window = surface");
+    FLYPRINT(FLY_LogType::LT_INFO, "Creating EGL window = surface");
     egl_window = my_app->window;
 #endif
     if (!egl_window)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "EGL Window got dereferenced!");
+        FLYPRINT(FLY_LogType::LT_ERROR, "EGL Window got dereferenced!");
         exit(0);
     }
 
@@ -249,27 +249,34 @@ void FLYDISPLAY_Init()
     int32 height = ANativeWindow_getHeight(egl_window);
     next_window->width = width;
     next_window->height = height;
-    egl_surface = eglCreateWindowSurface(egl_display, config, my_app->window, def_window_options);
-    FLYLOG(FLY_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
+    EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, def_window_options);
+    FLYPRINT(FLY_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
 #else // Other EGL based backends?
 #endif
-
-    if (egl_surface == EGL_NO_SURFACE)
+    
+    
+    if (test == EGL_NO_SURFACE)
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "Failed to create EGL Surface!");
+        if(egl_surface == EGL_NO_SURFACE)
+        {
+        FLYPRINT(FLY_LogType::LT_ERROR, "Failed to create EGL Surface!: %#x", eglGetError());
         exit(0);
+        }
     }
-    FLYLOG(FLY_LogType::LT_INFO, "Created EGL Surface!");
+    else
+        egl_surface = test;
+
+    FLYPRINT(FLY_LogType::LT_INFO, "Created EGL Surface!");
 
 #elif defined(USE_GLFW)
-    FLYLOG(FLY_LogType::LT_INFO, "Compiled with GLFW Version: %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION);
+    FLYPRINT(FLY_LogType::LT_INFO, "Compiled with GLFW Version: %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION);
     glfwGetVersion(&glfw_major, &glfw_minor, &glfw_revision);
-    FLYLOG(FLY_LogType::LT_INFO, "Using GLFW Version: %d.%d.%d", glfw_major, glfw_minor, glfw_revision);
+    FLYPRINT(FLY_LogType::LT_INFO, "Using GLFW Version: %d.%d.%d", glfw_major, glfw_minor, glfw_revision);
 
 // GLFW Hints - Before calling glfwInit(), setup behaviour.
     glfwInitHint(GLFW_JOYSTICK_HAT_BUTTONS, GLFW_TRUE); // It is default value but for test and check
     if (!glfwInit()) exit(0);
-    FLYLOG(FLY_LogType::LT_INFO, "Successfully Initialized GLFW!");
+    FLYPRINT(FLY_LogType::LT_INFO, "Successfully Initialized GLFW!");
 
     glfw_monitors = glfwGetMonitors(&monitor_count); // Main Monitor is always 0
     //glfwSetMonitorCallback( _send_monitor_change_event_ );
@@ -279,7 +286,7 @@ void FLYDISPLAY_Init()
 
 void FLYDISPLAY_Close()
 {
-    FLYLOG(FLY_LogType::LT_INFO, "Closing FLY_Displays...");
+    FLYPRINT(FLY_LogType::LT_INFO, "Closing FLY_Displays...");
 #if defined(USE_EGL)
 
 #elif defined USE_GLFW
@@ -299,7 +306,7 @@ void FLYDISPLAY_SetVSYNC(int16 vsync_val)
 {
     if (main_window_context == UINT16_MAX)
     {
-        FLYLOG(FLY_LogType::LT_WARNING, "No main context to act on, dismissed change of SwapInterval!");
+        FLYPRINT(FLY_LogType::LT_WARNING, "No main context to act on, dismissed change of SwapInterval!");
         return;
     }
 #if defined(USE_EGL)
@@ -385,7 +392,7 @@ void FLYDISPLAY_GetWindowSize(uint16 window, int32* x, int32* y)
     }
     else
     {
-        FLYLOG(FLY_LogType::LT_WARNING, "Window not available!");
+        FLYPRINT(FLY_LogType::LT_WARNING, "Window not available!");
     }
 }
 
@@ -396,7 +403,7 @@ void FLYDISPLAY_GetViewportSize(uint16 window, int32* w, int32* h)
     if (window < fly_windows.size())
         viewport_size_callback(w, h);
     else
-        FLYLOG(FLY_LogType::LT_WARNING, "Window not available!");
+        FLYPRINT(FLY_LogType::LT_WARNING, "Window not available!");
 
     FLYDISPLAY_MakeContextMain(prev_main);
 }
@@ -409,7 +416,7 @@ void FLYDISPLAY_SetWindowClose(uint16 window)
     if (window < fly_windows.size())
         SET_FLAG(fly_windows[window]->working_flags, FLYWINDOW_TO_CLOSE);
     else
-        FLYLOG(LT_WARNING, "Invalid window...");
+        FLYPRINT(LT_WARNING, "Invalid window...");
 }
 
 bool FLYDISPLAY_ShouldWindowClose(uint16 window)
@@ -424,7 +431,7 @@ uint16 FLYDISPLAY_CloseWindow(uint16 window)
     uint16 size = fly_windows.size();
     if(window < size)
     {
-        FLYLOG(FLY_LogType::LT_INFO, "Closing window n*%d with title %s", window, fly_windows[window]->title);
+        FLYPRINT(FLY_LogType::LT_INFO, "Closing window n*%d with title %s", window, fly_windows[window]->title);
         delete fly_windows[window];
         fly_windows[window] = fly_windows[size-1];
         fly_windows.pop_back();
@@ -436,11 +443,11 @@ uint16 FLYDISPLAY_CloseWindow(uint16 window)
         glfw_windows[window] = glfw_windows[size - 1]; // This changes the order drastically, but fast
         glfw_windows.pop_back();
 #endif
-        FLYLOG(FLY_LogType::LT_INFO, "Window n*%d with title %s is now n*%d", size-1, fly_windows[window]->title, window);
+        FLYPRINT(FLY_LogType::LT_INFO, "Window n*%d with title %s is now n*%d", size-1, fly_windows[window]->title, window);
     }
     else
     {
-        FLYLOG(FLY_LogType::LT_WARNING, "Window n*%d not available!");
+        FLYPRINT(FLY_LogType::LT_WARNING, "Window n*%d not available!");
     }
     return window; // When a window is popped that is not last, last becomes this window, thus return position of previous last window
 }
@@ -458,7 +465,7 @@ void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 
     // Set to monitor[0] for fullscreen at 4th parameter
     if (!next_window)
     {
-        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        FLYPRINT(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new FLY_Window();
         // Default window hints...
         next_window->buffer_options = (int32*)def_buffer_options;
@@ -553,13 +560,13 @@ void FLYDISPLAY_MakeContextMain(uint16 window)
 {
     if (window > fly_windows.size())
     {
-        FLYLOG(FLY_LogType::LT_WARNING, "Invalid context!");
+        FLYPRINT(FLY_LogType::LT_WARNING, "Invalid context!");
         return;
     }
 #if defined(USE_EGL)
     if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
     {
-        FLYLOG(FLY_LogType::LT_ERROR, "Failed to attach Context to Surface (eglMakeCurrent())!");
+        FLYPRINT(FLY_LogType::LT_ERROR, "Failed to attach Context to Surface (eglMakeCurrent())!");
         exit(0);
     };
 #elif defined(USE_GLFW)

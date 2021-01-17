@@ -18,9 +18,10 @@ enum main_states
 
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
+
+extern bool have_resumed;
 void ImGuiImplFlyLibTest()
 {
-    FLYPRINT(LT_INFO, "TEST_CRASH");
         // Shader Setup
         const char* vertexShaderSource =
             "layout (location = 0) in vec3 aPos;\n"
@@ -35,11 +36,9 @@ void ImGuiImplFlyLibTest()
             "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
             "}\0";
         const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertexShaderSource };
-        FLYPRINT(LT_INFO, "TEST_CRASH");
         FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
-        FLYPRINT(LT_INFO, "TEST_CRASH");
         vert_s->Compile();
-        FLY_CHECK_RENDER_ERRORS();
+
         const char* fragmentShaderSource =
             "out vec4 FragColor;\n"
             "in vec2 v_uv;\n"
@@ -50,14 +49,13 @@ void ImGuiImplFlyLibTest()
         const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragmentShaderSource };
         FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
         frag_s->Compile();
-        FLY_CHECK_RENDER_ERRORS();
+
         FLY_Program program;
         FLYRENDER_CreateProgram(&program);
         program.AttachShader(vert_s);
         program.AttachShader(frag_s);
         FLYRENDER_LinkProgram(program);
-        FLY_CHECK_RENDER_ERRORS();
-        FLY_CHECK_RENDER_ERRORS();
+
         // Texture Setup--------------------------------------------------------------------------------
         FLY_Texture2D tex;
         FLY_GenTextureData(&tex);
@@ -76,13 +74,13 @@ void ImGuiImplFlyLibTest()
         FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
         tex.SetParameter(mag_filter);
         tex.ApplyParameters();
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+
 #ifdef _WIN32
         tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
         FLY_SendTextureToGPU(tex);
         stbi_image_free(tex.pixels);
 #endif
-FLYPRINT(LT_INFO, "TEST_CRASH");
+
         // Mesh Setup-----------------------------------------------------------------------------------
         float vertices[] = {
             // positions          // colors           // texture coords
@@ -109,7 +107,7 @@ FLYPRINT(LT_INFO, "TEST_CRASH");
         triangle.AddAttribute(new FLY_VertAttrib("aPos", FLY_FLOAT, false, 3));
         triangle.AddAttribute(new FLY_VertAttrib("aCol", FLY_FLOAT, false, 3));
         triangle.AddAttribute(new FLY_VertAttrib("aTexCoord", FLY_FLOAT, false, 2));
-FLYPRINT(LT_INFO, "TEST_CRASH");
+
         FLY_GenerateMeshBuffer(&triangle);
         FLY_BindMeshBuffer(triangle);
         FLY_SendMeshToGPU(triangle);
@@ -117,11 +115,11 @@ FLYPRINT(LT_INFO, "TEST_CRASH");
 
         FLYRENDER_UseProgram(program);
         program.DeclareUniform("ourColor");
-FLYPRINT(LT_INFO, "TEST_CRASH");
+
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLY_Timer t;
     //-------------------------------------------------------------------
-FLYPRINT(LT_INFO, "TEST_CRASH");
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -132,25 +130,26 @@ FLYPRINT(LT_INFO, "TEST_CRASH");
     bool show_another_window = true;
     while(!FLYDISPLAY_ShouldWindowClose(0))
     {
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYINPUT_Process(0);
+        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
      //---------------------------   
         FLYRENDER_UseProgram(program);
+        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
         SetFloat4(program, "ourColor", float4(0, green, 0, 1));
 #ifdef _WIN32
-FLYPRINT(LT_INFO, "TEST_CRASH");
         FLY_SetActiveTextureUnit(FLY_TEXTURE0);
         FLY_BindTexture(tex);
 #endif
-FLYPRINT(LT_INFO, "TEST_CRASH");
         FLYRENDER_DrawIndices(triangle);
+        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         //----------------------
-FLYPRINT(LT_INFO, "TEST_CRASH");
         ImGui_ImplFlyLib_NewFrame();
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+
         ImGui::NewFrame();
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+
         if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
         {
             static float f = 0.0f;
@@ -173,21 +172,21 @@ FLYPRINT(LT_INFO, "TEST_CRASH");
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+
         ImGui::Render();
-FLYPRINT(LT_INFO, "TEST_CRASH");
+
         int32 x, y;
         FLYDISPLAY_GetViewportSize(0, &x, & y);
-        FLYPRINT(LT_INFO, "TEST_CRASH");
-        // here we should make the expected window framebuffer the main
+if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        // Remember to make the expected framebuffer (aka window) to main
         FLYRENDER_ChangeFramebufferSize(x, y);
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYRENDER_Clear(col);
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         ImGui_ImplFlyLib_Render(ImGui::GetDrawData());
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYDISPLAY_SwapAllBuffers();
-        FLYPRINT(LT_INFO, "TEST_CRASH");
+if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         
         
     }
@@ -224,10 +223,8 @@ int main(int argc, char**argv)
     }
 
     //LearnOpenGLTest();
-    FLYPRINT(LT_INFO, "Testing Crash...");
     ImGuiImplFlyLibTest();
     // For Testing timer and android keyboard
-    FLYPRINT(LT_INFO, "Testing Crash...");
     FLYINPUT_DisplaySoftwareKeyboard(true);
     while(state == MAIN_UPDATE)
     {
