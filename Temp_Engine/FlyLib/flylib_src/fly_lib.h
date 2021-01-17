@@ -156,9 +156,9 @@ FL_API void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h);
 																																		
 // Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////		
 // I don't like having user setup a FLY_Window directly
-FL_API void FLYDISPLAY_NextWindow_BufferHints(int2* options, int32 size);
-FL_API void FLYDISPLAY_NextWindow_ContextHints(int2* options, int32 size);
-FL_API void FLYDISPLAY_NextWindow_WindowHints(int2* options, int32 size);
+FL_API void FLYDISPLAY_NextWindow_WindowHints(int32* options, int32 size);
+FL_API void FLYDISPLAY_NextWindow_ContextHints(int32* options, int32 size);
+FL_API void FLYDISPLAY_NextWindow_BufferHints(int32* options, int32 size);
 
 FL_API void FLYDISPLAY_OpenWindow(const char* title, int32 width=0, int32 height=0, uint16 monitor = 0);
 FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);

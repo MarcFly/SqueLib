@@ -19,9 +19,13 @@ struct FLY_Window
 
     // Initialization Flags
     int32* window_options = NULL;
+    int32 num_window_options = 0;
+    
     int32* context_options = NULL;
+    int32 num_context_options = 0;
+    
     int32* buffer_options = NULL;
-
+    int32 num_buffer_options = 0;
     // Flags for workign with flylib
     uint16 working_flags;
 };
@@ -451,6 +455,43 @@ uint16 FLYDISPLAY_CloseWindow(uint16 window)
     }
     return window; // When a window is popped that is not last, last becomes this window, thus return position of previous last window
 }
+
+void FLYDISPLAY_NextWindow_WindowHints(int32* options, int32 size)
+{
+    if (!next_window)
+    {
+        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        next_window = new FLY_Window();
+    }
+
+    next_window->window_options = options;
+    next_window->num_window_options = size;
+}
+
+void FLYDISPLAY_NextWindow_ContextHints(int32* options, int32 size)
+{
+    if (!next_window)
+    {
+        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        next_window = new FLY_Window();
+    }
+
+    next_window->context_options = options;
+    next_window->num_context_options = size;
+}
+
+void FLYDISPLAY_NextWindow_BufferHints(int32* options, int32 size)
+{
+    if (!next_window)
+    {
+        FLYLOG(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
+        next_window = new FLY_Window();
+    }
+
+    next_window->buffer_options = options;
+    next_window->num_buffer_options = size;
+}
+
 
 void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 monitor)
 {
