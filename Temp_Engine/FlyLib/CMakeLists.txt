@@ -95,11 +95,29 @@ set_target_properties(MathGeoLib
         LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
 )
-#set(mathgeolib_include ${mathgeolib_SOURCE_DIR}/src)
-#file(GLOB_RECURSE mathgeolib_src ${mathgeolib_include}/*.cpp ${mathgeolib_include}/*.c)
-#add_library(mgl_lib STATIC "${mathgeolib_src}")
-#target_include_directories(mgl_lib PUBLIC ${mathgeolib_include})
+# FlatBuffers------------------------------------------------------------------------------------
+option(FLATBUFFERS_BUILD_TESTS OFF)
+option(FLATBUFFERS_INSTALL OFF)
+FetchContent_Declare(flatbuffers
+    GIT_REPOSITORY https://github.com/google/flatbuffers.git
+    GIT_TAG v1.12.0
+)
+FetchContent_MakeAvailable(flatbuffers)
+FetchContent_GetProperties(flatbuffers SOURCE_DIR flatbuffers_src_dir)
 
+set(flatbuffers_include "${flatbuffers_src_dir}/include/flatbuffers")
+# If I want to use it locally instead of pulling the whole repo
+#set(flatbuffers_include "${CMAKE_CURRENT_SOURCE_DIR}/external/flatbuffers-src/include/flatbuffers")
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/flatbuffers-src"
+#                 ${CMAKE_CURRENT_BINARY_DIR}/flatbuffers-build
+#                 EXCLUDE_FROM_ALL)
+
+set_target_properties(flatbuffers
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+)
 
 # DESKTOP DEPENDENCIES---------------------------------------------------------------------------
 if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) 
@@ -196,10 +214,12 @@ endif()
 #------------------------------------------------------------------------------------------------
 target_include_directories(FlyLib PUBLIC
     ${mgl_src_dir}
+    ${flatbuffers_include}
 )
 target_link_libraries(FlyLib PUBLIC
     glad
     MathGeoLib
+    flatbuffers
 )
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT

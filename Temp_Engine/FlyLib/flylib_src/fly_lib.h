@@ -30,9 +30,11 @@
 																																		
 // OS Specific Defs ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef _WIN32																															
-#   define FOLDER_ENDING '\\'																											
+#   define FOLDER_ENDING '\\'	
+#	define FE '\\'
 #else																																	
-#   define FOLDER_ENDING '/'																											
+#   define FOLDER_ENDING '/'	
+#	define FE '/'
 #endif																																	
 																																		
 #if defined(ANDROID)	// This Ifdef has to be revised, because I am supposed to include more rendering apis...								
@@ -640,5 +642,16 @@ FL_API void FLYSHADER_CheckCompileLog(const FLY_Shader& fly_shader);
 FL_API void FLYRENDER_CheckProgramLog(const FLY_Program& fly_program);
 FL_API void CheckForRenderErrors(const char* file, int line);																			
 #define FLY_CHECK_RENDER_ERRORS() FL_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
-																																	
+			
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// FILESYSTEM //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//  i don't like having to inlcude std::stirng..........
+#include <string>
+FL_API std::string FLYFS_GetExecPath();
+FL_API bool FLYFS_CreateDirFullPath(const char* path);
+FL_API bool FLYFS_CreateDirRelative(const char* path, int32_t flags = NULL);
+FL_API byte* FLYFS_LoadFileRaw(const char* path);
+FL_API bool FLYFS_WriteFileRaw(const char* path, byte* data);
 #endif // _FLY_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

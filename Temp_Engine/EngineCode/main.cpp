@@ -19,107 +19,109 @@ enum main_states
 bool have_resumed;
 void ImGuiImplFlyLibTest()
 {
-        // Shader Setup
-        const char* vertexShaderSource =
-            "layout (location = 0) in vec3 aPos;\n"
-            "layout (location = 1) in vec3 aCol;\n"
-            "layout (location = 2) in vec2 aTexCoord;\n"
-            "out vec3 v_col;\n"
-            "out vec2 v_uv;\n"
-            "void main()\n"
-            "{\n"
-            "   v_uv = aTexCoord;\n"
-            "   v_col = aCol;\n"
-            "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-            "}\0";
-        const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertexShaderSource };
-        FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
-        vert_s->Compile();
+    std::string test = FLYFS_GetExecPath();
+    bool test_dir = FLYFS_CreateDirRelative("../JustTesting", FLYFS_HIDDEN);
+    // Shader Setup
+    const char* vertexShaderSource =
+        "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 1) in vec3 aCol;\n"
+        "layout (location = 2) in vec2 aTexCoord;\n"
+        "out vec3 v_col;\n"
+        "out vec2 v_uv;\n"
+        "void main()\n"
+        "{\n"
+        "   v_uv = aTexCoord;\n"
+        "   v_col = aCol;\n"
+        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+        "}\0";
+    const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertexShaderSource };
+    FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
+    vert_s->Compile();
 
-        const char* fragmentShaderSource =
-            "out vec4 FragColor;\n"
-            "in vec2 v_uv;\n"
-            "in vec3 v_col;\n"
-            "uniform vec4 ourColor;\n"
-            "uniform sampler2D ourTexture;\n"
-            "void main() { FragColor = ourColor+vec4(v_col, 1.0)+texture(ourTexture, v_uv);}\0";
-        const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragmentShaderSource };
-        FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
-        frag_s->Compile();
+    const char* fragmentShaderSource =
+        "out vec4 FragColor;\n"
+        "in vec2 v_uv;\n"
+        "in vec3 v_col;\n"
+        "uniform vec4 ourColor;\n"
+        "uniform sampler2D ourTexture;\n"
+        "void main() { FragColor = ourColor+vec4(v_col, 1.0)+texture(ourTexture, v_uv);}\0";
+    const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragmentShaderSource };
+    FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
+    frag_s->Compile();
 
-        FLY_Program program;
-        FLYRENDER_CreateProgram(&program);
-        program.AttachShader(vert_s);
-        program.AttachShader(frag_s);
-        FLYRENDER_LinkProgram(program);
+    FLY_Program program;
+    FLYRENDER_CreateProgram(&program);
+    program.AttachShader(vert_s);
+    program.AttachShader(frag_s);
+    FLYRENDER_LinkProgram(program);
         
-        FLY_CHECK_RENDER_ERRORS();
-        // Texture Setup--------------------------------------------------------------------------------
-        FLY_Texture2D tex;
-        FLY_GenTextureData(&tex);
-        tex.format = FLY_RGB;
-        tex.var_type = FLY_UBYTE;
-        FLY_TexAttrib* wrap_s = new FLY_TexAttrib(FLY_WRAP_S, FLY_INT, new int32_t(FLY_MIRROR));
-        tex.SetParameter(wrap_s);
+    FLY_CHECK_RENDER_ERRORS();
+    // Texture Setup--------------------------------------------------------------------------------
+    FLY_Texture2D tex;
+    FLY_GenTextureData(&tex);
+    tex.format = FLY_RGB;
+    tex.var_type = FLY_UBYTE;
+    FLY_TexAttrib* wrap_s = new FLY_TexAttrib(FLY_WRAP_S, FLY_INT, new int32_t(FLY_MIRROR));
+    tex.SetParameter(wrap_s);
 
-        FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32_t(FLY_MIRROR));
-        tex.SetParameter(wrap_t);
-        //FLY_TexAttrib* border_color = tex.AddParameter();
-        //border_color->Set(FLY_BORDER_COLOR,FLY_FLOAT, new float4(1.0f, 1.0f, 0.0f, 1.0f));
+    FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32_t(FLY_MIRROR));
+    tex.SetParameter(wrap_t);
+    //FLY_TexAttrib* border_color = tex.AddParameter();
+    //border_color->Set(FLY_BORDER_COLOR,FLY_FLOAT, new float4(1.0f, 1.0f, 0.0f, 1.0f));
 
-        FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
-        tex.SetParameter(min_filter);
-        FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
-        tex.SetParameter(mag_filter);
-        tex.ApplyParameters();
+    FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
+    tex.SetParameter(min_filter);
+    FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
+    tex.SetParameter(mag_filter);
+    tex.ApplyParameters();
 
 #ifdef _WIN32
-        tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
-        FLY_SendTextureToGPU(tex);
-        stbi_image_free(tex.pixels);
+    tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
+    FLY_SendTextureToGPU(tex);
+    stbi_image_free(tex.pixels);
 #endif
 
-        FLY_CHECK_RENDER_ERRORS();
+    FLY_CHECK_RENDER_ERRORS();
 
-        // Mesh Setup-----------------------------------------------------------------------------------
-        float vertices[] = {
-            // positions          // colors           // texture coords
-             0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-             0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-        };
-        unsigned int indices[] = {  // note that we start from 0!
-            0, 1, 3,   // first triangle
-            1, 2, 3    // second triangle
-        };
-        FLY_Mesh triangle;
+    // Mesh Setup-----------------------------------------------------------------------------------
+    float vertices[] = {
+        // positions          // colors           // texture coords
+            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+    };
+    unsigned int indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
+    };
+    FLY_Mesh triangle;
 
-        triangle.verts = (char*)vertices;
-        triangle.num_verts = 4;
-        triangle.draw_config = FLY_TRIANGLES;
-        triangle.draw_mode = FLY_STATIC_DRAW;
-        triangle.indices = (char*)indices;
-        triangle.index_var = FLY_UINT;
-        triangle.index_var_size = 4;
-        triangle.num_index = 6;
+    triangle.verts = (char*)vertices;
+    triangle.num_verts = 4;
+    triangle.draw_config = FLY_TRIANGLES;
+    triangle.draw_mode = FLY_STATIC_DRAW;
+    triangle.indices = (char*)indices;
+    triangle.index_var = FLY_UINT;
+    triangle.index_var_size = 4;
+    triangle.num_index = 6;
 
-        triangle.AddAttribute(new FLY_VertAttrib("aPos", FLY_FLOAT, false, 3));
-        triangle.AddAttribute(new FLY_VertAttrib("aCol", FLY_FLOAT, false, 3));
-        triangle.AddAttribute(new FLY_VertAttrib("aTexCoord", FLY_FLOAT, false, 2));
+    triangle.AddAttribute(new FLY_VertAttrib("aPos", FLY_FLOAT, false, 3));
+    triangle.AddAttribute(new FLY_VertAttrib("aCol", FLY_FLOAT, false, 3));
+    triangle.AddAttribute(new FLY_VertAttrib("aTexCoord", FLY_FLOAT, false, 2));
 
-        FLY_GenerateMeshBuffer(&triangle);
-        FLY_BindMeshBuffer(triangle);
-        FLY_SendMeshToGPU(triangle);
-        triangle.SetLocationsInOrder();
+    FLY_GenerateMeshBuffer(&triangle);
+    FLY_BindMeshBuffer(triangle);
+    FLY_SendMeshToGPU(triangle);
+    triangle.SetLocationsInOrder();
 
-        FLYRENDER_UseProgram(program);
-        program.DeclareUniform("ourColor");
+    FLYRENDER_UseProgram(program);
+    program.DeclareUniform("ourColor");
 
-        ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
-        FLY_Timer t;
+    ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
+    FLY_Timer t;
 
-        FLY_CHECK_RENDER_ERRORS();
+    FLY_CHECK_RENDER_ERRORS();
     //-------------------------------------------------------------------
 
     IMGUI_CHECKVERSION();
