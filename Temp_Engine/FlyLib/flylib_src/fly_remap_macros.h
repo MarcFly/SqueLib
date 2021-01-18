@@ -199,6 +199,7 @@
 #include <libloaderapi.h>
 #define FLYFS_HIDDEN				FILE_ATTRIBUTE_HIDDEN
 #elif defined(__linux__)
+#define FLYFS_HIDDEN				BITSET1
 #elif defined(ANDROID)
 #endif
 #endif // FLY_REMAP_MACROS

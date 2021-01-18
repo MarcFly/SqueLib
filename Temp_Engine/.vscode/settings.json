@@ -94,7 +94,9 @@
         "optional": "cpp",
         "sstream": "cpp",
         "memory_resource": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "set": "cpp",
+        "unordered_set": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

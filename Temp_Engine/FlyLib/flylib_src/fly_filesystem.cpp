@@ -23,6 +23,9 @@
 #include <Windows.h>
 #include <libloaderapi.h>
 #elif defined(__linux__)
+#include <unistd.h>
+#include <sys/stat.h>
+#include <libgen.h>
 #elif defined(ANDROID)
 #endif
 
@@ -31,14 +34,25 @@
 // Should I use std::string?
 std::string FLYFS_GetExecPath()
 {
+	std::string ret;
 	char path[256];
 	int len = 0;
 #if defined(_WIN32)
 	len = GetModuleFileNameA(NULL, path, 256);
+	std::string exec_path(path);
+	std::string exe = strrchr(path, FE);
+	size_t v = exec_path.find(std::string_view(exe));
+	exec_path = exec_path.substr(0, exec_path.length() - exe.length()) + FOLDER_ENDING + path;
+
 #elif defined(__linux__)
+	int32_t pid = getpid();
+	char string[50];
+	sprintf(string, "/proc/%d/self", pid);
+	len = readlink(string, path, 256);
+	ret = dirname(path);
 #elif defined(ANDROID)
 #endif
-	return std::string(path);
+	return ret;
 }
 
 bool FLYFS_CreateDirFullPath(const char* path)
@@ -47,6 +61,7 @@ bool FLYFS_CreateDirFullPath(const char* path)
 #if defined(_WIN32)
 	ret = CreateDirectoryA(path, NULL);
 #elif defined(__linux__)
+	ret = (mkdir("path", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #elif defined(ANDROID)
 #endif
 	return ret;
@@ -56,16 +71,19 @@ bool FLYFS_CreateDirFullPath(const char* path)
 bool FLYFS_CreateDirRelative(const char* path, int32_t flags)
 {
 	bool ret = true;
-	std::string exec_path = FLYFS_GetExecPath();
-	std::string exe = strrchr(exec_path.c_str(), FE);
-	size_t v = exec_path.find(std::string_view(exe));
-	exec_path = exec_path.substr(0, exec_path.length() - exe.length()) + FOLDER_ENDING + path;
+	std::string exec_path = FLYFS_GetExecPath() + FOLDER_ENDING + path;
+	
 
 	FLYFS_CreateDirFullPath(exec_path.c_str());
 
 #if defined(_WIN32)
 	SetFileAttributes(exec_path.c_str(), flags);
 #elif defined(__linux__)
+	if(CHK_FLAG(flags, FLYFS_HIDDEN))
+	{
+		int32_t v = exec_path.find(strrchr(exec_path.c_str(), FOLDER_ENDING));
+		rename(exec_path.c_str(), exec_path.insert(v+1, 1, '.').c_str());
+	}
 #elif defined(ANDROID)
 #endif
 
