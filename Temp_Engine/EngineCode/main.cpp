@@ -1,7 +1,5 @@
 #include <iostream>
 #include <fly_lib.h>
-//#include <imgui.h>
-//#include <imgui_impl_flylib.h>
 
 enum main_states
 {
@@ -12,14 +10,13 @@ enum main_states
 };
 
 #include <cmath>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
-
-extern bool have_resumed;
+#include <MathGeoLib.h>
+bool have_resumed;
 void ImGuiImplFlyLibTest()
 {
         // Shader Setup
@@ -55,23 +52,24 @@ void ImGuiImplFlyLibTest()
         program.AttachShader(vert_s);
         program.AttachShader(frag_s);
         FLYRENDER_LinkProgram(program);
-
+        
+        FLY_CHECK_RENDER_ERRORS();
         // Texture Setup--------------------------------------------------------------------------------
         FLY_Texture2D tex;
         FLY_GenTextureData(&tex);
         tex.format = FLY_RGB;
         tex.var_type = FLY_UBYTE;
-        FLY_TexAttrib* wrap_s = new FLY_TexAttrib(FLY_WRAP_S, FLY_INT, new int32(FLY_MIRROR));
+        FLY_TexAttrib* wrap_s = new FLY_TexAttrib(FLY_WRAP_S, FLY_INT, new int32_t(FLY_MIRROR));
         tex.SetParameter(wrap_s);
 
-        FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32(FLY_MIRROR));
+        FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32_t(FLY_MIRROR));
         tex.SetParameter(wrap_t);
         //FLY_TexAttrib* border_color = tex.AddParameter();
         //border_color->Set(FLY_BORDER_COLOR,FLY_FLOAT, new float4(1.0f, 1.0f, 0.0f, 1.0f));
 
-        FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32(FLY_LINEAR));
+        FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
         tex.SetParameter(min_filter);
-        FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
+        FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
         tex.SetParameter(mag_filter);
         tex.ApplyParameters();
 
@@ -80,6 +78,8 @@ void ImGuiImplFlyLibTest()
         FLY_SendTextureToGPU(tex);
         stbi_image_free(tex.pixels);
 #endif
+
+        FLY_CHECK_RENDER_ERRORS();
 
         // Mesh Setup-----------------------------------------------------------------------------------
         float vertices[] = {
@@ -118,6 +118,8 @@ void ImGuiImplFlyLibTest()
 
         ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
         FLY_Timer t;
+
+        FLY_CHECK_RENDER_ERRORS();
     //-------------------------------------------------------------------
 
     IMGUI_CHECKVERSION();
@@ -130,6 +132,7 @@ void ImGuiImplFlyLibTest()
     bool show_another_window = true;
     while(!FLYDISPLAY_ShouldWindowClose(0))
     {
+
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYINPUT_Process(0);
         if(have_resumed) FLY_CHECK_RENDER_ERRORS();
@@ -137,7 +140,7 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYRENDER_UseProgram(program);
         if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
-        SetFloat4(program, "ourColor", float4(0, green, 0, 1));
+        SetFloat4(program, "ourColor", math::float4(0, green, 0, 1));
 #ifdef _WIN32
         FLY_SetActiveTextureUnit(FLY_TEXTURE0);
         FLY_BindTexture(tex);
@@ -175,10 +178,11 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
 
         ImGui::Render();
 
-        int32 x, y;
-        FLYDISPLAY_GetViewportSize(0, &x, & y);
+        int32_t x, y;
+        FLYDISPLAY_GetViewportSize(0, &x, &y);
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         // Remember to make the expected framebuffer (aka window) to main
+    FLYDISPLAY_MakeContextMain(0);
         FLYRENDER_ChangeFramebufferSize(x, y);
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYRENDER_Clear(col);
@@ -208,7 +212,7 @@ int main(int argc, char**argv)
 
     // Helpers Initialization
     {
-        FLYLIB_Init(/*flags*/);
+        FLYLIB_Init("Flylib Testing Grounds", NULL);
     }
 
     // Engine Initialization

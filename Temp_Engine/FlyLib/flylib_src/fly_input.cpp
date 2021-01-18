@@ -7,12 +7,12 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void EmptyKey(int32 code, int32 state) { FLYPRINT(LT_INFO, "Key %c: %d", code, state); }
-KeyCallback key_fun = EmptyKey;
+void DebugKey(int32_t code, int32_t state) { FLYPRINT(LT_INFO, "Key %c: %d", code, state); }
+KeyCallback key_fun = DebugKey;
 
 FLY_Key keyboard[MAX_KEYS];
 FLY_Mouse mouse;
-void EmptyMouseFloatCallback(float x, float y) { FLYPRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
+void DebugMouseFloatCallback(float x, float y) { FLYPRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
 
 #include <list> // i don't like including libraries, but will do until I have a proven easier alternative
 std::list<int> char_buffer;
@@ -115,7 +115,7 @@ static void GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int acti
     key_fun(key, keyboard[key].state);
 }
 
-static void GLFW_CharCallback(GLFWwindow* window, uint32 codepoint)
+static void GLFW_CharCallback(GLFWwindow* window, uint32_t codepoint)
 {
     char_buffer.push_back(codepoint);
 }
@@ -220,7 +220,7 @@ void FLYINPUT_Init()
 {
     FLYINPUT_InitForWindow(0);
 }
-void FLYINPUT_InitForWindow(uint16 window)
+void FLYINPUT_InitForWindow(uint16_t window)
 {
 
 #if defined USE_GLFW
@@ -248,7 +248,7 @@ bool FLYINPUT_Close()
 }
 
 
-void FLYINPUT_Process(uint16 window)
+void FLYINPUT_Process(uint16_t window)
 {
 #ifdef ANDROID
     int events;
@@ -327,17 +327,17 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p)
 {
     // Evaluate what the pointer has done during the time it was tracked
-    int16 delta_x = p.gesture.end_x - p.gesture.start_x;
-    int16 delta_y = p.gesture.end_y - p.gesture.start_y;
-    int32 screen_w, screen_h;
+    int16_t delta_x = p.gesture.end_x - p.gesture.start_x;
+    int16_t delta_y = p.gesture.end_y - p.gesture.start_y;
+    int32_t screen_w, screen_h;
     FLYDISPLAY_GetWindowSize(0, &screen_w, &screen_h);
 
-    uint16 abs_delta_x = delta_x;
-    uint16 abs_delta_y = delta_y;
+    uint16_t abs_delta_x = delta_x;
+    uint16_t abs_delta_y = delta_y;
     float dist_perc_x = 100 * abs_delta_x / (float)screen_w;
     float dist_perc_y = 100 * abs_delta_y / (float)screen_h;
 
-    uint16 time = p.gesture.timer.ReadMilliSec();
+    uint16_t time = p.gesture.timer.ReadMilliSec();
     // Tap Gesture
     if (time <= GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
     {

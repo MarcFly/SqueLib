@@ -51,8 +51,8 @@ const char* fragment_shader =
 	"}\n";
 
 // Drawing Variables
-static uint16           fly_displayWidth = 0;
-static uint16           fly_displayHeight = 0;
+static uint16_t         fly_displayWidth = 0;
+static uint16_t         fly_displayHeight = 0;
 static FLY_Texture2D    fly_fontTexture;
 static FLY_RenderState  fly_backupState;
 static FLY_RenderState  fly_renderState;
@@ -64,10 +64,10 @@ static FLY_Mesh         fly_dataHandle;
 // RENDER FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ImGui_ImplFlyLib_VariableRenderState(ImDrawData* draw_data, int32  fb_width, int32 fb_height)
+void ImGui_ImplFlyLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_width, int32_t fb_height)
 {
-	fly_renderState.viewport.z = fb_width;
-	fly_renderState.viewport.w = fb_height;
+	fly_renderState.viewport[2] = fb_width;
+	fly_renderState.viewport[3] = fb_height;
 	fly_renderState.SetUp();
 
 	float L = draw_data->DisplayPos.x;
@@ -95,8 +95,8 @@ void ImGui_ImplFlyLib_Render(ImDrawData* draw_data)
 {
 	fly_backupState.BackUp();
 
-	int32 fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
-	int32 fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
+	int32_t fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
+	int32_t fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
 	if (fb_width <= 0 || fb_height <= 0) return;
 
 	ImGui_ImplFlyLib_VariableRenderState(draw_data, fb_width, fb_height);
@@ -128,8 +128,8 @@ void ImGui_ImplFlyLib_Render(ImDrawData* draw_data)
 				clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
 				if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
 				{
-					FLYRENDER_Scissor((int32)clip_rect.x, (int32)(fb_height - clip_rect.w), (int32)(clip_rect.z - clip_rect.x), (int32)(clip_rect.w - clip_rect.y));
-					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32)(intptr_t)pcmd->TextureId);
+					FLYRENDER_Scissor((int32_t)clip_rect.x, (int32_t)(fb_height - clip_rect.w), (int32_t)(clip_rect.z - clip_rect.x), (int32_t)(clip_rect.w - clip_rect.y));
+					FLYRENDER_BindExternalTexture(FLY_TEXTURE_2D, (uint32_t)(intptr_t)pcmd->TextureId);
 					FLYRENDER_DrawIndices(fly_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
 				}
 			}
@@ -214,10 +214,10 @@ void ImGui_ImplFlyLib_CreateFontsTexture()
 	fly_fontTexture.format = FLY_RGBA;
 	io.Fonts->GetTexDataAsRGBA32((uchar**)&fly_fontTexture.pixels, &fly_fontTexture.w, &fly_fontTexture.h);
 
-	FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
 	fly_fontTexture.SetParameter(min_filter);
 
-	FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32(FLY_LINEAR));
+	FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
 	fly_fontTexture.SetParameter(mag_filter);
 
 	fly_fontTexture.ApplyParameters();
@@ -246,7 +246,8 @@ void ImGui_ImplFlyLib_StaticRenderState()
 	fly_renderState.blend_func_dst_rgb = FLY_ONE_MINUS_SRC_ALPHA;
 	fly_renderState.blend_func_src_rgb = FLY_SRC_ALPHA;
 	fly_renderState.blend_func_separate = true;
-	fly_renderState.polygon_mode = int2(FLY_FILL, FLY_FILL);
+	fly_renderState.polygon_mode[0] = FLY_FILL;
+	fly_renderState.polygon_mode[1] = FLY_FILL;
 
 	fly_backupState.SetUp();
 }
@@ -355,9 +356,9 @@ void ImGui_ImplFlyLib_Init()
 	io.KeyMap[ImGuiKey_Z] = FLY_KEY_UPPER_Z;
 
     // Init Scale Based on DPI (have to tune it)
-    uint16 dpi = FLYDISPLAY_GetDPIDensity();
-	uint16 w, h; FLYDISPLAY_GetMainDisplaySize(w, h);
-	uint16 bigger = (w > h) ? w : h;
+    uint16_t dpi = FLYDISPLAY_GetDPIDensity();
+	uint16_t w, h; FLYDISPLAY_GetMainDisplaySize(w, h);
+	uint16_t bigger = (w > h) ? w : h;
 	float scale = (bigger / dpi)*.8;
 	//io.FontGlobalScale = scale;
 	//ImGui::GetStyle().ScaleAllSizes(scale);
@@ -402,7 +403,7 @@ void ImGui_ImplFlyLib_NewFrame()
     //io.DisplaySize = ImVec2(fly_backupState.viewport.z, fly_backupState.viewport.w);
 	
 	
-	int32 w, h;
+	int32_t w, h;
 	FLYDISPLAY_GetWindowSize(0, &w, &h); 
 	io.DisplaySize = ImVec2(w, h);
 	FLYDISPLAY_GetViewportSize(0, &w, &h);

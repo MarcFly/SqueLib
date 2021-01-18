@@ -60,7 +60,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB RE-INIT");
             FLYLIB_Init();
             on_resume_callback();
-            bool have_resumed = true;
+            have_resumed = true;
         }
         break;
     case APP_CMD_TERM_WINDOW:
@@ -139,7 +139,7 @@ void android_main(struct android_app* app)
 // INITIALIZATION AND STATE CONTROL ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYLIB_Init(/* flags */)
+void FLYLIB_Init(const char* app_name, int32_t flags)
 {
     // Call Init for all loaded modules and with required flags
     // Logger Lib
@@ -150,7 +150,7 @@ void FLYLIB_Init(/* flags */)
     FLYDISPLAY_SetViewportSizeCallback(FLYRENDER_GetFramebufferSize);
     FLYDISPLAY_Init();
     //FLYDISPLAY_NextWindow;
-    FLYDISPLAY_OpenWindow("FlyLib Test Window");
+    FLYDISPLAY_OpenWindow(app_name);
 
     // For testing
     FLYDISPLAY_MakeContextMain(0);
@@ -219,8 +219,6 @@ void FLY_PrintVargs(FLY_LogType lt, const char file[], int line, const char* for
 
 void FLY_ConsolePrint(int lt, const char* log)
 {
-    printf("FLY_LogType-%d: %s\n", lt, log);
-
 #if defined(_WIN32) && defined(_DEBUG)
     OutputDebugString(log);
     OutputDebugString("\n");

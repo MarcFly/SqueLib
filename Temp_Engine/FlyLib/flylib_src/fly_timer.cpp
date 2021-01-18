@@ -57,17 +57,17 @@ void FLY_Timer::Kill()
     stop_at_ns = 0;
 }
 
-bool FLY_Timer::IsStopped()
+bool FLY_Timer::IsStopped() const
 {
     return is_stopped;
 }
 
-bool FLY_Timer::IsActive()
+bool FLY_Timer::IsActive() const
 {
     return is_active;
 }
 
-double FLY_Timer::ReadMilliSec()
+double FLY_Timer::ReadMilliSec() const
 {
     if (is_stopped || !is_active)
         return stop_at_ms - start_at_ms;
@@ -75,7 +75,7 @@ double FLY_Timer::ReadMilliSec()
     return now - start_at_ms;
 }
 
-double FLY_Timer::ReadMicroSec()
+double FLY_Timer::ReadMicroSec() const
 {
     if (is_stopped || !is_active)
         return stop_at_us - start_at_us;
@@ -83,7 +83,7 @@ double FLY_Timer::ReadMicroSec()
     return now - start_at_us;
 }
 
-double FLY_Timer::ReadNanoSec()
+double FLY_Timer::ReadNanoSec() const
 {
     if (is_stopped || !is_active)
         return stop_at_ns - start_at_ns;

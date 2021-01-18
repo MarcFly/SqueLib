@@ -15,45 +15,45 @@ struct FLY_Window
 {
     // Main attributes
     const char* title = "";
-    int32 width = 0, height = 0;
+    int32_t width = 0, height = 0;
 
     // Initialization Flags
-    int32* window_options = NULL;
-    int32 num_window_options = 0;
+    int32_t* window_options = NULL;
+    int32_t num_window_options = 0;
     
-    int32* context_options = NULL;
-    int32 num_context_options = 0;
+    int32_t* context_options = NULL;
+    int32_t num_context_options = 0;
     
-    int32* buffer_options = NULL;
-    int32 num_buffer_options = 0;
+    int32_t* buffer_options = NULL;
+    int32_t num_buffer_options = 0;
     // Flags for workign with flylib
-    uint16 working_flags;
+    uint16_t working_flags;
 };
 
 static std::mutex display_mtx;
 std::vector<FLY_Window*> fly_windows;
 FLY_Window* next_window = NULL;
-static uint16 main_window_context = UINT16_MAX;
+static uint16_t main_window_context = UINT16_MAX;
 int monitor_count;
 
-void EmptyResizeCallback(int32 width, int32 height) { FLYPRINT(LT_INFO, "ViewportResize Callback Not Set, tried: %d,%d!", width, height); }
-ResizeCallback viewport_resize_callback = EmptyResizeCallback;
+void DebugResizeCallback(int32_t width, int32_t height) { FLYPRINT(LT_INFO, "ViewportResize Callback Not Set, tried: %d,%d!", width, height); }
+ResizeCallback viewport_resize_callback = DebugResizeCallback;
 
-void EmptyViewportSizeCallback(int32* width, int32* height) { FLYPRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
-ViewportSizeCallback viewport_size_callback = EmptyViewportSizeCallback;
+void DebugViewportSizeCallback(int32_t* width, int32_t* height) { FLYPRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
+ViewportSizeCallback viewport_size_callback = DebugViewportSizeCallback;
 
-static int32 def_window_options[] =
+static int32_t def_window_options[] =
 {
     FLY_DISPLAY_END
 };
 
-static int32 const def_context_options[] =
+static int32_t const def_context_options[] =
 {
     FLY_WINDOW_CONTEXT_MAJOR, FLY_CONTEXT_MAJOR_MIN,
     FLY_DISPLAY_END
 };
 
-static int32 const def_buffer_options[] =
+static int32_t const def_buffer_options[] =
 {
     FLY_RED_BITS, 8,
     FLY_GREEN_BITS, 8,
@@ -105,7 +105,7 @@ static int32 const def_buffer_options[] =
             if (glfw_windows[i] == window) FLYDISPLAY_SetWindowClose(i);
     }
 
-    int32 GetFLY_WindowFromGLFWwindow(GLFWwindow* window)
+    int32_t GetFLY_WindowFromGLFWwindow(GLFWwindow* window)
     {
         FLY_Window* ret = nullptr;
         for(int i = 0; i < fly_windows.size(); ++i)
@@ -118,7 +118,7 @@ static int32 const def_buffer_options[] =
 
     void GLFW_FramebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
-        int32 win = GetFLY_WindowFromGLFWwindow(window);   
+        int32_t win = GetFLY_WindowFromGLFWwindow(window);   
         if (win < 0 || win >= fly_windows.size())
         {
             FLYPRINT(LT_WARNING, "Rogue GLFW window!");
@@ -160,9 +160,9 @@ void FLYDISPLAY_Init()
         FLYPRINT(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new FLY_Window();
         // Default window hints...
-        next_window->buffer_options = (int32*)def_buffer_options;
-        next_window->context_options = (int32*)def_context_options;
-        next_window->context_options = (int32*)def_window_options;
+        next_window->buffer_options = (int32_t*)def_buffer_options;
+        next_window->context_options = (int32_t*)def_context_options;
+        next_window->context_options = (int32_t*)def_window_options;
     }
 
     FLYPRINT(LT_INFO, "Declaring Backed Specific Variables...");
@@ -249,8 +249,8 @@ void FLYDISPLAY_Init()
     }
 
 #if defined(ANDROID)
-    int32 width = ANativeWindow_getWidth(egl_window);
-    int32 height = ANativeWindow_getHeight(egl_window);
+    int32_t width = ANativeWindow_getWidth(egl_window);
+    int32_t height = ANativeWindow_getHeight(egl_window);
     next_window->width = width;
     next_window->height = height;
     EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, def_window_options);
@@ -294,19 +294,19 @@ void FLYDISPLAY_Close()
 #if defined(USE_EGL)
 
 #elif defined USE_GLFW
-    uint16 glfw_size = glfw_windows.size();
+    uint16_t glfw_size = glfw_windows.size();
     for (int i = 0; i < glfw_size; ++i)
         glfwDestroyWindow(glfw_windows[i]);
     glfw_windows.clear();
     glfwTerminate();
 #endif
-    uint16 size = fly_windows.size();
+    uint16_t size = fly_windows.size();
     for (int i = 0; i < size; ++i)
         delete fly_windows[i];
     fly_windows.clear();
 }
 
-void FLYDISPLAY_SetVSYNC(int16 vsync_val)
+void FLYDISPLAY_SetVSYNC(int16_t vsync_val)
 {
     if (main_window_context == UINT16_MAX)
     {
@@ -321,7 +321,7 @@ void FLYDISPLAY_SetVSYNC(int16 vsync_val)
 #endif
 }
 
-int32 FLYDISPLAY_GetDPIDensity(uint16 window)
+int32_t FLYDISPLAY_GetDPIDensity(uint16_t window)
 {
 #if defined(ANDROID)
     AConfiguration* config = AConfiguration_new();
@@ -342,7 +342,7 @@ int32 FLYDISPLAY_GetDPIDensity(uint16 window)
 
 }
 
-void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h)
+void FLYDISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h)
 {
 #if defined(USE_GLFW)
     const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
@@ -357,7 +357,7 @@ void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONTROL SPECIFIC WINDOWS //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window)
+void* FLYDISPLAY_GetPlatformWindowHandle(uint16_t window)
 {
 #if defined(USE_GLFW)
 #   if defined(_WIN32)
@@ -369,7 +369,7 @@ void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window)
     return nullptr;
 }
 
-void FLYDISPLAY_ResizeWindow(uint16 window, uint16 w, uint16 h)
+void FLYDISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h)
 {
     if(window >= fly_windows.size()) return;
 
@@ -380,14 +380,14 @@ void FLYDISPLAY_ResizeWindow(uint16 window, uint16 w, uint16 h)
 #elif defined(USE_EGL)
     // ?
 #endif
-    uint16 prev_main = main_window_context;
+    uint16_t prev_main = main_window_context;
     FLYDISPLAY_MakeContextMain(window);
     viewport_resize_callback(w,h);
     FLYDISPLAY_MakeContextMain(prev_main);
 }
 
 // Unsure if this returns content rect or actual window size on GLFW, because it resizes to content rect I think
-void FLYDISPLAY_GetWindowSize(uint16 window, int32* x, int32* y)
+void FLYDISPLAY_GetWindowSize(uint16_t window, int32_t* x, int32_t* y)
 {
     if (window < fly_windows.size())
     {
@@ -400,9 +400,9 @@ void FLYDISPLAY_GetWindowSize(uint16 window, int32* x, int32* y)
     }
 }
 
-void FLYDISPLAY_GetViewportSize(uint16 window, int32* w, int32* h)
+void FLYDISPLAY_GetViewportSize(uint16_t window, int32_t* w, int32_t* h)
 {
-    uint16 prev_main = main_window_context;
+    uint16_t prev_main = main_window_context;
     FLYDISPLAY_MakeContextMain(window);
     if (window < fly_windows.size())
         viewport_size_callback(w, h);
@@ -413,9 +413,9 @@ void FLYDISPLAY_GetViewportSize(uint16 window, int32* w, int32* h)
 }
 
 
-uint16 FLYDISPLAY_GetAmountWindows() { return fly_windows.size(); }
+uint16_t FLYDISPLAY_GetAmountWindows() { return fly_windows.size(); }
 
-void FLYDISPLAY_SetWindowClose(uint16 window)
+void FLYDISPLAY_SetWindowClose(uint16_t window)
 {
     if (window < fly_windows.size())
         SET_FLAG(fly_windows[window]->working_flags, FLYWINDOW_TO_CLOSE);
@@ -423,16 +423,16 @@ void FLYDISPLAY_SetWindowClose(uint16 window)
         FLYPRINT(LT_WARNING, "Invalid window...");
 }
 
-bool FLYDISPLAY_ShouldWindowClose(uint16 window)
+bool FLYDISPLAY_ShouldWindowClose(uint16_t window)
 {
     if(window < fly_windows.size())
         return CHK_FLAG(fly_windows[window]->working_flags, FLYWINDOW_TO_CLOSE);
     return false;
 }
 
-uint16 FLYDISPLAY_CloseWindow(uint16 window)
+uint16_t FLYDISPLAY_CloseWindow(uint16_t window)
 {
-    uint16 size = fly_windows.size();
+    uint16_t size = fly_windows.size();
     if(window < size)
     {
         FLYPRINT(FLY_LogType::LT_INFO, "Closing window n*%d with title %s", window, fly_windows[window]->title);
@@ -456,7 +456,7 @@ uint16 FLYDISPLAY_CloseWindow(uint16 window)
     return window; // When a window is popped that is not last, last becomes this window, thus return position of previous last window
 }
 
-void FLYDISPLAY_NextWindow_WindowHints(int32* options, int32 size)
+void FLYDISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
 {
     if (!next_window)
     {
@@ -468,7 +468,7 @@ void FLYDISPLAY_NextWindow_WindowHints(int32* options, int32 size)
     next_window->num_window_options = size;
 }
 
-void FLYDISPLAY_NextWindow_ContextHints(int32* options, int32 size)
+void FLYDISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
 {
     if (!next_window)
     {
@@ -480,7 +480,7 @@ void FLYDISPLAY_NextWindow_ContextHints(int32* options, int32 size)
     next_window->num_context_options = size;
 }
 
-void FLYDISPLAY_NextWindow_BufferHints(int32* options, int32 size)
+void FLYDISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
 {
     if (!next_window)
     {
@@ -493,7 +493,7 @@ void FLYDISPLAY_NextWindow_BufferHints(int32* options, int32 size)
 }
 
 
-void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 monitor)
+void FLYDISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uint16_t monitor)
 {
 #if defined(ANDROID)
     if(fly_windows.size() > 0)
@@ -509,9 +509,9 @@ void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 
         FLYPRINT(FLY_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new FLY_Window();
         // Default window hints...
-        next_window->buffer_options = (int32*)def_buffer_options;
-        next_window->context_options = (int32*)def_context_options;
-        next_window->context_options = (int32*)def_window_options;
+        next_window->buffer_options = (int32_t*)def_buffer_options;
+        next_window->context_options = (int32_t*)def_context_options;
+        next_window->context_options = (int32_t*)def_window_options;
     }
 
     next_window->title = title;
@@ -551,7 +551,7 @@ void FLYDISPLAY_OpenWindow(const char* title, int32 width, int32 height, uint16 
     next_window = NULL;
 }
 
-void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y)
+void FLYDISPLAY_GetWindowPos(uint16_t window, int32_t& x, int32_t& y)
 {
 #if defined(USE_GLFW)
     glfwGetWindowPos(glfw_windows[window], &x, &y);
@@ -566,7 +566,7 @@ void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y)
 // CONTROLLING CONTEXTS //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYDISPLAY_SwapBuffer(uint16 window)
+void FLYDISPLAY_SwapBuffer(uint16_t window)
 {
     if(window > fly_windows.size())
     {
@@ -597,7 +597,7 @@ void FLYDISPLAY_SwapAllBuffers()
     }
 }
 
-void FLYDISPLAY_MakeContextMain(uint16 window)
+void FLYDISPLAY_MakeContextMain(uint16_t window)
 {
     if (window > fly_windows.size())
     {

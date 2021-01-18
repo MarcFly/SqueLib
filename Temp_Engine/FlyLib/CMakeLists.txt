@@ -29,7 +29,7 @@ set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/flylib_src)
 
 # Get all shared source files
-file(GLOB_RECURSE FLYLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp")
+file(GLOB_RECURSE FLYLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.h")
 add_library(FlyLib SHARED "${FLYLIB_SRC}")
 #------------------------------------------------------------------------------------------------
 # SETUP BUILD PATHS
@@ -77,10 +77,29 @@ endif()
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 include(FetchContent)
+
 set(EXTERNAL ${CMAKE_SOURCE_DIR}/external/FlyLib_deps)
 set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
-# MAKEAVAILABLE----------------------------------------------------------------------------------
+# MathGeoLib--------------------------------------------------------------------------------------
+FetchContent_Declare(mathgeolib
+    GIT_REPOSITORY https://github.com/juj/MathGeoLib.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(mathgeolib)
+FetchContent_GetProperties(mathgeolib SOURCE_DIR mgl_src_dir)
+set(mgl_src_dir ${mgl_src_dir}/src)
+set_target_properties(MathGeoLib
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+)
+#set(mathgeolib_include ${mathgeolib_SOURCE_DIR}/src)
+#file(GLOB_RECURSE mathgeolib_src ${mathgeolib_include}/*.cpp ${mathgeolib_include}/*.c)
+#add_library(mgl_lib STATIC "${mathgeolib_src}")
+#target_include_directories(mgl_lib PUBLIC ${mathgeolib_include})
+
 
 # DESKTOP DEPENDENCIES---------------------------------------------------------------------------
 if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) 
@@ -108,8 +127,6 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
             ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
             LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
             RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-            POSITION_INDEPENDENT_CODE ON
-            PUBLIC_HEADER "fly_lib.h"
     )
     # All MakeAvailable together, first we declare so that they can start populating i belive
     # MakeAvailable should check completion/availability and finish/start downloading
@@ -152,10 +169,10 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     target_link_libraries(FlyLib PUBLIC
         ${OPEN_gl_LIBRARY}
         glfw
-        glad)
+    )
     target_include_directories(FlyLib PUBLIC
         ${glfw_include}
-        ${glad_include})
+    )
     #---------------------------------------------------------------------------------------------
     # PLATFORM SPECIFIC INCLUDE/LINKS
     #---------------------------------------------------------------------------------------------
@@ -177,11 +194,12 @@ endif()
 #------------------------------------------------------------------------------------------------
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
+target_include_directories(FlyLib PUBLIC
+    ${mgl_src_dir}
+)
 target_link_libraries(FlyLib PUBLIC
     glad
-)
-target_include_directories(FlyLib PUBLIC
-    ${glad_include}
+    MathGeoLib
 )
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
@@ -198,3 +216,9 @@ set_target_properties(FlyLib
 target_compile_options(glad PUBLIC
     -fPIC
 )
+
+#------------------------------------------------------------------------------------------------
+# Group Sources for IDEs
+#------------------------------------------------------------------------------------------------
+#source_group("external/mathgeolib/source" FILES "${mathgeolib_src}")
+source_group("flylib_source" FILES "${FLYLIB_SRC}")

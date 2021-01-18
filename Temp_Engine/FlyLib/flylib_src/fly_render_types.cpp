@@ -14,14 +14,14 @@ FLY_VertAttrib::FLY_VertAttrib() :
     offset(0), name("")
 {}
 
-FLY_VertAttrib::FLY_VertAttrib(const char* name_, int32 var_type_, bool normalize_, uint16 num_components) :
+FLY_VertAttrib::FLY_VertAttrib(const char* name_, int32_t var_type_, bool normalize_, uint16_t num_components) :
     id(0), var_type(var_type_), num_comp(num_components), 
     normalize(normalize_), vert_size(0), offset(0), name(name)
 {   
     var_size = FLY_VarGetSize(var_type);
 }
 
-uint16 FLY_VertAttrib::GetSize() const { return var_size * num_comp; }
+uint16_t FLY_VertAttrib::GetSize() const { return var_size * num_comp; }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MESH MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ FLY_Mesh::FLY_Mesh() : draw_config(FLY_POINTS), draw_mode(FLY_STATIC_DRAW),
     num_index(0), index_var(FLY_UINT), index_var_size(4), indices(NULL)
 {}
 
-FLY_Mesh::FLY_Mesh(int32 draw_config_, int32 draw_mode_, int32 index_var_) :
+FLY_Mesh::FLY_Mesh(int32_t draw_config_, int32_t draw_mode_, int32_t index_var_) :
     draw_config(draw_config_), draw_mode(draw_mode_),
     attribute_object(0), vert_id(0), num_verts(0),
     verts(NULL), index_id(0), num_index(0),
@@ -49,13 +49,13 @@ FLY_Mesh::~FLY_Mesh() { if(vert_id > 0) CleanUp(); }
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CHANGING DATA DYNAMICALLY /////////////////////////////////////////////////////////////////////////////
-void FLY_Mesh::ChangeVertData(int32 num_verts_, void* verts_)
+void FLY_Mesh::ChangeVertData(int32_t num_verts_, void* verts_)
 {
     num_verts = num_verts_;
     verts = verts_;
 }
 
-void FLY_Mesh::ChangeIndexData(int32 num_index_, void* indices_)
+void FLY_Mesh::ChangeIndexData(int32_t num_index_, void* indices_)
 {
     num_index = num_index_;
     indices = indices_;
@@ -71,7 +71,7 @@ FLY_VertAttrib* FLY_Mesh::AddAttribute(FLY_VertAttrib* attr)
 
 void FLY_Mesh::EnableAttributesForProgram(const FLY_Program& program)
 {
-    uint16 size = attributes.size();
+    uint16_t size = attributes.size();
     for (int i = 0; i < size; ++i)
         FLY_EnableProgramAttribute(program, attributes[i]);
 }
@@ -80,31 +80,31 @@ void FLY_Mesh::SetLocationsInOrder()
 {
     SetOffsetsInOrder();
 
-    uint16 size = attributes.size();
+    uint16_t size = attributes.size();
     // So not to bind the Element Array (which will test if causes errors)
-    int32 temp_id = index_id;
+    int32_t temp_id = index_id;
     index_id = 0;
     FLY_BindMeshBuffer(*this);
     index_id = temp_id;
 
-    uint16 vert_size = GetVertSize();
+    uint16_t vert_size = GetVertSize();
     for (int i = 0; i < size; ++i)
         FLY_EnableBufferAttribute(i, vert_size, attributes[i]);
 }
 
-void FLY_Mesh::SetAttributeLocation(const char* name, const int32 location)
+void FLY_Mesh::SetAttributeLocation(const char* name, const int32_t location)
 {
-    uint16 size = attributes.size();
-    uint16 vert_size = GetVertSize();
+    uint16_t size = attributes.size();
+    uint16_t vert_size = GetVertSize();
     for (int i = 0; i < size; ++i)
         if( strcmp(attributes[i]->name, name) == 0) 
             attributes[i]->id = location;
 }
 
 // Getters ///////////////////////////////////////////////////////////////////////////////////////////////
-uint16 FLY_Mesh::GetVertSize() const
+uint16_t FLY_Mesh::GetVertSize() const
 {
-    uint16 ret = 0;
+    uint16_t ret = 0;
     int size = attributes.size();
     for (int i = 0; i < size; ++i)
         ret += attributes[i]->GetSize();
@@ -112,7 +112,7 @@ uint16 FLY_Mesh::GetVertSize() const
     return ret;
 }
 
-uint16 FLY_Mesh::GetAttribSize(const char* name) const
+uint16_t FLY_Mesh::GetAttribSize(const char* name) const
 {
     int size = attributes.size();
     for (int i = 0; i < size; ++i)
@@ -139,8 +139,8 @@ void FLY_Mesh::CleanUp()
 
 void FLY_Mesh::SetOffsetsInOrder()
 {
-    uint16 size = attributes.size();
-    uint32 offset = 0;
+    uint16_t size = attributes.size();
+    uint32_t offset = 0;
     for (int i = 0; i < size; ++i)
     {
         attributes[i]->offset = offset;
@@ -161,7 +161,7 @@ void FLY_Mesh::SetOffsetsInOrder()
 FLY_TexAttrib::FLY_TexAttrib() : id(0),   var_type(0),    data(NULL)
 {}
 
-FLY_TexAttrib::FLY_TexAttrib(int32 parameter_id, int32 var_type_, void* data_) :
+FLY_TexAttrib::FLY_TexAttrib(int32_t parameter_id, int32_t var_type_, void* data_) :
     id(parameter_id),   var_type(var_type_),    data(data_)
 {}
 
@@ -175,7 +175,7 @@ FLY_Texture2D::FLY_Texture2D() : id(UINT32_MAX),    format(0),  var_type(FLY_FLO
     w(0),   h(0),   channel_num(0),  pixels(NULL)
 {}
 
-FLY_Texture2D::FLY_Texture2D(int32 format_, int32 var_type_) : id(UINT32_MAX),    format(format_),  
+FLY_Texture2D::FLY_Texture2D(int32_t format_, int32_t var_type_) : id(UINT32_MAX),    format(format_),  
     var_type(var_type_),    w(0),   h(0),   channel_num(0),  pixels(NULL)
 {
     var_size = FLY_VarGetSize(var_type);
@@ -189,7 +189,7 @@ FLY_Texture2D::~FLY_Texture2D() {CleanUp();}
 void FLY_Texture2D::SetParameter(FLY_TexAttrib* attr)
 {
     if (attr == NULL) return;
-    uint16 size = attributes.size();
+    uint16_t size = attributes.size();
     for(int i = 0; i < size; ++i)
     {
         if (attributes[i]->id == attr->id)
@@ -205,7 +205,7 @@ void FLY_Texture2D::SetParameter(FLY_TexAttrib* attr)
 void FLY_Texture2D::ApplyParameters()
 {
     FLY_BindTexture(*this);
-    uint16 size = attributes.size();
+    uint16_t size = attributes.size();
     for(int i = 0; i < size; ++i)
         FLY_SetTextureParameters(*this, *attributes[i]);
 }

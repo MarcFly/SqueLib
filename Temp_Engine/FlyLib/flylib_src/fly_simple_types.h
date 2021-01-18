@@ -49,51 +49,7 @@ enum FLY_LogType
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DEFAULT TYPES /////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef unsigned short uint16;
-typedef unsigned int uint32;
-typedef short int16;
-typedef int int32;
-typedef long long int64;
-typedef unsigned long long uint64;
 typedef unsigned char uchar;
-
-typedef struct float4
-{
-	float4() : x(0), y(0), z(0), w(0) {};
-	float4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {};
-	float x, y, z, w;
-} float4;
-typedef struct float3
-{
-	float3() : x(0), y(0), z(0) {};
-	float3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {};
-	float x, y, z;
-} float3;
-typedef struct float2
-{
-	float2() : x(0), y(0) {};
-	float2(float x_, float y_) : x(x_), y(y_) {};
-	float x, y;
-} float2;
-
-typedef struct int4
-{
-	int4() : x(0), y(0), z(0), w(0) {};
-	int4(int32 x_, int32 y_, int32 z_, int32 w_) : x(x_), y(y_), z(z_), w(w_) {};
-	int32 x, y, z, w;
-} int4;
-typedef struct int3
-{
-	int3() : x(0), y(0), z(0) {};
-	int3(int32 x_, int32 y_, int32 z_) : x(x_), y(y_), z(z_) {};
-	int32 x, y, z;
-} int3;
-typedef struct int2
-{
-	int2() : x(0), y(0) {};
-	int2(int32 x_, int32 y_) : x(x_), y(y_) {};
-	int32 x, y;
-} int2;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FUNCTION TYPES ////////////////////////////////////////////////////////////////////////////////////////
@@ -102,10 +58,10 @@ typedef struct int2
 typedef void(*VoidFun)();
 
 // Display
-typedef void(*ResizeCallback)(int32 width, int height);
-typedef void(*ViewportSizeCallback)(int32* width, int32* height);
+typedef void(*ResizeCallback)(int32_t width, int height);
+typedef void(*ViewportSizeCallback)(int32_t* width, int32_t* height);
 // Input
-typedef void(*KeyCallback)(int32 code, int32 state);
+typedef void(*KeyCallback)(int32_t code, int32_t state);
 typedef void(*MouseFloatCallback)(float x, float y);
 
 #endif

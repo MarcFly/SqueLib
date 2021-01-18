@@ -46,11 +46,16 @@
 #	else
 #	endif																						
 #endif																																	
-																																		
+
+// Extra defs for libraries I am using with
+#define MATH_SILENT_ASSUME // better runtime on mathgeolib
+#include <MathGeoLib.h>
+
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <fly_remap_macros.h>																											
 #include <fly_simple_types.h>																											
-																																		
+#include <stdint.h>		
+
 // Initialization / State Control //////////////////////////////////////////////////////////////////////////////////////////////////////
 #define FL_VERSION_MAJOR 2020																											
 #define FL_VERSION_MINOR 1																												
@@ -58,7 +63,7 @@
 
 // FLYLIB should not have an init/close
 // User should do that with specifics per module really
-FL_API void FLYLIB_Init(/* flags */);																									
+FL_API void FLYLIB_Init(const char* app_name, int32_t flags);																									
 FL_API void FLYLIB_Close();																									
 FL_API unsigned int FLYLIB_GetVersion();																							
 FL_API int FLYLIB_IsCompatibleDLL();		
@@ -114,11 +119,11 @@ typedef struct FLY_Timer
 	FL_API void Start();																												
 	FL_API void Stop();																													
 	FL_API void Kill();																													
-	FL_API bool IsStopped();																											
-	FL_API bool IsActive();																												
-	FL_API double ReadMilliSec();																										
-	FL_API double ReadMicroSec();																										
-	FL_API double ReadNanoSec();																										
+	FL_API bool IsStopped() const;																											
+	FL_API bool IsActive() const;																												
+	FL_API double ReadMilliSec() const;																										
+	FL_API double ReadMicroSec() const;																										
+	FL_API double ReadNanoSec() const;																										
 																																		
 private:																																
 	double start_at_ms;																													
@@ -149,36 +154,36 @@ enum FLY_WindowFlags
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLYDISPLAY_Init();
 FL_API void FLYDISPLAY_Close();																											
-FL_API void FLYDISPLAY_SetVSYNC(int16 vsync_val);																						
-FL_API int32 FLYDISPLAY_GetDPIDensity(uint16 window = 0);																				
-FL_API void FLYDISPLAY_GetMainDisplaySize(uint16& w, uint16& h);
+FL_API void FLYDISPLAY_SetVSYNC(int16_t vsync_val);																						
+FL_API int32_t FLYDISPLAY_GetDPIDensity(uint16_t window = 0);																				
+FL_API void FLYDISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
 
 																																		
 // Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////		
 // I don't like having user setup a FLY_Window directly
-FL_API void FLYDISPLAY_NextWindow_WindowHints(int32* options, int32 size);
-FL_API void FLYDISPLAY_NextWindow_ContextHints(int32* options, int32 size);
-FL_API void FLYDISPLAY_NextWindow_BufferHints(int32* options, int32 size);
+FL_API void FLYDISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size);
+FL_API void FLYDISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size);
+FL_API void FLYDISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size);
 
-FL_API void FLYDISPLAY_OpenWindow(const char* title, int32 width=0, int32 height=0, uint16 monitor = 0);
-FL_API bool FLYDISPLAY_ShouldWindowClose(uint16 window);
+FL_API void FLYDISPLAY_OpenWindow(const char* title, int32_t width=0, int32_t height=0, uint16_t monitor = 0);
+FL_API bool FLYDISPLAY_ShouldWindowClose(uint16_t window);
 
 // Setters
-FL_API void FLYDISPLAY_SetWindowClose(uint16 window);																																									
-FL_API uint16 FLYDISPLAY_CloseWindow(uint16 window);																																											
-FL_API void FLYDISPLAY_ResizeWindow(uint16 window, uint16 w, uint16 h);
+FL_API void FLYDISPLAY_SetWindowClose(uint16_t window);																																									
+FL_API uint16_t FLYDISPLAY_CloseWindow(uint16_t window);																																											
+FL_API void FLYDISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h);
 
 // Getters
-FL_API uint16 FLYDISPLAY_GetAmountWindows();
-FL_API void FLYDISPLAY_GetWindowPos(uint16 window, int32& x, int32& y);																	
-FL_API void FLYDISPLAY_GetWindowSize(uint16 window, int32* w, int32* h);
-FL_API void FLYDISPLAY_GetViewportSize(uint16 window, int32* w, int32* h);
-FL_API void* FLYDISPLAY_GetPlatformWindowHandle(uint16 window);
+FL_API uint16_t FLYDISPLAY_GetAmountWindows();
+FL_API void FLYDISPLAY_GetWindowPos(uint16_t window, int32_t& x, int32_t& y);																	
+FL_API void FLYDISPLAY_GetWindowSize(uint16_t window, int32_t* w, int32_t* h);
+FL_API void FLYDISPLAY_GetViewportSize(uint16_t window, int32_t* w, int32_t* h);
+FL_API void* FLYDISPLAY_GetPlatformWindowHandle(uint16_t window);
 
 // Controlling Contexts ////////////////////////////////////////////////////////////////////////////////////////////////////////////////																										
-FL_API void FLYDISPLAY_SwapBuffer(uint16 window);
+FL_API void FLYDISPLAY_SwapBuffer(uint16_t window);
 FL_API void FLYDISPLAY_SwapAllBuffers();																								
-FL_API void FLYDISPLAY_MakeContextMain(uint16 window);
+FL_API void FLYDISPLAY_MakeContextMain(uint16_t window);
 FL_API ResizeCallback FLYDISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb);
 FL_API ViewportSizeCallback FLYDISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb);
 																																		
@@ -271,26 +276,26 @@ enum FLYINPUT_Actions
 	FLY_ACTION_MAX																														
 };																																		
 																																		
-void EmptyKey(int32 code, int32 state);																									
+void DebugKey(int32_t code, int32_t state);																									
 typedef struct FLY_Key																													
 {																																		
 	//int key;																															
 	int prev_state = -1;																												
 	int state = -1;																														
-	KeyCallback callback = EmptyKey;																									
+	KeyCallback callback = DebugKey;																									
 } FLY_Key;																																
 																																		
 																																		
-void EmptyMouseFloatCallback(float x, float y);																							
+void DebugMouseFloatCallback(float x, float y);																							
 typedef struct FLY_Mouse																												
 {																																		
 	float prev_y = INT32_MAX, prev_x = INT32_MAX;																						
 	float x = INT32_MAX, y = INT32_MAX;																									
-	MouseFloatCallback pos_callback = EmptyMouseFloatCallback;																			
+	MouseFloatCallback pos_callback = DebugMouseFloatCallback;																			
 																																		
 	float prev_scrollx = INT32_MAX, prev_scrolly = INT32_MAX;																			
 	float scrollx = INT32_MAX, scrolly = INT32_MAX;																						
-	MouseFloatCallback scroll_callback = EmptyMouseFloatCallback;																		
+	MouseFloatCallback scroll_callback = DebugMouseFloatCallback;																		
 																																		
 	FLY_Key mbuttons[MAX_MOUSE_BUTTONS];																								
 																																		
@@ -320,9 +325,9 @@ typedef struct FLY_Pointer
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLYINPUT_Init();
-FL_API void FLYINPUT_InitForWindow(uint16 window);
+FL_API void FLYINPUT_InitForWindow(uint16_t window);
 FL_API bool FLYINPUT_Close();																											
-FL_API void FLYINPUT_Process(uint16 window);																							
+FL_API void FLYINPUT_Process(uint16_t window);																							
 FL_API void FLYINPUT_DisplaySoftwareKeyboard(bool show);																				
 															
 // Usage / Utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -352,20 +357,20 @@ typedef struct FLY_VertAttrib
 {
 	// Constructors / Destructors
 	FL_API FLY_VertAttrib();
-	FL_API FLY_VertAttrib(const char* name_, int32 var_type, bool normalize, uint16 num_components);
+	FL_API FLY_VertAttrib(const char* name_, int32_t var_type, bool normalize, uint16_t num_components);
 
 	// Variables
-	int32 id;
-	int32 var_type;
-	uint16 num_comp;
+	int32_t id;
+	int32_t var_type;
+	uint16_t num_comp;
 	bool normalize;
-	uint16 var_size;
-	uint16 vert_size;
-	uint16 offset;
+	uint16_t var_size;
+	uint16_t vert_size;
+	uint16_t offset;
 	const char* name;
 
 	// Usage functions	
-	FL_API uint16 GetSize() const;
+	FL_API uint16_t GetSize() const;
 
 } FLY_VertAttrib;
 
@@ -377,40 +382,40 @@ typedef struct FLY_Mesh
 {
 // Constructors / Destructors
 	FL_API FLY_Mesh();
-	FL_API FLY_Mesh(int32 draw_config, int32 draw_mode, int32 index_var);
+	FL_API FLY_Mesh(int32_t draw_config, int32_t draw_mode, int32_t index_var);
 
 	FL_API ~FLY_Mesh();
 
 // Variables
-	int32 draw_config;
-	int32 draw_mode = FLY_STATIC_DRAW;
-	uint32 attribute_object = 0;
+	int32_t draw_config;
+	int32_t draw_mode = FLY_STATIC_DRAW;
+	uint32_t attribute_object = 0;
 
 	// Vertex Data																														
-	uint32 vert_id = 0;
-	uint32 num_verts = 0;
+	uint32_t vert_id = 0;
+	uint32_t num_verts = 0;
 	void* verts = NULL;
 	// Indices for the buffer																											
-	uint32 index_id = 0;
-	uint16 num_index = 0;
-	uint32 index_var = FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
-	uint16 index_var_size = 0;
+	uint32_t index_id = 0;
+	uint16_t num_index = 0;
+	uint32_t index_var = FLY_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
+	uint16_t index_var_size = 0;
 	void* indices = nullptr;
 
 // Usage Functions
 	// Changing the data dynamically (good for stream/dynamic draw)
-	FL_API void ChangeVertData(int32 num_verts_, void* verts_);
-	FL_API void ChangeIndexData(int32 num_index_, void* indices_);
+	FL_API void ChangeVertData(int32_t num_verts_, void* verts_);
+	FL_API void ChangeIndexData(int32_t num_index_, void* indices_);
 
 	// Location and Vertex attributes																									
 	FL_API FLY_VertAttrib* AddAttribute(FLY_VertAttrib* attribute = NULL);
 	FL_API void EnableAttributesForProgram(const FLY_Program& program);
 	FL_API void SetLocationsInOrder();
-	FL_API void SetAttributeLocation(const char* name, const int32 location);
+	FL_API void SetAttributeLocation(const char* name, const int32_t location);
 
 	// Getters																															
-	FL_API uint16 GetVertSize() const;
-	FL_API uint16 GetAttribSize(const char* name) const;
+	FL_API uint16_t GetVertSize() const;
+	FL_API uint16_t GetAttribSize(const char* name) const;
 
 	// CleanUp
 	FL_API void CleanUp();
@@ -431,10 +436,10 @@ typedef struct FLY_TexAttrib
 {
 	// Constructors / Destructor
 	FL_API FLY_TexAttrib();
-	FL_API FLY_TexAttrib(int32 parameter_id, int32 var_type, void* data);
+	FL_API FLY_TexAttrib(int32_t parameter_id, int32_t var_type, void* data);
 	// Variables
-	int32 id;
-	int32 var_type;
+	int32_t id;
+	int32_t var_type;
 	void* data;
 
 	// Usage Functions																															
@@ -445,16 +450,16 @@ typedef struct FLY_Texture2D
 {
 	// Constructors / Destructor
 	FL_API FLY_Texture2D();
-	FL_API FLY_Texture2D(int32 format, int32 var_type);
+	FL_API FLY_Texture2D(int32_t format, int32_t var_type);
 	FL_API ~FLY_Texture2D();
 
 	// Variables
-	uint32 id;
-	int32 format;
-	int32 var_type;
-	uint16 var_size;
-	int32 w, h;
-	int32 channel_num;
+	uint32_t id;
+	int32_t format;
+	int32_t var_type;
+	uint16_t var_size;
+	int32_t w, h;
+	int32_t channel_num;
 	void* pixels;
 	std::vector<FLY_TexAttrib*> attributes;
 
@@ -470,8 +475,8 @@ typedef struct FLY_Texture2D
 // FLY_Texture3D??...																													
 typedef struct FLY_Texture3D
 {
-	uint32 id = 0;
-	int32 format = 0;
+	uint32_t id = 0;
+	int32_t format = 0;
 	int w, h;
 	uchar** pixels = nullptr;
 
@@ -487,13 +492,13 @@ typedef struct FLY_Shader
 {
 // Constructor / Destructor
 	FL_API FLY_Shader();
-	FL_API FLY_Shader(int32 type, uint16 strs, const char** data);
+	FL_API FLY_Shader(int32_t type, uint16_t strs, const char** data);
 
 	FL_API ~FLY_Shader();
 // Variables
-	int32 id = 0;
-	int32 type;
-	uint16 lines = 0;
+	int32_t id = 0;
+	int32_t type;
+	uint16_t lines = 0;
 	const char** source;
 
 // Usage Functions
@@ -508,22 +513,19 @@ typedef struct FLY_Uniform
 	FL_API ~FLY_Uniform();
 
 // Variables
-	int32 id = INT32_MAX;
+	int32_t id = INT32_MAX;
 	const char* name = "";
 } FLY_Uniform;
 
 // Usage Functions
 FL_API void SetBool(const FLY_Program& prog, const char* name, bool value);
 FL_API void SetInt(const FLY_Program& prog, const char* name, int value);
-FL_API void SetInt2(const FLY_Program& prog, const char* name, int2 value);
-FL_API void SetInt3(const FLY_Program& prog, const char* name, int3 value);
-FL_API void SetInt4(const FLY_Program& prog, const char* name, int4 value);
 FL_API void SetFloat(const FLY_Program& prog, const char* name, float value);
 FL_API void SetFloat2(const FLY_Program& prog, const char* name, float2 value);
 FL_API void SetFloat3(const FLY_Program& prog, const char* name, float3 value);
 FL_API void SetFloat4(const FLY_Program& prog, const char* name, float4 value);
 // ... add a matrix/array passer...																									
-FL_API void SetMatrix4(const FLY_Program& prog, const char* name, const float* matrix, uint16 number_of_matrices = 1, bool transpose = false);
+FL_API void SetMatrix4(const FLY_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
 
 #include <vector>																														
 typedef struct FLY_Program
@@ -534,14 +536,14 @@ typedef struct FLY_Program
 	
 	FL_API ~FLY_Program();
 // Variables
-	int32 id = 0;
+	int32_t id = 0;
 
 // Usage Functions																		
 	FL_API FLY_Shader* AttachShader(FLY_Shader* fly_shader);
 	FL_API void FreeShadersFromGPU(); // Not required, but saves space after linking
 
 	FL_API void DeclareUniform(const char*);
-	FL_API int32 GetUniformLocation(const char* name) const;
+	FL_API int32_t GetUniformLocation(const char* name) const;
 
 	FL_API void CleanUp();
 	
@@ -569,19 +571,19 @@ typedef struct FLY_RenderState
 {																																		
 	bool backed_up = false;	
 	// Have to change into a vector similar to attributes...
-	int32 bound_texture, active_texture_unit;
-	int32 sampler;
-	int32 program, vertex_array_buffer, element_array_buffer;																			
-	int32 attribute_object;																												
-	int32 blend_equation_rgb, blend_equation_alpha;																						
+	int32_t bound_texture, active_texture_unit;
+	int32_t sampler;
+	int32_t program, vertex_array_buffer, element_array_buffer;																			
+	int32_t attribute_object;																												
+	int32_t blend_equation_rgb, blend_equation_alpha;																						
 																																		
 	bool blend_func_separate = false;																									
-	int32 blend_func_src_rgb, blend_func_dst_rgb;																						
-	int32 blend_func_src_alpha, blend_func_dst_alpha;																					
+	int32_t blend_func_src_rgb, blend_func_dst_rgb;																						
+	int32_t blend_func_src_alpha, blend_func_dst_alpha;																					
 																																		
-	int4 viewport;																														
-	int4 scissor_box;																													
-	int2 polygon_mode;																													
+	int32_t viewport[4];																														
+	int32_t scissor_box[4];																													
+	int32_t polygon_mode[2];																													
 	bool blend, cull_faces, depth_test, scissor_test;																					
 																																		
 	FL_API void SetUp();																												
@@ -592,8 +594,8 @@ typedef struct FLY_RenderState
 FL_API bool FLYRENDER_Init();																											
 FL_API void FLYRENDER_Close();																											
 																																		
-FL_API void FLYRENDER_ChangeFramebufferSize(int32 width, int32 height);		
-FL_API void FLYRENDER_GetFramebufferSize(int32* width, int32* height);
+FL_API void FLYRENDER_ChangeFramebufferSize(int32_t width, int32_t height);		
+FL_API void FLYRENDER_GetFramebufferSize(int32_t* width, int32_t* height);
 FL_API void FLYRENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NULL);
 FL_API const char* FLYRENDER_GetGLSLVer();																								
 																																		
@@ -606,7 +608,7 @@ FL_API void FLY_SendMeshToGPU(const FLY_Mesh& mesh);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLY_EnableProgramAttribute(const FLY_Program& prog, FLY_VertAttrib* attr);
 FL_API void FLY_SendAttributeToGPU(const FLY_VertAttrib& attr);
-void FLY_EnableBufferAttribute(int32 location, uint16 vert_size, FLY_VertAttrib* attr);
+void FLY_EnableBufferAttribute(int32_t location, uint16_t vert_size, FLY_VertAttrib* attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLY_SetTextureParameters(const FLY_Texture2D& tex, const FLY_TexAttrib& attr);
@@ -615,12 +617,12 @@ FL_API void FLY_SetTextureParameters(const FLY_Texture2D& tex, const FLY_TexAttr
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FL_API void FLY_GenTextureData(FLY_Texture2D* tex);
 FL_API void FLY_BindTexture(const FLY_Texture2D& tex);
-FL_API void FLY_SetActiveTextureUnit(int32 unit);
-FL_API void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32 mipmap_level = 0);
+FL_API void FLY_SetActiveTextureUnit(int32_t unit);
+FL_API void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32_t mipmap_level = 0);
 
-FL_API void FLYRENDER_ActiveTexture(int32 texture_id);
-FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32 id);
-FL_API void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id);
+FL_API void FLYRENDER_ActiveTexture(int32_t texture_id);
+FL_API void FLYRENDER_BindExternalTexture(int tex_type, uint32_t id);
+FL_API void FLYRENDER_BindSampler(int32_t texture_locator, int32_t sampler_id);
 
 // Shader Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -630,14 +632,13 @@ FL_API void FLYRENDER_LinkProgram(const FLY_Program& prog);
 FL_API void FLYRENDER_UseProgram(const FLY_Program& prog);
 
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FL_API void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices = 0, int32 count = -1);
-FL_API void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32 count = 0);
+FL_API void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32_t offset_indices = 0, int32_t count = -1);
+FL_API void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32_t count = 0);
 
 // Debugging
 FL_API void FLYSHADER_CheckCompileLog(const FLY_Shader& fly_shader);
 FL_API void FLYRENDER_CheckProgramLog(const FLY_Program& fly_program);
 FL_API void CheckForRenderErrors(const char* file, int line);																			
 #define FLY_CHECK_RENDER_ERRORS() FL_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
-																																		
 																																	
 #endif // _FLY_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

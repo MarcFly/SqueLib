@@ -31,8 +31,8 @@ void FLY_RenderState::SetUp()
         glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
     else
         glBlendFunc(blend_func_src_alpha, blend_func_dst_alpha);
-    glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
-    glScissor(scissor_box.x, scissor_box.y, scissor_box.z, scissor_box.w);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
 
     if (blend) glEnable(GL_BLEND);
     else glDisable(GL_BLEND);
@@ -45,7 +45,7 @@ void FLY_RenderState::SetUp()
 
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
-    glPolygonMode(FLY_FRONT_AND_BACK, (GLenum)polygon_mode.x);
+    glPolygonMode(FLY_FRONT_AND_BACK, (GLenum)polygon_mode[0]);
     glBindSampler(0, sampler);
 #   endif
 #endif
@@ -73,8 +73,8 @@ void FLY_RenderState::BackUp()
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
 
-    glGetIntegerv(GL_VIEWPORT, &viewport.x);
-    glGetIntegerv(GL_SCISSOR_BOX, &scissor_box.x);
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glGetIntegerv(GL_SCISSOR_BOX, scissor_box);
 
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
@@ -83,7 +83,7 @@ void FLY_RenderState::BackUp()
 
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
-    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode.x);
+    glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
     glGetIntegerv(GL_SAMPLER_BINDING, &sampler);
 #   endif
 
@@ -92,23 +92,23 @@ void FLY_RenderState::BackUp()
     //FLY_CHECK_RENDER_ERRORS();
 }
 
-void FLYRENDER_ChangeFramebufferSize(int32 width, int32 height)
+void FLYRENDER_ChangeFramebufferSize(int32_t width, int32_t height)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glViewport(0, 0, width, height);
 #endif
 }
 
-void FLYRENDER_GetFramebufferSize(int32* width, int32* height)
+void FLYRENDER_GetFramebufferSize(int32_t* width, int32_t* height)
 {
-    int4 size;
+    int32_t size[4];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     
-    glGetIntegerv(GL_VIEWPORT, &size.x);
+    glGetIntegerv(GL_VIEWPORT, size);
 #endif
 
-    *width = size.z;
-    *height = size.w;
+    *width = size[2];
+    *height = size[3];
 }
 
 bool FLYRENDER_Init()
@@ -138,7 +138,7 @@ bool FLYRENDER_Init()
     FLYPRINT(FLY_LogType::LT_INFO, "OpenGLES Version: %d.%d", GLVersion.major, GLVersion.minor);
 #endif
     // Generate Viewport with window size
-    uint16 w, h;
+    uint16_t w, h;
     /*FLYDISPLAY_MakeContextMain(0);
     FLYDISPLAY_GetWindowSize(0, &w, &h);
     FLYRENDER_ChangeViewPortSize(w, h);*/
@@ -160,7 +160,7 @@ void FLYRENDER_Clear(const ColorRGBA& color, int clear_flags)
 }
 
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-int32 GetGLVer()
+int32_t GetGLVer()
 {
     return GLVersion.major * 100 + GLVersion.minor * 10;
 }
@@ -174,7 +174,7 @@ const char* FLYRENDER_GetGLSLVer()
 #if defined(USE_OPENGL) ||defined(USE_OPENGLES)
     char* str = NULL;
     int ver = GLVersion.major * 100 + GLVersion.minor * 10;
-    int16 size = 16;
+    int16_t size = 16;
     if (ver >= 320)
     {        
         const char* gles = "\n";
@@ -266,7 +266,7 @@ void FLY_SendAttributeToGPU(const FLY_VertAttrib& attr)
 #endif
 }
 
-void FLY_EnableBufferAttribute(int32 location, uint16 vert_size, FLY_VertAttrib* attr)
+void FLY_EnableBufferAttribute(int32_t location, uint16_t vert_size, FLY_VertAttrib* attr)
 {
     attr->id = location;
     attr->vert_size = vert_size;
@@ -293,7 +293,7 @@ void FLY_SetTextureParameters(const FLY_Texture2D& tex, const FLY_TexAttrib& att
     if (attr.var_type == FLY_FLOAT)
         glTexParameterfv(FLY_TEXTURE_2D, attr.id, (const float*)attr.data);
     else
-        glTexParameteriv(FLY_TEXTURE_2D, attr.id, (const int32*)attr.data);
+        glTexParameteriv(FLY_TEXTURE_2D, attr.id, (const int32_t*)attr.data);
 #endif
 }
 
@@ -314,14 +314,14 @@ void FLY_BindTexture(const FLY_Texture2D& tex)
 #endif
 }
 
-void FLY_SetActiveTextureUnit(int32 unit)
+void FLY_SetActiveTextureUnit(int32_t unit)
 {
 #if defined(USE_OPENGL) | defined(USE_OPENGLES)
     glActiveTexture(unit);
 #endif
 }
 
-void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32 mipmap_level)
+void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32_t mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindTexture(GL_TEXTURE_2D, tex.id);
@@ -330,14 +330,14 @@ void FLY_SendTextureToGPU(const FLY_Texture2D& tex, int32 mipmap_level)
 #endif
 }
 
-void FLYRENDER_BindExternalTexture(int tex_type, uint32 id)
+void FLYRENDER_BindExternalTexture(int tex_type, uint32_t id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindTexture(tex_type, id);
 #endif
 }
 
-void FLYRENDER_BindSampler(int32 texture_locator, int32 sampler_id)
+void FLYRENDER_BindSampler(int32_t texture_locator, int32_t sampler_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     if(GetGLVer() >= 330)glBindSampler(texture_locator, sampler_id);
@@ -378,7 +378,7 @@ void FLYRENDER_UseProgram(const FLY_Program& prog)
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices, int32 count)
+void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32_t offset_indices, int32_t count)
 {
     count = (count < 0) ? mesh.num_index : count;
     FLY_BindMeshBuffer(mesh);
@@ -391,7 +391,7 @@ void FLYRENDER_DrawIndices(const FLY_Mesh& mesh, int32 offset_indices, int32 cou
 #endif
 }
 
-void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32 count)
+void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32_t count)
 {
     count = (count == 0) ? mesh.num_verts : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
@@ -418,7 +418,7 @@ void FLYRENDER_DrawVertices(const FLY_Mesh& mesh, int32 count)
 #include <cstring>
 void CheckForRenderErrors(const char* file, int line)
 {
-    int32 errcode = 0;
+    int32_t errcode = 0;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     while ((errcode = glGetError()) != GL_NO_ERROR)
         FLYPRINT(LT_WARNING, "%s(%d): OpenGL Error %d", strrchr(file, FOLDER_ENDING), line, errcode);

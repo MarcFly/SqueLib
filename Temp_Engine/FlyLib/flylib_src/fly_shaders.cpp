@@ -21,7 +21,7 @@
 FLY_Shader::FLY_Shader() : id(0), type(NULL), lines(0), source(NULL)
 {}
 
-FLY_Shader::FLY_Shader(int32 type_, uint16 strs, const char** data) :
+FLY_Shader::FLY_Shader(int32_t type_, uint16_t strs, const char** data) :
     type(type_), lines(strs), source(data)
 {
     if (data == NULL | *data == NULL)
@@ -107,10 +107,11 @@ void SetInt(const FLY_Program& prog, const char* name, int value)
 #endif
 }
 
-void SetInt2(const FLY_Program& prog, const char* name, int2 value)
+/*
+void SetInt2(const FLY_Program& prog, const char* name, int value[2])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform2i(prog.GetUniformLocation(name), value.x, value.y);
+    glUniform2i(prog.GetUniformLocation(name), value.x, value[2]);
 #endif
 }
 
@@ -127,6 +128,7 @@ void SetInt4(const FLY_Program& prog, const char* name, int4 value)
     glUniform4i(prog.GetUniformLocation(name), value.x, value.y, value.z, value.w);
 #endif
 }
+*/
 
 void SetFloat(const FLY_Program& prog, const char* name, float value)
 {
@@ -156,7 +158,7 @@ void SetFloat4(const FLY_Program& prog, const char* name, float4 value)
 #endif
 }
 
-void SetMatrix4(const FLY_Program& prog, const char* name, const float* value, uint16 number_of_matrices, bool transpose)
+void SetMatrix4(const FLY_Program& prog, const char* name, const float* value, uint16_t number_of_matrices, bool transpose)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniformMatrix4fv(prog.GetUniformLocation(name), number_of_matrices, transpose, value);
@@ -222,7 +224,7 @@ void FLY_Program::DeclareUniform(const char* name)
 }
 
 #include <cstring>
-int32 FLY_Program::GetUniformLocation(const char* name) const
+int32_t FLY_Program::GetUniformLocation(const char* name) const
 {
     int size = uniforms.size();
     for (int i = 0; i < size; ++i)
