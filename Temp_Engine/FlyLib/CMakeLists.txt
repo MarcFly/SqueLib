@@ -62,7 +62,7 @@ endif()
 # ADD NON-FETCHABLE SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 # GLAD---------------------------------------------------------------------------------------
-add_library(glad STATIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
+add_library(glad SHARED "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
 set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
 target_include_directories(glad PUBLIC ${glad_include})
 set_target_properties(glad
