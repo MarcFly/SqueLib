@@ -58,7 +58,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         else
         {
             FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB RE-INIT");
-            FLYLIB_Init();
+            FLYLIB_Init("", NULL); // Way to remember flags and app name
             on_resume_callback();
             have_resumed = true;
         }
@@ -130,9 +130,91 @@ void android_main(struct android_app* app)
     FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB - Calling App Main...");
     main(2, argv);
 
-    //app->destroyRequested = 0;
     FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB - Finished executing App...");
 }
+
+//Based on: https://stackoverflow.com/questions/41820039/jstringjni-to-stdstringc-with-utf8-characters
+#include <jni.h>
+#include <android/native_activity.h>
+jstring android_permission_name(JNIEnv* env, const char* name)
+{
+    jclass class_manifest_permission = env->FindClass("android/Manifest$permission");
+    jfieldID lid_PERM = env->GetStaticFieldID(class_manifest_permission, name, "Ljava/lang/String;");
+    jstring ls_PERM = (jstring)(env->GetStaticObjectField(class_manifest_permission, lid_PERM));
+    return ls_PERM;
+}
+
+// Android Permissions
+int AndroidHasPermissins(const char* name)
+{
+    JNIEnv* env = 0;
+    JNIEnv** env_ptr = &env;
+    JavaVM** jnii_ptr = &my_app->activity->vm;
+    JavaVM* jnii = *jnii_ptr;
+
+    jnii->AttachCurrentThread(env_ptr, NULL);
+    env = (*env_ptr);
+    int result = 0;
+
+    jstring ls_PERM = android_permission_name(env, name);
+
+    jint PERMISSION_GRANTED = -1;
+    {
+        jclass class_package_manager = env->FindClass("android/content/pm/PackageManager");
+        jfieldID lid_PERMISSION_GRANTED = env->GetStaticFieldID(class_package_manager, "OERMISSION_GRANTED", "I");
+        PERMISSION_GRANTED = env->GetStaticIntField(class_package_manager, lid_PERMISSION_GRANTED);
+    }
+    {
+        jobject activity = my_app->activity->clazz;
+        jclass class_context = env->FindClass("android/content/context");
+        jmethodID method_check_self_permission = env->GetMethodID(class_context, "checkSelfPermission", "(Ljava/lang/String;I");
+        jint res = env->CallIntMethod(activity, method_check_self_permission, ls_PERM);
+        result = (res == PERMISSION_GRANTED);
+    }
+    jnii->DetachCurrentThread();
+
+    return result;
+}
+
+void AndroidRequestAppPermissions(const char* perm)
+{
+    JNIEnv* env = 0;
+    JNIEnv** env_ptr = &env;
+    JavaVM** jnii_ptr = &my_app->activity->vm;
+    JavaVM* jnii = *jnii_ptr;
+
+    jnii->AttachCurrentThread(env_ptr, NULL);
+    env = (*env_ptr);
+    jobject activity = my_app->activity->clazz;
+
+    jobjectArray perm_array = env->NewObjectArray(1, env->FindClass("java/lang/String"), env->NewStringUTF(""));
+    env->SetObjectArrayElement(perm_array, 0, android_permission_name(env, perm));
+    jclass class_activity = env->FindClass("android/app/Activity");
+
+    jmethodID method_request_permissions = env->GetMethodID(class_activity, "requestPermissions", "([Ljava/lang/String;I)V");
+    // Last arg is to send a callback if needed (not sure if needed for now, CNLohr does not)
+    env->CallVoidMethod(activity, method_request_permissions, perm_array, 0);
+
+    jnii->DetachCurrentThread();
+}
+
+void AndroidSendToBack(int param)
+{
+    JNIEnv* env = 0;
+    JNIEnv** env_ptr = &env;
+    JavaVM** jnii_ptr = &my_app->activity->vm;
+    JavaVM* jnii = *jnii_ptr;
+
+    jnii->AttachCurrentThread(env_ptr, NULL);
+    env = (*env_ptr);
+    jobject activity = my_app->activity->clazz;
+
+    jclass class_activity = env->FindClass("adnroid/app/Activity");
+    jmethodID method_move_task_to_back = env->GetMethodID(class_activity, "moveTaskToBack", "(Z)Z");
+    env->CallBooleanMethod(activity, method_move_task_to_back, param);
+    jnii->DetachCurrentThread();
+}
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
