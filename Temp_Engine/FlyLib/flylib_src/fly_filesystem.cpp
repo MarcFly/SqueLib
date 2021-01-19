@@ -101,7 +101,7 @@ byte* FLYFS_LoadFileRaw(const char* file)
 	int len = in.tellg();
 	in.seekg(0, std::ios::beg);
 	data = new byte[len];
-	in.read(data, len);
+	in.read((char*)data, len);
 	in.close();
 
 	return data;

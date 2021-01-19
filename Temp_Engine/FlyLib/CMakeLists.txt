@@ -61,18 +61,26 @@ endif()
 #------------------------------------------------------------------------------------------------
 # ADD NON-FETCHABLE SUBPROJECTS
 #------------------------------------------------------------------------------------------------
-#if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
-    # GLAD---------------------------------------------------------------------------------------
-    add_library(glad STATIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
-    set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
-    target_include_directories(glad PUBLIC ${glad_include})
-    set_target_properties(glad
-        PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-            LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-            RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-    )
-#endif()
+# GLAD---------------------------------------------------------------------------------------
+add_library(glad STATIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
+set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
+target_include_directories(glad PUBLIC ${glad_include})
+set_target_properties(glad
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+)
+# MathGeoLib ------------------------------------------------------------------------------------
+# Setup Custom MathGeoLib build because of some issues with android...
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/mathgeolib")
+set(mathegeolib_include "${CMAKE_CURRENT_SOURCE_DIR}/external/mathgeolib/src")
+set_target_properties(MathGeoLib
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+)
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
@@ -81,20 +89,6 @@ include(FetchContent)
 set(EXTERNAL ${CMAKE_SOURCE_DIR}/external/FlyLib_deps)
 set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
-# MathGeoLib--------------------------------------------------------------------------------------
-FetchContent_Declare(mathgeolib
-    GIT_REPOSITORY https://github.com/juj/MathGeoLib.git
-    GIT_TAG master
-)
-FetchContent_MakeAvailable(mathgeolib)
-FetchContent_GetProperties(mathgeolib SOURCE_DIR mgl_src_dir)
-set(mgl_src_dir ${mgl_src_dir}/src)
-set_target_properties(MathGeoLib
-    PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-)
 # FlatBuffers------------------------------------------------------------------------------------
 option(FLATBUFFERS_BUILD_TESTS OFF)
 option(FLATBUFFERS_INSTALL OFF)
@@ -213,7 +207,7 @@ endif()
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 target_include_directories(FlyLib PUBLIC
-    ${mgl_src_dir}
+    ${mathegeolib_include}
     ${flatbuffers_include}
 )
 target_link_libraries(FlyLib PUBLIC
