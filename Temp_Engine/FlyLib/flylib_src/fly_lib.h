@@ -649,6 +649,6 @@ FL_API void CheckForRenderErrors(const char* file, int line);
 FL_API std::string FLYFS_GetExecPath();
 FL_API bool FLYFS_CreateDirFullPath(const char* path);
 FL_API bool FLYFS_CreateDirRelative(const char* path, int32_t flags = NULL);
-FL_API byte* FLYFS_LoadFileRaw(const char* path);
-FL_API bool FLYFS_WriteFileRaw(const char* path, byte* data);
+FL_API char* FLYFS_LoadFileRaw(const char* path);
+FL_API bool FLYFS_WriteFileRaw(const char* path, char* data);
 #endif // _FLY_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

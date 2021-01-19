@@ -92,22 +92,22 @@ bool FLYFS_CreateDirRelative(const char* path, int32_t flags)
 	return ret;
 }
 
-byte* FLYFS_LoadFileRaw(const char* file)
+char* FLYFS_LoadFileRaw(const char* file)
 {
-	byte* data = NULL;
+	char* data = NULL;
 	std::ifstream in;
 	in.open(file, std::ios::binary | std::ios::in);
 	in.seekg(0, std::ios::end);
 	int len = in.tellg();
 	in.seekg(0, std::ios::beg);
-	data = new byte[len];
+	data = new char[len];
 	in.read((char*)data, len);
 	in.close();
 
 	return data;
 }
 
-bool FLYFS_WriteFileRaw(const char* path, byte* data)
+bool FLYFS_WriteFileRaw(const char* path, char* data)
 {
 	bool ret = true;
 

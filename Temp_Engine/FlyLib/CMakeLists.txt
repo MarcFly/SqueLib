@@ -75,12 +75,7 @@ set_target_properties(glad
 # Setup Custom MathGeoLib build because of some issues with android...
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
 set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
-set_target_properties(glm
-    PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-)
+# GLM is interface library by default, does not have output, its added to project
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
