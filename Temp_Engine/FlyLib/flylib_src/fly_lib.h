@@ -49,15 +49,12 @@
 #	endif																						
 #endif																																	
 
-// Extra defs for libraries I am using with
-#define MATH_SILENT_ASSUME // better runtime on mathgeolib
-#include <MathGeoLib.h>
-
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <fly_remap_macros.h>																											
 #include <fly_simple_types.h>																											
-#include <stdint.h>		
-
+#include <stdint.h>
+// Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
+#include<glm.hpp>
 // Initialization / State Control //////////////////////////////////////////////////////////////////////////////////////////////////////
 #define FL_VERSION_MAJOR 2020																											
 #define FL_VERSION_MINOR 1																												
@@ -523,9 +520,9 @@ typedef struct FLY_Uniform
 FL_API void SetBool(const FLY_Program& prog, const char* name, bool value);
 FL_API void SetInt(const FLY_Program& prog, const char* name, int value);
 FL_API void SetFloat(const FLY_Program& prog, const char* name, float value);
-FL_API void SetFloat2(const FLY_Program& prog, const char* name, float2 value);
-FL_API void SetFloat3(const FLY_Program& prog, const char* name, float3 value);
-FL_API void SetFloat4(const FLY_Program& prog, const char* name, float4 value);
+FL_API void SetFloat2(const FLY_Program& prog, const char* name, glm::vec2 value);
+FL_API void SetFloat3(const FLY_Program& prog, const char* name, glm::vec3 value);
+FL_API void SetFloat4(const FLY_Program& prog, const char* name, glm::vec4 value);
 // ... add a matrix/array passer...																									
 FL_API void SetMatrix4(const FLY_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
 

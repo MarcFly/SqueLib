@@ -73,9 +73,9 @@ set_target_properties(glad
 )
 # MathGeoLib ------------------------------------------------------------------------------------
 # Setup Custom MathGeoLib build because of some issues with android...
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/mathgeolib")
-set(mathegeolib_include "${CMAKE_CURRENT_SOURCE_DIR}/external/mathgeolib/src")
-set_target_properties(MathGeoLib
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
+set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
+set_target_properties(glm
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
         LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
@@ -207,12 +207,12 @@ endif()
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 target_include_directories(FlyLib PUBLIC
-    ${mathegeolib_include}
+    ${glm_include}
     ${flatbuffers_include}
 )
 target_link_libraries(FlyLib PUBLIC
     glad
-    MathGeoLib
+    glm
     flatbuffers
 )
 #------------------------------------------------------------------------------------------------

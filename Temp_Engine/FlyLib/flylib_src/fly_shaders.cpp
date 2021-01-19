@@ -137,21 +137,21 @@ void SetFloat(const FLY_Program& prog, const char* name, float value)
 #endif
 }
 
-void SetFloat2(const FLY_Program& prog, const char* name, float2 value)
+void SetFloat2(const FLY_Program& prog, const char* name, glm::vec2 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform2f(prog.GetUniformLocation(name), value.x, value.y);
 #endif
 }
 
-void SetFloat3(const FLY_Program& prog, const char* name, float3 value)
+void SetFloat3(const FLY_Program& prog, const char* name, glm::vec3 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform3f(prog.GetUniformLocation(name), value.x, value.y, value.z);
 #endif
 }
 
-void SetFloat4(const FLY_Program& prog, const char* name, float4 value)
+void SetFloat4(const FLY_Program& prog, const char* name, glm::vec4 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform4f(prog.GetUniformLocation(name), value.x, value.y, value.z, value.w);

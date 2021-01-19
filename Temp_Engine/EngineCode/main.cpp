@@ -15,7 +15,6 @@ enum main_states
 
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
-#include <MathGeoLib.h>
 bool have_resumed;
 
 void ImGuiImplFlyLibTest()
@@ -143,7 +142,7 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYRENDER_UseProgram(program);
         if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
-        SetFloat4(program, "ourColor", math::float4(0, green, 0, 1));
+        SetFloat4(program, "ourColor", glm::vec4(0, green, 0, 1));
 #ifdef _WIN32
         FLY_SetActiveTextureUnit(FLY_TEXTURE0);
         FLY_BindTexture(tex);
