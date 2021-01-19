@@ -647,8 +647,37 @@ FL_API void CheckForRenderErrors(const char* file, int line);
 //  i don't like having to inlcude std::stirng..........
 #include <string>
 FL_API std::string FLYFS_GetExecPath();
+// On Android, all these functions require permissions
 FL_API bool FLYFS_CreateDirFullPath(const char* path);
 FL_API bool FLYFS_CreateDirRelative(const char* path, int32_t flags = NULL);
 FL_API char* FLYFS_LoadFileRaw(const char* path);
 FL_API bool FLYFS_WriteFileRaw(const char* path, char* data);
+
+// Permission safe functions
+enum FLY_Assets
+{
+
+};
+
+typedef struct FLY_Dir
+{
+	FLY_Dir* parent;
+	std::vector<FLY_Dir*> children;
+
+	const char* name;
+
+	char* native_dir_data;
+} FLY_Dir;
+
+typedef struct FLY_Asset
+{
+	uint16_t type;
+	int64_t size;
+	char* raw_data;
+}	FLY_Asset;
+
+FL_API FLY_Dir* FLYFS_CreateBaseDirTree();
+FL_API void FLYFS_UpdateTree(FLY_Dir* root);
+FL_API FLY_Dir* FLYFS_GetDirInTree(FLY_Dir* root, const char* leaf);
+FL_API FLY_Asset* FLYFS_GetAssetRaw(FLY_Dir* start_dir, const char* file);
 #endif // _FLY_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

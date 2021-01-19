@@ -51,6 +51,7 @@ add_custom_target( makecapk.apk
     COMMAND mkdir -p ${CMAKE_BINARY_DIR}/makecapk/res
     
     COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/EngineResources/* ${CMAKE_BINARY_DIR}/makecapk/res
+    COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/EngineAssets/* ${CMAKE_BINARY_DIR}/makecapk/assets
 
     COMMAND ${AAPT} package -f -F ${CMAKE_BINARY_DIR}/temp.apk -I ${ANDROIDSDK}/platforms/android-${ANDROIDVERSION}/android.jar -M ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml -S ${CMAKE_BINARY_DIR}/makecapk/res -A ${CMAKE_BINARY_DIR}/makecapk/assets -v --target-sdk-version ${ANDROIDTARGET}
     COMMAND unzip -o ${CMAKE_BINARY_DIR}/temp.apk -d ${CMAKE_BINARY_DIR}/makecapk

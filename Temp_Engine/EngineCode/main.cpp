@@ -19,9 +19,18 @@ bool have_resumed;
 
 void ImGuiImplFlyLibTest()
 {
-    std::string test = FLYFS_GetExecPath();
-    bool test_dir = FLYFS_CreateDirRelative("../JustTesting", FLYFS_HIDDEN);
-    // Shader Setup
+    //std::string test = FLYFS_GetExecPath();
+    //bool test_dir = FLYFS_CreateDirRelative("../JustTesting", FLYFS_HIDDEN);
+    //FLY_Dir* test_dir = FLYFS_CreateBaseDirTree();
+    //FLYPRINT(LT_INFO, "Test Dir and Asset; %s", test_dir->name);
+    //for(int i = 0; test_dir->children.size(); ++i)
+    {
+    //    FLYPRINT(LT_INFO, "%s", test_dir->children[i]->name);
+    }
+    //FLY_Asset* test_asset_raw = FLYFS_GetAssetRaw(NULL, "whatever.txt");
+    
+    //if(test_asset_raw != NULL)FLYPRINT(LT_INFO, "%s", test_asset_raw->raw_data);
+
     const char* vertexShaderSource =
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec3 aCol;\n"
