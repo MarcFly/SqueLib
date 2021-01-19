@@ -17,6 +17,7 @@ enum main_states
 #include <imgui_impl_flylib.h>
 #include <MathGeoLib.h>
 bool have_resumed;
+
 void ImGuiImplFlyLibTest()
 {
     std::string test = FLYFS_GetExecPath();

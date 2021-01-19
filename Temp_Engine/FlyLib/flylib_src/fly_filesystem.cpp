@@ -47,8 +47,8 @@ std::string FLYFS_GetExecPath()
 #elif defined(__linux__)
 	int32_t pid = getpid();
 	char string[50];
-	sprintf(string, "/proc/%d/self", pid);
-	len = readlink(string, path, 256);
+	sprintf(string, "/proc/self/exe", pid);
+	len = readlink("/proc/self/exe", path, 256);
 	ret = dirname(path);
 #elif defined(ANDROID)
 #endif
@@ -61,7 +61,7 @@ bool FLYFS_CreateDirFullPath(const char* path)
 #if defined(_WIN32)
 	ret = CreateDirectoryA(path, NULL);
 #elif defined(__linux__)
-	ret = (mkdir("path", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
+	ret = (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #elif defined(ANDROID)
 #endif
 	return ret;
@@ -82,7 +82,9 @@ bool FLYFS_CreateDirRelative(const char* path, int32_t flags)
 	if(CHK_FLAG(flags, FLYFS_HIDDEN))
 	{
 		int32_t v = exec_path.find(strrchr(exec_path.c_str(), FOLDER_ENDING));
-		rename(exec_path.c_str(), exec_path.insert(v+1, 1, '.').c_str());
+		std::string old = exec_path;
+		exec_path.insert(v+1, 1, '.');
+		rename(old.c_str(), exec_path.c_str());
 	}
 #elif defined(ANDROID)
 #endif
