@@ -414,6 +414,8 @@ void ImGui_ImplFlyLib_NewFrame()
 
 	int32_t w, h;
 	FLYDISPLAY_GetWindowSize(0, &w, &h); 
+	w = (w <= 0) ? 1 : w;
+	h = (h <= 0) ? 1 : h;
 	io.DisplaySize = ImVec2(w, h);
 	FLYDISPLAY_GetViewportSize(0, &w, &h);
 	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
