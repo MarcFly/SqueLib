@@ -11,10 +11,12 @@ enum main_states
 
 #include <cmath>
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#define STB_NEON
+#include <stb_image.h>
 
 #include <imgui.h>
 #include <imgui_impl_flylib.h>
+
 bool have_resumed;
 
 void ImGuiImplFlyLibTest()
@@ -27,9 +29,9 @@ void ImGuiImplFlyLibTest()
     {
     //    FLYPRINT(LT_INFO, "%s", test_dir->children[i]->name);
     }
-    //FLY_Asset* test_asset_raw = FLYFS_GetAssetRaw(NULL, "whatever.txt");
-    
-    //if(test_asset_raw != NULL)FLYPRINT(LT_INFO, "%s", test_asset_raw->raw_data);
+    FLY_Asset* test_asset_raw = FLYFS_GetAssetRaw(NULL, "whatever.txt");
+
+    if(test_asset_raw != NULL)FLYPRINT(LT_INFO, "%s", test_asset_raw->raw_data);
 
     const char* vertexShaderSource =
         "layout (location = 0) in vec3 aPos;\n"
@@ -84,11 +86,11 @@ void ImGuiImplFlyLibTest()
     tex.SetParameter(mag_filter);
     tex.ApplyParameters();
 
-#ifdef _WIN32
-    tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
+    FLY_Asset* tex_data = FLYFS_GetAssetRaw(NULL, "container.jpeg");
+    tex.pixels = stbi_load_from_memory((unsigned char*)tex_data->raw_data, tex_data->size, &tex.w, &tex.h, &tex.channel_num, 0);
+    //tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
     FLY_SendTextureToGPU(tex);
     stbi_image_free(tex.pixels);
-#endif
 
     FLY_CHECK_RENDER_ERRORS();
 
@@ -147,21 +149,9 @@ void ImGuiImplFlyLibTest()
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYINPUT_Process(0);
         if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-     //---------------------------   
-        FLYRENDER_UseProgram(program);
-        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-        float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
-        SetFloat4(program, "ourColor", glm::vec4(0, green, 0, 1));
-#ifdef _WIN32
-        FLY_SetActiveTextureUnit(FLY_TEXTURE0);
-        FLY_BindTexture(tex);
-#endif
-        FLYRENDER_DrawIndices(triangle);
-        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-        //----------------------
+
         ImGui_ImplFlyLib_NewFrame();
         if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-
         ImGui::NewFrame();
 
         if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
@@ -197,6 +187,19 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYRENDER_ChangeFramebufferSize(x, y);
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         FLYRENDER_Clear(col);
+        //--
+        FLYRENDER_UseProgram(program);
+        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
+        SetFloat4(program, "ourColor", glm::vec4(0, green, 0, 1));
+
+        FLY_SetActiveTextureUnit(FLY_TEXTURE0);
+        FLY_BindTexture(tex);
+
+        FLYRENDER_DrawIndices(triangle);
+        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        
+        //--
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         ImGui_ImplFlyLib_Render(ImGui::GetDrawData());
 if(have_resumed) FLY_CHECK_RENDER_ERRORS();
@@ -212,12 +215,9 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
     //----------------------
     ImGui_ImplFlyLib_Shutdown();
 }
-int global_argc;
-char** global_argv;
+
 int main(int argc, char**argv)
 {
-    global_argc = argc;
-    global_argv = argv;
     main_states state = MAIN_CREATION;
     bool ret = true;
 

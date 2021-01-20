@@ -97,11 +97,13 @@ bool FLYFS_CreateDirRelative(const char* path, int32_t flags)
 	return ret;
 }
 
-char* FLYFS_LoadFileRaw(const char* file)
+FLY_Asset* FLYFS_LoadFileRaw(const char* file)
 {
+	
 	char* data = NULL;
 	std::ifstream in;
 	in.open(file, std::ios::binary | std::ios::in);
+	if(!in.good()) return NULL;
 	in.seekg(0, std::ios::end);
 	int len = in.tellg();
 	in.seekg(0, std::ios::beg);
@@ -109,7 +111,11 @@ char* FLYFS_LoadFileRaw(const char* file)
 	in.read((char*)data, len);
 	in.close();
 
-	return data;
+	FLY_Asset* ret = new FLY_Asset();
+	ret->size = len;
+	ret->raw_data = data;
+	
+	return ret;
 }
 
 bool FLYFS_WriteFileRaw(const char* path, char* data)
@@ -167,8 +173,9 @@ FLY_Dir* FLYFS_GetDirInTree(FLY_Dir* root, const char* leaf)
 
 FLY_Asset* FLYFS_GetAssetRaw(FLY_Dir* start_dir, const char* file)
 {
-	FLY_Asset* ret = new FLY_Asset();
+	FLY_Asset* ret = NULL;
 #if defined(ANDROID)
+	ret = new FLY_Asset();
 	AAsset* asset = AAssetManager_open(my_app->activity->assetManager, file, AASSET_MODE_BUFFER);
 	FLYPRINT(LT_INFO, "%d %s", asset, file);
 	if(asset != NULL)
@@ -185,6 +192,10 @@ FLY_Asset* FLYFS_GetAssetRaw(FLY_Dir* start_dir, const char* file)
 		ret = NULL;
 	}
 #else
-	// Here I should construct path from main path then load raw file
+	// Here I should construct path from main path then load raw file, for now, it will do LoadFileRaw with exec path
+	std::string dir = FLYFS_GetExecPath() + FOLDER_ENDING + file;
+	ret = FLYFS_LoadFileRaw(dir.c_str());
 #endif
+
+	return ret;
 }
