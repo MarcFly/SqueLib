@@ -307,7 +307,13 @@ void ImGui_ImplFlyLib_Resume()
 void ImGui_ImplFlyLib_GoBackground()
 {
 
-	ImGui_ImplFlyLib_Shutdown();
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->TexID = 0;
+	fly_shaderProgram.CleanUp();
+
+	fly_dataHandle.CleanUp();
+	fly_fontTexture.CleanUp();
+
 	if (fly_PrevOnGoBackgroundCallback != NULL) fly_PrevOnGoBackgroundCallback();
 }
 
