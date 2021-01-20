@@ -326,8 +326,8 @@ void ImGui_ImplFlyLib_Init()
 		fly_PrevMousePosCallback = FLYINPUT_SetMousePosCallback(ImGui_ImplFlyLib_MousePosCallback);
 		fly_PrevMouseScrollCallback = FLYINPUT_SetMouseScrollCallback(ImGui_ImplFlyLib_MouseScrollCallback);
 		fly_PrevKeyboardCallback = FLYINPUT_SetKeyCallback(ImGui_ImplFlyLib_KeyboardCallback);
-		fly_PrevOnResumeCallback = FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Init);
-		fly_PrevOnGoBackgroundCallback = FLYINPUT_AddOnGoBackgroundCallback(ImGui_ImplFlyLib_Shutdown);
+		fly_PrevOnResumeCallback = FLYINPUT_AddOnResumeCallback(ImGui_ImplFlyLib_Resume);
+		fly_PrevOnGoBackgroundCallback = FLYINPUT_AddOnGoBackgroundCallback(ImGui_ImplFlyLib_GoBackground);
 		init_registered = true;
 	}
 	
@@ -386,11 +386,18 @@ void ImGui_ImplFlyLib_Shutdown()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->TexID = 0;
-
 	fly_shaderProgram.CleanUp();
+
 	fly_dataHandle.CleanUp();
 	fly_fontTexture.CleanUp();
 
+	FLYINPUT_SetMousePosCallback(fly_PrevMousePosCallback);
+	FLYINPUT_SetMouseScrollCallback(fly_PrevMouseScrollCallback);
+	FLYINPUT_SetKeyCallback(fly_PrevKeyboardCallback);
+	FLYINPUT_AddOnResumeCallback(fly_PrevOnResumeCallback);
+	FLYINPUT_AddOnGoBackgroundCallback(fly_PrevOnGoBackgroundCallback);
+
+	init_registered = false;
 }
 
 void ImGui_ImplFlyLib_NewFrame()
@@ -399,10 +406,6 @@ void ImGui_ImplFlyLib_NewFrame()
 
 	IM_ASSERT(io.Fonts->IsBuilt());
 
-    // Setup display size (every frame to accommodate for window resizing)
-    //io.DisplaySize = ImVec2(fly_backupState.viewport.z, fly_backupState.viewport.w);
-	
-	
 	int32_t w, h;
 	FLYDISPLAY_GetWindowSize(0, &w, &h); 
 	io.DisplaySize = ImVec2(w, h);

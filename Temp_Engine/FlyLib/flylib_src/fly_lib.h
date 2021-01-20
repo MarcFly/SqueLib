@@ -171,7 +171,7 @@ FL_API bool FLYDISPLAY_ShouldWindowClose(uint16_t window);
 FL_API void FLYDISPLAY_SetWindowClose(uint16_t window);																																									
 FL_API uint16_t FLYDISPLAY_CloseWindow(uint16_t window);																																											
 FL_API void FLYDISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h);
-
+FL_API void FLYDISPLAY_UpdateNativeWindowSize(uint16_t window);
 // Getters
 FL_API uint16_t FLYDISPLAY_GetAmountWindows();
 FL_API void FLYDISPLAY_GetWindowPos(uint16_t window, int32_t& x, int32_t& y);																	

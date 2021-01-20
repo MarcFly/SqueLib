@@ -378,7 +378,6 @@ void FLYDISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h)
 #if defined(USE_GLFW)
     glfwSetWindowSize(glfw_windows[window], w, h);
 #elif defined(USE_EGL)
-    // ?
 #endif
     uint16_t prev_main = main_window_context;
     FLYDISPLAY_MakeContextMain(window);
@@ -386,7 +385,18 @@ void FLYDISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h)
     FLYDISPLAY_MakeContextMain(prev_main);
 }
 
-// Unsure if this returns content rect or actual window size on GLFW, because it resizes to content rect I think
+void FLYDISPLAY_UpdateNativeWindowSize(uint16_t window)
+{
+    int32_t w, h;
+#if defined(USE_EGL)
+    w = ANativeWindow_getWidth(egl_window);
+    h = ANativeWindow_getHeight(egl_window);
+#else if defined(USE_GLFW)
+    glfwGetWindowSize(glfw_windows[window], &w, &h);
+#endif
+
+    FLYDISPLAY_ResizeWindow(window, w,h);
+}
 void FLYDISPLAY_GetWindowSize(uint16_t window, int32_t* x, int32_t* y)
 {
     if (window < fly_windows.size())

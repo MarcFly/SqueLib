@@ -68,12 +68,16 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         break;
     case APP_CMD_WINDOW_RESIZED:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_RESIZED");
+        FLYDISPLAY_UpdateNativeWindowSize(0);
         break;
     case APP_CMD_WINDOW_REDRAW_NEEDED:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_REDRAW_NEEDED");
         break;
     case APP_CMD_CONTENT_RECT_CHANGED:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_CONTENT_RECT_CHANGED");
+        // Require a window resize
+        FLYDISPLAY_UpdateNativeWindowSize(0);
+        // I don't like, this should be setup as callback to own resize (if flylib init, then it changes);
         break;
     case APP_CMD_GAINED_FOCUS:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_GAINED_FOCUS");
@@ -95,6 +99,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         break;
     case APP_CMD_SAVE_STATE:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_SAVE_STATE");
+        // Execution should stop doing intensive stuff (render, resettign dt,...)
         on_go_background_callback();
         break;
     case APP_CMD_PAUSE:
@@ -103,6 +108,8 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         break;
     case APP_CMD_STOP:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_STOP");
+        // Execution should stop doing intensive stuff (render, resettign dt,...)
+
         break;
     case APP_CMD_DESTROY:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_DESTROY");
