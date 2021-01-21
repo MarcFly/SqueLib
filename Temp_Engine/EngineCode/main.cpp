@@ -21,18 +21,6 @@ bool have_resumed;
 
 void ImGuiImplFlyLibTest()
 {
-    //std::string test = FLYFS_GetExecPath();
-    //bool test_dir = FLYFS_CreateDirRelative("../JustTesting", FLYFS_HIDDEN);
-    //FLY_Dir* test_dir = FLYFS_CreateBaseDirTree();
-    //FLYPRINT(LT_INFO, "Test Dir and Asset; %s", test_dir->name);
-    //for(int i = 0; test_dir->children.size(); ++i)
-    {
-    //    FLYPRINT(LT_INFO, "%s", test_dir->children[i]->name);
-    }
-    FLY_Asset* test_asset_raw = FLYFS_GetAssetRaw(NULL, "whatever.txt");
-
-    if(test_asset_raw != NULL)FLYPRINT(LT_INFO, "%s", test_asset_raw->raw_data);
-
     const char* vertexShaderSource =
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec3 aCol;\n"
@@ -77,8 +65,6 @@ void ImGuiImplFlyLibTest()
 
     FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32_t(FLY_MIRROR));
     tex.SetParameter(wrap_t);
-    //FLY_TexAttrib* border_color = tex.AddParameter();
-    //border_color->Set(FLY_BORDER_COLOR,FLY_FLOAT, new float4(1.0f, 1.0f, 0.0f, 1.0f));
 
     FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
     tex.SetParameter(min_filter);
@@ -88,7 +74,6 @@ void ImGuiImplFlyLibTest()
 
     FLY_Asset* tex_data = FLYFS_GetAssetRaw(NULL, "container.jpeg");
     tex.pixels = stbi_load_from_memory((unsigned char*)tex_data->raw_data, tex_data->size, &tex.w, &tex.h, &tex.channel_num, 0);
-    //tex.pixels = stbi_load("C:/Users/MarcFly/Documents/Repos/TFG-TempEngine/Temp_Engine/builds/Windows/Debug/container.jpg", &tex.w, &tex.h, &tex.channel_num, 0);
     FLY_SendTextureToGPU(tex);
     stbi_image_free(tex.pixels);
 
@@ -99,8 +84,8 @@ void ImGuiImplFlyLibTest()
         // positions          // colors           // texture coords
             0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
             0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
     };
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,   // first triangle

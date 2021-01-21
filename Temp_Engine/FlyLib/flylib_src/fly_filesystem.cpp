@@ -46,7 +46,7 @@ std::string FLYFS_GetExecPath()
 	std::string exec_path(path);
 	std::string exe = strrchr(path, FE);
 	size_t v = exec_path.find(std::string_view(exe));
-	exec_path = exec_path.substr(0, exec_path.length() - exe.length()) + FOLDER_ENDING + path;
+	ret = exec_path.substr(0, exec_path.length() - exe.length());
 #elif defined(ANDROID)
 #elif defined(__linux__)
 	int32_t pid = getpid();
@@ -168,7 +168,7 @@ void FLYFS_UpdateTree(FLY_Dir* root)
 
 FLY_Dir* FLYFS_GetDirInTree(FLY_Dir* root, const char* leaf)
 {
-
+	return NULL;
 }
 
 FLY_Asset* FLYFS_GetAssetRaw(FLY_Dir* start_dir, const char* file)
