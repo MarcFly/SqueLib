@@ -365,9 +365,9 @@ void ImGui_ImplFlyLib_Init()
     uint16_t dpi = FLYDISPLAY_GetDPIDensity();
 	uint16_t w, h; FLYDISPLAY_GetMainDisplaySize(w, h);
 	uint16_t bigger = (w > h) ? w : h;
-	float scale = (bigger / dpi)*.8;
-	//io.FontGlobalScale = scale;
-	//ImGui::GetStyle().ScaleAllSizes(scale);
+	float scale = (bigger / dpi)/5;
+	io.FontGlobalScale = scale;
+	ImGui::GetStyle().ScaleAllSizes(scale);
 
     // BackendFlags and things...
     //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
