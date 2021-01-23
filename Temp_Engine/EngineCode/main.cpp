@@ -128,6 +128,7 @@ void ImGuiImplFlyLibTest()
     //ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
     bool show_demo_window = true;
     bool show_another_window = true;
+    
     while(!FLYDISPLAY_ShouldWindowClose(0))
     {
 
@@ -225,7 +226,7 @@ int main(int argc, char**argv)
     //LearnOpenGLTest();
     ImGuiImplFlyLibTest();
     // For Testing timer and android keyboard
-    FLYINPUT_DisplaySoftwareKeyboard(true);
+    
     while(state == MAIN_UPDATE)
     {
         if(FLYDISPLAY_ShouldWindowClose(0))

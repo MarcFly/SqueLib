@@ -10,6 +10,7 @@
 static FLY_Timer    fly_Time;
 static double        fly_lastTime = 0;
 // Input Variables
+static bool			fly_wantKeyboard = false;
 static bool			fly_KeyCtrl = false;
 static bool			fly_KeyShift = false;
 static bool			fly_KeyAlt = false;
@@ -365,7 +366,7 @@ void ImGui_ImplFlyLib_Init()
     uint16_t dpi = FLYDISPLAY_GetDPIDensity();
 	uint16_t w, h; FLYDISPLAY_GetMainDisplaySize(w, h);
 	uint16_t bigger = (w > h) ? w : h;
-	float scale = (bigger / dpi)/5;
+	float scale = (bigger / dpi)/2.3f;
 	io.FontGlobalScale = scale;
 	ImGui::GetStyle().ScaleAllSizes(scale);
 
@@ -410,6 +411,11 @@ void ImGui_ImplFlyLib_NewFrame()
 {
     ImGuiIO& io = ImGui::GetIO();
 
+	if(fly_wantKeyboard != io.WantTextInput) 
+	{
+		FLYINPUT_DisplaySoftwareKeyboard(io.WantTextInput);
+		fly_wantKeyboard = io.WantTextInput;
+	}
 	IM_ASSERT(io.Fonts->IsBuilt());
 
 	int32_t w, h;
@@ -418,6 +424,7 @@ void ImGui_ImplFlyLib_NewFrame()
 	h = (h <= 0) ? 1 : h;
 	io.DisplaySize = ImVec2(w, h);
 	FLYDISPLAY_GetViewportSize(0, &w, &h);
+	FLYPRINT(LT_INFO, "%d,%d %d,%d", w,h, io.DisplaySize.x, io.DisplaySize.y);
 	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
 
     // Setup Time Step

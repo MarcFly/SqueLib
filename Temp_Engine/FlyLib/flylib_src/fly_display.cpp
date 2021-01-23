@@ -329,7 +329,7 @@ int32_t FLYDISPLAY_GetDPIDensity(uint16_t window)
     int32_t density = AConfiguration_getDensity(config);
     AConfiguration_delete(config);
     return density;
-#elif defined USE_GLFW
+#elif defined (USE_GLFW)
     const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
     int width_mm, height_mm;
     glfwGetMonitorPhysicalSize(glfw_monitors[0], &width_mm, &height_mm);
@@ -553,9 +553,10 @@ void FLYDISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uin
 #endif
 
     FLYPRINT(FLY_LogType::LT_INFO, "Window \"%s\" opened correctly", title);
-
+#ifndef ANDROID // Quick and dirty, will look into initing properly
     next_window->width = width;
     next_window->height = height;
+#endif
     fly_windows.push_back(next_window);
     FLYDISPLAY_MakeContextMain(fly_windows.size()-1);
     next_window = NULL;

@@ -60,9 +60,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
             FLYPRINT(FLY_LogType::LT_INFO, "FLYLIB RE-INIT");
             FLYLIB_Init("", NULL); // Way to remember flags and app name
             FLYDISPLAY_UpdateNativeWindowSize(0);
-            FLYPRINT(FLY_LogType::LT_INFO, "Test resume crash");
             on_resume_callback();
-            FLYPRINT(FLY_LogType::LT_INFO, "Test resume crash");
             have_resumed = true;
         }
         break;
@@ -71,7 +69,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         break;
     case APP_CMD_WINDOW_RESIZED:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_RESIZED");
-        FLYDISPLAY_UpdateNativeWindowSize(0);
+        //FLYDISPLAY_UpdateNativeWindowSize(0);
         break;
     case APP_CMD_WINDOW_REDRAW_NEEDED:
         FLYPRINT(FLY_LogType::LT_INFO, "APP_CMD_WINDOW_REDRAW_NEEDED");
