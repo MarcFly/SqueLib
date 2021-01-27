@@ -73,10 +73,12 @@ void ImGuiImplFlyLibTest()
     tex.ApplyParameters();
 
     FLY_Asset* tex_data = FLYFS_GetAssetRaw(NULL, "container.jpeg");
-    tex.pixels = stbi_load_from_memory((unsigned char*)tex_data->raw_data, tex_data->size, &tex.w, &tex.h, &tex.channel_num, 0);
-    FLY_SendTextureToGPU(tex);
-    stbi_image_free(tex.pixels);
-
+    if (tex_data != nullptr)
+    {
+        tex.pixels = stbi_load_from_memory((unsigned char*)tex_data->raw_data, tex_data->size, &tex.w, &tex.h, &tex.channel_num, 0);
+        FLY_SendTextureToGPU(tex);
+        stbi_image_free(tex.pixels);
+    }
     FLY_CHECK_RENDER_ERRORS();
 
     // Mesh Setup-----------------------------------------------------------------------------------

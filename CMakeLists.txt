@@ -36,15 +36,17 @@ add_library(FlyLib SHARED "${FLYLIB_SRC}")
 #------------------------------------------------------------------------------------------------
 execute_process(COMMAND mkdir -p ${CMAKE_SOURCE_DIR}/builds)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/builds)
-
 if(ToAndroid)
+    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a PARENT_SCOPE)
     set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
 else()
     set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
     # Change System Name to desired, 
     #then setup compiler and linkers and whatever is needed for crosscompiling
+    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME} PARENT_SCOPE)
     set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
 endif()
+message(STATUS FL_OutputFolder ${FL_OutputFolder})
 execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
 #------------------------------------------------------------------------------------------------
 # FIND SYSTEM LIBRARIES
@@ -62,7 +64,7 @@ endif()
 # ADD NON-FETCHABLE SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 # GLAD---------------------------------------------------------------------------------------
-add_library(glad SHARED "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
+add_library(glad STATIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/glad.c")
 set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
 target_include_directories(glad PUBLIC ${glad_include})
 set_target_properties(glad
@@ -71,8 +73,7 @@ set_target_properties(glad
         LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
 )
-# MathGeoLib ------------------------------------------------------------------------------------
-# Setup Custom MathGeoLib build because of some issues with android...
+# GL Math ------------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
 set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
 # GLM is interface library by default, does not have output, its added to project
@@ -81,32 +82,9 @@ set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
 #------------------------------------------------------------------------------------------------
 include(FetchContent)
 
-set(EXTERNAL ${CMAKE_SOURCE_DIR}/external/FlyLib_deps)
+set(EXTERNAL ${CMAKE_CURRENT_BINARY_DIR}/external/FlyLib_deps)
 set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
-# FlatBuffers------------------------------------------------------------------------------------
-#option(FLATBUFFERS_BUILD_TESTS OFF)
-#option(FLATBUFFERS_INSTALL OFF)
-#FetchContent_Declare(flatbuffers
-#    GIT_REPOSITORY https://github.com/google/flatbuffers.git
-#    GIT_TAG v1.12.0
-#)
-#FetchContent_MakeAvailable(flatbuffers)
-#FetchContent_GetProperties(flatbuffers SOURCE_DIR flatbuffers_src_dir)
-
-#set(flatbuffers_include "${flatbuffers_src_dir}/include/flatbuffers")
-# If I want to use it locally instead of pulling the whole repo
-#set(flatbuffers_include "${CMAKE_CURRENT_SOURCE_DIR}/external/flatbuffers-src/include/flatbuffers")
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/flatbuffers-src"
-#                 ${CMAKE_CURRENT_BINARY_DIR}/flatbuffers-build
-#                 EXCLUDE_FROM_ALL)
-
-#set_target_properties(flatbuffers
-#    PROPERTIES
-#        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-#        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-#        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-#)
 
 # DESKTOP DEPENDENCIES---------------------------------------------------------------------------
 if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) 
@@ -145,12 +123,12 @@ endif()
 set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 if(ToAndroid)
     add_compile_definitions(ANDROID)
-    include(${FL_cmake}/FindAndroidSDKVars.cmake)
+    include(${FL_cmake}/FindAndroidSDKVars.cmake PARENT_SCOPE)
 
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     target_sources(FlyLib PUBLIC ${app_glue}) # Add Android Files required 
 
-    include(${FL_cmake}/SetupAndroidEnv.cmake)
+    include(${FL_cmake}/SetupAndroidEnv.cmake PARENT_SCOPE)
     set_android_link_flags()
     set_android_compile_flags()
     if(NOT ANDROIDVERSION)
@@ -159,7 +137,7 @@ if(ToAndroid)
     set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
     link_android_all_libs(FlyLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
     include_android(FlyLib ${NDK} ${OS_NAME})
-
+    include(${FL_cmake}/AndroidInstallTargets.cmake PARENT_SCOPE)
 elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # SET MINIMAL C/CXX FLAGS
@@ -231,3 +209,6 @@ target_compile_options(glad PUBLIC
 #------------------------------------------------------------------------------------------------
 #source_group("external/mathgeolib/source" FILES "${mathgeolib_src}")
 source_group("flylib_source" FILES "${FLYLIB_SRC}")
+
+set(FlyLib_include ${CMAKE_CURRENT_SOURCE_DIR}/flylib_src PARENT_SCOPE)
+set(FlyLib_Output ${FL_OutputFolder} PARENT_SCOPE) 
