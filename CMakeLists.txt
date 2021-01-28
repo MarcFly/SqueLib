@@ -10,12 +10,12 @@ endif()
 #------------------------------------------------------------------------------------------------
 # Instead of Using CMAKE_MODULE_PATH, generate a variable to go into it and use .cmake extension
 # That way we don't overwrite other projects' CMAKE_MODULE_PATH and keep it cleaner to read
-set(FL_cmake  ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
-include(${FL_cmake}/Helpers.cmake)
+set(SQUE_cmake  ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
+include(${SQUE_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
-project(FlyLib_  VERSION 2020.1
+project(SqueLib_  VERSION 2020.1
                     DESCRIPTION "Multiplatform C++ Library for making apps and games easily"
                     LANGUAGES C CXX)
 
@@ -26,28 +26,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but it should)
 
 # Include directories shared by all build types
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/flylib_src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/squelib_src)
 
 # Get all shared source files
-file(GLOB_RECURSE FLYLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/flylib_src/*.h")
-add_library(FlyLib SHARED "${FLYLIB_SRC}")
+file(GLOB_RECURSE SQUELIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/squelib_src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/squelib_src/*.h")
+add_library(SqueLib SHARED "${SQUELIB_SRC}")
 #------------------------------------------------------------------------------------------------
 # SETUP BUILD PATHS
 #------------------------------------------------------------------------------------------------
 execute_process(COMMAND mkdir -p ${CMAKE_SOURCE_DIR}/builds)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/builds)
 if(ToAndroid)
-    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a PARENT_SCOPE)
-    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
+    set(SQUE_OutputFolder ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
 else()
     set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
     # Change System Name to desired, 
     #then setup compiler and linkers and whatever is needed for crosscompiling
-    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME} PARENT_SCOPE)
-    set(FL_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
+    set(SQUE_OutputFolder ${CMAKE_BINARY_DIR}/${CMAKE_SYSTEM_NAME})
 endif()
-message(STATUS FL_OutputFolder ${FL_OutputFolder})
-execute_process(COMMAND mkdir -p "${FL_OutputFolder}")
+message(STATUS SQUE_OutputFolder ${SQUE_OutputFolder})
+execute_process(COMMAND mkdir -p "${SQUE_OutputFolder}")
 #------------------------------------------------------------------------------------------------
 # FIND SYSTEM LIBRARIES
 #------------------------------------------------------------------------------------------------
@@ -70,8 +68,8 @@ target_include_directories(glad PUBLIC ${glad_include})
 set_target_properties(glad
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
 )
 # GL Math ------------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
@@ -82,7 +80,7 @@ set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
 #------------------------------------------------------------------------------------------------
 include(FetchContent)
 
-set(EXTERNAL ${CMAKE_CURRENT_BINARY_DIR}/external/FlyLib_deps)
+set(EXTERNAL ${CMAKE_CURRENT_BINARY_DIR}/external/SqueLib_deps)
 set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
 
@@ -110,8 +108,8 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     set_target_properties(glfw
         PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-            LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-            RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+            LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
+            RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
     )
     # All MakeAvailable together, first we declare so that they can start populating i belive
     # MakeAvailable should check completion/availability and finish/start downloading
@@ -123,21 +121,21 @@ endif()
 set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 if(ToAndroid)
     add_compile_definitions(ANDROID)
-    include(${FL_cmake}/FindAndroidSDKVars.cmake PARENT_SCOPE)
+    include(${SQUE_cmake}/FindAndroidSDKVars.cmake PARENT_SCOPE)
 
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
-    target_sources(FlyLib PUBLIC ${app_glue}) # Add Android Files required 
+    target_sources(SqueLib PUBLIC ${app_glue}) # Add Android Files required 
 
-    include(${FL_cmake}/SetupAndroidEnv.cmake PARENT_SCOPE)
+    include(${SQUE_cmake}/SetupAndroidEnv.cmake PARENT_SCOPE)
     set_android_link_flags()
     set_android_compile_flags()
     if(NOT ANDROIDVERSION)
         set(ANDROIDVERSION 29)
     endif()
     set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
-    link_android_all_libs(FlyLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
-    include_android(FlyLib ${NDK} ${OS_NAME})
-    include(${FL_cmake}/AndroidInstallTargets.cmake PARENT_SCOPE)
+    link_android_all_libs(SqueLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
+    include_android(SqueLib ${NDK} ${OS_NAME})
+    include(${SQUE_cmake}/AndroidInstallTargets.cmake PARENT_SCOPE)
 elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # SET MINIMAL C/CXX FLAGS
@@ -151,25 +149,25 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # DESKTOP INCLUDES/LINKS
     #---------------------------------------------------------------------------------------------
-    target_link_libraries(FlyLib PUBLIC
+    target_link_libraries(SqueLib PUBLIC
         ${OPEN_gl_LIBRARY}
         glfw
     )
-    target_include_directories(FlyLib PUBLIC
+    target_include_directories(SqueLib PUBLIC
         ${glfw_include}
     )
     #---------------------------------------------------------------------------------------------
     # PLATFORM SPECIFIC INCLUDE/LINKS
     #---------------------------------------------------------------------------------------------
     if(ToLinux)
-        target_link_libraries(FlyLib PUBLIC
+        target_link_libraries(SqueLib PUBLIC
             ${CMAKE_THREAD_LIBS_INIT}
             ${X11_LIBRARIES}
             ${CMAKE_DL_LIBS}
         )
     elseif(ToWindows)
     elseif(ToDarawin OR ToMacOS)
-        target_link_libraries(FlyLib PUBLIC
+        target_link_libraries(SqueLib PUBLIC
             "-framework Cocoa"
             "-framework IOKit"
             "-framework CoreVideo"
@@ -179,11 +177,11 @@ endif()
 #------------------------------------------------------------------------------------------------
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
-target_include_directories(FlyLib PUBLIC
+target_include_directories(SqueLib PUBLIC
     ${glm_include}
     #${flatbuffers_include}
 )
-target_link_libraries(FlyLib PUBLIC
+target_link_libraries(SqueLib PUBLIC
     glad
     glm
     #flatbuffers
@@ -191,14 +189,14 @@ target_link_libraries(FlyLib PUBLIC
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
-target_compile_options(FlyLib BEFORE PUBLIC -fpermissive -funsafe-math-optimizations)
-set_target_properties(FlyLib
+target_compile_options(SqueLib BEFORE PUBLIC -fpermissive -funsafe-math-optimizations)
+set_target_properties(SqueLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${FL_OutputFolder}"
-        RUNTIME_OUTPUT_DIRECTORY "${FL_OutputFolder}"
+        LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
+        RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
         POSITION_INDEPENDENT_CODE ON
-        PUBLIC_HEADER "fly_lib.h"
+        PUBLIC_HEADER "squelib.h"
 )
 target_compile_options(glad PUBLIC
     -fPIC
@@ -208,7 +206,9 @@ target_compile_options(glad PUBLIC
 # Group Sources for IDEs
 #------------------------------------------------------------------------------------------------
 #source_group("external/mathgeolib/source" FILES "${mathgeolib_src}")
-source_group("flylib_source" FILES "${FLYLIB_SRC}")
+source_group("squelib_source" FILES "${SQUELIB_SRC}")
 
-set(FlyLib_include ${CMAKE_CURRENT_SOURCE_DIR}/flylib_src PARENT_SCOPE)
-set(FlyLib_Output ${FL_OutputFolder} PARENT_SCOPE) 
+set(SqueLib_include ${CMAKE_CURRENT_SOURCE_DIR}/squelib_src PARENT_SCOPE)
+set(SqueLib_Output ${SQUE_OutputFolder} PARENT_SCOPE) 
+
+include(${SQUE_cmake}/SqueLib_Package.cmake PARENT_SCOPE)

@@ -14,7 +14,7 @@ What does SqueLib provide?
 ===
 
 **Easy C++ Android:**</br>
-As long as you are using C++17 that matches LLVM's LibC support, you can build with it and get an android app easily.
+As long as you are using up to C++17 that matches **[LLVM's LibC++](https://libcxx.llvm.org/)** support, you can build with it and get an android app easily.
 
 **Easy Logging:**</br>
 Maybe not that fast and memory efficient, but very practical log management that retrieves where it is called (very practical if you are a mad log-debugger like me).
@@ -38,15 +38,18 @@ Building With SqueLib
 
 You can basically copy the style of any example found, but the main parts will be the following:
 
- - Add FlyLib as a subdirectory, specifying any Binary Directory:
+***In your CMakeLists.txt***
+ - Add SqueLib as a subdirectory, specifying any Binary Directory:
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash
-    add_subdirectory(${path_to_FlyLib} ${paht_to_BinaryDir})
+    add_subdirectory(${path_to_SqueLib} ${paht_to_binary_dir})
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - Setup the install targets process
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash
-    # this will be update with the better functionality
+    SqueLib_PrepareBuld(target org_name ${source_files})
+    SqueLib_Package(asset_folder resource_folder)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- - Build with cmake adding the target platform
+***In the Command Line***
+ - Build with cmake adding the target platform - command line
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash
     cmake <dir> ( -DToWindows=1 || -DToLinux=1 || -DToAndroid ) -DCMAKE_BUILD_TYPE=(Release||Debug)
     cmake --build <dir>

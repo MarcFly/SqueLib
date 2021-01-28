@@ -1,7 +1,7 @@
 #ifdef FILESYSTEM_SOLO
-#	include "fly_filesystem.h"
+#	include "squefilesystem.h"
 #else
-#	include "fly_lib.h"
+#	include "squelib.h"
 #endif
 
 // for now I will be using std::string, because its practical
@@ -36,7 +36,7 @@ extern struct android_app* my_app;
 // Return a const char* to a char* works, but does generate memory leak if untreated
 // Should I make my own easy string to return these types?
 // Should I use std::string?
-std::string FLYFS_GetExecPath()
+std::string SQUE_FS_GetExecPath()
 {
 	std::string ret;
 	char path[256];
@@ -58,7 +58,7 @@ std::string FLYFS_GetExecPath()
 	return ret;
 }
 
-bool FLYFS_CreateDirFullPath(const char* path)
+bool SQUE_FS_CreateDirFullPath(const char* path)
 {
 	bool ret = true;
 #if defined(_WIN32)
@@ -71,20 +71,20 @@ bool FLYFS_CreateDirFullPath(const char* path)
 }
 
 // Path should be written without anything before, just if you want to do things out of directory
-bool FLYFS_CreateDirRelative(const char* path, int32_t flags)
+bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 {
 	bool ret = true;
-	std::string exec_path = FLYFS_GetExecPath() + FOLDER_ENDING + path;
+	std::string exec_path = SQUE_FS_GetExecPath() + FOLDER_ENDING + path;
 	
 
-	FLYFS_CreateDirFullPath(exec_path.c_str());
+	SQUE_FS_CreateDirFullPath(exec_path.c_str());
 
 #if defined(_WIN32)
 	SetFileAttributes(exec_path.c_str(), flags);
 #elif defined(ANDROID)
 
 #elif defined(__linux__)
-	if(CHK_FLAG(flags, FLYFS_HIDDEN))
+	if(CHK_FLAG(flags, SQUE_FS_HIDDEN))
 	{
 		int32_t v = exec_path.find(strrchr(exec_path.c_str(), FOLDER_ENDING));
 		std::string old = exec_path;
@@ -97,7 +97,7 @@ bool FLYFS_CreateDirRelative(const char* path, int32_t flags)
 	return ret;
 }
 
-FLY_Asset* FLYFS_LoadFileRaw(const char* file)
+SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 {
 	
 	char* data = NULL;
@@ -111,14 +111,14 @@ FLY_Asset* FLYFS_LoadFileRaw(const char* file)
 	in.read((char*)data, len);
 	in.close();
 
-	FLY_Asset* ret = new FLY_Asset();
+	SQUE_Asset* ret = new SQUE_Asset();
 	ret->size = len;
 	ret->raw_data = data;
 	
 	return ret;
 }
 
-bool FLYFS_WriteFileRaw(const char* path, char* data)
+bool SQUE_FS_WriteFileRaw(const char* path, char* data)
 {
 	bool ret = true;
 
@@ -127,9 +127,9 @@ bool FLYFS_WriteFileRaw(const char* path, char* data)
 
 // RAW ASSET READING / LOADING
 
-FLY_Dir* FLYFS_CreateBaseDirTree()
+SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 {
-	FLY_Dir* ret = new FLY_Dir();
+	SQUE_Dir* ret = new SQUE_Dir();
 #if defined(ANDROID)
 	ret->name = "raw";
 	ret->native_dir_data = (char*)AAssetManager_openDir(my_app->activity->assetManager, ret->name);
@@ -137,7 +137,7 @@ FLY_Dir* FLYFS_CreateBaseDirTree()
 	while(dirs)
 	{
 		const char* name = AAssetDir_getNextFileName((AAssetDir*)ret->native_dir_data);
-		FLYPRINT(LT_INFO, " %s", name);
+		SQUE_PRINT(LT_INFO, " %s", name);
 		if(name == NULL)
 			break;
 		else
@@ -145,7 +145,7 @@ FLY_Dir* FLYFS_CreateBaseDirTree()
 			AAssetDir* dir = AAssetManager_openDir(my_app->activity->assetManager, name);
 			if(dir != NULL)
 			{
-				FLY_Dir* branch = new FLY_Dir();
+				SQUE_Dir* branch = new SQUE_Dir();
 				branch->name = name;
 				branch->native_dir_data = (char*)branch;
 				branch->parent = ret;
@@ -156,28 +156,28 @@ FLY_Dir* FLYFS_CreateBaseDirTree()
 		}
 	}
 #else
-	ret->name = FLYFS_GetExecPath().c_str();
+	ret->name = SQUE_FS_GetExecPath().c_str();
 #endif
 	return ret;
 }
 
-void FLYFS_UpdateTree(FLY_Dir* root)
+void SQUE_FS_UpdateTree(SQUE_Dir* root)
 {
 
 }
 
-FLY_Dir* FLYFS_GetDirInTree(FLY_Dir* root, const char* leaf)
+SQUE_Dir* SQUE_FS_GetDirInTree(SQUE_Dir* root, const char* leaf)
 {
 	return NULL;
 }
 
-FLY_Asset* FLYFS_GetAssetRaw(FLY_Dir* start_dir, const char* file)
+SQUE_Asset* SQUE_FS_GetAssetRaw(SQUE_Dir* start_dir, const char* file)
 {
-	FLY_Asset* ret = NULL;
+	SQUE_Asset* ret = NULL;
 #if defined(ANDROID)
-	ret = new FLY_Asset();
+	ret = new SQUE_Asset();
 	AAsset* asset = AAssetManager_open(my_app->activity->assetManager, file, AASSET_MODE_BUFFER);
-	FLYPRINT(LT_INFO, "%d %s", asset, file);
+	SQUE_PRINT(LT_INFO, "%d %s", asset, file);
 	if(asset != NULL)
 	{
 		ret->size = AAsset_getLength(asset);
@@ -193,8 +193,8 @@ FLY_Asset* FLYFS_GetAssetRaw(FLY_Dir* start_dir, const char* file)
 	}
 #else
 	// Here I should construct path from main path then load raw file, for now, it will do LoadFileRaw with exec path
-	std::string dir = FLYFS_GetExecPath() + FOLDER_ENDING + file;
-	ret = FLYFS_LoadFileRaw(dir.c_str());
+	std::string dir = SQUE_FS_GetExecPath() + FOLDER_ENDING + file;
+	ret = SQUE_FS_LoadFileRaw(dir.c_str());
 #endif
 
 	return ret;

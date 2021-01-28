@@ -37,9 +37,9 @@ Building With SqueLib
 
 You can basically copy the style of any example found, but the main parts will be the following:
 
- - Add FlyLib as a subdirectory, specifying any Binary Directory:
+ - Add SqueLib as a subdirectory, specifying any Binary Directory:
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash
-    add_subdirectory(${path_to_FlyLib} ${paht_to_BinaryDir})
+    add_subdirectory(${path_to_SqueLib} ${paht_to_BinaryDir})
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - Setup the install targets process
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash

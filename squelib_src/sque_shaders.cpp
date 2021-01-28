@@ -1,7 +1,7 @@
 #ifdef SHADERS_SOLO
-#   include "fly_shaders.h"
+#   include "sque_shaders.h"
 #else
-#   include "fly_lib.h"
+#   include "squelib.h"
 #endif
 
 #include <glad/glad.h>
@@ -18,15 +18,15 @@
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLY_Shader::FLY_Shader() : id(0), type(NULL), lines(0), source(NULL)
+SQUE_Shader::SQUE_Shader() : id(0), type(NULL), lines(0), source(NULL)
 {}
 
-FLY_Shader::FLY_Shader(int32_t type_, uint16_t strs, const char** data) :
+SQUE_Shader::SQUE_Shader(int32_t type_, uint16_t strs, const char** data) :
     type(type_), lines(strs), source(data)
 {
     if (data == NULL | *data == NULL)
     {
-        FLYLOG(LT_WARNING, "Shader could not be found or read...");
+        SQUE_LOG(LT_WARNING, "Shader could not be found or read...");
     }
     else
     {
@@ -38,27 +38,27 @@ FLY_Shader::FLY_Shader(int32_t type_, uint16_t strs, const char** data) :
         glShaderSource(id, strs, source, NULL);
         glCompileShader(id);
 #endif
-        FLYSHADER_CheckCompileLog(*this);
+        SQUE_SHADER_CheckCompileLog(*this);
     }
 }
 
-FLY_Shader::~FLY_Shader()
+SQUE_Shader::~SQUE_Shader()
 {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLY_Shader::Compile()
+void SQUE_Shader::Compile()
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     glShaderSource(id, lines, source, NULL);
     glCompileShader(id);
 #endif
-    FLYSHADER_CheckCompileLog(*this);
+    SQUE_SHADER_CheckCompileLog(*this);
 }
 
-void FLYSHADER_CheckCompileLog(const FLY_Shader& shader)
+void SQUE_SHADER_CheckCompileLog(const SQUE_Shader& shader)
 {
     int success;
     char infoLog[512];
@@ -68,7 +68,7 @@ void FLYSHADER_CheckCompileLog(const FLY_Shader& shader)
     glGetShaderInfoLog(shader.id, 512, NULL, infoLog);
 
 #endif
-    if(!success) FLYPRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
+    if(!success) SQUE_PRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,27 +80,27 @@ void FLYSHADER_CheckCompileLog(const FLY_Shader& shader)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-FLY_Uniform::FLY_Uniform() : id(-1), name("")
+SQUE_Uniform::SQUE_Uniform() : id(-1), name("")
 {}
 
-FLY_Uniform::FLY_Uniform(const char* name_) : id(-1), name(name_)
+SQUE_Uniform::SQUE_Uniform(const char* name_) : id(-1), name(name_)
 {}
 
-FLY_Uniform::~FLY_Uniform()
+SQUE_Uniform::~SQUE_Uniform()
 {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SetBool(const FLY_Program& prog, const char* name, bool value)
+void SetBool(const SQUE_Program& prog, const char* name, bool value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform1i(prog.GetUniformLocation(name), value);
 #endif
 }
 
-void SetInt(const FLY_Program& prog, const char* name, int value)
+void SetInt(const SQUE_Program& prog, const char* name, int value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform1i(prog.GetUniformLocation(name), value);
@@ -108,21 +108,21 @@ void SetInt(const FLY_Program& prog, const char* name, int value)
 }
 
 /*
-void SetInt2(const FLY_Program& prog, const char* name, int value[2])
+void SetInt2(const SQUE_Program& prog, const char* name, int value[2])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform2i(prog.GetUniformLocation(name), value.x, value[2]);
 #endif
 }
 
-void SetInt3(const FLY_Program& prog, const char* name, int3 value)
+void SetInt3(const SQUE_Program& prog, const char* name, int3 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform3i(prog.GetUniformLocation(name), value.x, value.y, value.z);
 #endif
 }
 
-void SetInt4(const FLY_Program& prog, const char* name, int4 value)
+void SetInt4(const SQUE_Program& prog, const char* name, int4 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform4i(prog.GetUniformLocation(name), value.x, value.y, value.z, value.w);
@@ -130,35 +130,35 @@ void SetInt4(const FLY_Program& prog, const char* name, int4 value)
 }
 */
 
-void SetFloat(const FLY_Program& prog, const char* name, float value)
+void SetFloat(const SQUE_Program& prog, const char* name, float value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform1f(prog.GetUniformLocation(name), value);
 #endif
 }
 
-void SetFloat2(const FLY_Program& prog, const char* name, glm::vec2 value)
+void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform2f(prog.GetUniformLocation(name), value.x, value.y);
 #endif
 }
 
-void SetFloat3(const FLY_Program& prog, const char* name, glm::vec3 value)
+void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform3f(prog.GetUniformLocation(name), value.x, value.y, value.z);
 #endif
 }
 
-void SetFloat4(const FLY_Program& prog, const char* name, glm::vec4 value)
+void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform4f(prog.GetUniformLocation(name), value.x, value.y, value.z, value.w);
 #endif
 }
 
-void SetMatrix4(const FLY_Program& prog, const char* name, const float* value, uint16_t number_of_matrices, bool transpose)
+void SetMatrix4(const SQUE_Program& prog, const char* name, const float* value, uint16_t number_of_matrices, bool transpose)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniformMatrix4fv(prog.GetUniformLocation(name), number_of_matrices, transpose, value);
@@ -170,29 +170,29 @@ void SetMatrix4(const FLY_Program& prog, const char* name, const float* value, u
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-FLY_Program::FLY_Program() : vertex_s(NULL), fragment_s(NULL) // other shaders,...
+SQUE_Program::SQUE_Program() : vertex_s(NULL), fragment_s(NULL) // other shaders,...
 {}
 
-FLY_Program::~FLY_Program() { if(id > 0) CleanUp(); }
+SQUE_Program::~SQUE_Program() { if(id > 0) CleanUp(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLY_Shader* FLY_Program::AttachShader(FLY_Shader* shader)
+SQUE_Shader* SQUE_Program::AttachShader(SQUE_Shader* shader)
 {
     if (shader == NULL)
     {
-        FLYLOG(LT_WARNING, "No shader/program sent to attach...");
+        SQUE_LOG(LT_WARNING, "No shader/program sent to attach...");
         return NULL;
     }
-    FLY_Shader* ret = NULL;
-    if (shader->type == FLY_VERTEX_SHADER)
+    SQUE_Shader* ret = NULL;
+    if (shader->type == SQUE_VERTEX_SHADER)
     {
         ret = vertex_s;
         vertex_s = shader;
     }
-    else if (shader->type == FLY_FRAGMENT_SHADER)
+    else if (shader->type == SQUE_FRAGMENT_SHADER)
     {
         ret = fragment_s;
         fragment_s = shader;
@@ -206,7 +206,7 @@ FLY_Shader* FLY_Program::AttachShader(FLY_Shader* shader)
     return ret;
 }
 
-void FLY_Program::FreeShadersFromGPU()
+void SQUE_Program::FreeShadersFromGPU()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glDeleteShader(vertex_s->id);
@@ -214,9 +214,9 @@ void FLY_Program::FreeShadersFromGPU()
 #endif
 }
 
-void FLY_Program::DeclareUniform(const char* name)
+void SQUE_Program::DeclareUniform(const char* name)
 {
-    FLY_Uniform* uni = new FLY_Uniform(name);
+    SQUE_Uniform* uni = new SQUE_Uniform(name);
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     uni->id = glGetUniformLocation(id, uni->name);
 #endif
@@ -224,7 +224,7 @@ void FLY_Program::DeclareUniform(const char* name)
 }
 
 #include <cstring>
-int32_t FLY_Program::GetUniformLocation(const char* name) const
+int32_t SQUE_Program::GetUniformLocation(const char* name) const
 {
     int size = uniforms.size();
     for (int i = 0; i < size; ++i)
@@ -234,9 +234,9 @@ int32_t FLY_Program::GetUniformLocation(const char* name) const
     return UINT32_MAX;
 }
 
-void FLY_Program::CleanUp()
+void SQUE_Program::CleanUp()
 {
-    FLY_CHECK_RENDER_ERRORS();
+    SQUE_CHECK_RENDER_ERRORS();
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     if (vertex_s != NULL && vertex_s->id) { glDeleteShader(vertex_s->id); }
     if (fragment_s != NULL && fragment_s->id) { glDeleteShader(fragment_s->id); }
@@ -259,7 +259,7 @@ void FLY_Program::CleanUp()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void FLYRENDER_CheckProgramLog(const FLY_Program& prog)
+void SQUE_RENDER_CheckProgramLog(const SQUE_Program& prog)
 {
     int success;
     char infoLog[512];
@@ -269,5 +269,5 @@ void FLYRENDER_CheckProgramLog(const FLY_Program& prog)
     glGetProgramInfoLog(prog.id, 512, NULL, infoLog);
 
 #endif
-    if(!success) FLYLOG(LT_WARNING, "Program Linkage Info: %s", infoLog);
+    if(!success) SQUE_LOG(LT_WARNING, "Program Linkage Info: %s", infoLog);
 }

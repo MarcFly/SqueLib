@@ -1,12 +1,12 @@
-
-macro(set_app_properties AppName OrgName AndroidVersion)
+# Android Version will be 29 for now (only I can test)
+macro(set_app_properties AppName OrgName)
     set(APPNAME '"${AppName}"')
     set(ORG_NAME "${OrgName}")
     set(LABEL ${AppName})
     set(APKFILE "${AppName}.apk")
     set(PACKAGENAME "org.${OrgName}.${AppName}")
-    set(ANDROIDVERSION ${AndroidVersion})
-    set(ANDROIDTARGET ${AndroidVersion})
+    set(ANDROIDVERSION 29)
+    set(ANDROIDTARGET 29)
 endmacro()
 #------------------------------------------------------------------------------------------------
 # SETUP ANDROID SPECIFIC COMPILE OPTIONS + PROCESSES

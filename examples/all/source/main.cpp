@@ -1,5 +1,5 @@
 #include <iostream>
-#include <fly_lib.h>
+#include <squelib.h>
 
 enum main_states
 {
@@ -15,11 +15,11 @@ enum main_states
 #include <stb_image.h>
 
 #include <imgui.h>
-#include <imgui_impl_flylib.h>
+#include <imgui_impl_squelib.h>
 
 bool have_resumed;
 
-void ImGuiImplFlyLibTest()
+void ImGuiImplSqueLibTest()
 {
     const char* vertexShaderSource =
         "layout (location = 0) in vec3 aPos;\n"
@@ -33,8 +33,8 @@ void ImGuiImplFlyLibTest()
         "   v_col = aCol;\n"
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
         "}\0";
-    const char* vert_source[2] = { FLYRENDER_GetGLSLVer(), vertexShaderSource };
-    FLY_Shader* vert_s = new FLY_Shader(FLY_VERTEX_SHADER, 2, vert_source);
+    const char* vert_source[2] = { SQUE_RENDER_GetGLSLVer(), vertexShaderSource };
+    SQUE_Shader* vert_s = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
     vert_s->Compile();
 
     const char* fragmentShaderSource =
@@ -44,42 +44,42 @@ void ImGuiImplFlyLibTest()
         "uniform vec4 ourColor;\n"
         "uniform sampler2D ourTexture;\n"
         "void main() { FragColor = ourColor+vec4(v_col, 1.0)+texture(ourTexture, v_uv);}\0";
-    const char* frag_source[2] = { FLYRENDER_GetGLSLVer(), fragmentShaderSource };
-    FLY_Shader* frag_s = new FLY_Shader(FLY_FRAGMENT_SHADER, 2, frag_source);
+    const char* frag_source[2] = { SQUE_RENDER_GetGLSLVer(), fragmentShaderSource };
+    SQUE_Shader* frag_s = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, frag_source);
     frag_s->Compile();
 
-    FLY_Program program;
-    FLYRENDER_CreateProgram(&program);
+    SQUE_Program program;
+    SQUE_RENDER_CreateProgram(&program);
     program.AttachShader(vert_s);
     program.AttachShader(frag_s);
-    FLYRENDER_LinkProgram(program);
+    SQUE_RENDER_LinkProgram(program);
         
-    FLY_CHECK_RENDER_ERRORS();
+    SQUE_CHECK_RENDER_ERRORS();
     // Texture Setup--------------------------------------------------------------------------------
-    FLY_Texture2D tex;
-    FLY_GenTextureData(&tex);
-    tex.format = FLY_RGB;
-    tex.var_type = FLY_UBYTE;
-    FLY_TexAttrib* wrap_s = new FLY_TexAttrib(FLY_WRAP_S, FLY_INT, new int32_t(FLY_MIRROR));
+    SQUE_Texture2D tex;
+    SQUE_GenTextureData(&tex);
+    tex.format = SQUE_RGB;
+    tex.var_type = SQUE_UBYTE;
+    SQUE_TexAttrib* wrap_s = new SQUE_TexAttrib(SQUE_WRAP_S, SQUE_INT, new int32_t(SQUE_MIRROR));
     tex.SetParameter(wrap_s);
 
-    FLY_TexAttrib* wrap_t = new FLY_TexAttrib(FLY_WRAP_T, FLY_INT, new int32_t(FLY_MIRROR));
+    SQUE_TexAttrib* wrap_t = new SQUE_TexAttrib(SQUE_WRAP_T, SQUE_INT, new int32_t(SQUE_MIRROR));
     tex.SetParameter(wrap_t);
 
-    FLY_TexAttrib* min_filter = new FLY_TexAttrib(FLY_MIN_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
+    SQUE_TexAttrib* min_filter = new SQUE_TexAttrib(SQUE_MIN_FILTER, SQUE_INT, new int32_t(SQUE_LINEAR));
     tex.SetParameter(min_filter);
-    FLY_TexAttrib* mag_filter = new FLY_TexAttrib(FLY_MAG_FILTER, FLY_INT, new int32_t(FLY_LINEAR));
+    SQUE_TexAttrib* mag_filter = new SQUE_TexAttrib(SQUE_MAG_FILTER, SQUE_INT, new int32_t(SQUE_LINEAR));
     tex.SetParameter(mag_filter);
     tex.ApplyParameters();
 
-    FLY_Asset* tex_data = FLYFS_GetAssetRaw(NULL, "container.jpeg");
+    SQUE_Asset* tex_data = SQUE_FS_GetAssetRaw(NULL, "container.jpeg");
     if (tex_data != nullptr)
     {
         tex.pixels = stbi_load_from_memory((unsigned char*)tex_data->raw_data, tex_data->size, &tex.w, &tex.h, &tex.channel_num, 0);
-        FLY_SendTextureToGPU(tex);
+        SQUE_SendTextureToGPU(tex);
         stbi_image_free(tex.pixels);
     }
-    FLY_CHECK_RENDER_ERRORS();
+    SQUE_CHECK_RENDER_ERRORS();
 
     // Mesh Setup-----------------------------------------------------------------------------------
     float vertices[] = {
@@ -93,53 +93,53 @@ void ImGuiImplFlyLibTest()
         0, 1, 3,   // first triangle
         1, 2, 3    // second triangle
     };
-    FLY_Mesh triangle;
+    SQUE_Mesh triangle;
 
     triangle.verts = (char*)vertices;
     triangle.num_verts = 4;
-    triangle.draw_config = FLY_TRIANGLES;
-    triangle.draw_mode = FLY_STATIC_DRAW;
+    triangle.draw_config = SQUE_TRIANGLES;
+    triangle.draw_mode = SQUE_STATIC_DRAW;
     triangle.indices = (char*)indices;
-    triangle.index_var = FLY_UINT;
+    triangle.index_var = SQUE_UINT;
     triangle.index_var_size = 4;
     triangle.num_index = 6;
 
-    triangle.AddAttribute(new FLY_VertAttrib("aPos", FLY_FLOAT, false, 3));
-    triangle.AddAttribute(new FLY_VertAttrib("aCol", FLY_FLOAT, false, 3));
-    triangle.AddAttribute(new FLY_VertAttrib("aTexCoord", FLY_FLOAT, false, 2));
+    triangle.AddAttribute(new SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
+    triangle.AddAttribute(new SQUE_VertAttrib("aCol", SQUE_FLOAT, false, 3));
+    triangle.AddAttribute(new SQUE_VertAttrib("aTexCoord", SQUE_FLOAT, false, 2));
 
-    FLY_GenerateMeshBuffer(&triangle);
-    FLY_BindMeshBuffer(triangle);
-    FLY_SendMeshToGPU(triangle);
+    SQUE_GenerateMeshBuffer(&triangle);
+    SQUE_BindMeshBuffer(triangle);
+    SQUE_SendMeshToGPU(triangle);
     triangle.SetLocationsInOrder();
 
-    FLYRENDER_UseProgram(program);
+    SQUE_RENDER_UseProgram(program);
     program.DeclareUniform("ourColor");
 
     ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
-    FLY_Timer t;
+    SQUE_Timer t;
 
-    FLY_CHECK_RENDER_ERRORS();
+    SQUE_CHECK_RENDER_ERRORS();
     //-------------------------------------------------------------------
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     ImGui::StyleColorsDark();
-    ImGui_ImplFlyLib_Init();
+    ImGui_ImplSqueLib_Init();
     //ColorRGBA col = ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f);
     bool show_demo_window = true;
     bool show_another_window = true;
     
-    while(!FLYDISPLAY_ShouldWindowClose(0))
+    while(!SQUE_DISPLAY_ShouldWindowClose(0))
     {
 
-if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-        FLYINPUT_Process(0);
-        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
+        SQUE_INPUT_Process(0);
+        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
 
-        ImGui_ImplFlyLib_NewFrame();
-        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        ImGui_ImplSqueLib_NewFrame();
+        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         ImGui::NewFrame();
 
         if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
@@ -168,31 +168,31 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
         ImGui::Render();
 
         int32_t x, y;
-        FLYDISPLAY_GetViewportSize(0, &x, &y);
-if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        SQUE_DISPLAY_GetViewportSize(0, &x, &y);
+if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         // Remember to make the expected framebuffer (aka window) to main
-    FLYDISPLAY_MakeContextMain(0);
-        FLYRENDER_ChangeFramebufferSize(x, y);
-if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-        FLYRENDER_Clear(col);
+    SQUE_DISPLAY_MakeContextMain(0);
+        SQUE_RENDER_ChangeFramebufferSize(x, y);
+if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
+        SQUE_RENDER_Clear(col);
         //--
-        FLYRENDER_UseProgram(program);
-        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        SQUE_RENDER_UseProgram(program);
+        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
         SetFloat4(program, "ourColor", glm::vec4(0, green, 0, 1));
 
-        FLY_SetActiveTextureUnit(FLY_TEXTURE0);
-        FLY_BindTexture(tex);
+        SQUE_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_BindTexture(tex);
 
-        FLYRENDER_DrawIndices(triangle);
-        if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+        SQUE_RENDER_DrawIndices(triangle);
+        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         
         //--
-if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-        ImGui_ImplFlyLib_Render(ImGui::GetDrawData());
-if(have_resumed) FLY_CHECK_RENDER_ERRORS();
-        FLYDISPLAY_SwapAllBuffers();
-if(have_resumed) FLY_CHECK_RENDER_ERRORS();
+if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
+        ImGui_ImplSqueLib_Render(ImGui::GetDrawData());
+if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
+        SQUE_DISPLAY_SwapAllBuffers();
+if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         
         
     }
@@ -201,7 +201,7 @@ if(have_resumed) FLY_CHECK_RENDER_ERRORS();
     triangle.verts = NULL;
     triangle.indices = NULL;
     //----------------------
-    ImGui_ImplFlyLib_Shutdown();
+    ImGui_ImplSqueLib_Shutdown();
 }
 
 int main(int argc, char**argv)
@@ -211,49 +211,49 @@ int main(int argc, char**argv)
 
     // Helpers Initialization
     {
-        FLYLIB_Init("Flylib Testing Grounds", NULL);
+        SQUE_LIB_Init("Squelib Testing Grounds", NULL);
     }
 
     // Engine Initialization
     {
-        FLYLOG(FLY_LogType::LT_INFO, "Initializing Engine...");
+        SQUE_LOG(SQUE_LogType::LT_INFO, "Initializing Engine...");
         // Initialize all modules in required order
 
         state = (ret) ? MAIN_UPDATE : MAIN_EXIT;
 
-        if (ret) { FLYLOG(FLY_LogType::LT_INFO, "Entering Update Loop..."); }
-        else FLYLOG(FLY_LogType::LT_WARNING, "Error Initializing Engine...");
+        if (ret) { SQUE_LOG(SQUE_LogType::LT_INFO, "Entering Update Loop..."); }
+        else SQUE_LOG(SQUE_LogType::LT_WARNING, "Error Initializing Engine...");
     }
 
     //LearnOpenGLTest();
-    ImGuiImplFlyLibTest();
+    ImGuiImplSqueLibTest();
     // For Testing timer and android keyboard
     
     while(state == MAIN_UPDATE)
     {
-        if(FLYDISPLAY_ShouldWindowClose(0))
+        if(SQUE_DISPLAY_ShouldWindowClose(0))
             state = MAIN_FINISH;
     }
 
     //  Engine CleanUp
     {
-        FLYLOG(FLY_LogType::LT_INFO, "Cleaning Up Engine...");
+        SQUE_LOG(SQUE_LogType::LT_INFO, "Cleaning Up Engine...");
 
         // perform the CleanUp of all modules in reverse init order preferably
 
-        if (ret) { FLYLOG(FLY_LogType::LT_INFO, "Application Cleanup Performed Successfully..."); }
-        else FLYLOG(FLY_LogType::LT_WARNING, "Application Cleanup with errors...");
+        if (ret) { SQUE_LOG(SQUE_LogType::LT_INFO, "Application Cleanup Performed Successfully..."); }
+        else SQUE_LOG(SQUE_LogType::LT_WARNING, "Application Cleanup with errors...");
 
         // Delete memory bound modules
     }
 
     // Helpers CleanUp
     {
-        FLYLOG(FLY_LogType::LT_INFO, "Finishing Executing Engine...");
+        SQUE_LOG(SQUE_LogType::LT_INFO, "Finishing Executing Engine...");
         // Close something that is not part of the engine as a module
 
-        FLYLOG(FLY_LogType::LT_INFO, "Closing Helpers...");
-        FLYLIB_Close();
+        SQUE_LOG(SQUE_LogType::LT_INFO, "Closing Helpers...");
+        SQUE_LIB_Close();
     }
 
     return 0;

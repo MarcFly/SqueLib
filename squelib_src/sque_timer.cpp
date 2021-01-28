@@ -1,7 +1,7 @@
 #ifdef TIMER_SOLO
-    #include "fly_timer.h"
+    #include "sque_timer.h"
 #else
-    #include "fly_lib.h"
+    #include "squelib.h"
 #endif
 
 
@@ -19,7 +19,7 @@ typedef std::chrono::high_resolution_clock::duration high_res_clock;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-FLY_Timer::FLY_Timer() : is_stopped(false), is_active(true)
+SQUE_Timer::SQUE_Timer() : is_stopped(false), is_active(true)
 {
     high_res_clock now = std::chrono::high_resolution_clock::now().time_since_epoch();
     stop_at_ms = start_at_ms = CAST_MILLI(now);
@@ -30,7 +30,7 @@ FLY_Timer::FLY_Timer() : is_stopped(false), is_active(true)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void FLY_Timer::Start()
+void SQUE_Timer::Start()
 {
     is_active = true;
     is_stopped = false;
@@ -40,7 +40,7 @@ void FLY_Timer::Start()
     stop_at_ns = start_at_ns = CAST_NANOS(now);
 }
 
-void FLY_Timer::Stop()
+void SQUE_Timer::Stop()
 {
     high_res_clock now = TIME_NOW;
     stop_at_ms = CAST_MILLI(now);
@@ -49,7 +49,7 @@ void FLY_Timer::Stop()
     is_stopped = true;
 }
 
-void FLY_Timer::Kill()
+void SQUE_Timer::Kill()
 {
     is_active = false;
     stop_at_ms = 0;
@@ -57,17 +57,17 @@ void FLY_Timer::Kill()
     stop_at_ns = 0;
 }
 
-bool FLY_Timer::IsStopped() const
+bool SQUE_Timer::IsStopped() const
 {
     return is_stopped;
 }
 
-bool FLY_Timer::IsActive() const
+bool SQUE_Timer::IsActive() const
 {
     return is_active;
 }
 
-double FLY_Timer::ReadMilliSec() const
+double SQUE_Timer::ReadMilliSec() const
 {
     if (is_stopped || !is_active)
         return stop_at_ms - start_at_ms;
@@ -75,7 +75,7 @@ double FLY_Timer::ReadMilliSec() const
     return now - start_at_ms;
 }
 
-double FLY_Timer::ReadMicroSec() const
+double SQUE_Timer::ReadMicroSec() const
 {
     if (is_stopped || !is_active)
         return stop_at_us - start_at_us;
@@ -83,7 +83,7 @@ double FLY_Timer::ReadMicroSec() const
     return now - start_at_us;
 }
 
-double FLY_Timer::ReadNanoSec() const
+double SQUE_Timer::ReadNanoSec() const
 {
     if (is_stopped || !is_active)
         return stop_at_ns - start_at_ns;

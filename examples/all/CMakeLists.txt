@@ -6,9 +6,9 @@ else()
     cmake_policy(VERSION 3.18)
 endif()
 #------------------------------------------------------------------------------------------------
-# ADD SUBPROJECTS # Add where FlyLib is
+# ADD SUBPROJECTS # Add where SqueLib is
 #------------------------------------------------------------------------------------------------
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/FlyLib)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/SqueLib)
 # Binary dir will be changed to the expected binary dir to have together shared libraries
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS # Downloads dependencies that can be setup easily but a pain to do manually
@@ -31,8 +31,8 @@ set(imgui_src
     ${imgui_include}/imgui_widgets.cpp
     ${imgui_include}/imgui.cpp
 )
-set(imgui_flylib ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_flylib)
-list(APPEND imgui_src ${imgui_flylib}/imgui_impl_flylib.cpp)
+set(imgui_squelib ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_squelib)
+list(APPEND imgui_src ${imgui_squelib}/imgui_impl_squelib.cpp)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
@@ -57,32 +57,27 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 # REQUIRED PLATFORM SPECIFICS
 #------------------------------------------------------------------------------------------------
 
-if(ToAndroid)
-    add_library(All_Example SHARED "${ALL_SRC}")
-    set_app_properties(All_Example MarcTorresJimenez 29)
-    #link_android_libc(All_Example ${NDK} ${OS_NAME} ${ANDROIDVERSION})
-elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
-    add_executable(All_Example "${ALL_SRC}")
-endif()
+SqueLib_PrepareBuild(All_Example MarcTorresJimenez ${ALL_SRC})
+SqueLib_Package(${CMAKE_SOURCE_DIR}/EngineAssets ${CMAKE_SOURCE_DIR}/EngineResources)
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
-target_compile_options(FlyLib BEFORE PUBLIC -fpermissive)
+target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
 set_target_properties(All_Example
     PROPERTIES 
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${FlyLib_Output}"
-        RUNTIME_OUTPUT_DIRECTORY "${FlyLib_Output}"
+        LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
+        RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
 )
-# INCLUDE AND LINK TO FLYLIB
+# INCLUDE AND LINK TO SQUELIB
 target_link_libraries(All_Example 
     PUBLIC 
-        FlyLib)
-message(STATUS ${FlyLib_Output})
+        SqueLib)
+message(STATUS ${SqueLib_Output})
 target_include_directories(All_Example 
     PUBLIC 
-        ${FlyLib_include}
+        ${SqueLib_include}
         ${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 # INCLUDE AND LINK TO OTHER SUBPROJECTS
@@ -90,5 +85,5 @@ target_sources(All_Example PUBLIC
     "${imgui_src}"
 )
 target_include_directories(All_Example   PUBLIC
-    ${imgui_include} ${imgui_flylib}
+    ${imgui_include} ${imgui_squelib}
 )

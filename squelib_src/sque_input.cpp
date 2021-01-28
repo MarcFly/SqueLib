@@ -1,23 +1,23 @@
 #ifdef INPUT_SOLO
-#   include "fly_input.h"
+#   include "sque_input.h"
 #else
-#   include "fly_lib.h"
+#   include "squelib.h"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void DebugKey(int32_t code, int32_t state) { FLYPRINT(LT_INFO, "Key %c: %d", code, state); }
+void DebugKey(int32_t code, int32_t state) { SQUE_PRINT(LT_INFO, "Key %c: %d", code, state); }
 KeyCallback key_fun = DebugKey;
 
-FLY_Key keyboard[MAX_KEYS];
-FLY_Mouse mouse;
-void DebugMouseFloatCallback(float x, float y) { FLYPRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
+SQUE_Key keyboard[MAX_KEYS];
+SQUE_Mouse mouse;
+void DebugMouseFloatCallback(float x, float y) { SQUE_PRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
 
 #include <list> // i don't like including libraries, but will do until I have a proven easier alternative
 std::list<int> char_buffer;
 
-FLY_Pointer fly_pointers[MAX_POINTERS];
+SQUE_Pointer sque_pointers[MAX_POINTERS];
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +75,7 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
     }
     else
     {
-        FLY_ConsolePrint(LT_WARNING, "Unicode Value not supported...");
+        SQUE_ConsolePrint(LT_WARNING, "Unicode Value not supported...");
     }
 
     return 1;
@@ -151,7 +151,7 @@ static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double 
 // PRIVATE SETTERS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYINPUT_UpdateMouseFromPointer(float xpos, float ypos, int state, int num_pointers)
+void SQUE_INPUT_UpdateMouseFromPointer(float xpos, float ypos, int state, int num_pointers)
 {
     mouse.prev_x = mouse.x;
     mouse.prev_y = mouse.y;
@@ -170,9 +170,9 @@ static void ResetPointers()
 {
     for (int i = 0; i < MAX_POINTERS; ++i)
     {
-        fly_pointers[i].active = false;
-        fly_pointers[i].id = INT32_MAX;
-        FLY_Gesture& g = fly_pointers[i].gesture;
+        sque_pointers[i].active = false;
+        sque_pointers[i].id = INT32_MAX;
+        SQUE_Gesture& g = sque_pointers[i].gesture;
         g.timer.Kill();
         g.start_x = INT32_MAX;
         g.start_y = INT32_MAX;
@@ -198,13 +198,13 @@ static int GetPointer(int32_t id)
 
     while (ret < 10)
     {
-        if (!fly_pointers[ret].active || fly_pointers[ret].id == id)
+        if (!sque_pointers[ret].active || sque_pointers[ret].id == id)
         {
-            if (!fly_pointers[ret].active)
+            if (!sque_pointers[ret].active)
             {
-                fly_pointers[ret].id = id;
-                fly_pointers[ret].active = true;
-                fly_pointers[ret].gesture.timer.Start();
+                sque_pointers[ret].id = id;
+                sque_pointers[ret].active = true;
+                sque_pointers[ret].gesture.timer.Start();
             }
             return ret;
         }
@@ -216,17 +216,17 @@ static int GetPointer(int32_t id)
 // INITIALIZING & STATE MANAGEMENT ///////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYINPUT_Init()
+void SQUE_INPUT_Init()
 {
-    FLYINPUT_InitForWindow(0);
+    SQUE_INPUT_InitForWindow(0);
 }
-void FLYINPUT_InitForWindow(uint16_t window)
+void SQUE_INPUT_InitForWindow(uint16_t window)
 {
 
 #if defined USE_GLFW
     if (window > glfw_windows.size())
     {
-        FLYPRINT(LT_WARNING, "Tried to Init input for window out of range!");
+        SQUEPRINT(LT_WARNING, "Tried to Init input for window out of range!");
         return;
     }
 
@@ -240,7 +240,7 @@ void FLYINPUT_InitForWindow(uint16_t window)
 #endif
 }
 
-bool FLYINPUT_Close()
+bool SQUE_INPUT_Close()
 {
     bool ret = true;
 
@@ -248,7 +248,7 @@ bool FLYINPUT_Close()
 }
 
 
-void FLYINPUT_Process(uint16_t window)
+void SQUE_INPUT_Process(uint16_t window)
 {
 #ifdef ANDROID
     int events;
@@ -269,7 +269,7 @@ void FLYINPUT_Process(uint16_t window)
 // USAGE / UTILITIES /////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYINPUT_DisplaySoftwareKeyboard(bool show)
+void SQUE_INPUT_DisplaySoftwareKeyboard(bool show)
 {
 #ifdef ANDROID
     jint lflags = 0;
@@ -324,13 +324,13 @@ void FLYINPUT_DisplaySoftwareKeyboard(bool show)
 #endif
 }
 
-FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p)
+SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Pointer& p)
 {
     // Evaluate what the pointer has done during the time it was tracked
     int16_t delta_x = p.gesture.end_x - p.gesture.start_x;
     int16_t delta_y = p.gesture.end_y - p.gesture.start_y;
     int32_t screen_w, screen_h;
-    FLYDISPLAY_GetWindowSize(0, &screen_w, &screen_h);
+    SQUEDISPLAY_GetWindowSize(0, &screen_w, &screen_h);
 
     uint16_t abs_delta_x = delta_x;
     uint16_t abs_delta_y = delta_y;
@@ -341,46 +341,46 @@ FLYINPUT_Actions FLYINPUT_DetectGesture(FLY_Pointer& p)
     // Tap Gesture
     if (time <= GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
     {
-        return FLYINPUT_Actions::FLY_ACTION_TAP;
+        return SQUE_INPUT_Actions::SQUE_ACTION_TAP;
     }
     // Swipe Gesture
     else if (time > GESTURE_REFRESH && time <= 3 * GESTURE_REFRESH)
     {
         if (abs_delta_x > abs_delta_y)
-            return (FLYINPUT_Actions)(FLY_ACTION_SWIPE_LEFT + (int)(delta_x > 0)); // Swipe Horizontal
+            return (SQUE_INPUT_Actions)(SQUE_ACTION_SWIPE_LEFT + (int)(delta_x > 0)); // Swipe Horizontal
         else
-            return (FLYINPUT_Actions)(FLY_ACTION_SWIPE_UP + (int)(delta_y < 0));  // Swipe Vertical
+            return (SQUE_INPUT_Actions)(SQUE_ACTION_SWIPE_UP + (int)(delta_y < 0));  // Swipe Vertical
     }
     else if (time > GESTURE_REFRESH && time > 3 * GESTURE_REFRESH)
     {
 
     }
 
-    return FLYINPUT_Actions::FLY_ACTION_UNKNOWN;
+    return SQUE_INPUT_Actions::SQUE_ACTION_UNKNOWN;
 }
 
-FLYINPUT_Actions FLYINPUT_EvalGesture()
+SQUE_INPUT_Actions SQUE_INPUT_EvalGesture()
 {
     int num_pointers = 0;
-    FLYINPUT_Actions actions[MAX_POINTERS];
+    SQUE_INPUT_Actions actions[MAX_POINTERS];
     for (int i = 0; i < MAX_POINTERS; ++i)
     {
-        if (fly_pointers[i].id == INT32_MAX || !fly_pointers[i].gesture.timer.IsActive())
+        if (sque_pointers[i].id == INT32_MAX || !sque_pointers[i].gesture.timer.IsActive())
             break;
-        actions[i] = FLYINPUT_DetectGesture(fly_pointers[i]);
-        FLYPRINT(LT_INFO, "Pointer %d: FLYINPUT_ACTION::%d", i, actions[i]);
+        actions[i] = SQUE_INPUT_DetectGesture(sque_pointers[i]);
+        SQUEPRINT(LT_INFO, "Pointer %d: SQUE_INPUT_ACTION::%d", i, actions[i]);
     }
 
     ResetPointers();
 
-    return FLYINPUT_Actions::FLY_ACTION_UNKNOWN;
+    return SQUE_INPUT_Actions::SQUE_ACTION_UNKNOWN;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SETTERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FLYINPUT_SetMousePos(float x, float y)
+void SQUE_INPUT_SetMousePos(float x, float y)
 {
 #ifdef USE_GLFW
     //glfwSetCursor(glfw_windows[0], );
@@ -391,26 +391,26 @@ void FLYINPUT_SetMousePos(float x, float y)
 // GETTERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int FLYINPUT_GetCharFromBuffer()
+int SQUE_INPUT_GetCharFromBuffer()
 {
     int ret = (char_buffer.size() > 0) ? char_buffer.front() : -1;
     if (ret != -1) char_buffer.pop_front();
     return ret;
 }
 
-FLYINPUT_Actions FLYINPUT_GetMouseButton(int button)
+SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button)
 {
-    if (button >= MAX_MOUSE_BUTTONS) return FLY_ACTION_UNKNOWN;
-    return (FLYINPUT_Actions)mouse.mbuttons[button].state;
+    if (button >= MAX_MOUSE_BUTTONS) return SQUE_ACTION_UNKNOWN;
+    return (SQUE_INPUT_Actions)mouse.mbuttons[button].state;
 }
 
-void FLYINPUT_GetMousePos(float* x, float* y)
+void SQUE_INPUT_GetMousePos(float* x, float* y)
 {
     *x = mouse.x;
     *y = mouse.y;
 }
 
-void FLYINPUT_GetMouseWheel(float* v, float* h)
+void SQUE_INPUT_GetMouseWheel(float* v, float* h)
 {
     if (v != NULL) *v = mouse.scrolly;
     if (h != NULL) *h = mouse.scrollx;
@@ -421,21 +421,21 @@ void FLYINPUT_GetMouseWheel(float* v, float* h)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-KeyCallback FLYINPUT_SetKeyCallback(KeyCallback fly_key_fn) 
+KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn) 
 { 
     KeyCallback ret = key_fun;
-    key_fun = fly_key_fn; 
+    key_fun = sque_key_fn; 
     return ret;
 }
 
 
-MouseFloatCallback FLYINPUT_SetMousePosCallback(MouseFloatCallback position)
+MouseFloatCallback SQUE_INPUT_SetMousePosCallback(MouseFloatCallback position)
 {
     MouseFloatCallback ret = mouse.pos_callback;
     mouse.pos_callback = position;
     return ret;
 }
-MouseFloatCallback FLYINPUT_SetMouseScrollCallback(MouseFloatCallback scroll)
+MouseFloatCallback SQUE_INPUT_SetMouseScrollCallback(MouseFloatCallback scroll)
 {
     MouseFloatCallback ret = mouse.scroll_callback;
     mouse.scroll_callback = scroll;
@@ -452,11 +452,11 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     int32_t action = AMotionEvent_getAction(ev);
     if (action == AMOTION_EVENT_ACTION_CANCEL)
     {
-        FLYPRINT(LT_INFO, "Cancelled Touch Motion Event...");
+        SQUEPRINT(LT_INFO, "Cancelled Touch Motion Event...");
         // Cancelled Event
         return -1;
     }
-    FLYPRINT(LT_INFO, "Reading Touch Motion Event...");
+    SQUEPRINT(LT_INFO, "Reading Touch Motion Event...");
     int num_pointers = AMotionEvent_getPointerCount(ev);
     if (num_pointers >= MAX_POINTERS) return -1;
     int whichsource = action >> 8;
@@ -465,13 +465,13 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     // On Pointer 0, update mouse data for other libraries to use
     for (int i = 0; i < num_pointers; ++i)
     {
-        FLYPRINT(LT_INFO, "Get Pointer %d Status...", i);
+        SQUEPRINT(LT_INFO, "Get Pointer %d Status...", i);
         int x, y;
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
         x = AMotionEvent_getX(ev, i);
         y = AMotionEvent_getY(ev, i);
-        FLY_Pointer& p = fly_pointers[pointer];
-        FLY_Gesture& g = p.gesture;
+        SQUE_Pointer& p = sque_pointers[pointer];
+        SQUE_Gesture& g = p.gesture;
         if(whichsource != p.id) continue;
         switch (action)
         {
@@ -480,8 +480,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.start_y = y;
             p.timer.Start();
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
-            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_PRESS, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
-            FLYPRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
+            if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_PRESS, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
+            SQUEPRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
             g.refresh_bucket += p.timer.ReadMilliSec();
@@ -500,8 +500,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
                     g.end_x = x;
                     g.end_y = y;
                 }
-                if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_REPEAT, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
-                FLYPRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
+                if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_REPEAT, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
+                SQUEPRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             }
             break;
         case AMOTION_EVENT_ACTION_UP:
@@ -510,8 +510,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.end_y = y;
             g.timer.Stop();
             p.timer.Kill();
-            FLYPRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
-            if(i == 0) FLYINPUT_UpdateMouseFromPointer(x, y, FLYINPUT_Actions::FLY_ACTION_RELEASE, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
+            SQUEPRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
+            if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_RELEASE, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
             break;
         }
         if(motion_ended == true) motion_ended = !p.active;
@@ -519,8 +519,8 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     
     if(motion_ended) 
     {
-        FLYPRINT(LT_INFO, "Evaluate Motion event...");
-        FLYINPUT_EvalGesture();
+        SQUEPRINT(LT_INFO, "Evaluate Motion event...");
+        SQUE_INPUT_EvalGesture();
     }
 
     return 1;
