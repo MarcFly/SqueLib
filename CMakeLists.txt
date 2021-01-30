@@ -11,6 +11,7 @@ endif()
 # Instead of Using CMAKE_MODULE_PATH, generate a variable to go into it and use .cmake extension
 # That way we don't overwrite other projects' CMAKE_MODULE_PATH and keep it cleaner to read
 set(SQUE_cmake  ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
+set(SQUE_cmake_par ${SQUE_cmake} PARENT_SCOPE)
 include(${SQUE_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
@@ -121,12 +122,12 @@ endif()
 set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 if(ToAndroid)
     add_compile_definitions(ANDROID)
-    include(${SQUE_cmake}/FindAndroidSDKVars.cmake PARENT_SCOPE)
+    include(${SQUE_cmake}/FindAndroidSDKVars.cmake)
 
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     target_sources(SqueLib PUBLIC ${app_glue}) # Add Android Files required 
 
-    include(${SQUE_cmake}/SetupAndroidEnv.cmake PARENT_SCOPE)
+    include(${SQUE_cmake}/SetupAndroidEnv.cmake)
     set_android_link_flags()
     set_android_compile_flags()
     if(NOT ANDROIDVERSION)
@@ -135,7 +136,6 @@ if(ToAndroid)
     set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
     link_android_all_libs(SqueLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
     include_android(SqueLib ${NDK} ${OS_NAME})
-    include(${SQUE_cmake}/AndroidInstallTargets.cmake PARENT_SCOPE)
 elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # SET MINIMAL C/CXX FLAGS
@@ -179,12 +179,10 @@ endif()
 #------------------------------------------------------------------------------------------------
 target_include_directories(SqueLib PUBLIC
     ${glm_include}
-    #${flatbuffers_include}
 )
 target_link_libraries(SqueLib PUBLIC
     glad
     glm
-    #flatbuffers
 )
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT

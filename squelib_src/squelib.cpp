@@ -313,7 +313,7 @@ void SQUE_ConsolePrint(int lt, const char* log)
     OutputDebugString(log);
     OutputDebugString("\n");
 #elif defined ANDROID
-    __android_log_print(lt, "TempEngine", log);
+    __android_log_print(lt, "SqueLib", log);
 #elif defined LINUX
 
 #endif

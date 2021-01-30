@@ -226,7 +226,7 @@ void SQUE_INPUT_InitForWindow(uint16_t window)
 #if defined USE_GLFW
     if (window > glfw_windows.size())
     {
-        SQUEPRINT(LT_WARNING, "Tried to Init input for window out of range!");
+        SQUE_PRINT(LT_WARNING, "Tried to Init input for window out of range!");
         return;
     }
 
@@ -330,7 +330,7 @@ SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Pointer& p)
     int16_t delta_x = p.gesture.end_x - p.gesture.start_x;
     int16_t delta_y = p.gesture.end_y - p.gesture.start_y;
     int32_t screen_w, screen_h;
-    SQUEDISPLAY_GetWindowSize(0, &screen_w, &screen_h);
+    SQUE_DISPLAY_GetWindowSize(0, &screen_w, &screen_h);
 
     uint16_t abs_delta_x = delta_x;
     uint16_t abs_delta_y = delta_y;
@@ -368,7 +368,7 @@ SQUE_INPUT_Actions SQUE_INPUT_EvalGesture()
         if (sque_pointers[i].id == INT32_MAX || !sque_pointers[i].gesture.timer.IsActive())
             break;
         actions[i] = SQUE_INPUT_DetectGesture(sque_pointers[i]);
-        SQUEPRINT(LT_INFO, "Pointer %d: SQUE_INPUT_ACTION::%d", i, actions[i]);
+        SQUE_PRINT(LT_INFO, "Pointer %d: SQUE_INPUT_ACTION::%d", i, actions[i]);
     }
 
     ResetPointers();
@@ -452,11 +452,11 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     int32_t action = AMotionEvent_getAction(ev);
     if (action == AMOTION_EVENT_ACTION_CANCEL)
     {
-        SQUEPRINT(LT_INFO, "Cancelled Touch Motion Event...");
+        SQUE_PRINT(LT_INFO, "Cancelled Touch Motion Event...");
         // Cancelled Event
         return -1;
     }
-    SQUEPRINT(LT_INFO, "Reading Touch Motion Event...");
+    SQUE_PRINT(LT_INFO, "Reading Touch Motion Event...");
     int num_pointers = AMotionEvent_getPointerCount(ev);
     if (num_pointers >= MAX_POINTERS) return -1;
     int whichsource = action >> 8;
@@ -465,7 +465,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     // On Pointer 0, update mouse data for other libraries to use
     for (int i = 0; i < num_pointers; ++i)
     {
-        SQUEPRINT(LT_INFO, "Get Pointer %d Status...", i);
+        SQUE_PRINT(LT_INFO, "Get Pointer %d Status...", i);
         int x, y;
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
         x = AMotionEvent_getX(ev, i);
@@ -481,7 +481,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             p.timer.Start();
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
             if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_PRESS, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
-            SQUEPRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
+            SQUE_PRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
             g.refresh_bucket += p.timer.ReadMilliSec();
@@ -501,7 +501,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
                     g.end_y = y;
                 }
                 if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_REPEAT, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
-                SQUEPRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
+                SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             }
             break;
         case AMOTION_EVENT_ACTION_UP:
@@ -510,7 +510,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.end_y = y;
             g.timer.Stop();
             p.timer.Kill();
-            SQUEPRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
+            SQUE_PRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
             if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_RELEASE, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
             break;
         }
@@ -519,7 +519,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     
     if(motion_ended) 
     {
-        SQUEPRINT(LT_INFO, "Evaluate Motion event...");
+        SQUE_PRINT(LT_INFO, "Evaluate Motion event...");
         SQUE_INPUT_EvalGesture();
     }
 
