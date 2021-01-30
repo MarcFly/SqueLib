@@ -70,7 +70,9 @@ SQ_API int SQUE_LIB_IsCompatibleDLL();
 SQ_API int SQUE_VarGetSize(int type_macro);
 SQ_API void SQUE_ConsolePrint(int lt, const char* log);
 SQ_API void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...);
-#define SQUE_PRINT(LogType, format,...) SQ_MACRO SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)					
+#define SQUE_PRINT(LogType, format,...) SQ_MACRO SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)				
+
+SQ_API int SQUE_AskPermissions(const char* permission_name);
 
 // Callback Setters - Flow Management //////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API VoidFun SQUE_INPUT_AddOnResumeCallback(VoidFun fn);																				

@@ -424,7 +424,7 @@ void ImGui_ImplSqueLib_NewFrame()
 	h = (h <= 0) ? 1 : h;
 	io.DisplaySize = ImVec2(w, h);
 	SQUE_DISPLAY_GetViewportSize(0, &w, &h);
-	SQUE_PRINT(LT_INFO, "%d,%d %d,%d", w,h, io.DisplaySize.x, io.DisplaySize.y);
+	//SQUE_PRINT(LT_INFO, "%d,%d %d,%d", w,h, io.DisplaySize.x, io.DisplaySize.y);
 	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
 
     // Setup Time Step

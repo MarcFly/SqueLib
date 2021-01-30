@@ -20,17 +20,17 @@
 //
 
 #if defined(_WIN32)
-#include <Windows.h>
-#include <libloaderapi.h>
+	#include <Windows.h>
+	#include <libloaderapi.h>
 #elif defined(ANDROID)
-#include <android/asset_manager.h>
-#include <android/asset_manager_jni.h>
-#include <android_native_app_glue.h>
-extern struct android_app* my_app;
+	#include <android/asset_manager.h>
+	#include <android/asset_manager_jni.h>
+	#include <android_native_app_glue.h>
+	extern struct android_app* my_app;
 #elif defined(__linux__)
-#include <unistd.h>
-#include <sys/stat.h>
-#include <libgen.h>
+	#include <unistd.h>
+	#include <sys/stat.h>
+	#include <libgen.h>
 #endif
 
 // Return a const char* to a char* works, but does generate memory leak if untreated
@@ -60,7 +60,8 @@ std::string SQUE_FS_GetExecPath()
 
 bool SQUE_FS_CreateDirFullPath(const char* path)
 {
-	bool ret = true;
+	bool ret = SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE") && SQUE_AskPermissions("WRITE_MEDIA_STORAGE");
+	SQUE_PRINT(LT_INFO, "%d %d", SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE"), SQUE_AskPermissions("WRITE_MEDIA_STORAGE"));
 #if defined(_WIN32)
 	ret = CreateDirectoryA(path, NULL);
 #elif defined(ANDROID)

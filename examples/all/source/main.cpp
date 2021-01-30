@@ -21,6 +21,27 @@ bool have_resumed;
 
 void ImGuiImplSqueLibTest()
 {
+    SQUE_FS_CreateDirRelative("../../TestPermissions");
+    // does not exist SQUE_AskPermissions("permission.ACCESS");
+    SQUE_AskPermissions("INTERNET");
+    SQUE_AskPermissions("HIDE_NON_SYSTEM_OVERLAY_WINDOWS");
+    SQUE_AskPermissions("ACCESS_NETWORK_STATE");
+    SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE");
+    SQUE_AskPermissions("READ_EXTERNAL_STORAGE");
+    SQUE_AskPermissions("READ_PHONE_STATE");
+    SQUE_AskPermissions("GET_TASKS");
+    SQUE_AskPermissions("REORDER_TASKS");
+    SQUE_AskPermissions("WRITE_APN_SETTINGS");
+    // does not exist SQUE_AskPermissions("READ_SECURE_SETTINGS");
+    // does not exist SQUE_AskPermissions("READ_SETTINGS");
+    SQUE_AskPermissions("REAL_GET_TASKS");
+    SQUE_AskPermissions("INTERACT_ACROSS_USERS");
+    SQUE_AskPermissions("MANAGE_USERS");
+    SQUE_AskPermissions("INSTALL_PACKAGES");
+    SQUE_AskPermissions("DELETE_PACKAGES");
+    SQUE_AskPermissions("INTERACT_ACROSS_USERS_FULL");
+
+
     const char* vertexShaderSource =
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec3 aCol;\n"

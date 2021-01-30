@@ -8,8 +8,9 @@
         android:minSdkVersion="${ANDROIDVERSION}"
         android:targetSdkVersion="${ANDROIDTARGET}"/>
     
-    <uses-permission 
-        android:name="android.permission.SET_RELEASE_APP"/>
+    <uses-permission android:name="android.permission.SET_RELEASE_APP"/>
+    <!-- permissions will be asked during runtime always -->
+
     
     <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
         </style>
