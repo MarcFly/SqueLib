@@ -54,7 +54,9 @@ You can basically copy the style of any example found, but the main parts will b
     cmake <dir> ( -DToWindows=1 || -DToLinux=1 || -DToAndroid ) -DCMAKE_BUILD_TYPE=(Release||Debug)
     cmake --build <dir>
     # Optional for Android, install into android device...
+    make uninstall push # This will remove the app if exists, create the apk and install on device
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ - You can also check/use the examples/all command-line executables (FromLinux_BuildAll.sh / FromWin_BuildAll.batch) to have an even easier build experience 
 For getting into building with CMake, I strongly recommend **[Jeff Preshing's](https://preshing.com/)** **[introduction](https://preshing.com/20170522/learn-cmakes-scripting-language-in-15-minutes/)**.</br>
 There is a lot of info available and the documentation is extensive, but this carreid me heavily starting out. The post on plywood and arch80 engine have been also really interesting!
 
