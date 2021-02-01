@@ -651,7 +651,7 @@ SQ_API void CheckForRenderErrors(const char* file, int line);
 
 enum SQUE_Assets
 {
-
+	
 };
 
 typedef struct SQUE_Dir

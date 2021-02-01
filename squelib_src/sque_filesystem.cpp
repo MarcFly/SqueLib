@@ -45,7 +45,7 @@ std::string SQUE_FS_GetExecPath()
 	len = GetModuleFileNameA(NULL, path, 256);
 	std::string exec_path(path);
 	std::string exe = strrchr(path, FE);
-	size_t v = exec_path.find(std::string_view(exe));
+	size_t v = exec_path.find(exe);
 	ret = exec_path.substr(0, exec_path.length() - exe.length());
 #elif defined(ANDROID)
 #elif defined(__linux__)
