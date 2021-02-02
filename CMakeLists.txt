@@ -169,7 +169,8 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
             ${CMAKE_DL_LIBS}
         )
     elseif(ToWindows)
-    elseif(ToDarawin OR ToMacOS)
+
+    elseif(ToDarwin OR ToMacOS)
         target_link_libraries(SqueLib PUBLIC
             "-framework Cocoa"
             "-framework IOKit"

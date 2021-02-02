@@ -16,6 +16,10 @@ macro(SqueLib_PrepareBuild target OrgName SrcFiles)
         message(STATUS "Slow 4")        
     elseif(ToWindows OR ToLinux)
         add_executable(${target} "${SrcFiles}")
+        if(ToWindows)
+            set_target_properties(${target} PROPERTIES
+                LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") # Hide Console Always
+        endif(ToWindows)
     endif()
 endmacro()
 

@@ -156,7 +156,6 @@ void ImGuiImplSqueLibTest()
 if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         
         SQUE_INPUT_Process(0);
-        SQUE_INPUT_Process(1);
 
         if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
 
