@@ -7,7 +7,7 @@ For that reason it will be fully available for anyone to use and fork, although 
 
 But why did I really decided on this project, I hate going into IDE's. There are too many steps in configuring the projects and doing things. I prefer to get all things together, build and then just use any available IDE to debug what's happening, which **CMake** is great at. 
 
-The project has been debugged using MSVS and GDB. I haven't got _ndk-gdb_ to work, probably because my toolchain is not in concordance to the ndk's, and I genuinely dislike Android Studio but that may have to be an option if someone can point me in the right direction.
+The project has been debugged using MSVS, GDB and Android Studio through APK Debugging. Both GDB and Android Studio have been a learning experience by themselves on just getting them to work coming from only ever having used MSVS, the final documentation will include a setup and the most basic debugging (where I am) going.
 
 What does SqueLib provide?
 ===
@@ -119,6 +119,12 @@ When packaging apps and building, you'd want to have your data properly packaged
 For android it is required to have a folder _AppResources/icon/mipmap.png_ which will be used as the app icon when installing. When things get more advance, it will be usign this folder to setup also desktop icons and other data following the **Android** structure. If things change in the future, it will be probably when adding support for other platforms.
 
 In any case, you can go through the code and change it however you want to, have as much fun as I did!
+
+Debugging
+===
+The step of going from Windows to Linux and Linux to Android, have been as difficult as expected at first. As ***SqueLib*** provides what it can platform agnostically, you can debug your code that uses ***SqueLib*** (and no platform dependant extra code) on your preferred IDE, or that's what I would like to say.
+
+Currently I have only tried and get to work on **GDB** and **Android Studio**, besides MSVS which is just easy.
 
 License
 ===

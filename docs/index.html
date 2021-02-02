@@ -9,16 +9,21 @@ For that reason it will be fully available for anyone to use and fork, although 
 
 But why did I really decided on this project, I hate going into IDE's. There are too many steps in configuring the projects and doing things. I prefer to get all things together, build and then just use any available IDE to debug what's happening, which **CMake** is great at. 
 
-The project has been debugged using MSVS and GDB. I haven't got _ndk-gdb_ to work, probably because my toolchain is not in concordance to the ndk's, and I genuinely dislike Android Studio but that may have to be an option if someone can point me in the right direction.
+The project has been debugged using MSVS, GDB and Android Studio through APK Debugging. Both GDB and Android Studio have been a learning experience by themselves on just getting them to work coming from only ever having used MSVS, the final documentation will include a setup and the most basic debugging (where I am) going.
 
 What does SqueLib provide?
 ===
 
 **Easy C++ Android:**</br>
 As long as you are using up to C++17 that matches **[LLVM's LibC++](https://libcxx.llvm.org/)** support, you can build with it and get an android app easily.
+And ImGui support on **Android** is included with ***SqueLib***
 
 **Easy Logging:**</br>
 Maybe not that fast and memory efficient, but very practical log management that retrieves where it is called (very practical if you are a mad log-debugger like me).
+
+**Input Management:**</br>
+Because the library wraps over both _GLFW_ and the _Android NDK_, input is a bit jumbled with Display Management, for now, it si required the use of them together.
+You can setup callback to any key, mouse event and even default gestures provided!
 
 **Display Management:**</br>
 Althought currently not supporting multiple displays on _Android_, _SqueLib_ wraps over _GLFW_ to provide an easier experience that will not require a whole rewrite on _Android_ when trying to use multiple windows.
@@ -32,7 +37,7 @@ A long term interest is having support for other APIs to learn how they work and
 An easy way to load and write files and assets for the provided platforms.
 
 **Fast Precision Timer:**</br>
-Using _chrono_, a simple and efficient timer is provided down to nanosecond precision.
+Using _chrono_, a simple and efficient timer is provided.
 
 What does SqueLib lack?
 ===
@@ -117,6 +122,12 @@ For android it is required to have a folder _AppResources/icon/mipmap.png_ which
 
 In any case, you can go through the code and change it however you want to, have as much fun as I did!
 
+Debugging
+===
+The step of going from Windows to Linux and Linux to Android, have been as difficult as expected at first. As ***SqueLib*** provides what it can platform agnostically, you can debug your code that uses ***SqueLib*** (and no platform dependant extra code) on your preferred IDE, or that's what I would like to say.
+
+Currently I have only tried and get to work on **GDB** and **Android Studio**, besides MSVS which is just easy.
+
 License
 ===
 Copyright 2021 Marc Torres Jimenez
@@ -141,6 +152,7 @@ Acknowledgements
 [<i class="fab fa-discord"></i> MarcTorresDev#0001](https://discord.com)
 [<i class="fab fa-twitter-square"></i> MarcTorres_Dev](https://twitter.com/MarcTorres_Dev)
 [mtorres.form@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=mtorres.form@gmail.com)
+
 
 
 

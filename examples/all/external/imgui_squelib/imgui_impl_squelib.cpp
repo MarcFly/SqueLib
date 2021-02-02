@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Timing
 static SQUE_Timer    sque_Time;
-static double        sque_lastTime = 0;
+static float        sque_lastTime = 0;
 // Input Variables
 static bool			sque_wantKeyboard = false;
 static bool			sque_KeyCtrl = false;
@@ -368,7 +368,7 @@ void ImGui_ImplSqueLib_Init()
 	uint16_t bigger = (w > h) ? w : h;
 	float scale = (bigger / dpi)/2.3f;
 	io.FontGlobalScale = scale;
-	ImGui::GetStyle().ScaleAllSizes(scale);
+	if(!init_registered) ImGui::GetStyle().ScaleAllSizes(scale);
 
     // BackendFlags and things...
     //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
@@ -428,9 +428,9 @@ void ImGui_ImplSqueLib_NewFrame()
 	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
 
     // Setup Time Step
-	double read = sque_Time.ReadMilliSec();
-    double curr_time = (read / 1000);
-    io.DeltaTime = (curr_time - sque_lastTime)+0.000001;
+    double curr_time = (sque_Time.ReadMilliSec() / 1000);
+    io.DeltaTime = std::abs(curr_time - sque_lastTime)+0.000001;
+	SQUE_PRINT(LT_INFO, "%f %f %f", io.DeltaTime, sque_lastTime, curr_time);
     sque_lastTime = curr_time;
 
     // Update Mouse
