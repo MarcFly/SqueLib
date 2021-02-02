@@ -539,7 +539,7 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, NULL);
+    GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
     if (!glfw_window)
     {
         SQUE_PRINT(LT_WARNING, "Unable to create GLFW window...");

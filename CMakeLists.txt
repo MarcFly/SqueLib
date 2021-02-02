@@ -76,6 +76,9 @@ set_target_properties(glad
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
 set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
 # GLM is interface library by default, does not have output, its added to project
+# STB ----------------------------------------------------------------------------------------
+set(stb_include "${CMAKE_CURRENT_SOURCE_DIR}/external/stb")
+
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
@@ -179,6 +182,7 @@ endif()
 #------------------------------------------------------------------------------------------------
 target_include_directories(SqueLib PUBLIC
     ${glm_include}
+    ${stb_include}
 )
 target_link_libraries(SqueLib PUBLIC
     glad

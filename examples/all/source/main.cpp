@@ -10,9 +10,6 @@ enum main_states
 };
 
 #include <cmath>
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_NEON
-#include <stb_image.h>
 
 #include <imgui.h>
 #include <imgui_impl_squelib.h>
@@ -21,6 +18,10 @@ bool have_resumed;
 
 void ImGuiImplSqueLibTest()
 {
+    // SQUE_DISPLAY_OpenWindow("Test2ndWindow", 200,200);
+    // SQUE_DISPLAY_MakeContextMain(0);
+    // Currently not getting render on Window2
+
     SQUE_FS_CreateDirRelative("../../TestPermissions");
     // does not exist SQUE_AskPermissions("permission.ACCESS");
     SQUE_AskPermissions("INTERNET");
@@ -94,12 +95,9 @@ void ImGuiImplSqueLibTest()
     tex.ApplyParameters();
 
     SQUE_Asset* tex_data = SQUE_FS_GetAssetRaw(NULL, "container.jpeg");
-    if (tex_data != nullptr)
-    {
-        tex.pixels = stbi_load_from_memory((unsigned char*)tex_data->raw_data, tex_data->size, &tex.w, &tex.h, &tex.channel_num, 0);
-        SQUE_SendTextureToGPU(tex);
-        stbi_image_free(tex.pixels);
-    }
+    if (!SQUE_LOAD_Texture(tex_data, &tex))
+        SQUE_PRINT(LT_WARNING, "Texture not loaded...");
+
     SQUE_CHECK_RENDER_ERRORS();
 
     // Mesh Setup-----------------------------------------------------------------------------------
@@ -142,7 +140,7 @@ void ImGuiImplSqueLibTest()
 
     SQUE_CHECK_RENDER_ERRORS();
     //-------------------------------------------------------------------
-
+    
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -156,7 +154,10 @@ void ImGuiImplSqueLibTest()
     {
 
 if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
+        
         SQUE_INPUT_Process(0);
+        SQUE_INPUT_Process(1);
+
         if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
 
         ImGui_ImplSqueLib_NewFrame();
@@ -192,7 +193,7 @@ if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         SQUE_DISPLAY_GetViewportSize(0, &x, &y);
 if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         // Remember to make the expected framebuffer (aka window) to main
-    SQUE_DISPLAY_MakeContextMain(0);
+        SQUE_DISPLAY_MakeContextMain(0);
         SQUE_RENDER_ChangeFramebufferSize(x, y);
 if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
         SQUE_RENDER_Clear(col);
