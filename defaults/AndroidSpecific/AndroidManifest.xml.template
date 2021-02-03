@@ -16,7 +16,7 @@
         </style>
 
     <application 
-        android:debuggable="true" 
+        android:debuggable="${DEBUGGABLE}" 
         android:hasCode="false" 
         android:label="${LABEL}" 
         tools:replace="android:icon,android:theme,android:allowBackup,label" 

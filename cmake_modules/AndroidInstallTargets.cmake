@@ -21,19 +21,25 @@ execute_process(COMMAND keytool -genkey -v -keystore ${KEYSTOREFILE} -alias ${AL
 # ANDROID INSTALL / PUSH / UNINSTALL / MAKEAPK / ...
 #------------------------------------------------------------------------------------------------
 macro(squelib_add_targets target)
+    if(${CMAKE_BUILD_TYPE} EQUAL "Release")
+        set(debuggable "false")
+    else()
+        set(debuggable "true")
+    endif()
 
     add_custom_target( AndroidManifest.xml
         COMMAND @echo "Creating Manifest"
         COMMAND rm -rf ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml
         COMMAND @echo "Copying Template to Directory"
-        COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/AndroidSpecific/AndroidManifest.xml.template ${CMAKE_BINARY_DIR}/makecapk
+        COMMAND cp ${SqueLib_defaults}/AndroidSpecific/AndroidManifest.xml.template ${CMAKE_BINARY_DIR}/makecapk
         COMMAND @echo "Substituting Variables with required vals"
         COMMAND PACKAGENAME=${PACKAGENAME} 
                 ANDROIDVERSION=${ANDROIDVERSION} 
                 ANDROIDTARGET=${ANDROIDTARGET} 
                 APPNAME=${target}
-                LABEL=${LABEL} 
-                envsubst '$$ANDROIDTARGET $$ANDROIDVERSION $$APPNAME $$PACKAGENAME $$LABEL' 
+                LABEL=${LABEL}
+                DEBUGGABLE=${debuggable}
+                envsubst '$$ANDROIDTARGET $$ANDROIDVERSION $$APPNAME $$PACKAGENAME $$LABEL $$DEBUGGABLE' 
                 < ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml.template 
                 > ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml
 

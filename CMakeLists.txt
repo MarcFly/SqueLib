@@ -213,5 +213,6 @@ source_group("squelib_source" FILES "${SQUELIB_SRC}")
 
 set(SqueLib_include ${CMAKE_CURRENT_SOURCE_DIR}/squelib_src PARENT_SCOPE)
 set(SqueLib_Output ${SQUE_OutputFolder} PARENT_SCOPE) 
+set(SqueLib_defaults ${CMAKE_CURRENT_SOURCE_DIR}/defaults PARENT_SCOPE)
 
 include(${SQUE_cmake}/SqueLib_Package.cmake PARENT_SCOPE)
