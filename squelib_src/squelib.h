@@ -44,6 +44,7 @@
 #	define USE_OPENGL
 #   define USE_GLFW	
 #	if defined(_WIN32)
+#		define WIN32_LEAN_AND_MEAN // Just in case
 #       define GLFW_EXPOSE_NATIVE_WIN32
 #	else
 #	endif																						
@@ -72,11 +73,13 @@ SQ_API void SQUE_ConsolePrint(int lt, const char* log);
 SQ_API void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...);
 #define SQUE_PRINT(LogType, format,...) SQ_MACRO SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)				
 
+// Permissions /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API int SQUE_AskPermissions(const char* permission_name);
 
 // Callback Setters - Flow Management //////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API VoidFun SQUE_INPUT_AddOnResumeCallback(VoidFun fn);																				
-SQ_API VoidFun SQUE_INPUT_AddOnGoBackgroundCallback(VoidFun fn);																			
+SQ_API VoidFun SQUE_AddOnResumeCallback(VoidFun fn);																				
+SQ_API VoidFun SQUE_AddOnGoBackgroundCallback(VoidFun fn);																			
+SQ_API void SQUE_Sleep(uint32_t ms);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

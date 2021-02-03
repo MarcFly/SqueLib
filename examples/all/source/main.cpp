@@ -14,10 +14,21 @@ enum main_states
 #include <imgui.h>
 #include <imgui_impl_squelib.h>
 
-bool have_resumed;
+bool on_background = false;
+void OnResume()
+{
+    on_background = false;
+}
+void OnGoBackground()
+{
+    on_background = true;
+}
+
 
 void ImGuiImplSqueLibTest()
 {
+    SQUE_AddOnGoBackgroundCallback(OnGoBackground);
+    SQUE_AddOnResumeCallback(OnResume);
     // SQUE_DISPLAY_OpenWindow("Test2ndWindow", 200,200);
     // SQUE_DISPLAY_MakeContextMain(0);
     // Currently not getting render on Window2
@@ -152,69 +163,67 @@ void ImGuiImplSqueLibTest()
     
     while(!SQUE_DISPLAY_ShouldWindowClose(0))
     {
-
-if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        
         SQUE_INPUT_Process(0);
-
-        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-
-        ImGui_ImplSqueLib_NewFrame();
-        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        ImGui::NewFrame();
-
-        if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
+        
+        if(on_background)
         {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&col); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
+            SQUE_Sleep(100);
+            continue;
         }
+        {
+            ImGui_ImplSqueLib_NewFrame();
+            ImGui::NewFrame();
 
-        ImGui::Render();
+            if(show_demo_window)ImGui::ShowDemoWindow(&show_demo_window);
+            {
+                static float f = 0.0f;
+                static int counter = 0;
 
-        int32_t x, y;
-        SQUE_DISPLAY_GetViewportSize(0, &x, &y);
-if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        // Remember to make the expected framebuffer (aka window) to main
-        SQUE_DISPLAY_MakeContextMain(0);
-        SQUE_RENDER_ChangeFramebufferSize(x, y);
-if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        SQUE_RENDER_Clear(col);
-        //--
-        SQUE_RENDER_UseProgram(program);
-        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
-        SetFloat4(program, "ourColor", glm::vec4(0, green, 0, 1));
+                ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-        SQUE_SetActiveTextureUnit(SQUE_TEXTURE0);
-        SQUE_BindTexture(tex);
+                ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+                ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+                ImGui::Checkbox("Another Window", &show_another_window);
 
-        SQUE_RENDER_DrawIndices(triangle);
-        if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        
-        //--
-if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        ImGui_ImplSqueLib_Render(ImGui::GetDrawData());
-if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        SQUE_DISPLAY_SwapAllBuffers();
-if(have_resumed) SQUE_CHECK_RENDER_ERRORS();
-        
+                ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+                ImGui::ColorEdit3("clear color", (float*)&col); // Edit 3 floats representing a color
+
+                if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                    counter++;
+                ImGui::SameLine();
+                ImGui::Text("counter = %d", counter);
+
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                ImGui::End();
+            }
+
+            ImGui::Render();
+
+            int32_t x, y;
+            SQUE_DISPLAY_GetViewportSize(0, &x, &y);
+
+            // Remember to make the expected framebuffer (aka window) to main
+            SQUE_DISPLAY_MakeContextMain(0);
+            SQUE_RENDER_ChangeFramebufferSize(x, y);
+
+            SQUE_RENDER_Clear(col);
+            //--
+            SQUE_RENDER_UseProgram(program);
+
+            float green = sin(t.ReadMilliSec() / 200.f) + 0.5f;
+            SetFloat4(program, "ourColor", glm::vec4(0, green, 0, 1));
+
+            SQUE_SetActiveTextureUnit(SQUE_TEXTURE0);
+            SQUE_BindTexture(tex);
+
+            SQUE_RENDER_DrawIndices(triangle);
+            
+            //--
+
+            ImGui_ImplSqueLib_Render(ImGui::GetDrawData());
+
+            SQUE_DISPLAY_SwapAllBuffers();  
+        }      
         
     }
 

@@ -333,9 +333,8 @@ void ImGui_ImplSqueLib_Init()
 		sque_PrevMousePosCallback = SQUE_INPUT_SetMousePosCallback(ImGui_ImplSqueLib_MousePosCallback);
 		sque_PrevMouseScrollCallback = SQUE_INPUT_SetMouseScrollCallback(ImGui_ImplSqueLib_MouseScrollCallback);
 		sque_PrevKeyboardCallback = SQUE_INPUT_SetKeyCallback(ImGui_ImplSqueLib_KeyboardCallback);
-		sque_PrevOnResumeCallback = SQUE_INPUT_AddOnResumeCallback(ImGui_ImplSqueLib_Resume);
-		sque_PrevOnGoBackgroundCallback = SQUE_INPUT_AddOnGoBackgroundCallback(ImGui_ImplSqueLib_GoBackground);
-		init_registered = true;
+		sque_PrevOnResumeCallback = SQUE_AddOnResumeCallback(ImGui_ImplSqueLib_Resume);
+		sque_PrevOnGoBackgroundCallback = SQUE_AddOnGoBackgroundCallback(ImGui_ImplSqueLib_GoBackground);
 	}
 	
     ImGuiIO &io = ImGui::GetIO();
@@ -387,6 +386,7 @@ void ImGui_ImplSqueLib_Init()
 	ImGui_ImplSqueLib_CreateShaderProgram();
 
 	if(init_registered && sque_PrevOnResumeCallback != NULL) sque_PrevOnResumeCallback();
+	init_registered = true;
 }
 
 void ImGui_ImplSqueLib_Shutdown()
@@ -401,8 +401,8 @@ void ImGui_ImplSqueLib_Shutdown()
 	SQUE_INPUT_SetMousePosCallback(sque_PrevMousePosCallback);
 	SQUE_INPUT_SetMouseScrollCallback(sque_PrevMouseScrollCallback);
 	SQUE_INPUT_SetKeyCallback(sque_PrevKeyboardCallback);
-	SQUE_INPUT_AddOnResumeCallback(sque_PrevOnResumeCallback);
-	SQUE_INPUT_AddOnGoBackgroundCallback(sque_PrevOnGoBackgroundCallback);
+	SQUE_AddOnResumeCallback(sque_PrevOnResumeCallback);
+	SQUE_AddOnGoBackgroundCallback(sque_PrevOnGoBackgroundCallback);
 
 	init_registered = false;
 }

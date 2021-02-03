@@ -599,8 +599,10 @@ void SQUE_DISPLAY_SwapAllBuffers()
         SQUE_DISPLAY_MakeContextMain(i);
 #if defined(USE_EGL)
         eglSwapBuffers(egl_display, egl_surface);
-        sque_windows[i]->width = ANativeWindow_getWidth(egl_window);
-        sque_windows[i]->height = ANativeWindow_getHeight(egl_window);
+        // Checking size on swapbuffers on android, might crash sometimes because it might perform this before actually
+        // creating the native window, for example onResume() -> why was it necessary? (when rotating or something like that?)
+        // sque_windows[i]->width = ANativeWindow_getWidth(egl_window); //
+        // sque_windows[i]->height = ANativeWindow_getHeight(egl_window); //
         return;
 #elif defined(USE_GLFW)
         glfwSwapBuffers(glfw_windows[i]);

@@ -4,14 +4,10 @@
 #include <string>
 #include <cstring>
 
-#if defined(_DEBUG)
-
-#   if defined(_WIN32)
-#      include <Windows.h> // really only necessary to print to outputdebugstring, which is practical
-#   elif defined(ANDROID)
-#          include<android/log.h>
-#   endif
-
+#if defined(ANDROID) || defined(__linux__)
+#   include <unistd.h>
+#else if defined(_WIN32)
+#   include <windows.h>
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,19 +344,28 @@ int SQUE_AskPermissions(const char* permission_name)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CALLBACKS FOR FLOW MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////////////////////
+// CALLBACKS / FLOW MANAGEMENT /////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VoidFun SQUE_INPUT_AddOnResumeCallback(VoidFun fun)
+VoidFun SQUE_AddOnResumeCallback(VoidFun fun)
 {
     VoidFun ret = on_resume_callback;
     on_resume_callback = fun;
     return ret;
 
 }
-VoidFun SQUE_INPUT_AddOnGoBackgroundCallback(VoidFun fun)
+VoidFun SQUE_AddOnGoBackgroundCallback(VoidFun fun)
 {
     VoidFun ret = on_go_background_callback;
     on_go_background_callback = fun;
     return ret;
+}
+
+void SQUE_Sleep(uint32_t ms)
+{
+#if defined(ANDROID) || defined(__linux__)
+    usleep(ms * 1000);
+#else if defined(_WIN32)
+    Sleep(ms);
+#endif
 }
