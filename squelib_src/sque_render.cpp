@@ -31,7 +31,7 @@ void SQUE_RenderState::SetUp()
         glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
     else
         glBlendFunc(blend_func_src_alpha, blend_func_dst_alpha);
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    //glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
 
     if (blend) glEnable(GL_BLEND);
@@ -73,7 +73,7 @@ void SQUE_RenderState::BackUp()
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
 
-    glGetIntegerv(GL_VIEWPORT, viewport);
+    //glGetIntegerv(GL_VIEWPORT, viewport);
     glGetIntegerv(GL_SCISSOR_BOX, scissor_box);
 
     blend = glIsEnabled(GL_BLEND);
