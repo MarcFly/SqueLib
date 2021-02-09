@@ -386,8 +386,6 @@ typedef struct SQUE_Mesh
 {
 // Constructors / Destructors
 	SQ_API SQUE_Mesh();
-	SQ_API SQUE_Mesh(int32_t draw_config, int32_t draw_mode, int32_t index_var);
-
 	SQ_API ~SQUE_Mesh();
 
 // Variables
@@ -408,8 +406,9 @@ typedef struct SQUE_Mesh
 
 // Usage Functions
 	// Changing the data dynamically (good for stream/dynamic draw)
+	SQ_API void ChangeDrawConfig(int32_t draw_config, int32_t draw_mode);
 	SQ_API void ChangeVertData(int32_t num_verts_, void* verts_);
-	SQ_API void ChangeIndexData(int32_t num_index_, void* indices_);
+	SQ_API void ChangeIndexData(int32_t num_index_, void* indices_, uint32_t index_var_ = SQUE_UINT);
 
 	// Location and Vertex attributes																									
 	SQ_API SQUE_VertAttrib* AddAttribute(SQUE_VertAttrib* attribute = NULL);
@@ -507,6 +506,7 @@ typedef struct SQUE_Shader
 
 // Usage Functions
 	SQ_API void Compile();
+	SQ_API void CleanUp();
 } SQUE_Shader;
 
 typedef struct SQUE_Uniform
@@ -520,16 +520,6 @@ typedef struct SQUE_Uniform
 	int32_t id = INT32_MAX;
 	const char* name = "";
 } SQUE_Uniform;
-
-// Usage Functions
-SQ_API void SetBool(const SQUE_Program& prog, const char* name, bool value);
-SQ_API void SetInt(const SQUE_Program& prog, const char* name, int value);
-SQ_API void SetFloat(const SQUE_Program& prog, const char* name, float value);
-SQ_API void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value);
-SQ_API void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value);
-SQ_API void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value);
-// ... add a matrix/array passer...																									
-SQ_API void SetMatrix4(const SQUE_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
 
 #include <vector>																														
 typedef struct SQUE_Program
@@ -548,7 +538,7 @@ typedef struct SQUE_Program
 
 	SQ_API void DeclareUniform(const char*);
 	SQ_API int32_t GetUniformLocation(const char* name) const;
-
+	
 	SQ_API void CleanUp();
 	
 private:
@@ -559,7 +549,16 @@ private:
 
 } SQUE_Program;
 
-
+// Usage Functions
+SQ_API void SetBool(const SQUE_Program& prog, const char* name, bool value);
+SQ_API void SetInt(const SQUE_Program& prog, const char* name, int value);
+SQ_API void SetFloat(const SQUE_Program& prog, const char* name, float value);
+SQ_API void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value);
+SQ_API void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value);
+SQ_API void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value);
+// ... add a matrix/array passer...																									
+SQ_API void SetMatrix4(const SQUE_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
+	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -577,15 +576,14 @@ typedef struct SQUE_RenderState
 	// Have to change into a vector similar to attributes...
 	int32_t bound_texture, active_texture_unit;
 	int32_t sampler;
-	int32_t program, vertex_array_buffer, element_array_buffer;																			
+	int32_t vertex_array_buffer, element_array_buffer;																			
 	int32_t attribute_object;																												
 	int32_t blend_equation_rgb, blend_equation_alpha;																						
 																																		
 	bool blend_func_separate = false;																									
 	int32_t blend_func_src_rgb, blend_func_dst_rgb;																						
 	int32_t blend_func_src_alpha, blend_func_dst_alpha;																					
-																																		
-	int32_t viewport[4];																														
+																																																														
 	int32_t scissor_box[4];																													
 	int32_t polygon_mode[2];																													
 	bool blend, cull_faces, depth_test, scissor_test;																					
@@ -604,7 +602,10 @@ SQ_API void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NUL
 SQ_API const char* SQUE_RENDER_GetGLSLVer();																								
 																																		
 // Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_Scissor(int x, int y, int w, int h);		
+SQ_API void SQUE_RENDER_Scissor(int x, int y, int w, int h);
+SQ_API void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h);
+SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);	
+
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_GenerateMeshBuffer(SQUE_Mesh* mesh);
 SQ_API void SQUE_BindMeshBuffer(const SQUE_Mesh& mesh);

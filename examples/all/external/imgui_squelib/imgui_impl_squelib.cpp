@@ -67,8 +67,7 @@ static SQUE_Mesh         sque_dataHandle;
 
 void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_width, int32_t fb_height)
 {
-	sque_renderState.viewport[2] = fb_width;
-	sque_renderState.viewport[3] = fb_height;
+	SQUE_RENDER_SetViewport(0, 0, fb_width, fb_height);
 	sque_renderState.SetUp();
 
 	float L = draw_data->DisplayPos.x;
@@ -87,9 +86,6 @@ void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_wi
 	SQUE_RENDER_UseProgram(sque_shaderProgram);
 	SetInt(sque_shaderProgram, "Texture", 0);
 	SetMatrix4(sque_shaderProgram, "ProjMtx", &ortho_projection[0][0]);
-	
-	/*SQUE_BindMeshBuffer(sque_dataHandle);
-	sque_dataHandle.EnableAttributesForProgram(sque_shaderProgram);*/
 }
 
 void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
@@ -110,7 +106,7 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
 		sque_dataHandle.ChangeVertData(cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data);
-		sque_dataHandle.ChangeIndexData(cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
+		sque_dataHandle.ChangeIndexData(cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data, SQUE_USHORT);
 		
 		SQUE_SendMeshToGPU(sque_dataHandle);
 
@@ -148,10 +144,7 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	sque_backupState.BackUp();
 
 	SQUE_GenerateMeshBuffer(&sque_dataHandle);
-	sque_dataHandle.draw_config = SQUE_TRIANGLES;
-	sque_dataHandle.draw_mode = SQUE_STREAM_DRAW;
-	sque_dataHandle.index_var = SQUE_USHORT;	
-	sque_dataHandle.index_var_size = SQUE_VarGetSize(SQUE_USHORT);
+	sque_dataHandle.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
 	SQUE_VertAttrib* p = sque_dataHandle.AddAttribute();
 	p->name = "Position";

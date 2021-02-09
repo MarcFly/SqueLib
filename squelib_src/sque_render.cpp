@@ -18,7 +18,6 @@
 void SQUE_RenderState::SetUp()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUseProgram(program);
     glBindTexture(GL_TEXTURE_2D, bound_texture);
     glActiveTexture(active_texture_unit);
 
@@ -31,7 +30,7 @@ void SQUE_RenderState::SetUp()
         glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
     else
         glBlendFunc(blend_func_src_alpha, blend_func_dst_alpha);
-    //glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
     glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
 
     if (blend) glEnable(GL_BLEND);
@@ -56,9 +55,7 @@ void SQUE_RenderState::SetUp()
 void SQUE_RenderState::BackUp()
 {
     backed_up = true;
-    //SQUE_CHECK_RENDER_ERRORS();
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGetIntegerv(GL_CURRENT_PROGRAM, &program);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound_texture);
     glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture_unit);
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_array_buffer);
@@ -73,7 +70,6 @@ void SQUE_RenderState::BackUp()
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
 
-    //glGetIntegerv(GL_VIEWPORT, viewport);
     glGetIntegerv(GL_SCISSOR_BOX, scissor_box);
 
     blend = glIsEnabled(GL_BLEND);
@@ -200,6 +196,24 @@ void SQUE_RENDER_Scissor(int x, int y, int w, int h)
 #endif
 }
 
+void SQUE_RENDER_GetViewport(glm::vec4* vec)
+{
+    int vint[4];
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glGetIntegerv(GL_VIEWPORT, vint);
+#endif
+    vec->x = vint[0];
+    vec->y = vint[1];
+    vec->z = vint[2];
+    vec->w = vint[3];
+}
+
+void SQUE_RENDER_SetViewport(int x, int y, int w, int h)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glViewport(x,y,w,h);
+#endif
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DATA MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

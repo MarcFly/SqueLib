@@ -43,7 +43,9 @@ SQUE_Shader::SQUE_Shader(int32_t type_, uint16_t strs, const char** data) :
 }
 
 SQUE_Shader::~SQUE_Shader()
-{}
+{
+    CleanUp();
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
@@ -71,6 +73,12 @@ void SQUE_SHADER_CheckCompileLog(const SQUE_Shader& shader)
     if(!success) SQUE_PRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
 }
 
+void SQUE_Shader::CleanUp()
+{
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    glDeleteShader(id);
+#endif
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -236,17 +244,14 @@ int32_t SQUE_Program::GetUniformLocation(const char* name) const
 
 void SQUE_Program::CleanUp()
 {
-    SQUE_CHECK_RENDER_ERRORS();
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    if (vertex_s != NULL && vertex_s->id) { glDeleteShader(vertex_s->id); }
-    if (fragment_s != NULL && fragment_s->id) { glDeleteShader(fragment_s->id); }
     if (vertex_s != NULL && id && vertex_s->id) { glDetachShader(id, vertex_s->id); vertex_s->id = 0; }
     if (fragment_s != NULL && id && fragment_s->id) { glDetachShader(id, fragment_s->id); fragment_s->id = 0; }
     if (id > 0) { glDeleteProgram(id); id = 0; }
 #endif
 
-    if (vertex_s != NULL) { delete vertex_s; vertex_s = NULL; }
-    if (fragment_s != NULL) { delete fragment_s; fragment_s = NULL; }
+    vertex_s = NULL;
+    fragment_s = NULL;
 
     int size = uniforms.size();
     for (int i = 0; i < size; ++i)

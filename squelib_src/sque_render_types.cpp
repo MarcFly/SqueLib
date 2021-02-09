@@ -34,31 +34,29 @@ SQUE_Mesh::SQUE_Mesh() : draw_config(SQUE_POINTS), draw_mode(SQUE_STATIC_DRAW),
     num_index(0), index_var(SQUE_UINT), index_var_size(4), indices(NULL)
 {}
 
-SQUE_Mesh::SQUE_Mesh(int32_t draw_config_, int32_t draw_mode_, int32_t index_var_) :
-    draw_config(draw_config_), draw_mode(draw_mode_),
-    attribute_object(0), vert_id(0), num_verts(0),
-    verts(NULL), index_id(0), num_index(0),
-    index_var(index_var_), indices(NULL)
-{   
-    index_var_size = SQUE_VarGetSize(index_var);
-}
-
 SQUE_Mesh::~SQUE_Mesh() { if(vert_id > 0) CleanUp(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CHANGING DATA DYNAMICALLY /////////////////////////////////////////////////////////////////////////////
+void SQUE_Mesh::ChangeDrawConfig(int32_t draw_config_, int32_t draw_mode_)
+{
+    draw_config = draw_config_;
+    draw_mode = draw_mode_;
+}
 void SQUE_Mesh::ChangeVertData(int32_t num_verts_, void* verts_)
 {
     num_verts = num_verts_;
     verts = verts_;
 }
 
-void SQUE_Mesh::ChangeIndexData(int32_t num_index_, void* indices_)
+void SQUE_Mesh::ChangeIndexData(int32_t num_index_, void* indices_, uint32_t index_var_)
 {
     num_index = num_index_;
     indices = indices_;
+    index_var = index_var_;
+    index_var_size = SQUE_VarGetSize(index_var);
 }
 
 // LOCATIONS AND VERTEX ATTRIBUTES ///////////////////////////////////////////////////////////////////////
@@ -123,14 +121,10 @@ uint16_t SQUE_Mesh::GetAttribSize(const char* name) const
 
 void SQUE_Mesh::CleanUp()
 {
-    if (verts != NULL) { delete[] verts; verts = NULL; }
-    if (indices != NULL) { delete[] indices; indices = NULL; }
-    num_verts = 0;
-    num_index = 0;
-    SQUE_PRINT(LT_INFO, "Deleted Attributes from mesh...");
     for (int i = 0; i < attributes.size(); ++i)
         delete attributes[i];
     attributes.clear();
+    SQUE_PRINT(LT_INFO, "Deleted Attributes from mesh...");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

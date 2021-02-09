@@ -82,14 +82,9 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     // function that inits: draw_config, draw_mode
     // function that sets: verts + vert_num,  index+index_var+index_num
     // 3 Functions but it makes more sense in the long run (variable verts, variable index, variable draw_config/mode)
-    b.rect.verts = (char*)quad;
-    b.rect.num_verts = 4;
-    b.rect.draw_config = SQUE_TRIANGLES;
-    b.rect.draw_mode = SQUE_STATIC_DRAW;
-    b.rect.indices = (char*)quad_indices;
-    b.rect.index_var = SQUE_UINT;
-    b.rect.index_var_size = 4;
-    b.rect.num_index = 6;
+    b.rect.ChangeVertData(4, (void*)quad);
+    b.rect.ChangeIndexData(6, (void*)quad_indices, SQUE_UINT);
+    b.rect.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STATIC_DRAW);
     b.rect.AddAttribute(new SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_GenerateMeshBuffer(&b.rect);
     SQUE_BindMeshBuffer(b.rect);
@@ -101,14 +96,9 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     p1.sizey = b.y / 4;
     p1.x = b.x/20;
     p1.y = vy / 2;
-    p1.rect.verts = (char*)quad;
-    p1.rect.num_verts = 4;
-    p1.rect.draw_config = SQUE_TRIANGLES;
-    p1.rect.draw_mode = SQUE_STATIC_DRAW;
-    p1.rect.indices = (char*)quad_indices;
-    p1.rect.index_var = SQUE_UINT;
-    p1.rect.index_var_size = 4;
-    p1.rect.num_index = 6;
+    p1.rect.ChangeVertData(4, (void*)quad);
+    p1.rect.ChangeIndexData(6, (void*)quad_indices);
+    p1.rect.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STATIC_DRAW);
     p1.rect.AddAttribute(new SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_GenerateMeshBuffer(&p1.rect);
     SQUE_BindMeshBuffer(p1.rect);
@@ -120,14 +110,9 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     p2.sizey = p1.sizey;
     p2.x = vx - b.x/20;
     p2.y = p1.y;
-    p2.rect.verts = (char*)quad;
-    p2.rect.num_verts = 4;
-    p2.rect.draw_config = SQUE_TRIANGLES;
-    p2.rect.draw_mode = SQUE_STATIC_DRAW;
-    p2.rect.indices = (char*)quad_indices;
-    p2.rect.index_var = SQUE_UINT;
-    p2.rect.index_var_size = 4;
-    p2.rect.num_index = 6;
+    p2.rect.ChangeVertData(4, (void*)quad);
+    p2.rect.ChangeIndexData(6, (void*)quad_indices);
+    p2.rect.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STATIC_DRAW);
     p2.rect.AddAttribute(new SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_GenerateMeshBuffer(&p2.rect);
     SQUE_BindMeshBuffer(p2.rect);
@@ -184,7 +169,14 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
     p_p->DeclareUniform("center");
     p_p->DeclareUniform("size");
     p_p->DeclareUniform("col");
+}
 
+void CleanUpShaders(SQUE_Program& b, SQUE_Program& p)
+{
+}
+
+void CleanObjects(Ball& b, Paddle& p1, Paddle& p2)
+{
 }
 
 void BallCollisionWalls(float dt, Ball& b)
