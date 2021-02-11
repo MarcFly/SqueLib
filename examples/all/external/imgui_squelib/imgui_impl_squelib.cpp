@@ -69,6 +69,7 @@ void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_wi
 {
 	SQUE_RENDER_SetViewport(0, 0, fb_width, fb_height);
 	sque_renderState.SetUp();
+	SQUE_SetActiveTextureUnit(SQUE_TEXTURE0);
 
 	float L = draw_data->DisplayPos.x;
 	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
@@ -234,7 +235,6 @@ void ImGui_ImplSqueLib_StaticRenderState()
 	sque_renderState.cull_faces = false;
 	sque_renderState.depth_test = false;
 	sque_renderState.scissor_test = true;
-	sque_renderState.active_texture_unit = SQUE_TEXTURE0;
 	sque_renderState.blend_func_dst_alpha = SQUE_ONE;
 	sque_renderState.blend_func_src_alpha = SQUE_ONE;
 	sque_renderState.blend_func_dst_rgb = SQUE_ONE_MINUS_SRC_ALPHA;
@@ -323,8 +323,8 @@ void ImGui_ImplSqueLib_Init()
 
 	if(!init_registered)
 	{
-		sque_PrevMousePosCallback = SQUE_INPUT_SetMousePosCallback(ImGui_ImplSqueLib_MousePosCallback);
-		sque_PrevMouseScrollCallback = SQUE_INPUT_SetMouseScrollCallback(ImGui_ImplSqueLib_MouseScrollCallback);
+		sque_PrevMousePosCallback = SQUE_INPUT_SetPointerPosCallback(ImGui_ImplSqueLib_MousePosCallback, 0);
+		sque_PrevMouseScrollCallback = SQUE_INPUT_SetScrollCallback(ImGui_ImplSqueLib_MouseScrollCallback);
 		sque_PrevKeyboardCallback = SQUE_INPUT_SetKeyCallback(ImGui_ImplSqueLib_KeyboardCallback);
 		sque_PrevOnResumeCallback = SQUE_AddOnResumeCallback(ImGui_ImplSqueLib_Resume);
 		sque_PrevOnGoBackgroundCallback = SQUE_AddOnGoBackgroundCallback(ImGui_ImplSqueLib_GoBackground);
@@ -391,8 +391,8 @@ void ImGui_ImplSqueLib_Shutdown()
 	sque_dataHandle.CleanUp();
 	sque_fontTexture.CleanUp();
 
-	SQUE_INPUT_SetMousePosCallback(sque_PrevMousePosCallback);
-	SQUE_INPUT_SetMouseScrollCallback(sque_PrevMouseScrollCallback);
+	SQUE_INPUT_SetPointerPosCallback(sque_PrevMousePosCallback, 0);
+	SQUE_INPUT_SetScrollCallback(sque_PrevMouseScrollCallback);
 	SQUE_INPUT_SetKeyCallback(sque_PrevKeyboardCallback);
 	SQUE_AddOnResumeCallback(sque_PrevOnResumeCallback);
 	SQUE_AddOnGoBackgroundCallback(sque_PrevOnGoBackgroundCallback);

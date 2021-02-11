@@ -291,20 +291,6 @@ typedef struct SQUE_Key
 																																		
 																																		
 void DebugMouseFloatCallback(float x, float y);																							
-typedef struct SQUE_Mouse																												
-{																																		
-	float prev_y = INT32_MAX, prev_x = INT32_MAX;																						
-	float x = INT32_MAX, y = INT32_MAX;																									
-	MouseFloatCallback pos_callback = DebugMouseFloatCallback;																			
-																																		
-	float prev_scrollx = INT32_MAX, prev_scrolly = INT32_MAX;																			
-	float scrollx = INT32_MAX, scrolly = INT32_MAX;																						
-	MouseFloatCallback scroll_callback = DebugMouseFloatCallback;																		
-																																		
-	SQUE_Key mbuttons[MAX_MOUSE_BUTTONS];																								
-																																		
-} SQUE_Mouse;																															
-																																		
 																																		
 // Touch Display Oriented - But will implement mouse based gestures and callback based key gestures	////////////////////////////////////
 typedef struct SQUE_Gesture																												
@@ -321,10 +307,11 @@ typedef struct SQUE_Gesture
 typedef struct SQUE_Pointer																												
 {																																		
 	bool active = false;																												
-	int32_t id;																															
-	SQUE_Timer timer;																													
-	SQUE_Gesture gesture;																												
-																																		
+	int32_t id;	
+	
+	float prev_y = INT32_MAX, prev_x = INT32_MAX;																						
+	float x = INT32_MAX, y = INT32_MAX;																									
+	MouseFloatCallback pos_callback = DebugMouseFloatCallback;
 } SQUE_Pointer;																															
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,7 +323,7 @@ SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(bool show);
 															
 // Usage / Utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(bool show);
-SQ_API SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Pointer& p);
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Gesture& g);
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_EvalGesture();
 
 // Setters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -344,14 +331,14 @@ SQ_API void SQUE_INPUT_SetMousePos(float x, float y);
 
 // Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button);
-SQ_API void SQUE_INPUT_GetMousePos(float* x, float* y);
-SQ_API void SQUE_INPUT_GetMouseWheel(float* v = NULL, float* h = NULL);
+SQ_API void SQUE_INPUT_GetPointerAvg(float* x, float* y, uint16_t points = 1);
+SQ_API void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 SQ_API int SQUE_INPUT_GetCharFromBuffer();
 
 // Callback Setters ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn);																		
-SQ_API MouseFloatCallback SQUE_INPUT_SetMousePosCallback(MouseFloatCallback position);													
-SQ_API MouseFloatCallback SQUE_INPUT_SetMouseScrollCallback(MouseFloatCallback scroll);													
+SQ_API MouseFloatCallback SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback position, uint16_t pointer);
+SQ_API MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll);
 SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallbacks(int button, KeyCallback key_callback);												
 	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -573,18 +560,13 @@ typedef struct ColorRGBA {
 typedef struct SQUE_RenderState																											
 {																																		
 	bool backed_up = false;	
-	// Have to change into a vector similar to attributes...
-	int32_t bound_texture, active_texture_unit;
-	int32_t sampler;
-	int32_t vertex_array_buffer, element_array_buffer;																			
-	int32_t attribute_object;																												
+	// Have to change into a vector similar to attributes...																												
 	int32_t blend_equation_rgb, blend_equation_alpha;																						
 																																		
 	bool blend_func_separate = false;																									
 	int32_t blend_func_src_rgb, blend_func_dst_rgb;																						
 	int32_t blend_func_src_alpha, blend_func_dst_alpha;																					
-																																																														
-	int32_t scissor_box[4];																													
+																																																																																										
 	int32_t polygon_mode[2];																													
 	bool blend, cull_faces, depth_test, scissor_test;																					
 																																		
@@ -604,7 +586,9 @@ SQ_API const char* SQUE_RENDER_GetGLSLVer();
 // Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_Scissor(int x, int y, int w, int h);
 SQ_API void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h);
-SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);	
+SQ_API void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value);
+SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
+SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
 
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_GenerateMeshBuffer(SQUE_Mesh* mesh);

@@ -68,7 +68,7 @@ set(glad_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
 target_include_directories(glad PUBLIC ${glad_include})
 set_target_properties(glad
     PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
         LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
 )
@@ -111,7 +111,7 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     FetchContent_MakeAvailable(glfw)
     set_target_properties(glfw
         PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+            ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
             LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
             RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
     )
@@ -195,7 +195,7 @@ target_link_libraries(SqueLib PUBLIC
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive -funsafe-math-optimizations)
 set_target_properties(SqueLib
     PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
         LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
         POSITION_INDEPENDENT_CODE ON

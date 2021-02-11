@@ -3,7 +3,7 @@
 #else
 #   include "squelib.h"
 #endif
-
+// #define ANDROID //tests
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11,13 +11,17 @@ void DebugKey(int32_t code, int32_t state) { SQUE_PRINT(LT_INFO, "Key %c: %d", c
 KeyCallback key_fun = DebugKey;
 
 SQUE_Key keyboard[MAX_KEYS];
-SQUE_Mouse mouse;
-void DebugMouseFloatCallback(float x, float y) { SQUE_PRINT(LT_INFO, "Mouse %.2f,%.2f", x, y); }
+void DebugMouseFloatCallback(float x, float y) { SQUE_PRINT(LT_INFO, "Pointer %.2f,%.2f", x, y); }
 
 #include <list> // i don't like including libraries, but will do until I have a proven easier alternative
 std::list<int> char_buffer;
 
-SQUE_Pointer sque_pointers[MAX_POINTERS];
+float scrollx = INT32_MAX, scrolly = INT32_MAX;
+MouseFloatCallback scroll_callback = DebugMouseFloatCallback;
+
+SQUE_Key mouse_buttons[MAX_MOUSE_BUTTONS];
+SQUE_Pointer pointers[MAX_POINTERS];
+SQUE_Gesture gestures[MAX_POINTERS];
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,26 +126,24 @@ static void GLFW_CharCallback(GLFWwindow* window, uint32_t codepoint)
 
 static void GLFW_MousePosCallback(GLFWwindow* window, double xpos, double ypos)
 {
-    mouse.prev_x = mouse.x;
-    mouse.prev_y = mouse.y;
-    mouse.x = (float)xpos;
-    mouse.y = (float)ypos;
-    mouse.pos_callback(mouse.x, mouse.y);
+    pointers[0].prev_x = pointers[0].x;
+    pointers[0].prev_y = pointers[0].y;
+    pointers[0].x = (float)xpos;
+    pointers[0].y = (float)ypos;
+    pointers[0].pos_callback(pointers[0].x, pointers[0].y);
 }
 static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-    mouse.mbuttons[button].prev_state = mouse.mbuttons[button].state;
-    mouse.mbuttons[button].state = action;
-    mouse.mbuttons[button].callback(button, mouse.mbuttons[button].state);
+    mouse_buttons[button].prev_state = mouse_buttons[button].state;
+    mouse_buttons[button].state = action;
+    mouse_buttons[button].callback(button, mouse_buttons[button].state);
 }
 
 static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    mouse.prev_scrollx = mouse.scrollx;
-    mouse.prev_scrolly = mouse.scrolly;
-    mouse.scrollx = xoffset;
-    mouse.scrolly = yoffset;
-    mouse.scroll_callback(mouse.scrollx, mouse.scrolly);
+    scrollx = xoffset;
+    scrolly = yoffset;
+    scroll_callback(scrollx, scrolly);
 }
 
 #else
@@ -151,28 +153,13 @@ static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double 
 // PRIVATE SETTERS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_INPUT_UpdateMouseFromPointer(float xpos, float ypos, int state, int num_pointers)
-{
-    mouse.prev_x = mouse.x;
-    mouse.prev_y = mouse.y;
-    mouse.x = xpos;
-    mouse.y = ypos;
-    mouse.pos_callback(mouse.x, mouse.y);
-
-    mouse.mbuttons[0].prev_state = mouse.mbuttons[0].state;
-    mouse.mbuttons[0].state = state;
-    mouse.mbuttons[0].callback(0, mouse.mbuttons[0].state);
-}
-
-
-
 static void ResetPointers()
 {
     for (int i = 0; i < MAX_POINTERS; ++i)
     {
-        sque_pointers[i].active = false;
-        sque_pointers[i].id = INT32_MAX;
-        SQUE_Gesture& g = sque_pointers[i].gesture;
+        pointers[i].active = false;
+        pointers[i].id = INT32_MAX;
+        SQUE_Gesture& g = gestures[i];
         g.timer.Kill();
         g.start_x = INT32_MAX;
         g.start_y = INT32_MAX;
@@ -198,13 +185,13 @@ static int GetPointer(int32_t id)
 
     while (ret < 10)
     {
-        if (!sque_pointers[ret].active || sque_pointers[ret].id == id)
+        if (!pointers[ret].active || pointers[ret].id == id)
         {
-            if (!sque_pointers[ret].active)
+            if (!pointers[ret].active)
             {
-                sque_pointers[ret].id = id;
-                sque_pointers[ret].active = true;
-                sque_pointers[ret].gesture.timer.Start();
+                pointers[ret].id = id;
+                pointers[ret].active = true;
+                gestures[ret].timer.Start();
             }
             return ret;
         }
@@ -324,11 +311,11 @@ void SQUE_INPUT_DisplaySoftwareKeyboard(bool show)
 #endif
 }
 
-SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Pointer& p)
+SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Gesture& g)
 {
     // Evaluate what the pointer has done during the time it was tracked
-    int16_t delta_x = p.gesture.end_x - p.gesture.start_x;
-    int16_t delta_y = p.gesture.end_y - p.gesture.start_y;
+    int16_t delta_x = g.end_x - g.start_x;
+    int16_t delta_y = g.end_y - g.start_y;
     int32_t screen_w, screen_h;
     SQUE_DISPLAY_GetWindowSize(0, &screen_w, &screen_h);
 
@@ -337,7 +324,7 @@ SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Pointer& p)
     float dist_perc_x = 100 * abs_delta_x / (float)screen_w;
     float dist_perc_y = 100 * abs_delta_y / (float)screen_h;
 
-    uint16_t time = p.gesture.timer.ReadMilliSec();
+    uint16_t time = g.timer.ReadMilliSec();
     // Tap Gesture
     if (time <= GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
     {
@@ -365,9 +352,9 @@ SQUE_INPUT_Actions SQUE_INPUT_EvalGesture()
     SQUE_INPUT_Actions actions[MAX_POINTERS];
     for (int i = 0; i < MAX_POINTERS; ++i)
     {
-        if (sque_pointers[i].id == INT32_MAX || !sque_pointers[i].gesture.timer.IsActive())
+        if (pointers[i].id == INT32_MAX || !gestures[i].timer.IsActive())
             break;
-        actions[i] = SQUE_INPUT_DetectGesture(sque_pointers[i]);
+        actions[i] = SQUE_INPUT_DetectGesture(gestures[i]);
         SQUE_PRINT(LT_INFO, "Pointer %d: SQUE_INPUT_ACTION::%d", i, actions[i]);
     }
 
@@ -401,19 +388,25 @@ int SQUE_INPUT_GetCharFromBuffer()
 SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button)
 {
     if (button >= MAX_MOUSE_BUTTONS) return SQUE_ACTION_UNKNOWN;
-    return (SQUE_INPUT_Actions)mouse.mbuttons[button].state;
+    return (SQUE_INPUT_Actions)mouse_buttons[button].state;
 }
 
-void SQUE_INPUT_GetMousePos(float* x, float* y)
+void SQUE_INPUT_GetPointerAvg(float* x, float* y, uint16_t points)
 {
-    *x = mouse.x;
-    *y = mouse.y;
+    *x = *y = 0;
+    for(uint16_t i = 0; i < points; ++i)
+    {
+        *x+=pointers[i].x;
+        *y+=pointers[i].y;
+    }
+    *x/=(float)points;
+    *y/=(float)points;
 }
 
 void SQUE_INPUT_GetMouseWheel(float* v, float* h)
 {
-    if (v != NULL) *v = mouse.scrolly;
-    if (h != NULL) *h = mouse.scrollx;
+    if (v != NULL) *v = scrolly;
+    if (h != NULL) *h = scrollx;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,22 +422,18 @@ KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn)
 }
 
 
-MouseFloatCallback SQUE_INPUT_SetMousePosCallback(MouseFloatCallback position)
+MouseFloatCallback SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback position, uint16_t pointer)
 {
-    MouseFloatCallback ret = mouse.pos_callback;
-    mouse.pos_callback = position;
+    MouseFloatCallback ret = pointers[pointer].pos_callback;
+    pointers[pointer].pos_callback = position;
     return ret;
 }
-MouseFloatCallback SQUE_INPUT_SetMouseScrollCallback(MouseFloatCallback scroll)
+MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll)
 {
-    MouseFloatCallback ret = mouse.scroll_callback;
-    mouse.scroll_callback = scroll;
+    MouseFloatCallback ret = scroll_callback;
+    scroll_callback = scroll;
     return ret;
 }
-
-
-
-
 
 #ifdef ANDROID
 int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
@@ -470,48 +459,27 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
         x = AMotionEvent_getX(ev, i);
         y = AMotionEvent_getY(ev, i);
-        SQUE_Pointer& p = sque_pointers[pointer];
-        SQUE_Gesture& g = p.gesture;
+        SQUE_Pointer& p = pointers[pointer];
+        SQUE_Gesture& g = gestures[pointer];
         if(whichsource != p.id) continue;
         switch (action)
         {
         case AMOTION_EVENT_ACTION_DOWN:
             g.start_x = x;
             g.start_y = y;
-            p.timer.Start();
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
-            if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_PRESS, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
             SQUE_PRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_MOVE:
-            g.refresh_bucket += p.timer.ReadMilliSec();
-            if(g.refresh_bucket >= GESTURE_REFRESH)
-            {
-                p.timer.Start();
-                g.refresh_bucket -= GESTURE_REFRESH;
-                // Add point to be tracked;
-                if(g.start_x == INT32_MAX)
-                {
-                    g.start_x = x;
-                    g.start_y = y;
-                }
-                else
-                {
-                    g.end_x = x;
-                    g.end_y = y;
-                }
-                if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_REPEAT, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
-                SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
-            }
+        // Redo MidPoints of a Gesture properly
+            SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             break;
         case AMOTION_EVENT_ACTION_UP:
             p.active = false;
             g.end_x = x;
             g.end_y = y;
             g.timer.Stop();
-            p.timer.Kill();
             SQUE_PRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
-            if(i == 0) SQUE_INPUT_UpdateMouseFromPointer(x, y, SQUE_INPUT_Actions::SQUE_ACTION_RELEASE, num_pointers); // THIS IS A HORRIBLE HACK, on the long run I can't add proper pointer interaction
             break;
         }
         if(motion_ended == true) motion_ended = !p.active;

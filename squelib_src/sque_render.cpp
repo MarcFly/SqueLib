@@ -18,20 +18,11 @@
 void SQUE_RenderState::SetUp()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindTexture(GL_TEXTURE_2D, bound_texture);
-    glActiveTexture(active_texture_unit);
-
-    glBindVertexArray(attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_array_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
-
     glBlendEquationSeparate(blend_equation_rgb, blend_equation_alpha);
     if (blend_func_separate)
         glBlendFuncSeparate(blend_func_src_rgb, blend_func_dst_rgb, blend_func_src_alpha, blend_func_dst_alpha);
     else
         glBlendFunc(blend_func_src_alpha, blend_func_dst_alpha);
-
-    glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
 
     if (blend) glEnable(GL_BLEND);
     else glDisable(GL_BLEND);
@@ -45,7 +36,6 @@ void SQUE_RenderState::SetUp()
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
     glPolygonMode(SQUE_FRONT_AND_BACK, (GLenum)polygon_mode[0]);
-    glBindSampler(0, sampler);
 #   endif
 #endif
 
@@ -56,12 +46,6 @@ void SQUE_RenderState::BackUp()
 {
     backed_up = true;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound_texture);
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture_unit);
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_array_buffer);
-    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_array_buffer);
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &attribute_object);
-
     glGetIntegerv(GL_BLEND_EQUATION_RGB, &blend_equation_rgb);
     glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blend_equation_alpha);
 
@@ -69,8 +53,6 @@ void SQUE_RenderState::BackUp()
     glGetIntegerv(GL_BLEND_DST_RGB, &blend_func_dst_rgb);
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_func_src_alpha);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_func_dst_alpha);
-
-    glGetIntegerv(GL_SCISSOR_BOX, scissor_box);
 
     blend = glIsEnabled(GL_BLEND);
     cull_faces = glIsEnabled(GL_CULL_FACE);
@@ -80,7 +62,6 @@ void SQUE_RenderState::BackUp()
     // OpenGL Version Specific Code
 #   ifdef USE_OPENGL
     glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
-    glGetIntegerv(GL_SAMPLER_BINDING, &sampler);
 #   endif
 
 #endif
@@ -206,6 +187,19 @@ void SQUE_RENDER_GetViewport(glm::vec4* vec)
     vec->y = vint[1];
     vec->z = vint[2];
     vec->w = vint[3];
+}
+void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES) 
+    glGetIntegerv(value_id, value);
+#endif
+}
+
+void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES) 
+    glPolygonMode(faces, mode);
+#endif
 }
 
 void SQUE_RENDER_SetViewport(int x, int y, int w, int h)

@@ -66,7 +66,7 @@ SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/EngineAssets ${CMAKE_CURRENT_SOURCE_
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
 set_target_properties(All_Example
     PROPERTIES 
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
         LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
         RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
 )

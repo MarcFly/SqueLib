@@ -39,7 +39,7 @@ SqueLib_Package("" "")
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
 set_target_properties(SquePong
     PROPERTIES 
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/archive"
+        ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
         LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
         RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
 )
