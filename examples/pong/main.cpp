@@ -184,11 +184,10 @@ void BallCollisionWalls(float dt, Ball& b)
     int vx, vy;
     SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
 
-    if((b.x - b.radius)+b.dirx < 0 || (b.x+b.radius) > vx) 
+    if((b.x - b.radius) < 0 || (b.x+b.radius) > vx) 
     {
-        //b.y = vy/2;
-        //b.x = vx/2;
-        b.dirx *= -1;
+        b.y = vy/2;
+        b.x = vx/2;
         // random ball y dir
     }
 
@@ -200,13 +199,50 @@ void BallCollisionWalls(float dt, Ball& b)
 
 void BallCollisionPaddle(Paddle& p, Ball& b)
 {
-    
+
+    //if (((b.y - b.radius) > p.y && (b.y + b.radius) < (p.y + p.sizey)) && ((b.x - b.radius) > p.x && (b.x + b.radius) < (p.x + p.sizex)))
+    // Left is in paddle
+    float b_left = b.x - b.radius;
+    float b_right = b.x + b.radius;
+    float b_top = b.y - b.radius;
+    float b_bottom = b.y + b.radius;
+
+    float p_left = p.x - p.sizex;
+    float p_right = p.x + p.sizex;
+    float p_top = p.y - p.sizey;
+    float p_bottom = p.y + p.sizey;
+    bool y_in = (b_top < p_bottom && b_top > p_top) || (b_bottom < p_bottom && b_bottom > p_top);
+    bool x_in = (b_left < p_right&& b_left > p_left) || (b_right < p_right&& b_right > p_left);
+    if( y_in && x_in)
+        b.dirx *= -1;
+}
+
+void ActivePointerCallback(int32_t code, int32_t state)
+{
+    SQUE_INPUT_SetPointerActive(code, (state > SQUE_ACTION_RELEASE));
+}
+
+void MovePaddles(Paddle& p1, Paddle& p2)
+{
+    float x,y;
+    int wx, wy;
+    int sx, sy;
+    SQUE_DISPLAY_GetWindowPos(0, wx, wy);
+    SQUE_DISPLAY_GetWindowSize(0, &sx, &sy);
+    if(SQUE_INPUT_GetPointerPos(&x, &y, 0)) 
+        p1.y = sy-(y);
+
+    SQUE_INPUT_GetPointerPos(&x, &y, 0);
+        p2.y = sy-(y);
+
 }
 
 int main(int argc, char** argv)
 {
     SQUE_LIB_Init("SquePong", NULL);
     SQUE_DISPLAY_SetVSYNC(0);
+    SQUE_INPUT_SetMouseButtonCallback(0, ActivePointerCallback);
+    SQUE_INPUT_SetMouseButtonCallback(1, ActivePointerCallback);
     Ball ball;
     Paddle player1;
     Paddle player2;
@@ -233,6 +269,7 @@ int main(int argc, char** argv)
     while(!SQUE_DISPLAY_ShouldWindowClose(0))
     {
         SQUE_INPUT_Process(0);
+        MovePaddles(player1, player2);
         if(on_background)
         {
             SQUE_Sleep(100);
@@ -245,7 +282,8 @@ int main(int argc, char** argv)
         ball.x += ball.dirx*dt*ball.speed;
         ball.y += ball.diry*dt*ball.speed;
         BallCollisionWalls(dt, ball);
-        
+        BallCollisionPaddle(player1, ball);
+        BallCollisionPaddle(player2, ball);
         // Render things
         SQUE_RENDER_Clear(col);
 
@@ -282,7 +320,7 @@ int main(int argc, char** argv)
         SetFloat2(paddle_program, "vp", glm::vec2(vx, vy));
         
         SetFloat2(paddle_program, "center", glm::vec2(player1.x, player1.y));
-        SetFloat2(paddle_program, "size", glm::vec2(player1.sizex, player1.sizey));
+        SetFloat2(paddle_program, "size", glm::vec2(player1.sizex*2, player1.sizey*2));
         SetFloat3(paddle_program, "col", glm::vec3(1, 0, 0));
         SQUE_RENDER_DrawIndices(player1.rect);
 
@@ -290,7 +328,7 @@ int main(int argc, char** argv)
         SetFloat2(paddle_program, "vp", glm::vec2(vx, vy));
 
         SetFloat2(paddle_program, "center", glm::vec2(player2.x, player2.y));
-        SetFloat2(paddle_program, "size", glm::vec2(player2.sizex, player2.sizey));
+        SetFloat2(paddle_program, "size", glm::vec2(player2.sizex*2, player2.sizey*2));
         SetFloat3(paddle_program, "col", glm::vec3(0, 1, 0));
         SQUE_RENDER_DrawIndices(player2.rect);
         

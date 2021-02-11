@@ -328,10 +328,12 @@ SQ_API SQUE_INPUT_Actions SQUE_INPUT_EvalGesture();
 
 // Setters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_INPUT_SetMousePos(float x, float y);																						
+SQ_API void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active);
 
 // Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button);
 SQ_API void SQUE_INPUT_GetPointerAvg(float* x, float* y, uint16_t points = 1);
+SQ_API bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer = 0);
 SQ_API void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 SQ_API int SQUE_INPUT_GetCharFromBuffer();
 
@@ -339,8 +341,82 @@ SQ_API int SQUE_INPUT_GetCharFromBuffer();
 SQ_API KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn);																		
 SQ_API MouseFloatCallback SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback position, uint16_t pointer);
 SQ_API MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll);
-SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallbacks(int button, KeyCallback key_callback);												
+SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback key_callback);												
 	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+typedef struct SQUE_Shader
+{
+// Constructor / Destructor
+	SQ_API SQUE_Shader();
+	SQ_API SQUE_Shader(int32_t type, uint16_t strs, const char** data);
+
+	SQ_API ~SQUE_Shader();
+// Variables
+	int32_t id = 0;
+	int32_t type;
+	uint16_t lines = 0;
+	const char** source;
+
+// Usage Functions
+	SQ_API void Compile();
+	SQ_API void CleanUp();
+} SQUE_Shader;
+
+typedef struct SQUE_Uniform
+{
+// Constructors / Destructors
+	SQ_API SQUE_Uniform();
+	SQ_API SQUE_Uniform(const char*);
+	SQ_API ~SQUE_Uniform();
+
+// Variables
+	int32_t id = INT32_MAX;
+	const char* name = "";
+} SQUE_Uniform;
+
+#include <vector>																														
+typedef struct SQUE_Program
+{
+
+// Constructors / Destructors
+	SQ_API SQUE_Program();
+	
+	SQ_API ~SQUE_Program();
+// Variables
+	int32_t id = 0;
+
+// Usage Functions																		
+	SQ_API SQUE_Shader* AttachShader(SQUE_Shader* sque_shader);
+	SQ_API void FreeShadersFromGPU(); // Not required, but saves space after linking
+
+	SQ_API void DeclareUniform(const char*);
+	SQ_API int32_t GetUniformLocation(const char* name) const;
+	
+	SQ_API void CleanUp();
+	
+private:
+	SQUE_Shader* vertex_s;
+	SQUE_Shader* fragment_s;
+	// Compute, Tesselation, Geometry,...
+	std::vector<SQUE_Uniform*> uniforms;
+
+} SQUE_Program;
+
+// Usage Functions
+SQ_API void SetBool(const SQUE_Program& prog, const char* name, bool value);
+SQ_API void SetInt(const SQUE_Program& prog, const char* name, int value);
+SQ_API void SetFloat(const SQUE_Program& prog, const char* name, float value);
+SQ_API void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value);
+SQ_API void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value);
+SQ_API void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value);
+// ... add a matrix/array passer...																									
+SQ_API void SetMatrix4(const SQUE_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
+	
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MESHES //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -367,8 +443,7 @@ typedef struct SQUE_VertAttrib
 
 #include <vector> 																														
 // Maybe Swap to a custom array handler for specific sizes																				
-// I want to hav e afast search on less than 100 objects, probably a full array is good enough											
-struct SQUE_Program;
+// I want to have afast search on less than 100 objects, probably a full array is good enough											
 typedef struct SQUE_Mesh
 {
 // Constructors / Destructors
@@ -384,7 +459,8 @@ typedef struct SQUE_Mesh
 	uint32_t vert_id = 0;
 	uint32_t num_verts = 0;
 	void* verts = NULL;
-	// Indices for the buffer																											
+
+	// Index Data																											
 	uint32_t index_id = 0;
 	uint16_t num_index = 0;
 	uint32_t index_var = SQUE_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
@@ -472,80 +548,6 @@ typedef struct SQUE_Texture3D
 
 	// Cp[y from SQUE_Texture2D																												
 } SQUE_Texture3D;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct SQUE_Shader
-{
-// Constructor / Destructor
-	SQ_API SQUE_Shader();
-	SQ_API SQUE_Shader(int32_t type, uint16_t strs, const char** data);
-
-	SQ_API ~SQUE_Shader();
-// Variables
-	int32_t id = 0;
-	int32_t type;
-	uint16_t lines = 0;
-	const char** source;
-
-// Usage Functions
-	SQ_API void Compile();
-	SQ_API void CleanUp();
-} SQUE_Shader;
-
-typedef struct SQUE_Uniform
-{
-// Constructors / Destructors
-	SQ_API SQUE_Uniform();
-	SQ_API SQUE_Uniform(const char*);
-	SQ_API ~SQUE_Uniform();
-
-// Variables
-	int32_t id = INT32_MAX;
-	const char* name = "";
-} SQUE_Uniform;
-
-#include <vector>																														
-typedef struct SQUE_Program
-{
-
-// Constructors / Destructors
-	SQ_API SQUE_Program();
-	
-	SQ_API ~SQUE_Program();
-// Variables
-	int32_t id = 0;
-
-// Usage Functions																		
-	SQ_API SQUE_Shader* AttachShader(SQUE_Shader* sque_shader);
-	SQ_API void FreeShadersFromGPU(); // Not required, but saves space after linking
-
-	SQ_API void DeclareUniform(const char*);
-	SQ_API int32_t GetUniformLocation(const char* name) const;
-	
-	SQ_API void CleanUp();
-	
-private:
-	SQUE_Shader* vertex_s;
-	SQUE_Shader* fragment_s;
-	// Compute, Tesselation, Geometry,...
-	std::vector<SQUE_Uniform*> uniforms;
-
-} SQUE_Program;
-
-// Usage Functions
-SQ_API void SetBool(const SQUE_Program& prog, const char* name, bool value);
-SQ_API void SetInt(const SQUE_Program& prog, const char* name, int value);
-SQ_API void SetFloat(const SQUE_Program& prog, const char* name, float value);
-SQ_API void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value);
-SQ_API void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value);
-SQ_API void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value);
-// ... add a matrix/array passer...																									
-SQ_API void SetMatrix4(const SQUE_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
-	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

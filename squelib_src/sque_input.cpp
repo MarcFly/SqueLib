@@ -374,6 +374,11 @@ void SQUE_INPUT_SetMousePos(float x, float y)
 #endif
 }
 
+void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active)
+{
+    pointers[pointer].active = active;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GETTERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -403,7 +408,17 @@ void SQUE_INPUT_GetPointerAvg(float* x, float* y, uint16_t points)
     *y/=(float)points;
 }
 
-void SQUE_INPUT_GetMouseWheel(float* v, float* h)
+bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer)
+{
+    if(pointer > MAX_POINTERS) return false;
+    SQUE_Pointer& p = pointers[pointer];
+    *x = p.x;
+    *y = p.y;
+
+    return p.active;
+}
+
+void SQUE_INPUT_GetScroll(float* v, float* h)
 {
     if (v != NULL) *v = scrolly;
     if (h != NULL) *h = scrollx;
@@ -432,6 +447,13 @@ MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll)
 {
     MouseFloatCallback ret = scroll_callback;
     scroll_callback = scroll;
+    return ret;
+}
+
+KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback cb)
+{
+    KeyCallback ret = mouse_buttons[button].callback;
+    mouse_buttons[button].callback = cb;
     return ret;
 }
 
