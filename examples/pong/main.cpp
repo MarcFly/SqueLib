@@ -48,7 +48,7 @@ const char* vert_shader =
     "out vec2 c;\n"
     "void main()\n"
     "{\n"
-        "vec2 ndc_pos = 2*((center / vp) - vec2(.5));"
+        "vec2 ndc_pos = 2.*((center / vp) - vec2(.5));"
         "vec2 ndc_size = ( (vertPos-ndc_pos) / abs(vertPos-ndc_pos) ) * (size / vp);"
         "c = center;"
         "gl_Position = vec4(ndc_pos+ndc_size, 0,1);"
@@ -183,6 +183,8 @@ void BallCollisionWalls(float dt, Ball& b)
 {
     int vx, vy;
     SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
+    float bx = b.x + b.dirx*b.speed*dt;
+    float by = b.y + b.diry*b.speed*dt;
 
     if((b.x - b.radius) < 0 || (b.x+b.radius) > vx) 
     {
@@ -194,10 +196,11 @@ void BallCollisionWalls(float dt, Ball& b)
     if((b.y - b.radius) < 0 || (b.y + b.radius) > vy)
     {
         b.diry *= -1;
+        b.y += b.diry*b.speed*dt;
     }
 }
 
-void BallCollisionPaddle(Paddle& p, Ball& b)
+void BallCollisionPaddle(float dt, Paddle& p, Ball& b)
 {
 
     //if (((b.y - b.radius) > p.y && (b.y + b.radius) < (p.y + p.sizey)) && ((b.x - b.radius) > p.x && (b.x + b.radius) < (p.x + p.sizex)))
@@ -214,7 +217,10 @@ void BallCollisionPaddle(Paddle& p, Ball& b)
     bool y_in = (b_top < p_bottom && b_top > p_top) || (b_bottom < p_bottom && b_bottom > p_top);
     bool x_in = (b_left < p_right&& b_left > p_left) || (b_right < p_right&& b_right > p_left);
     if( y_in && x_in)
+    {
         b.dirx *= -1;
+        b.x += b.dirx*b.speed*dt;
+    }
 }
 
 void ActivePointerCallback(int32_t code, int32_t state)
@@ -282,8 +288,8 @@ int main(int argc, char** argv)
         ball.x += ball.dirx*dt*ball.speed;
         ball.y += ball.diry*dt*ball.speed;
         BallCollisionWalls(dt, ball);
-        BallCollisionPaddle(player1, ball);
-        BallCollisionPaddle(player2, ball);
+        BallCollisionPaddle(dt, player1, ball);
+        BallCollisionPaddle(dt, player2, ball);
         // Render things
         SQUE_RENDER_Clear(col);
 
@@ -306,12 +312,12 @@ int main(int argc, char** argv)
         // If it is not setup as expected when resizing a window or a viewport, setup will then change back the active framebuffer
         // Fault 5 -> SetUp overrides the Program (duh) -> then if you want some quick and dirty it fucks it up
         state.blend = false;
-        //state.SetUp();
+        state.SetUp();
         SQUE_RENDER_DrawIndices(ball.rect);
 
         SetFloat3(ball_program, "col_in", glm::vec3(0, 1, 1));
         state.blend = true;
-        //state.SetUp();
+        state.SetUp();
         SQUE_RENDER_DrawIndices(ball.rect);
         
         

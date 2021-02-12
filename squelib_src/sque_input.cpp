@@ -487,6 +487,9 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         switch (action)
         {
         case AMOTION_EVENT_ACTION_DOWN:
+            p.active = true;
+            p.x = x;
+            p.y = y;
             g.start_x = x;
             g.start_y = y;
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
@@ -495,9 +498,13 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         case AMOTION_EVENT_ACTION_MOVE:
         // Redo MidPoints of a Gesture properly
             SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
+            p.x = x;
+            p.y = y;
             break;
         case AMOTION_EVENT_ACTION_UP:
             p.active = false;
+            p.x = x;
+            p.y = y;
             g.end_x = x;
             g.end_y = y;
             g.timer.Stop();
