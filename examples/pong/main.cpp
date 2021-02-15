@@ -120,6 +120,11 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     p2.rect.SetLocationsInOrder();
 }
 
+SQUE_Shader* vert_s2;
+SQUE_Shader* vert_s;
+SQUE_Shader* ball_f;
+SQUE_Shader* rect_f;
+
 void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 {
     SQUE_RENDER_CreateProgram(b_p);
@@ -131,24 +136,24 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
     const char* rect_source[2] = {glsl, rect_frag};
     const char* vert_2s[2] = { glsl, vert_shader };
 
-    SQUE_Shader* vert_s2 = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
-    SQUE_Shader* vert_s = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
-    SQUE_Shader* ball_f = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, ball_source);
-    SQUE_Shader* rect_f = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, rect_source);
+   vert_s2 = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
+   vert_s = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
+   ball_f = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, ball_source);
+   rect_f = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, rect_source);
 
     vert_s2->Compile();
     rect_f->Compile();
-    p_p->AttachShader(vert_s2);
-    p_p->AttachShader(rect_f);
-    SQUE_RENDER_LinkProgram(*p_p);
+    SQUE_PROGRAM_AttachShader(*p_p, vert_s2->id, vert_s2->type);
+    SQUE_PROGRAM_AttachShader(*p_p, rect_f->id, rect_f->type);
+    SQUE_RENDER_LinkProgram(p_p->id);
 
     vert_s->Compile();
     ball_f->Compile();
     
 
-    b_p->AttachShader(vert_s);
-    b_p->AttachShader(ball_f);
-    SQUE_RENDER_LinkProgram(*b_p);
+    SQUE_PROGRAM_AttachShader(*b_p, vert_s->id, vert_s->type);
+    SQUE_PROGRAM_AttachShader(*b_p, ball_f->id, ball_f->type);
+    SQUE_RENDER_LinkProgram(b_p->id);
 
     SQUE_CHECK_RENDER_ERRORS();
 
@@ -157,18 +162,20 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 
     // Fault 1 -> Uniform Declaration should be per shader
     // Then the Program should have a method to set ids for the declared uniforms
-    SQUE_RENDER_UseProgram(*b_p);
-    b_p->DeclareUniform("vp");
-    b_p->DeclareUniform("center");
-    b_p->DeclareUniform("size");
-    b_p->DeclareUniform("radius");
-    b_p->DeclareUniform("col_in");
+    SQUE_RENDER_UseProgram(b_p->id);
+    SQUE_SHADERS_DeclareProgram(b_p->id, 5);
+    SQUE_SHADERS_DeclareUniform(b_p->id, "vp");
+    SQUE_SHADERS_DeclareUniform(b_p->id, "center");
+    SQUE_SHADERS_DeclareUniform(b_p->id, "size");
+    SQUE_SHADERS_DeclareUniform(b_p->id, "radius");
+    SQUE_SHADERS_DeclareUniform(b_p->id, "col_in");
 
-    SQUE_RENDER_UseProgram(*p_p);
-    p_p->DeclareUniform("vp");
-    p_p->DeclareUniform("center");
-    p_p->DeclareUniform("size");
-    p_p->DeclareUniform("col");
+    SQUE_RENDER_UseProgram(p_p->id);
+    SQUE_SHADERS_DeclareProgram(p_p->id, 4);
+    SQUE_SHADERS_DeclareUniform(p_p->id, "vp");
+    SQUE_SHADERS_DeclareUniform(p_p->id, "center");
+    SQUE_SHADERS_DeclareUniform(p_p->id, "size");
+    SQUE_SHADERS_DeclareUniform(p_p->id, "col");
 }
 
 void CleanUpShaders(SQUE_Program& b, SQUE_Program& p)
@@ -243,9 +250,12 @@ void MovePaddles(Paddle& p1, Paddle& p2)
 
 }
 
+
+
 int main(int argc, char** argv)
 {
     SQUE_LIB_Init("SquePong", NULL);
+    InitGLDebug();
     SQUE_DISPLAY_SetVSYNC(0);
     SQUE_INPUT_SetMouseButtonCallback(0, ActivePointerCallback);
     SQUE_INPUT_SetMouseButtonCallback(1, ActivePointerCallback);
@@ -294,18 +304,17 @@ int main(int argc, char** argv)
         SQUE_RENDER_Clear(col);
 
         // Ball Render
-        SQUE_RENDER_UseProgram(ball_program);
+        SQUE_RENDER_UseProgram(ball_program.id);
         int vx, vy;
         SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
         SQUE_DISPLAY_MakeContextMain(0);
 
         float y = vy;
-        SetFloat2(ball_program, "vp", glm::vec2(vx,vy));
-        SetFloat2(ball_program, "center", glm::vec2(ball.x,ball.y)); // VERT SHADER IS IN CLIP SPACE (-1,1), change and it will be working
-        SetFloat2(ball_program, "size", glm::vec2(ball.radius*2, ball.radius*2));
-        SetFloat(ball_program, "radius", ball.radius);
-        SetFloat3(ball_program, "col_in", glm::vec3(1, 0, 0));
-
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "vp"), glm::vec2(vx,vy));
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "center"), glm::vec2(ball.x,ball.y)); // VERT SHADER IS IN CLIP SPACE (-1,1), change and it will be working
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "size"), glm::vec2(ball.radius*2, ball.radius*2));
+        SetFloat(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "radius"), ball.radius);
+        SetFloat3(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "col_in"), glm::vec3(1, 0, 0));
 
         // state.SetUp();
         // Fault 4 -> SetUp will override ViewPort (duh)
@@ -315,30 +324,30 @@ int main(int argc, char** argv)
         state.SetUp();
         SQUE_RENDER_DrawIndices(ball.rect);
 
-        SetFloat3(ball_program, "col_in", glm::vec3(0, 1, 1));
+        SetFloat3(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "col_in"), glm::vec3(0, 1, 1));
         state.blend = true;
         state.SetUp();
         SQUE_RENDER_DrawIndices(ball.rect);
         
         
         // Player 1 Render
-        SQUE_RENDER_UseProgram(paddle_program);
-        SetFloat2(paddle_program, "vp", glm::vec2(vx, vy));
+        SQUE_RENDER_UseProgram(paddle_program.id);
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "vp"), glm::vec2(vx, vy));
         
-        SetFloat2(paddle_program, "center", glm::vec2(player1.x, player1.y));
-        SetFloat2(paddle_program, "size", glm::vec2(player1.sizex*2, player1.sizey*2));
-        SetFloat3(paddle_program, "col", glm::vec3(1, 0, 0));
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "center"), glm::vec2(player1.x, player1.y));
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "size"), glm::vec2(player1.sizex*2, player1.sizey*2));
+        SetFloat3(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "col"), glm::vec3(1, 0, 0));
         SQUE_RENDER_DrawIndices(player1.rect);
 
-        SQUE_RENDER_UseProgram(paddle_program);
-        SetFloat2(paddle_program, "vp", glm::vec2(vx, vy));
+        SQUE_RENDER_UseProgram(paddle_program.id);
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "vp"), glm::vec2(vx, vy));
 
-        SetFloat2(paddle_program, "center", glm::vec2(player2.x, player2.y));
-        SetFloat2(paddle_program, "size", glm::vec2(player2.sizex*2, player2.sizey*2));
-        SetFloat3(paddle_program, "col", glm::vec3(0, 1, 0));
-        SQUE_RENDER_DrawIndices(player2.rect);
-        
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "center"), glm::vec2(player2.x, player2.y));
+        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "size"), glm::vec2(player2.sizex*2, player2.sizey*2));
+        SetFloat3(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "col"), glm::vec3(0, 1, 0));
+        SQUE_RENDER_DrawIndices(player2.rect);   
 
+        SQUE_CHECK_RENDER_ERRORS();
         SQUE_DISPLAY_SwapAllBuffers();
     }
 

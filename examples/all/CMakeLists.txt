@@ -31,7 +31,7 @@ set(imgui_src
     ${imgui_include}/imgui_widgets.cpp
     ${imgui_include}/imgui.cpp
 )
-set(imgui_squelib ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui_squelib)
+set(imgui_squelib ${SqueLib_extra}/imgui_squelib)
 list(APPEND imgui_src ${imgui_squelib}/imgui_impl_squelib.cpp)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT

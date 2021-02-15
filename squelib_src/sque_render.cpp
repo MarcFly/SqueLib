@@ -367,18 +367,18 @@ void SQUE_RENDER_CreateProgram(SQUE_Program* prog)
 #endif
 }
 
-void SQUE_RENDER_LinkProgram(const SQUE_Program& prog)
+void SQUE_RENDER_LinkProgram(const uint32_t program_id)
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glLinkProgram(prog.id);
+    glLinkProgram(program_id);
 #endif
-    SQUE_RENDER_CheckProgramLog(prog);
+    SQUE_RENDER_CheckProgramLog(program_id);
 }
 
-void SQUE_RENDER_UseProgram(const SQUE_Program& prog)
+void SQUE_RENDER_UseProgram(const uint32_t program_id)
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glUseProgram(prog.id);
+    glUseProgram(program_id);
 #endif
 }
 
@@ -429,6 +429,27 @@ void CheckForRenderErrors(const char* file, int line)
     int32_t errcode = 0;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     while ((errcode = glGetError()) != GL_NO_ERROR)
+    {
         SQUE_PRINT(LT_WARNING, "%s(%d): OpenGL Error %d", strrchr(file, FOLDER_ENDING), line, errcode);
+    }  
 #endif
 }
+
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+void glDebug(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+{
+    SQUE_PRINT(LT_INFO, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+        (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+        type, severity, message);
+}
+
+void InitGLDebug()
+{
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(glDebug, 0);
+}
+#else
+void InitGLDebug()
+{}
+#endif

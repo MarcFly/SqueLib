@@ -368,53 +368,49 @@ typedef struct SQUE_Shader
 
 typedef struct SQUE_Uniform
 {
-// Constructors / Destructors
-	SQ_API SQUE_Uniform();
-	SQ_API SQUE_Uniform(const char*);
-	SQ_API ~SQUE_Uniform();
-
-// Variables
 	int32_t id = INT32_MAX;
-	const char* name = "";
+	char name[124] = "";
 } SQUE_Uniform;
 
-#include <vector>																														
+typedef struct SQUE_ProgramUniforms
+{
+	SQUE_ProgramUniforms() {};
+	SQUE_ProgramUniforms(int32_t id_) :id(id_) {};
+
+	uint32_t id = -1;
+	uint32_t start_uniform = -1;
+	uint32_t end_uniform = -1;
+	uint16_t last = 0;
+} SQUE_ProgramUniforms;
+
+SQ_API void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms = 10);
+SQ_API int32_t SQUE_SHADERS_DeclareUniform(int32_t program_id, const char* uniform_name);
+
 typedef struct SQUE_Program
 {
-
-// Constructors / Destructors
-	SQ_API SQUE_Program();
-	
-	SQ_API ~SQUE_Program();
 // Variables
-	int32_t id = 0;
-
-// Usage Functions																		
-	SQ_API SQUE_Shader* AttachShader(SQUE_Shader* sque_shader);
-	SQ_API void FreeShadersFromGPU(); // Not required, but saves space after linking
-
-	SQ_API void DeclareUniform(const char*);
-	SQ_API int32_t GetUniformLocation(const char* name) const;
-	
-	SQ_API void CleanUp();
-	
-private:
-	SQUE_Shader* vertex_s;
-	SQUE_Shader* fragment_s;
-	// Compute, Tesselation, Geometry,...
-	std::vector<SQUE_Uniform*> uniforms;
-
+	uint32_t id = 0;
+	uint32_t shaders[3]; // IDs of the shaders // Order by execution stage
+	// 0 Vertex -> 1 Geometry -> 2 Fragment 
+	// Tesselation and Compute will be added later if I want to and have time to
+	// They require more setup and steps
 } SQUE_Program;
 
+SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, int32_t shader_id, uint32_t type);
+SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
+SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
+
 // Usage Functions
-SQ_API void SetBool(const SQUE_Program& prog, const char* name, bool value);
-SQ_API void SetInt(const SQUE_Program& prog, const char* name, int value);
-SQ_API void SetFloat(const SQUE_Program& prog, const char* name, float value);
-SQ_API void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value);
-SQ_API void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value);
-SQ_API void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value);
+SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(uint32_t program_id, const char* name);
+
+SQ_API void SetBool		(const int32_t uniform_id, bool value);
+SQ_API void SetInt		(const int32_t uniform_id, int32_t value);
+SQ_API void SetFloat	(const int32_t uniform_id, float value);
+SQ_API void SetFloat2	(const int32_t uniform_id, glm::vec2 value);
+SQ_API void SetFloat3	(const int32_t uniform_id, glm::vec3 value);
+SQ_API void SetFloat4	(const int32_t uniform_id, glm::vec4 value);
 // ... add a matrix/array passer...																									
-SQ_API void SetMatrix4(const SQUE_Program& prog, const char* name, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
+SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
 	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -434,12 +430,12 @@ typedef struct SQUE_VertAttrib
 	uint16_t var_size;
 	uint16_t vert_size;
 	uint16_t offset;
-	const char* name;
 
-	// Usage functions	
-	SQ_API uint16_t GetSize() const;
+	char name[111] = "";
 
 } SQUE_VertAttrib;
+
+SQ_API uint16_t SQUE_VERTEX_ATTRIBUTE_GetSize(uint16_t vertex_size, uint16_t num_components);
 
 #include <vector> 																														
 // Maybe Swap to a custom array handler for specific sizes																				
@@ -619,17 +615,18 @@ SQ_API void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id)
 
 // Shader Program Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_CreateProgram(SQUE_Program* prog);
-SQ_API void SQUE_RENDER_LinkProgram(const SQUE_Program& prog);
-SQ_API void SQUE_RENDER_UseProgram(const SQUE_Program& prog);
+SQ_API void SQUE_RENDER_LinkProgram(const uint32_t program_id);
+SQ_API void SQUE_RENDER_UseProgram(const uint32_t program_id);
 
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices = 0, int32_t count = -1);
 SQ_API void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, int32_t count = 0);
 
 // Debugging
-SQ_API void SQUE_SHADER_CheckCompileLog(const SQUE_Shader& sque_shader);
-SQ_API void SQUE_RENDER_CheckProgramLog(const SQUE_Program& sque_program);
-SQ_API void CheckForRenderErrors(const char* file, int line);																			
+SQ_API void SQUE_SHADER_CheckCompileLog(const int32_t shader_id);
+SQ_API void SQUE_RENDER_CheckProgramLog(const uint32_t program_id);
+SQ_API void CheckForRenderErrors(const char* file, int line);
+SQ_API void InitGLDebug();
 #define SQUE_CHECK_RENDER_ERRORS() SQ_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
 			
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

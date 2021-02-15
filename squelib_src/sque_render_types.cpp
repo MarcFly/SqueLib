@@ -11,17 +11,18 @@ SQUE_VertAttrib::SQUE_VertAttrib() :
     id(0), var_type(SQUE_FLOAT),
     num_comp(0), normalize(false),
     var_size(4), vert_size(0),
-    offset(0), name("")
+    offset(0)
 {}
 
 SQUE_VertAttrib::SQUE_VertAttrib(const char* name_, int32_t var_type_, bool normalize_, uint16_t num_components) :
     id(0), var_type(var_type_), num_comp(num_components), 
-    normalize(normalize_), vert_size(0), offset(0), name(name)
+    normalize(normalize_), vert_size(0), offset(0)
 {   
     var_size = SQUE_VarGetSize(var_type);
+    memcpy(name, name_, strlen(name_));
 }
 
-uint16_t SQUE_VertAttrib::GetSize() const { return var_size * num_comp; }
+uint16_t SQUE_VERTEX_ATTRIBUTE_GetSize(uint16_t vertex_size, uint16_t num_components) { return num_components * vertex_size; }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MESH MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +106,7 @@ uint16_t SQUE_Mesh::GetVertSize() const
     uint16_t ret = 0;
     int size = attributes.size();
     for (int i = 0; i < size; ++i)
-        ret += attributes[i]->GetSize();
+        ret += attributes[i]->var_size * attributes[i]->num_comp;
 
     return ret;
 }
@@ -115,7 +116,7 @@ uint16_t SQUE_Mesh::GetAttribSize(const char* name) const
     int size = attributes.size();
     for (int i = 0; i < size; ++i)
         if(strcmp(attributes[i]->name, name) == 0)  
-            return attributes[i]->GetSize();
+            return attributes[i]->var_size * attributes[i]->num_comp;
     return 0;
 }
 
@@ -138,7 +139,7 @@ void SQUE_Mesh::SetOffsetsInOrder()
     for (int i = 0; i < size; ++i)
     {
         attributes[i]->offset = offset;
-        offset += attributes[i]->GetSize();
+        offset += attributes[i]->var_size * attributes[i]->num_comp;
     }
 }
 

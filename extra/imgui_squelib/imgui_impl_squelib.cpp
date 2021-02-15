@@ -84,9 +84,9 @@ void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_wi
 		{ (R + L) / (L - R),	(T + B) / (B - T),  0.0f,   1.0f }
 	};
 
-	SQUE_RENDER_UseProgram(sque_shaderProgram);
-	SetInt(sque_shaderProgram, "Texture", 0);
-	SetMatrix4(sque_shaderProgram, "ProjMtx", &ortho_projection[0][0]);
+	SQUE_RENDER_UseProgram(sque_shaderProgram.id);
+	SetInt(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.id, "Texture"), 0);
+	SetMatrix4(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.id, "ProjMtx"), &ortho_projection[0][0]);
 }
 
 void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
@@ -148,21 +148,21 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	sque_dataHandle.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
 	SQUE_VertAttrib* p = sque_dataHandle.AddAttribute();
-	p->name = "Position";
+	memcpy(p->name,"Position", strlen("Position"));
 	p->normalize = false;
 	p->num_comp = 2;
 	p->var_type = SQUE_FLOAT;
 	p->var_size = SQUE_VarGetSize(SQUE_FLOAT);
 
 	SQUE_VertAttrib* uv = sque_dataHandle.AddAttribute();
-	uv->name = "UV";
+	memcpy(uv->name,"UV", strlen("UV"));
 	uv->normalize = false;
 	uv->num_comp = 2;
 	uv->var_type = SQUE_FLOAT;
 	uv->var_size = SQUE_VarGetSize(SQUE_FLOAT);
 
 	SQUE_VertAttrib* c = sque_dataHandle.AddAttribute();
-	c->name = "Color";
+	memcpy(c->name, "Color", strlen("Color"));
 	c->normalize = true;
 	c->num_comp = 4;
 	c->var_type = SQUE_UBYTE;
@@ -186,12 +186,14 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 	frag_s->Compile();
 
 	SQUE_RENDER_CreateProgram(&sque_shaderProgram);
-	sque_shaderProgram.AttachShader(vert_s);
-	sque_shaderProgram.AttachShader(frag_s);
+	SQUE_PROGRAM_AttachShader(sque_shaderProgram, vert_s->id, vert_s->type);
+	SQUE_PROGRAM_AttachShader(sque_shaderProgram, frag_s->id, frag_s->type);
 
-	SQUE_RENDER_LinkProgram(sque_shaderProgram);
-	sque_shaderProgram.DeclareUniform("Texture");
-	sque_shaderProgram.DeclareUniform("ProjMtx");
+	SQUE_RENDER_LinkProgram(sque_shaderProgram.id);
+
+	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2);
+	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.id, "Texture");
+	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.id, "ProjMtx");
 
 	ImGui_ImplSqueLib_PrepareBuffers();
 
@@ -303,7 +305,7 @@ void ImGui_ImplSqueLib_GoBackground()
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->TexID = 0;
-	sque_shaderProgram.CleanUp();
+	//sque_shaderProgram.CleanUp();
 
 	sque_dataHandle.CleanUp();
 	sque_fontTexture.CleanUp();
@@ -386,7 +388,7 @@ void ImGui_ImplSqueLib_Shutdown()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->TexID = 0;
-	sque_shaderProgram.CleanUp();
+	//sque_shaderProgram.CleanUp();
 
 	sque_dataHandle.CleanUp();
 	sque_fontTexture.CleanUp();

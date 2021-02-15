@@ -536,7 +536,7 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE); // TODO: Add an option for debug messages and init GLDebug as intended
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);

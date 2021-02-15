@@ -30,15 +30,12 @@ SQUE_Shader::SQUE_Shader(int32_t type_, uint16_t strs, const char** data) :
     }
     else
     {
-        type = type;
-        source = data;
-        lines = strs;
 #if defined (USE_OPENGL) || defined(USE_OPENGLES)
         id = glCreateShader(type);
-        glShaderSource(id, strs, source, NULL);
+        glShaderSource(id, lines, source, NULL);
         glCompileShader(id);
 #endif
-        SQUE_SHADER_CheckCompileLog(*this);
+        SQUE_SHADER_CheckCompileLog(id);
     }
 }
 
@@ -57,17 +54,17 @@ void SQUE_Shader::Compile()
     glShaderSource(id, lines, source, NULL);
     glCompileShader(id);
 #endif
-    SQUE_SHADER_CheckCompileLog(*this);
+    SQUE_SHADER_CheckCompileLog(id);
 }
 
-void SQUE_SHADER_CheckCompileLog(const SQUE_Shader& shader)
+void SQUE_SHADER_CheckCompileLog(const int32_t shader_id)
 {
     int success;
     char infoLog[512];
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glGetShaderiv(shader.id, GL_COMPILE_STATUS, &success);
-    glGetShaderInfoLog(shader.id, 512, NULL, infoLog);
+    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
+    glGetShaderInfoLog(shader_id, 512, NULL, infoLog);
 
 #endif
     if(!success) SQUE_PRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
@@ -82,94 +79,120 @@ void SQUE_Shader::CleanUp()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include <unordered_set>
+std::vector<SQUE_Uniform> uniforms;
+std::vector<SQUE_ProgramUniforms> programs;
+
+void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms)
+{
+    // TEST: 1 million ifs to check need for reserve and 1 million reserve with same capacity
+    // If need reserve, reserve like 10-50 space
+    int cap = programs.capacity() - 1; 
+    programs.resize((cap < program_id) ? program_id : cap+1);
+    SQUE_ProgramUniforms p;
+    p.id = program_id;
+    
+    p.start_uniform = uniforms.capacity();
+    p.end_uniform = p.start_uniform + num_uniforms - 1;
+    uniforms.resize(p.start_uniform + num_uniforms);
+
+    programs[program_id-1] = p;
+}
+
+int32_t SQUE_SHADERS_DeclareUniform(int32_t program_id, const char* name)
+{
+    SQUE_ProgramUniforms& p = programs[program_id-1];
+
+    SQUE_Uniform uni;
+    memcpy(uni.name, name, strlen(name));
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    uni.id = glGetUniformLocation(program_id, uni.name);
+#endif
+    uniforms[p.start_uniform + p.last] = uni;
+    ++p.last;
+
+    return uni.id;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // UNIFORMS //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQUE_Uniform::SQUE_Uniform() : id(-1), name("")
-{}
-
-SQUE_Uniform::SQUE_Uniform(const char* name_) : id(-1), name(name_)
-{}
-
-SQUE_Uniform::~SQUE_Uniform()
-{}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SetBool(const SQUE_Program& prog, const char* name, bool value)
+void SetBool(const int32_t uniform_id, bool value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform1i(prog.GetUniformLocation(name), value);
+    glUniform1i(uniform_id, value);
 #endif
 }
 
-void SetInt(const SQUE_Program& prog, const char* name, int value)
+void SetInt(const int32_t uniform_id, int32_t value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform1i(prog.GetUniformLocation(name), value);
+    glUniform1i(uniform_id, value);
 #endif
 }
 
 /*
-void SetInt2(const SQUE_Program& prog, const char* name, int value[2])
+void SetInt2(const int32_t uniform_id, int value[2])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform2i(prog.GetUniformLocation(name), value.x, value[2]);
+    glUniform2i(uniform_id, value.x, value[2]);
 #endif
 }
 
-void SetInt3(const SQUE_Program& prog, const char* name, int3 value)
+void SetInt3(const int32_t uniform_id, int3 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform3i(prog.GetUniformLocation(name), value.x, value.y, value.z);
+    glUniform3i(uniform_id, value.x, value.y, value.z);
 #endif
 }
 
-void SetInt4(const SQUE_Program& prog, const char* name, int4 value)
+void SetInt4(const int32_t uniform_id, int4 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform4i(prog.GetUniformLocation(name), value.x, value.y, value.z, value.w);
+    glUniform4i(uniform_id, value.x, value.y, value.z, value.w);
 #endif
 }
 */
 
-void SetFloat(const SQUE_Program& prog, const char* name, float value)
+void SetFloat(const int32_t uniform_id, float value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform1f(prog.GetUniformLocation(name), value);
+    glUniform1f(uniform_id, value);
 #endif
 }
 
-void SetFloat2(const SQUE_Program& prog, const char* name, glm::vec2 value)
+void SetFloat2(const int32_t uniform_id, glm::vec2 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform2f(prog.GetUniformLocation(name), value.x, value.y);
+    glUniform2f(uniform_id, value.x, value.y);
 #endif
 }
 
-void SetFloat3(const SQUE_Program& prog, const char* name, glm::vec3 value)
+void SetFloat3(const int32_t uniform_id, glm::vec3 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform3f(prog.GetUniformLocation(name), value.x, value.y, value.z);
+    glUniform3f(uniform_id, value.x, value.y, value.z);
 #endif
 }
 
-void SetFloat4(const SQUE_Program& prog, const char* name, glm::vec4 value)
+void SetFloat4(const int32_t uniform_id, glm::vec4 value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform4f(prog.GetUniformLocation(name), value.x, value.y, value.z, value.w);
+    glUniform4f(uniform_id, value.x, value.y, value.z, value.w);
 #endif
 }
 
-void SetMatrix4(const SQUE_Program& prog, const char* name, const float* value, uint16_t number_of_matrices, bool transpose)
+void SetMatrix4(const int32_t uniform_id, const float* value, uint16_t number_of_matrices, bool transpose)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniformMatrix4fv(prog.GetUniformLocation(name), number_of_matrices, transpose, value);
+    glUniformMatrix4fv(uniform_id, number_of_matrices, transpose, value);
 #endif
 }
 
@@ -178,85 +201,49 @@ void SetMatrix4(const SQUE_Program& prog, const char* name, const float* value, 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQUE_Program::SQUE_Program() : vertex_s(NULL), fragment_s(NULL) // other shaders,...
-{}
-
-SQUE_Program::~SQUE_Program() { if(id > 0) CleanUp(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SQUE_Shader* SQUE_Program::AttachShader(SQUE_Shader* shader)
+void SQUE_PROGRAM_AttachShader(SQUE_Program& program, int32_t shader_id, uint32_t type)
 {
-    if (shader == NULL)
-    {
-        SQUE_LOG(LT_WARNING, "No shader/program sent to attach...");
-        return NULL;
-    }
-    SQUE_Shader* ret = NULL;
-    if (shader->type == SQUE_VERTEX_SHADER)
-    {
-        ret = vertex_s;
-        vertex_s = shader;
-    }
-    else if (shader->type == SQUE_FRAGMENT_SHADER)
-    {
-        ret = fragment_s;
-        fragment_s = shader;
-    }
+    int32_t pos = -1 + (type == SQUE_VERTEX_SHADER) * 1 + (type == SQUE_GEOMETRY_SHADER) * 2 + (type == SQUE_FRAGMENT_SHADER) * 3;
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    if (ret != NULL) glDetachShader(id, ret->id);
-    glAttachShader(id, shader->id);
+    //glDetachShader(program.id, program.shaders[pos]); // No issues detaching non existing shader, just make sure
+    glAttachShader(program.id, shader_id);
 #endif
 
-    return ret;
+    program.shaders[pos] = shader_id;
 }
 
-void SQUE_Program::FreeShadersFromGPU()
+void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glDeleteShader(vertex_s->id);
-    glDeleteShader(fragment_s->id);
+    for(uint16_t i = 0; i < 3; ++i) // HARDOCODED: number of supported shaders per programs
+        glDeleteShader(shaders[i]);
 #endif
-}
-
-void SQUE_Program::DeclareUniform(const char* name)
-{
-    SQUE_Uniform* uni = new SQUE_Uniform(name);
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    uni->id = glGetUniformLocation(id, uni->name);
-#endif
-    uniforms.push_back(uni);
 }
 
 #include <cstring>
-int32_t SQUE_Program::GetUniformLocation(const char* name) const
+int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t program_id, const char* name)
 {
-    int size = uniforms.size();
-    for (int i = 0; i < size; ++i)
-        if (std::strcmp(name, uniforms[i]->name) == 0)
-            return uniforms[i]->id;
+    SQUE_ProgramUniforms& p = programs[program_id-1];
+
+    uint32_t last = p.start_uniform + p.last;
+    for (int i = p.start_uniform; i < last; ++i)
+        if (std::strcmp(name, uniforms[i].name) == 0)
+            return uniforms[i].id;
 
     return UINT32_MAX;
 }
 
-void SQUE_Program::CleanUp()
+void SQUE_PROGRAM_FreeFromGPU(int32_t program_id)
 {
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    if (vertex_s != NULL && id && vertex_s->id) { glDetachShader(id, vertex_s->id); vertex_s->id = 0; }
-    if (fragment_s != NULL && id && fragment_s->id) { glDetachShader(id, fragment_s->id); fragment_s->id = 0; }
-    if (id > 0) { glDeleteProgram(id); id = 0; }
+    glDeleteProgram(program_id);
 #endif
-
-    vertex_s = NULL;
-    fragment_s = NULL;
-
-    int size = uniforms.size();
-    for (int i = 0; i < size; ++i)
-        delete uniforms[i];
-    uniforms.clear();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,14 +251,14 @@ void SQUE_Program::CleanUp()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void SQUE_RENDER_CheckProgramLog(const SQUE_Program& prog)
+void SQUE_RENDER_CheckProgramLog(const uint32_t program_id)
 {
     int success;
     char infoLog[512];
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glGetProgramiv(prog.id, GL_LINK_STATUS, &success);
-    glGetProgramInfoLog(prog.id, 512, NULL, infoLog);
+    glGetProgramiv(program_id, GL_LINK_STATUS, &success);
+    glGetProgramInfoLog(program_id, 512, NULL, infoLog);
 
 #endif
     if(!success) SQUE_LOG(LT_WARNING, "Program Linkage Info: %s", infoLog);

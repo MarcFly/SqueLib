@@ -7,11 +7,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void DebugKey(int32_t code, int32_t state) { SQUE_PRINT(LT_INFO, "Key %c: %d", code, state); }
+void DebugKey(int32_t code, int32_t state) { /*SQUE_PRINT(LT_INFO, "Key %c: %d", code, state);*/ }
 KeyCallback key_fun = DebugKey;
 
 SQUE_Key keyboard[MAX_KEYS];
-void DebugMouseFloatCallback(float x, float y) { SQUE_PRINT(LT_INFO, "Pointer %.2f,%.2f", x, y); }
+void DebugMouseFloatCallback(float x, float y) { /*SQUE_PRINT(LT_INFO, "Pointer %.2f,%.2f", x, y);*/ }
 
 #include <list> // i don't like including libraries, but will do until I have a proven easier alternative
 std::list<int> char_buffer;
