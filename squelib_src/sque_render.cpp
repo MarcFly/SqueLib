@@ -212,35 +212,34 @@ void SQUE_RENDER_SetViewport(int x, int y, int w, int h)
 // DATA MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_GenerateMeshBuffer(SQUE_Mesh* mesh)
+void SQUE_GenerateMeshBuffer(uint32_t& vert_id, uint32_t& index_id, uint32_t& attrib_obj)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenBuffers(1, &mesh->vert_id);
-    glGenBuffers(1, &mesh->index_id);
-    glGenVertexArrays(1, &mesh->attribute_object);
+    glGenBuffers(1, &vert_id);
+    glGenBuffers(1, &index_id);
+    glGenVertexArrays(1, &attrib_obj);
 #endif
 }
 
-void SQUE_BindMeshBuffer(const SQUE_Mesh& mesh)
+void SQUE_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id, const uint32_t attrib_obj)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindVertexArray(mesh.attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);
-    if(mesh.num_index > 0) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_id);
+    glBindVertexArray(attrib_obj);
+    glBindBuffer(GL_ARRAY_BUFFER, vert_id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_id);
 #endif
 }
 
-void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh)
+void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
 {
-    int buffer_size = mesh.GetVertSize() * mesh.num_verts;
-    SQUE_BindMeshBuffer(mesh);
+    int buffer_size = SQUE_MESHES_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
+    SQUE_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBufferData(GL_ARRAY_BUFFER, buffer_size, (const void*)mesh.verts, mesh.draw_mode);
-    if (mesh.num_index > 0)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-                    mesh.num_index * mesh.index_var_size, 
-                    (const void*)mesh.indices, 
-                    mesh.draw_mode);
+    glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, mesh.draw_mode);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+                mesh.num_index * mesh.index_var_size, 
+                indices, 
+                mesh.draw_mode);
 #endif
 }
 
@@ -248,7 +247,7 @@ void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh)
 // VERTEX ATTRIBUTE MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_EnableProgramAttribute(const SQUE_Program& prog,  SQUE_VertAttrib* attr)
+void SQUE_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     attr->id = glGetAttribLocation(prog.id, attr->name);
@@ -256,36 +255,22 @@ void SQUE_EnableProgramAttribute(const SQUE_Program& prog,  SQUE_VertAttrib* att
     glVertexAttribPointer(attr->id, attr->num_comp,
         attr->var_type,
         attr->normalize,
-        attr->vert_size,
+        vert_size,
         (void*)attr->offset);
 #endif
 }
 
-// For a location, set the ID to the location and SendToGPU
-void SQUE_SendAttributeToGPU(const SQUE_VertAttrib& attr)
+void SQUE_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr)
 {
+
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glEnableVertexAttribArray(attr.id);
-    glVertexAttribPointer(attr.id, attr.num_comp, 
+    glVertexAttribPointer(attr.id, 
+                        attr.num_comp, 
                         attr.var_type, 
                         attr.normalize, 
-                        attr.vert_size, 
-                        (void*)attr.offset);
-#endif
-}
-
-void SQUE_EnableBufferAttribute(int32_t location, uint16_t vert_size, SQUE_VertAttrib* attr)
-{
-    attr->id = location;
-    attr->vert_size = vert_size;
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glEnableVertexAttribArray(attr->id);
-    glVertexAttribPointer(attr->id, 
-                        attr->num_comp, 
-                        attr->var_type, 
-                        attr->normalize, 
                         vert_size, 
-                        (void*)attr->offset);
+                        (void*)attr.offset);
 #endif
 }
 
@@ -389,7 +374,7 @@ void SQUE_RENDER_UseProgram(const uint32_t program_id)
 void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices, int32_t count)
 {
     count = (count < 0) ? mesh.num_index : count;
-    SQUE_BindMeshBuffer(mesh);
+    SQUE_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(mesh.attribute_object);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);

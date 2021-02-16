@@ -82,48 +82,67 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     // function that inits: draw_config, draw_mode
     // function that sets: verts + vert_num,  index+index_var+index_num
     // 3 Functions but it makes more sense in the long run (variable verts, variable index, variable draw_config/mode)
-    b.rect.ChangeVertData(4, (void*)quad);
-    b.rect.ChangeIndexData(6, (void*)quad_indices, SQUE_UINT);
-    b.rect.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STATIC_DRAW);
-    b.rect.AddAttribute(new SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
-    SQUE_GenerateMeshBuffer(&b.rect);
-    SQUE_BindMeshBuffer(b.rect);
-    SQUE_SendMeshToGPU(b.rect);
-    b.rect.SetLocationsInOrder();
+    SQUE_MESHES_SetVertData(b.rect, 4);
+    SQUE_MESHES_SetIndexData(b.rect, 6, SQUE_UINT);
+    SQUE_MESHES_SetDrawConfig(b.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+
+    
+    SQUE_GenerateMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
+    SQUE_BindMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
+    SQUE_MESHES_DeclareAttributes(b.rect.vert_id, b.rect.attrib_ref, 1);
+    SQUE_MESHES_AddAttribute(b.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESHES_CalcVertSize(b.rect.attrib_ref);
+    SQUE_SendMeshToGPU(b.rect, quad, quad_indices);
+    SQUE_MESHES_SetLocations(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object, b.rect.attrib_ref);
 
 // PLAYER 1
     p1.sizex = b.y / 20;
     p1.sizey = b.y / 4;
     p1.x = b.x/20;
     p1.y = vy / 2;
-    p1.rect.ChangeVertData(4, (void*)quad);
-    p1.rect.ChangeIndexData(6, (void*)quad_indices);
-    p1.rect.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STATIC_DRAW);
-    p1.rect.AddAttribute(new SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
-    SQUE_GenerateMeshBuffer(&p1.rect);
-    SQUE_BindMeshBuffer(p1.rect);
-    SQUE_SendMeshToGPU(p1.rect);
-    p1.rect.SetLocationsInOrder();
+    SQUE_MESHES_SetVertData(p1.rect, 4);
+    SQUE_MESHES_SetIndexData(p1.rect, 6, SQUE_UINT);
+    SQUE_MESHES_SetDrawConfig(p1.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+
+    
+    SQUE_GenerateMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
+    SQUE_BindMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
+    SQUE_MESHES_DeclareAttributes(p1.rect.vert_id, p1.rect.attrib_ref, 1);
+    SQUE_MESHES_AddAttribute(p1.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESHES_CalcVertSize(p1.rect.attrib_ref);
+    SQUE_SendMeshToGPU(p1.rect, quad, quad_indices);
+    SQUE_MESHES_SetLocations(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object, p1.rect.attrib_ref);
 
 // PLAYER 2
     p2.sizex = p1.sizex;
     p2.sizey = p1.sizey;
     p2.x = vx - b.x/20;
     p2.y = p1.y;
-    p2.rect.ChangeVertData(4, (void*)quad);
-    p2.rect.ChangeIndexData(6, (void*)quad_indices);
-    p2.rect.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STATIC_DRAW);
-    p2.rect.AddAttribute(new SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
-    SQUE_GenerateMeshBuffer(&p2.rect);
-    SQUE_BindMeshBuffer(p2.rect);
-    SQUE_SendMeshToGPU(p2.rect);
-    p2.rect.SetLocationsInOrder();
+    SQUE_MESHES_SetVertData(p2.rect, 4);
+    SQUE_MESHES_SetIndexData(p2.rect, 6, SQUE_UINT);
+    SQUE_MESHES_SetDrawConfig(p2.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+
+    
+    SQUE_GenerateMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
+    SQUE_BindMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
+    SQUE_MESHES_DeclareAttributes(p2.rect.vert_id, p2.rect.attrib_ref, 1);
+    SQUE_MESHES_AddAttribute(p2.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESHES_CalcVertSize(p2.rect.attrib_ref);
+    SQUE_SendMeshToGPU(p2.rect, quad, quad_indices);
+    SQUE_MESHES_SetLocations(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object, p2.rect.attrib_ref);
 }
 
-SQUE_Shader* vert_s2;
-SQUE_Shader* vert_s;
-SQUE_Shader* ball_f;
-SQUE_Shader* rect_f;
+
+char* easy_concat(const char* s1, const char* s2)
+{
+    const size_t len1 = strlen(s1);
+    const size_t len2 = strlen(s2);
+    char* result = new char[len1 + len2 + 1]; // +1 for the null-terminator
+    // in real code you would check for errors in malloc here
+    memcpy(result, s1, len1);
+    memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
+    return result;
+}
 
 void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 {
@@ -131,28 +150,27 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
     SQUE_RENDER_CreateProgram(p_p);
 
     const char* glsl = SQUE_RENDER_GetGLSLVer();
-    const char* vert_source[2] = {glsl, vert_shader};
-    const char* ball_source[2] = {glsl, ball_frag};
-    const char* rect_source[2] = {glsl, rect_frag};
-    const char* vert_2s[2] = { glsl, vert_shader };
+    std::string vert_source(easy_concat(glsl, vert_shader));
+    std::string ball_source(easy_concat(glsl, ball_frag));
+    std::string rect_source(easy_concat(glsl, rect_frag));
 
-   vert_s2 = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
-   vert_s = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
-   ball_f = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, ball_source);
-   rect_f = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, rect_source);
+    SQUE_Shader vert_s2(SQUE_VERTEX_SHADER, vert_source.c_str());
+    SQUE_Shader vert_s(SQUE_VERTEX_SHADER, vert_source.c_str());
+    SQUE_Shader ball_f(SQUE_FRAGMENT_SHADER, ball_source.c_str());
+    SQUE_Shader rect_f(SQUE_FRAGMENT_SHADER, rect_source.c_str());
 
-    vert_s2->Compile();
-    rect_f->Compile();
-    SQUE_PROGRAM_AttachShader(*p_p, vert_s2->id, vert_s2->type);
-    SQUE_PROGRAM_AttachShader(*p_p, rect_f->id, rect_f->type);
+    SQUE_SHADERS_Compile(vert_s2.id);
+    SQUE_SHADERS_Compile(rect_f.id);
+    SQUE_PROGRAM_AttachShader(*p_p, vert_s2.id, vert_s2.type);
+    SQUE_PROGRAM_AttachShader(*p_p, rect_f.id, rect_f.type);
     SQUE_RENDER_LinkProgram(p_p->id);
 
-    vert_s->Compile();
-    ball_f->Compile();
+    SQUE_SHADERS_Compile(vert_s.id);
+    SQUE_SHADERS_Compile(ball_f.id);
     
 
-    SQUE_PROGRAM_AttachShader(*b_p, vert_s->id, vert_s->type);
-    SQUE_PROGRAM_AttachShader(*b_p, ball_f->id, ball_f->type);
+    SQUE_PROGRAM_AttachShader(*b_p, vert_s.id, vert_s.type);
+    SQUE_PROGRAM_AttachShader(*b_p, ball_f.id, ball_f.type);
     SQUE_RENDER_LinkProgram(b_p->id);
 
     SQUE_CHECK_RENDER_ERRORS();

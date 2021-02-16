@@ -372,7 +372,7 @@ void ImGui_ImplSqueLib_Init()
 	// how will it work with multiple windows and multiple viewports?
 	// Do the multiwindows have to share the context?
 	// Does ImGui have to be initialized on a per window basis?
-	io.ImeWindowHandle = SQUE_DISPLAY_GetPlatformWindowHandle(0);
+	//io.ImeWindowHandle = SQUE_DISPLAY_GetPlatformWindowHandle(0);
 	
 	
 	// Initialize Render State...

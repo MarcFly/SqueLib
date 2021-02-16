@@ -351,20 +351,19 @@ SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback key
 typedef struct SQUE_Shader
 {
 // Constructor / Destructor
-	SQ_API SQUE_Shader();
-	SQ_API SQUE_Shader(int32_t type, uint16_t strs, const char** data);
+	SQ_API SQUE_Shader() {};
 
+	SQ_API SQUE_Shader(int32_t type_, const char* source_);
 	SQ_API ~SQUE_Shader();
+
 // Variables
 	int32_t id = 0;
-	int32_t type;
-	uint16_t lines = 0;
-	const char** source;
-
-// Usage Functions
-	SQ_API void Compile();
-	SQ_API void CleanUp();
+	int32_t type = NULL;
 } SQUE_Shader;
+
+SQ_API void SQUE_SHADERS_ChangeSource(int32_t shader_id, const char* source_);
+SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
+SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
 
 typedef struct SQUE_Uniform
 {
@@ -428,7 +427,6 @@ typedef struct SQUE_VertAttrib
 	uint16_t num_comp;
 	bool normalize;
 	uint16_t var_size;
-	uint16_t vert_size;
 	uint16_t offset;
 
 	char name[111] = "";
@@ -437,59 +435,58 @@ typedef struct SQUE_VertAttrib
 
 SQ_API uint16_t SQUE_VERTEX_ATTRIBUTE_GetSize(uint16_t vertex_size, uint16_t num_components);
 
+typedef struct SQUE_VertAttribIndex
+{
+	uint32_t id = -1;
+	uint32_t start_attrib = -1;
+	uint32_t end_attrib = -1;
+	uint16_t last = 0;
+	uint16_t vert_size;
+};
+
 #include <vector> 																														
 // Maybe Swap to a custom array handler for specific sizes																				
-// I want to have afast search on less than 100 objects, probably a full array is good enough											
+// I want to have afast search on less than 100 objects, probably a full array is good enough	
 typedef struct SQUE_Mesh
 {
 // Constructors / Destructors
 	SQ_API SQUE_Mesh();
-	SQ_API ~SQUE_Mesh();
+	//SQ_API ~SQUE_Mesh();
 
 // Variables
 	int32_t draw_config;
 	int32_t draw_mode = SQUE_STATIC_DRAW;
 	uint32_t attribute_object = 0;
+	int32_t attrib_ref = -1;
 
 	// Vertex Data																														
 	uint32_t vert_id = 0;
 	uint32_t num_verts = 0;
-	void* verts = NULL;
+	
 
 	// Index Data																											
 	uint32_t index_id = 0;
 	uint16_t num_index = 0;
 	uint32_t index_var = SQUE_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
 	uint16_t index_var_size = 0;
-	void* indices = nullptr;
+	
+	
 
-// Usage Functions
-	// Changing the data dynamically (good for stream/dynamic draw)
-	SQ_API void ChangeDrawConfig(int32_t draw_config, int32_t draw_mode);
-	SQ_API void ChangeVertData(int32_t num_verts_, void* verts_);
-	SQ_API void ChangeIndexData(int32_t num_index_, void* indices_, uint32_t index_var_ = SQUE_UINT);
-
-	// Location and Vertex attributes																									
-	SQ_API SQUE_VertAttrib* AddAttribute(SQUE_VertAttrib* attribute = NULL);
-	SQ_API void EnableAttributesForProgram(const SQUE_Program& program);
-	SQ_API void SetLocationsInOrder();
-	SQ_API void SetAttributeLocation(const char* name, const int32_t location);
-
-	// Getters																															
-	SQ_API uint16_t GetVertSize() const;
-	SQ_API uint16_t GetAttribSize(const char* name) const;
-
-	// CleanUp
-	SQ_API void CleanUp();
-
-private:
-	// Private Variables
-	std::vector<SQUE_VertAttrib*> attributes;
-
-	// Private Usage Functions
-	void SetOffsetsInOrder();
 
 } SQUE_Mesh;
+// Usage Functions
+SQ_API void SQUE_MESHES_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
+SQ_API void SQUE_MESHES_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
+SQ_API void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
+SQ_API void SQUE_MESHES_SendToGPU(SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
+
+SQ_API uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref);
+SQ_API uint16_t SQUE_MESHES_GetVertSize(const uint32_t attrib_ref);
+SQ_API uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char* name);
+
+SQ_API void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs);
+SQ_API SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attrib);
+SQ_API void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const int32_t attr_obj, const int32_t attrib_ref);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -589,13 +586,12 @@ SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
 SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
 
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_GenerateMeshBuffer(SQUE_Mesh* mesh);
-SQ_API void SQUE_BindMeshBuffer(const SQUE_Mesh& mesh);
-SQ_API void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh);
+SQ_API void SQUE_GenerateMeshBuffer(uint32_t& vert_id, uint32_t& index_id, uint32_t& attrib_obj);
+SQ_API void SQUE_BindMeshBuffer(const uint32_t vert_id = 0, const uint32_t index_id = 0, const uint32_t attrib_obj = 0);
+SQ_API void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices = NULL, void* indices = NULL);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_EnableProgramAttribute(const SQUE_Program& prog, SQUE_VertAttrib* attr);
-SQ_API void SQUE_SendAttributeToGPU(const SQUE_VertAttrib& attr);
-void SQUE_EnableBufferAttribute(int32_t location, uint16_t vert_size, SQUE_VertAttrib* attr);
+SQ_API void SQUE_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
+SQ_API void SQUE_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_SetTextureParameters(const SQUE_Texture2D& tex, const SQUE_TexAttrib& attr);
@@ -623,7 +619,7 @@ SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indice
 SQ_API void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, int32_t count = 0);
 
 // Debugging
-SQ_API void SQUE_SHADER_CheckCompileLog(const int32_t shader_id);
+SQ_API void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id);
 SQ_API void SQUE_RENDER_CheckProgramLog(const uint32_t program_id);
 SQ_API void CheckForRenderErrors(const char* file, int line);
 SQ_API void InitGLDebug();

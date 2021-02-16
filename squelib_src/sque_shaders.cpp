@@ -17,47 +17,47 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-SQUE_Shader::SQUE_Shader() : id(0), type(NULL), lines(0), source(NULL)
-{}
-
-SQUE_Shader::SQUE_Shader(int32_t type_, uint16_t strs, const char** data) :
-    type(type_), lines(strs), source(data)
-{
-    if (data == NULL | *data == NULL)
-    {
-        SQUE_LOG(LT_WARNING, "Shader could not be found or read...");
-    }
-    else
-    {
+SQUE_Shader::SQUE_Shader(int32_t type_, const char* source_) :
+    type(type_)
+{    
 #if defined (USE_OPENGL) || defined(USE_OPENGLES)
-        id = glCreateShader(type);
-        glShaderSource(id, lines, source, NULL);
-        glCompileShader(id);
+    id = glCreateShader(type);
+    glShaderSource(id, 1, &source_, NULL);
 #endif
-        SQUE_SHADER_CheckCompileLog(id);
-    }
 }
 
 SQUE_Shader::~SQUE_Shader()
 {
-    CleanUp();
+    SQUE_SHADERS_FreeFromGPU(id);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_Shader::Compile()
+void SQUE_SHADERS_ChangeSource(int32_t shader_id, const char* source_)
 {
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glShaderSource(id, lines, source, NULL);
-    glCompileShader(id);
+#if defined (USE_OPENGL) || defined(USE_OPENGLES)
+    glShaderSource(shader_id, 1, &source_, NULL);
 #endif
-    SQUE_SHADER_CheckCompileLog(id);
 }
 
-void SQUE_SHADER_CheckCompileLog(const int32_t shader_id)
+void SQUE_SHADERS_Compile(int32_t shader_id)
+{
+#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
+    glCompileShader(shader_id);
+#endif
+    SQUE_SHADERS_CheckCompileLog(shader_id);
+}
+
+void SQUE_SHADERS_FreeFromGPU(int32_t shader_id)
+{
+#if defined (USE_OPENGL) || defined(USE_OPENGLES)
+    glDeleteShader(shader_id);
+#endif
+}
+
+void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id)
 {
     int success;
     char infoLog[512];
@@ -70,12 +70,6 @@ void SQUE_SHADER_CheckCompileLog(const int32_t shader_id)
     if(!success) SQUE_PRINT(LT_WARNING, "Shader Compilation Info: %s", infoLog);
 }
 
-void SQUE_Shader::CleanUp()
-{
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glDeleteShader(id);
-#endif
-}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +79,7 @@ std::vector<SQUE_ProgramUniforms> programs;
 
 void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms)
 {
-    // TEST: 1 million ifs to check need for reserve and 1 million reserve with same capacity
+    // TEST push/resize branching/if: 1 million ifs to check need for reserve and 1 million reserve with same capacity
     // If need reserve, reserve like 10-50 space
     int cap = programs.capacity() - 1; 
     programs.resize((cap < program_id) ? program_id : cap+1);
