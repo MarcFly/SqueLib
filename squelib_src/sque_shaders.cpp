@@ -71,10 +71,8 @@ std::vector<SQUE_ProgramUniforms> programs;
 
 void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms)
 {
-    // TEST push/resize branching/if: 1 million ifs to check need for reserve and 1 million reserve with same capacity
-    // If need reserve, reserve like 10-50 space
-    int cap = programs.capacity() - 1; 
-    programs.resize((cap < program_id) ? program_id : cap+1);
+    int cap = programs.size() - 1; 
+    if(cap < program_id) programs.resize(program_id+50);
     SQUE_ProgramUniforms p;
     p.id = program_id;
     

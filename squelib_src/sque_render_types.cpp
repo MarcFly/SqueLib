@@ -63,10 +63,13 @@ void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t ind
 // LOCATIONS AND VERTEX ATTRIBUTES ///////////////////////////////////////////////////////////////////////
 std::vector<SQUE_VertAttrib> vertex_attributes;
 std::vector<SQUE_VertAttribIndex> mesh_attributes_index;
+int32_t last = 0;
 
 void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs)
 {
-    // TEST push/resize branching/if
+    int32_t cap = mesh_attributes_index.size() - 1;
+    if (cap < last) mesh_attributes_index.resize(cap + 1 + 50);
+
     SQUE_VertAttribIndex index;
     index.id = vert_id;
     vertex_attributes.resize(vertex_attributes.size() + num_attribs);
@@ -74,9 +77,10 @@ void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, u
     index.end_attrib = index.start_attrib + num_attribs - 1;
     index.last = 0;
     
-
-    mesh_attributes_index.push_back(index);
-    attrib_ref = mesh_attributes_index.size()-1;
+    mesh_attributes_index[last] = index;
+    attrib_ref = last;
+    last++;
+    
 }
 
 SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attr)
