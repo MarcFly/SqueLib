@@ -350,18 +350,12 @@ SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback key
 // Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct SQUE_Shader
 {
-// Constructor / Destructor
-	SQ_API SQUE_Shader() {};
-
-	SQ_API SQUE_Shader(int32_t type_, const char* source_);
-	SQ_API ~SQUE_Shader();
-
-// Variables
 	int32_t id = 0;
 	int32_t type = NULL;
 } SQUE_Shader;
 
-SQ_API void SQUE_SHADERS_ChangeSource(int32_t shader_id, const char* source_);
+SQ_API void SQUE_SHADERS_Generate(SQUE_Shader& shader, const int32_t shader_type);
+SQ_API void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_);
 SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
 SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
 
@@ -478,7 +472,7 @@ typedef struct SQUE_Mesh
 SQ_API void SQUE_MESHES_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
 SQ_API void SQUE_MESHES_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
 SQ_API void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
-SQ_API void SQUE_MESHES_SendToGPU(SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
+
 
 SQ_API uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref);
 SQ_API uint16_t SQUE_MESHES_GetVertSize(const uint32_t attrib_ref);
@@ -588,7 +582,7 @@ SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_GenerateMeshBuffer(uint32_t& vert_id, uint32_t& index_id, uint32_t& attrib_obj);
 SQ_API void SQUE_BindMeshBuffer(const uint32_t vert_id = 0, const uint32_t index_id = 0, const uint32_t attrib_obj = 0);
-SQ_API void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices = NULL, void* indices = NULL);
+SQ_API void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
 SQ_API void SQUE_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);

@@ -70,7 +70,7 @@ void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, u
     SQUE_VertAttribIndex index;
     index.id = vert_id;
     vertex_attributes.resize(vertex_attributes.size() + num_attribs);
-    index.start_attrib = vertex_attributes.size()-1;
+    index.start_attrib = vertex_attributes.size()-num_attribs;
     index.end_attrib = index.start_attrib + num_attribs - 1;
     index.last = 0;
     

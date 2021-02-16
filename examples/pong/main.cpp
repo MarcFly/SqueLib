@@ -92,7 +92,7 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_MESHES_DeclareAttributes(b.rect.vert_id, b.rect.attrib_ref, 1);
     SQUE_MESHES_AddAttribute(b.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_MESHES_CalcVertSize(b.rect.attrib_ref);
-    SQUE_SendMeshToGPU(b.rect, quad, quad_indices);
+    SQUE_RENDER_SendMeshToGPU(b.rect, quad, quad_indices);
     SQUE_MESHES_SetLocations(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object, b.rect.attrib_ref);
 
 // PLAYER 1
@@ -110,7 +110,7 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_MESHES_DeclareAttributes(p1.rect.vert_id, p1.rect.attrib_ref, 1);
     SQUE_MESHES_AddAttribute(p1.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_MESHES_CalcVertSize(p1.rect.attrib_ref);
-    SQUE_SendMeshToGPU(p1.rect, quad, quad_indices);
+    SQUE_RENDER_SendMeshToGPU(p1.rect, quad, quad_indices);
     SQUE_MESHES_SetLocations(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object, p1.rect.attrib_ref);
 
 // PLAYER 2
@@ -128,7 +128,7 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_MESHES_DeclareAttributes(p2.rect.vert_id, p2.rect.attrib_ref, 1);
     SQUE_MESHES_AddAttribute(p2.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_MESHES_CalcVertSize(p2.rect.attrib_ref);
-    SQUE_SendMeshToGPU(p2.rect, quad, quad_indices);
+    SQUE_RENDER_SendMeshToGPU(p2.rect, quad, quad_indices);
     SQUE_MESHES_SetLocations(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object, p2.rect.attrib_ref);
 }
 
@@ -154,10 +154,21 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
     std::string ball_source(easy_concat(glsl, ball_frag));
     std::string rect_source(easy_concat(glsl, rect_frag));
 
-    SQUE_Shader vert_s2(SQUE_VERTEX_SHADER, vert_source.c_str());
-    SQUE_Shader vert_s(SQUE_VERTEX_SHADER, vert_source.c_str());
-    SQUE_Shader ball_f(SQUE_FRAGMENT_SHADER, ball_source.c_str());
-    SQUE_Shader rect_f(SQUE_FRAGMENT_SHADER, rect_source.c_str());
+    SQUE_Shader vert_s2;
+    SQUE_SHADERS_Generate(vert_s2, SQUE_VERTEX_SHADER);
+    SQUE_SHADERS_SetSource(vert_s2.id, vert_source.c_str());
+
+    SQUE_Shader vert_s;
+    SQUE_SHADERS_Generate(vert_s, SQUE_VERTEX_SHADER);
+    SQUE_SHADERS_SetSource(vert_s.id, vert_source.c_str());
+
+    SQUE_Shader ball_f;
+    SQUE_SHADERS_Generate(ball_f, SQUE_FRAGMENT_SHADER);
+    SQUE_SHADERS_SetSource(ball_f.id, ball_source.c_str());
+
+    SQUE_Shader rect_f;
+    SQUE_SHADERS_Generate(rect_f, SQUE_FRAGMENT_SHADER);
+    SQUE_SHADERS_SetSource(rect_f.id, rect_source.c_str());
 
     SQUE_SHADERS_Compile(vert_s2.id);
     SQUE_SHADERS_Compile(rect_f.id);

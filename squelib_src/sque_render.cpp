@@ -230,7 +230,7 @@ void SQUE_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id, const 
 #endif
 }
 
-void SQUE_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
+void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
 {
     int buffer_size = SQUE_MESHES_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
     SQUE_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
@@ -376,9 +376,6 @@ void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices, int3
     count = (count < 0) ? mesh.num_index : count;
     SQUE_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindVertexArray(mesh.attribute_object);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_id);
     glDrawElements(mesh.draw_config, count, mesh.index_var, (void*)(mesh.index_var_size * offset_indices));
 #else
 #endif

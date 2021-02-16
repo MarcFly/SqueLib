@@ -59,6 +59,8 @@ static SQUE_RenderState  sque_backupState;
 static SQUE_RenderState  sque_renderState;
 static SQUE_Program      sque_shaderProgram;
 static SQUE_Mesh         sque_dataHandle;
+static SQUE_Shader		sque_vertShader;
+static SQUE_Shader		sque_fragShader;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,10 +108,9 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 	for (int i = 0; i < draw_data->CmdListsCount; ++i)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
-		sque_dataHandle.ChangeVertData(cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data);
-		sque_dataHandle.ChangeIndexData(cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data, SQUE_USHORT);
-		
-		SQUE_SendMeshToGPU(sque_dataHandle);
+		SQUE_MESHES_SetVertData(sque_dataHandle, cmd_list->VtxBuffer.Size);
+		SQUE_MESHES_SetIndexData(sque_dataHandle, cmd_list->IdxBuffer.Size, SQUE_USHORT);
+		SQUE_RENDER_SendMeshToGPU(sque_dataHandle, cmd_list->VtxBuffer.Data, cmd_list->IdxBuffer.Data);
 
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
 		{
@@ -134,8 +135,8 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 		}
 
 	}
-	sque_dataHandle.ChangeVertData(0, NULL);
-	sque_dataHandle.ChangeIndexData(0, NULL);
+	//sque_dataHandle.ChangeVertData(0, NULL);
+	//sque_dataHandle.ChangeIndexData(0, NULL);
 
 	sque_backupState.SetUp();
 }
@@ -144,50 +145,48 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 {
 	sque_backupState.BackUp();
 
-	SQUE_GenerateMeshBuffer(&sque_dataHandle);
-	sque_dataHandle.ChangeDrawConfig(SQUE_TRIANGLES, SQUE_STREAM_DRAW);
+	SQUE_GenerateMeshBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
+	SQUE_MESHES_SetDrawConfig(sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
-	SQUE_VertAttrib* p = sque_dataHandle.AddAttribute();
-	memcpy(p->name,"Position", strlen("Position"));
-	p->normalize = false;
-	p->num_comp = 2;
-	p->var_type = SQUE_FLOAT;
-	p->var_size = SQUE_VarGetSize(SQUE_FLOAT);
-
-	SQUE_VertAttrib* uv = sque_dataHandle.AddAttribute();
-	memcpy(uv->name,"UV", strlen("UV"));
-	uv->normalize = false;
-	uv->num_comp = 2;
-	uv->var_type = SQUE_FLOAT;
-	uv->var_size = SQUE_VarGetSize(SQUE_FLOAT);
-
-	SQUE_VertAttrib* c = sque_dataHandle.AddAttribute();
-	memcpy(c->name, "Color", strlen("Color"));
-	c->normalize = true;
-	c->num_comp = 4;
-	c->var_type = SQUE_UBYTE;
-	c->var_size = SQUE_VarGetSize(SQUE_UBYTE);
-
-	sque_dataHandle.SetLocationsInOrder();
+	SQUE_MESHES_DeclareAttributes(sque_dataHandle.vert_id, sque_dataHandle.attrib_ref, 3);
+	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
+	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
+	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
+	SQUE_MESHES_SetLocations(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object, sque_dataHandle.attrib_ref);
 
 	sque_backupState.SetUp();
+}
+
+char* easy_concat(const char* s1, const char* s2)
+{
+	const size_t len1 = strlen(s1);
+	const size_t len2 = strlen(s2);
+	char* result = new char[len1 + len2 + 1]; // +1 for the null-terminator
+	// in real code you would check for errors in malloc here
+	memcpy(result, s1, len1);
+	memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
+	return result;
 }
 
 void ImGui_ImplSqueLib_CreateShaderProgram()
 {
 	sque_backupState.BackUp();
 
-	const char* vert_source[2] = { SQUE_RENDER_GetGLSLVer(), vertex_shader };
-	SQUE_Shader* vert_s = new SQUE_Shader(SQUE_VERTEX_SHADER, 2, vert_source);
-	vert_s->Compile();
+	const char* glsl = SQUE_RENDER_GetGLSLVer();
 
-	const char* frag_source[2] = { SQUE_RENDER_GetGLSLVer(), fragment_shader };
-	SQUE_Shader* frag_s = new SQUE_Shader(SQUE_FRAGMENT_SHADER, 2, frag_source);
-	frag_s->Compile();
+	SQUE_SHADERS_Generate(sque_vertShader, SQUE_VERTEX_SHADER);
+	std::string vert(easy_concat(glsl, vertex_shader));
+	SQUE_SHADERS_SetSource(sque_vertShader.id, vert.c_str());
+	SQUE_SHADERS_Compile(sque_vertShader.id);
+
+	SQUE_SHADERS_Generate(sque_fragShader, SQUE_FRAGMENT_SHADER);
+	std::string frag(easy_concat(glsl, fragment_shader));
+	SQUE_SHADERS_SetSource(sque_fragShader.id, frag.c_str());
+	SQUE_SHADERS_Compile(sque_fragShader.id);
 
 	SQUE_RENDER_CreateProgram(&sque_shaderProgram);
-	SQUE_PROGRAM_AttachShader(sque_shaderProgram, vert_s->id, vert_s->type);
-	SQUE_PROGRAM_AttachShader(sque_shaderProgram, frag_s->id, frag_s->type);
+	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_vertShader.id, sque_vertShader.type);
+	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_fragShader.id, sque_fragShader.type);
 
 	SQUE_RENDER_LinkProgram(sque_shaderProgram.id);
 
@@ -307,7 +306,7 @@ void ImGui_ImplSqueLib_GoBackground()
 	io.Fonts->TexID = 0;
 	//sque_shaderProgram.CleanUp();
 
-	sque_dataHandle.CleanUp();
+	//sque_dataHandle.CleanUp();
 	sque_fontTexture.CleanUp();
 
 	if (sque_PrevOnGoBackgroundCallback != NULL) sque_PrevOnGoBackgroundCallback();
@@ -390,7 +389,7 @@ void ImGui_ImplSqueLib_Shutdown()
 	io.Fonts->TexID = 0;
 	//sque_shaderProgram.CleanUp();
 
-	sque_dataHandle.CleanUp();
+	//sque_dataHandle.CleanUp();
 	sque_fontTexture.CleanUp();
 
 	SQUE_INPUT_SetPointerPosCallback(sque_PrevMousePosCallback, 0);
@@ -425,7 +424,7 @@ void ImGui_ImplSqueLib_NewFrame()
     // Setup Time Step
     double curr_time = (sque_Time.ReadMilliSec() / 1000);
     io.DeltaTime = std::abs(curr_time - sque_lastTime)+0.000001;
-	SQUE_PRINT(LT_INFO, "%f %f %f", io.DeltaTime, sque_lastTime, curr_time);
+	//SQUE_PRINT(LT_INFO, "%f %f %f", io.DeltaTime, sque_lastTime, curr_time);
     sque_lastTime = curr_time;
 
     // Update Mouse
