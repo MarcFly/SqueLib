@@ -76,7 +76,7 @@ void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms)
     SQUE_ProgramUniforms p;
     p.id = program_id;
     
-    p.start_uniform = uniforms.capacity();
+    p.start_uniform = uniforms.size();
     p.end_uniform = p.start_uniform + num_uniforms - 1;
     uniforms.resize(p.start_uniform + num_uniforms);
 

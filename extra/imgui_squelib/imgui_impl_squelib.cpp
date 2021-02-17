@@ -61,6 +61,7 @@ static SQUE_Program      sque_shaderProgram;
 static SQUE_Mesh         sque_dataHandle;
 static SQUE_Shader		sque_vertShader;
 static SQUE_Shader		sque_fragShader;
+static void*			sque_fontPixels;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,7 +72,7 @@ void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_wi
 {
 	SQUE_RENDER_SetViewport(0, 0, fb_width, fb_height);
 	sque_renderState.SetUp();
-	SQUE_SetActiveTextureUnit(SQUE_TEXTURE0);
+	SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
 
 	float L = draw_data->DisplayPos.x;
 	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
@@ -145,7 +146,7 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 {
 	sque_backupState.BackUp();
 
-	SQUE_GenerateMeshBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
+	SQUE_RENDER_GenerateMeshBuffer(&sque_dataHandle.vert_id, &sque_dataHandle.index_id, &sque_dataHandle.attribute_object);
 	SQUE_MESHES_SetDrawConfig(sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
 	SQUE_MESHES_DeclareAttributes(sque_dataHandle.vert_id, sque_dataHandle.attrib_ref, 3);
@@ -184,7 +185,7 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 	SQUE_SHADERS_SetSource(sque_fragShader.id, frag.c_str());
 	SQUE_SHADERS_Compile(sque_fragShader.id);
 
-	SQUE_RENDER_CreateProgram(&sque_shaderProgram);
+	SQUE_RENDER_CreateProgram(&sque_shaderProgram.id);
 	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_vertShader.id, sque_vertShader.type);
 	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_fragShader.id, sque_fragShader.type);
 
@@ -204,20 +205,19 @@ void ImGui_ImplSqueLib_CreateFontsTexture()
 	sque_backupState.BackUp();
 
 	ImGuiIO& io = ImGui::GetIO();
-	SQUE_GenTextureData(&sque_fontTexture);
+	SQUE_RENDER_GenTextureData(&sque_fontTexture.id);
 	sque_fontTexture.var_type = SQUE_UBYTE;
 	sque_fontTexture.var_size = 1;
 	sque_fontTexture.format = SQUE_RGBA;
-	io.Fonts->GetTexDataAsRGBA32((uchar**)&sque_fontTexture.pixels, &sque_fontTexture.w, &sque_fontTexture.h);
+	io.Fonts->GetTexDataAsRGBA32((uchar**)&sque_fontPixels, &sque_fontTexture.w, &sque_fontTexture.h);
 
-	SQUE_TexAttrib* min_filter = new SQUE_TexAttrib(SQUE_MIN_FILTER, SQUE_INT, new int32_t(SQUE_LINEAR));
-	sque_fontTexture.SetParameter(min_filter);
-
-	SQUE_TexAttrib* mag_filter = new SQUE_TexAttrib(SQUE_MAG_FILTER, SQUE_INT, new int32_t(SQUE_LINEAR));
-	sque_fontTexture.SetParameter(mag_filter);
-
-	sque_fontTexture.ApplyParameters();
-	SQUE_SendTextureToGPU(sque_fontTexture);
+	int32_t filter = SQUE_LINEAR;
+	SQUE_TEXTURES_DeclareTextureWide(sque_fontTexture.id, 2);
+	SQUE_TEXTURES_AddIntParameter(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MIN_FILTER, &filter));
+	SQUE_TEXTURES_AddIntParameter(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MAG_FILTER, &filter));
+	SQUE_RENDER_BindTex2D(sque_fontTexture.id);
+	SQUE_RENDER_SetTextureParameters(sque_fontTexture.id);
+	SQUE_RENDER_SendTex2DToGPU(sque_fontTexture, sque_fontPixels);
 
 	io.Fonts->TexID = (ImTextureID)(intptr_t)sque_fontTexture.id;
 
@@ -307,7 +307,7 @@ void ImGui_ImplSqueLib_GoBackground()
 	//sque_shaderProgram.CleanUp();
 
 	//sque_dataHandle.CleanUp();
-	sque_fontTexture.CleanUp();
+	delete sque_fontPixels;
 
 	if (sque_PrevOnGoBackgroundCallback != NULL) sque_PrevOnGoBackgroundCallback();
 }
@@ -389,8 +389,7 @@ void ImGui_ImplSqueLib_Shutdown()
 	io.Fonts->TexID = 0;
 	//sque_shaderProgram.CleanUp();
 
-	//sque_dataHandle.CleanUp();
-	sque_fontTexture.CleanUp();
+	delete sque_fontPixels;
 
 	SQUE_INPUT_SetPointerPosCallback(sque_PrevMousePosCallback, 0);
 	SQUE_INPUT_SetScrollCallback(sque_PrevMouseScrollCallback);

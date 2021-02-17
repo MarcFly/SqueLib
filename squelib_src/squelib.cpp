@@ -161,7 +161,7 @@ void AndroidSendToBack(int param)
 // INITIALIZATION AND STATE CONTROL ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_LIB_Init(const char* app_name, int32_t flags)
+void SQUE_LIB_Init(const char* app_name)
 {
     // Call Init for all loaded modules and with required flags
     // Logger Lib
@@ -171,7 +171,15 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
     SQUE_DISPLAY_SetViewportResizeCallback(SQUE_RENDER_ChangeFramebufferSize);
     SQUE_DISPLAY_SetViewportSizeCallback(SQUE_RENDER_GetFramebufferSize);
     SQUE_DISPLAY_Init();
-    //SQUE_DISPLAY_NextWindow;
+
+    // Default options, 
+    int32_t options[] =
+    {
+        SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN,
+        SQUE_WINDOW_CONTEXT_MINOR, SQUE_CONTEXT_MINOR_MIN,
+        SQUE_DEBUG_CONTEXT, 1
+    };
+    SQUE_DISPLAY_NextWindow_ContextHints(options, sizeof(options)/sizeof(int32_t));
     SQUE_DISPLAY_OpenWindow(app_name);
 
     // For testing

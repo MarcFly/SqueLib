@@ -14,24 +14,15 @@
 struct SQUE_Window
 {
     // Main attributes
-    const char* title = "";
+    char title[256] = "";
     int32_t width = 0, height = 0;
 
-    // Initialization Flags
-    int32_t* window_options = NULL;
-    int32_t num_window_options = 0;
-    
-    int32_t* context_options = NULL;
-    int32_t num_context_options = 0;
-    
-    int32_t* buffer_options = NULL;
-    int32_t num_buffer_options = 0;
     // Flags for workign with squelib
     uint16_t working_flags;
 };
 
 static std::mutex display_mtx;
-std::vector<SQUE_Window*> sque_windows;
+std::vector<SQUE_Window> sque_windows;
 SQUE_Window* next_window = NULL;
 static uint16_t main_window_context = UINT16_MAX;
 int monitor_count;
@@ -126,7 +117,7 @@ static int32_t const def_buffer_options[] =
         }
         SQUE_DISPLAY_ResizeWindow(win, width, height);
         
-        SQUE_PRINT(SQUE_LogType::LT_INFO, "Resized Window \"%s\": %d %d", sque_windows[win]->title, width, height);    
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "Resized Window \"%s\": %d %d", sque_windows[win].title, width, height);    
     }
 
     static void GLFW_MouseEnterLeaveCallback(GLFWwindow* window, int entered)
@@ -134,7 +125,7 @@ static int32_t const def_buffer_options[] =
         for (int i = 0; i < glfw_windows.size(); ++i)
             if (glfw_windows[i] == window)
             {
-                (entered > 0) ? SET_FLAG(sque_windows[i]->working_flags, SQUE_WINDOW_MOUSE_IN) : CLR_FLAG(sque_windows[i]->working_flags, SQUE_WINDOW_MOUSE_IN);
+                (entered > 0) ? SET_FLAG(sque_windows[i].working_flags, SQUE_WINDOW_MOUSE_IN) : CLR_FLAG(sque_windows[i].working_flags, SQUE_WINDOW_MOUSE_IN);
                 break;
             }
     }
@@ -159,10 +150,6 @@ void SQUE_DISPLAY_Init()
     {
         SQUE_PRINT(SQUE_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new SQUE_Window();
-        // Default window hints...
-        next_window->buffer_options = (int32_t*)def_buffer_options;
-        next_window->context_options = (int32_t*)def_context_options;
-        next_window->context_options = (int32_t*)def_window_options;
     }
 
     SQUE_PRINT(LT_INFO, "Declaring Backed Specific Variables...");
@@ -300,10 +287,8 @@ void SQUE_DISPLAY_Close()
     glfw_windows.clear();
     glfwTerminate();
 #endif
-    uint16_t size = sque_windows.size();
-    for (int i = 0; i < size; ++i)
-        delete sque_windows[i];
     sque_windows.clear();
+    sque_windows.shrink_to_fit();
 }
 
 void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val)
@@ -373,8 +358,8 @@ void SQUE_DISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h)
 {
     if(window >= sque_windows.size()) return;
 
-    sque_windows[window]->width = w;
-    sque_windows[window]->height = h;
+    sque_windows[window].width = w;
+    sque_windows[window].height = h;
 #if defined(USE_GLFW)
     glfwSetWindowSize(glfw_windows[window], w, h);
 #elif defined(USE_EGL)
@@ -401,8 +386,8 @@ void SQUE_DISPLAY_GetWindowSize(uint16_t window, int32_t* x, int32_t* y)
 {
     if (window < sque_windows.size())
     {
-        *x = sque_windows[window]->width;
-        *y = sque_windows[window]->height;
+        *x = sque_windows[window].width;
+        *y = sque_windows[window].height;
     }
     else
     {
@@ -428,7 +413,7 @@ uint16_t SQUE_DISPLAY_GetAmountWindows() { return sque_windows.size(); }
 void SQUE_DISPLAY_SetWindowClose(uint16_t window)
 {
     if (window < sque_windows.size())
-        SET_FLAG(sque_windows[window]->working_flags, SQUE_WINDOW_TO_CLOSE);
+        SET_FLAG(sque_windows[window].working_flags, SQUE_WINDOW_TO_CLOSE);
     else
         SQUE_PRINT(LT_WARNING, "Invalid window...");
 }
@@ -436,7 +421,7 @@ void SQUE_DISPLAY_SetWindowClose(uint16_t window)
 bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window)
 {
     if(window < sque_windows.size())
-        return CHK_FLAG(sque_windows[window]->working_flags, SQUE_WINDOW_TO_CLOSE);
+        return CHK_FLAG(sque_windows[window].working_flags, SQUE_WINDOW_TO_CLOSE);
     return false;
 }
 
@@ -445,8 +430,7 @@ uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window)
     uint16_t size = sque_windows.size();
     if(window < size)
     {
-        SQUE_PRINT(SQUE_LogType::LT_INFO, "Closing window n*%d with title %s", window, sque_windows[window]->title);
-        delete sque_windows[window];
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "Closing window n*%d with title %s", window, sque_windows[window].title);
         sque_windows[window] = sque_windows[size-1];
         sque_windows.pop_back();
 
@@ -457,7 +441,7 @@ uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window)
         glfw_windows[window] = glfw_windows[size - 1]; // This changes the order drastically, but fast
         glfw_windows.pop_back();
 #endif
-        SQUE_PRINT(SQUE_LogType::LT_INFO, "Window n*%d with title %s is now n*%d", size-1, sque_windows[window]->title, window);
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "Window n*%d with title %s is now n*%d", size-1, sque_windows[window].title, window);
     }
     else
     {
@@ -474,8 +458,12 @@ void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-    next_window->window_options = options;
-    next_window->num_window_options = size;
+#ifdef USE_GLFW
+    for (uint16_t i = 0; i < size; i+2)
+        glfwWindowHint(options[i], options[i + 1]);
+#elif defined(USE_EGL)
+
+#endif
 }
 
 void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
@@ -486,8 +474,12 @@ void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-    next_window->context_options = options;
-    next_window->num_context_options = size;
+#ifdef USE_GLFW
+    for (uint16_t i = 0; i < size; i += 2)
+        glfwWindowHint(options[i], options[i + 1]);
+#elif defined(USE_EGL)
+
+#endif
 }
 
 void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
@@ -498,8 +490,12 @@ void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-    next_window->buffer_options = options;
-    next_window->num_buffer_options = size;
+#ifdef USE_GLFW
+    for (uint16_t i = 0; i < size; i + 2)
+        glfwWindowHint(options[i], options[i + 1]);
+#elif defined(USE_EGL)
+
+#endif
 }
 
 
@@ -518,13 +514,9 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
     {
         SQUE_PRINT(SQUE_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new SQUE_Window();
-        // Default window hints...
-        next_window->buffer_options = (int32_t*)def_buffer_options;
-        next_window->context_options = (int32_t*)def_context_options;
-        next_window->context_options = (int32_t*)def_window_options;
     }
 
-    next_window->title = title;
+    memcpy(next_window->title, title, strlen(title));
     next_window->working_flags = NULL;
 
     int x = 0, y = 0, w = 0, h = 0;
@@ -533,11 +525,6 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
     width = (width != 0) ?width : w * .7;
     height = (height != 0) ? height : h * .7;
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE); // TODO: Add an option for debug messages and init GLDebug as intended
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
     if (!glfw_window)
@@ -557,8 +544,9 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
     next_window->width = width;
     next_window->height = height;
 #endif
-    sque_windows.push_back(next_window);
+    sque_windows.push_back(*next_window);
     SQUE_DISPLAY_MakeContextMain(sque_windows.size()-1);
+    delete next_window;
     next_window = NULL;
 }
 

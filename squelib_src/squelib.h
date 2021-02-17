@@ -57,13 +57,13 @@
 // Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
 #include<glm.hpp>
 // Initialization / State Control //////////////////////////////////////////////////////////////////////////////////////////////////////
-#define SQUE_VERSION_MAJOR 2020																											
+#define SQUE_VERSION_MAJOR 2021																											
 #define SQUE_VERSION_MINOR 1																												
 #define SQUE_VERSION ((SQUE_VERSION_MAJOR << 16) | SQUE_VERSION_MINOR)																		
 
 // SQUE_LIB should not have an init/close
 // User should do that with specifics per module really
-SQ_API void SQUE_LIB_Init(const char* app_name, int32_t flags);																									
+SQ_API void SQUE_LIB_Init(const char* app_name);																									
 SQ_API void SQUE_LIB_Close();																									
 SQ_API unsigned int SQUE_LIB_GetVersion();																							
 SQ_API int SQUE_LIB_IsCompatibleDLL();		
@@ -153,7 +153,7 @@ enum SQUE_WindowFlags
 	SQUE_WINDOW_MOUSE_IN = BITSET1,
 	SQUE_WINDOW_TO_MAXIMIZE = BITSET4,
 	SQUE_WINDOW_TO_CLOSE = BITSET5,
-	
+	SQUE_WINDOW_DEBUG = BITSET6,	
 };																																	
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_DISPLAY_Init();
@@ -210,41 +210,41 @@ enum SQUE_KeyboardKeys
 	// 1 Initial key																													
 	// MAIN PRINTABLE ASCII CHARACTERS																									
 	SQUE_KEY_SPACE			= 32,	SQUE_KEY_SINGLE_QUOTE	= 39,	SQUE_KEY_ASTERISK		= 42,	SQUE_KEY_PLUS			= 43,		
-	SQUE_KEY_COMMA			= 44,	SQUE_KEY_DASH			= 45,	SQUE_KEY_DOT				= 46,	SQUE_KEY_FORW_SLASH		= 47,		
-	SQUE_KEY_ZERO_0			= 48,	SQUE_KEY_ONE_1			= 49,	SQUE_KEY_TWO_2			= 50,	SQUE_KEY_THREE_3			= 51,		
-	SQUE_KEY_FOUR_4			= 52,	SQUE_KEY_FIVE_5			= 53,	SQUE_KEY_SIX_6			= 54,	SQUE_KEY_SEVEN_7			= 55,		
-	SQUE_KEY_EIGHT_8			= 56,	SQUE_KEY_NINE_9			= 57,	SQUE_KEY_COLON			= 58,	SQUE_KEY_SEMI_COLON		= 59,		
+	SQUE_KEY_COMMA			= 44,	SQUE_KEY_DASH			= 45,	SQUE_KEY_DOT			= 46,	SQUE_KEY_FORW_SLASH		= 47,		
+	SQUE_KEY_ZERO_0			= 48,	SQUE_KEY_ONE_1			= 49,	SQUE_KEY_TWO_2			= 50,	SQUE_KEY_THREE_3		= 51,		
+	SQUE_KEY_FOUR_4			= 52,	SQUE_KEY_FIVE_5			= 53,	SQUE_KEY_SIX_6			= 54,	SQUE_KEY_SEVEN_7		= 55,		
+	SQUE_KEY_EIGHT_8		= 56,	SQUE_KEY_NINE_9			= 57,	SQUE_KEY_COLON			= 58,	SQUE_KEY_SEMI_COLON		= 59,		
 	SQUE_KEY_EQUALS			= 61,	SQUE_KEY_GREATER_THAN	= 62,	SQUE_KEY_END_QUESTION	= 63,	SQUE_KEY_AT				= 64,		
-	SQUE_KEY_UPPER_A			= 65,	SQUE_KEY_UPPER_B			= 66,	SQUE_KEY_UPPER_C			= 67,	SQUE_KEY_UPPER_D			= 68,		
-	SQUE_KEY_UPPER_E			= 69,	SQUE_KEY_UPPER_F			= 70,	SQUE_KEY_UPPER_G			= 71,	SQUE_KEY_UPPER_H			= 72,		
-	SQUE_KEY_UPPER_I			= 73,	SQUE_KEY_UPPER_J			= 74,	SQUE_KEY_UPPER_K			= 75,	SQUE_KEY_UPPER_L			= 76,		
-	SQUE_KEY_UPPER_M			= 77,	SQUE_KEY_UPPER_N			= 78,	SQUE_KEY_UPPER_O			= 79,	SQUE_KEY_UPPER_P			= 80,		
-	SQUE_KEY_UPPER_Q			= 81,	SQUE_KEY_UPPER_R			= 82,	SQUE_KEY_UPPER_S			= 83,	SQUE_KEY_UPPER_T			= 84,		
-	SQUE_KEY_UPPER_U			= 85,	SQUE_KEY_UPPER_V			= 86,	SQUE_KEY_UPPER_W			= 87,	SQUE_KEY_UPPER_X			= 88,		
-	SQUE_KEY_UPPER_Y			= 89,	SQUE_KEY_UPPER_Z			= 90,	SQUE_KEY_OPEN_BRACKET	= 91,	SQUE_KEY_BACK_SLASH		= 92,		
-	SQUE_KEY_CLOSE_BRACKET	= 93, 	SQUE_KEY_OPEN_ACCENT		= 96,																		
+	SQUE_KEY_UPPER_A		= 65,	SQUE_KEY_UPPER_B		= 66,	SQUE_KEY_UPPER_C		= 67,	SQUE_KEY_UPPER_D		= 68,		
+	SQUE_KEY_UPPER_E		= 69,	SQUE_KEY_UPPER_F		= 70,	SQUE_KEY_UPPER_G		= 71,	SQUE_KEY_UPPER_H		= 72,		
+	SQUE_KEY_UPPER_I		= 73,	SQUE_KEY_UPPER_J		= 74,	SQUE_KEY_UPPER_K		= 75,	SQUE_KEY_UPPER_L		= 76,		
+	SQUE_KEY_UPPER_M		= 77,	SQUE_KEY_UPPER_N		= 78,	SQUE_KEY_UPPER_O		= 79,	SQUE_KEY_UPPER_P		= 80,		
+	SQUE_KEY_UPPER_Q		= 81,	SQUE_KEY_UPPER_R		= 82,	SQUE_KEY_UPPER_S		= 83,	SQUE_KEY_UPPER_T		= 84,		
+	SQUE_KEY_UPPER_U		= 85,	SQUE_KEY_UPPER_V		= 86,	SQUE_KEY_UPPER_W		= 87,	SQUE_KEY_UPPER_X		= 88,		
+	SQUE_KEY_UPPER_Y		= 89,	SQUE_KEY_UPPER_Z		= 90,	SQUE_KEY_OPEN_BRACKET	= 91,	SQUE_KEY_BACK_SLASH		= 92,		
+	SQUE_KEY_CLOSE_BRACKET	= 93, 	SQUE_KEY_OPEN_ACCENT	= 96,																		
 																																		
 	// 54 keys here																														
 																																		
 	// MAIN USAGE CHARACTERS																											
-	SQUE_KEY_WORLD_1			= 161,	SQUE_KEY_WORLD_2		= 162,	SQUE_KEY_ESCAPE			= 256,	SQUE_KEY_ENTER				= 257,		
-	SQUE_KEY_TAB				= 258,	SQUE_KEY_BACKSPACE	= 259,	SQUE_KEY_INSERT			= 260,	SQUE_KEY_DELETE				= 261,		
-	SQUE_KEY_ARROW_RIGHT		= 262,	SQUE_KEY_ARROW_LEFT	= 263,	SQUE_KEY_ARROW_DOWN		= 264,	SQUE_KEY_ARROW_UP			= 265,		
-	SQUE_KEY_PAGE_UP			= 266,	SQUE_KEY_PAGE_DOWN	= 267,	SQUE_KEY_HOME			= 268,	SQUE_KEY_END					= 269,		
-	SQUE_KEY_CAPS_LOCK		= 281,	SQUE_KEY_SCROLL_LOCK	= 281,	SQUE_KEY_NUM_LOCK		= 282,	SQUE_KEY_PRINT_SCREEN		= 283,		
-	SQUE_KEY_PAUSE			= 284,	SQUE_KEY_F1			= 290,	SQUE_KEY_F2				= 291,	SQUE_KEY_F3					= 292,		
-	SQUE_KEY_F4				= 293,	SQUE_KEY_F5			= 294,	SQUE_KEY_F6				= 295,	SQUE_KEY_F7					= 296,		
-	SQUE_KEY_F8				= 297,	SQUE_KEY_F9			= 298,	SQUE_KEY_F10				= 299,	SQUE_KEY_F11					= 300,		
-	SQUE_KEY_F12				= 301,	SQUE_KEY_F13			= 302,	SQUE_KEY_F14				= 303,	SQUE_KEY_F15					= 304,		
-	SQUE_KEY_F16				= 305,	SQUE_KEY_F17			= 306,	SQUE_KEY_F18				= 307,	SQUE_KEY_F19					= 308,		
-	SQUE_KEY_F20				= 309,	SQUE_KEY_F21			= 310,	SQUE_KEY_F22				= 311,	SQUE_KEY_F23					= 312,		
-	SQUE_KEY_F24				= 313,	SQUE_KEY_F25			= 314,	SQUE_KEY_KEYPAD_1		= 320,	SQUE_KEY_KEYPAD_2			= 321,		
-	SQUE_KEY_KEYPAD_3		= 322,	SQUE_KEY_KEYPAD_4	= 323,	SQUE_KEY_KEYPAD_5		= 324,	SQUE_KEY_KEYPAD_6			= 325,		
-	SQUE_KEY_KEYPAD_7		= 326,	SQUE_KEY_KEYPAD_8	= 327,	SQUE_KEY_KEYPAD_9		= 328,	SQUE_KEY_KEYPAD_DECIMAL		= 329,		
-	SQUE_KEY_KEYPAD_DIVIDE	= 331,	SQUE_KEY_KEYPAD_MULT	= 332,	SQUE_KEY_KEYPAD_SUBTRACT	= 333,	SQUE_KEY_KEYPAD_ADD			= 334,		
-	SQUE_KEY_KEYPAD_ENTER	= 335,	SQUE_KEY_KEYPAD_EQUAL= 336,	SQUE_KEY_LEFT_SHIFT		= 340,	SQUE_KEY_LEFT_CTRL			= 341,		
-	SQUE_KEY_LEFT_ALT		= 342,	SQUE_KEY_LEFT_SUPER	= 343,	SQUE_KEY_RIGHT_SHIFT		= 344,	SQUE_KEY_RIGHT_CTRL			= 345,		
-	SQUE_KEY_RIGHT_ALT		= 347,	SQUE_KEY_RIGHT_SUPER	= 348,																			
+	SQUE_KEY_WORLD_1			= 161,	SQUE_KEY_WORLD_2		= 162,	SQUE_KEY_ESCAPE				= 256,	SQUE_KEY_ENTER				= 257,		
+	SQUE_KEY_TAB				= 258,	SQUE_KEY_BACKSPACE		= 259,	SQUE_KEY_INSERT				= 260,	SQUE_KEY_DELETE				= 261,		
+	SQUE_KEY_ARROW_RIGHT		= 262,	SQUE_KEY_ARROW_LEFT		= 263,	SQUE_KEY_ARROW_DOWN			= 264,	SQUE_KEY_ARROW_UP			= 265,		
+	SQUE_KEY_PAGE_UP			= 266,	SQUE_KEY_PAGE_DOWN		= 267,	SQUE_KEY_HOME				= 268,	SQUE_KEY_END				= 269,		
+	SQUE_KEY_CAPS_LOCK			= 281,	SQUE_KEY_SCROLL_LOCK	= 281,	SQUE_KEY_NUM_LOCK			= 282,	SQUE_KEY_PRINT_SCREEN		= 283,		
+	SQUE_KEY_PAUSE				= 284,	SQUE_KEY_F1				= 290,	SQUE_KEY_F2					= 291,	SQUE_KEY_F3					= 292,		
+	SQUE_KEY_F4					= 293,	SQUE_KEY_F5				= 294,	SQUE_KEY_F6					= 295,	SQUE_KEY_F7					= 296,		
+	SQUE_KEY_F8					= 297,	SQUE_KEY_F9				= 298,	SQUE_KEY_F10				= 299,	SQUE_KEY_F11				= 300,		
+	SQUE_KEY_F12				= 301,	SQUE_KEY_F13			= 302,	SQUE_KEY_F14				= 303,	SQUE_KEY_F15				= 304,		
+	SQUE_KEY_F16				= 305,	SQUE_KEY_F17			= 306,	SQUE_KEY_F18				= 307,	SQUE_KEY_F19				= 308,		
+	SQUE_KEY_F20				= 309,	SQUE_KEY_F21			= 310,	SQUE_KEY_F22				= 311,	SQUE_KEY_F23				= 312,		
+	SQUE_KEY_F24				= 313,	SQUE_KEY_F25			= 314,	SQUE_KEY_KEYPAD_1			= 320,	SQUE_KEY_KEYPAD_2			= 321,		
+	SQUE_KEY_KEYPAD_3			= 322,	SQUE_KEY_KEYPAD_4		= 323,	SQUE_KEY_KEYPAD_5			= 324,	SQUE_KEY_KEYPAD_6			= 325,		
+	SQUE_KEY_KEYPAD_7			= 326,	SQUE_KEY_KEYPAD_8		= 327,	SQUE_KEY_KEYPAD_9			= 328,	SQUE_KEY_KEYPAD_DECIMAL		= 329,		
+	SQUE_KEY_KEYPAD_DIVIDE		= 331,	SQUE_KEY_KEYPAD_MULT	= 332,	SQUE_KEY_KEYPAD_SUBTRACT	= 333,	SQUE_KEY_KEYPAD_ADD			= 334,		
+	SQUE_KEY_KEYPAD_ENTER		= 335,	SQUE_KEY_KEYPAD_EQUAL	= 336,	SQUE_KEY_LEFT_SHIFT			= 340,	SQUE_KEY_LEFT_CTRL			= 341,		
+	SQUE_KEY_LEFT_ALT			= 342,	SQUE_KEY_LEFT_SUPER		= 343,	SQUE_KEY_RIGHT_SHIFT		= 344,	SQUE_KEY_RIGHT_CTRL			= 345,		
+	SQUE_KEY_RIGHT_ALT			= 347,	SQUE_KEY_RIGHT_SUPER	= 348,																			
 	// 66 keys here																														
 	// EXTENDED ASCII CHARACTERS																										
 																																		
@@ -323,7 +323,7 @@ SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(bool show);
 															
 // Usage / Utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(bool show);
-SQ_API SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Gesture& g);
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g);
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_EvalGesture();
 
 // Setters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -489,15 +489,28 @@ typedef struct SQUE_TexAttrib
 {
 	// Constructors / Destructor
 	SQ_API SQUE_TexAttrib();
-	SQ_API SQUE_TexAttrib(int32_t parameter_id, int32_t var_type, void* data);
+	SQ_API SQUE_TexAttrib(int32_t parameter_id, void* data);
+	SQ_API ~SQUE_TexAttrib();
+
 	// Variables
 	int32_t id;
-	int32_t var_type;
-	void* data;
-
-	// Usage Functions																															
+	void* data;																														
 
 } SQUE_TexAttrib;
+
+typedef struct SQUE_TexAttribIndex
+{
+	uint32_t id = -1;
+
+	uint32_t int_start = -1;
+	uint32_t int_end = -1;
+	uint16_t int_last = 0;
+
+	uint32_t float_start = -1;
+	uint32_t float_end = -1;
+	uint16_t float_last = 0;
+
+} SQUE_TexAttribIndex;
 
 typedef struct SQUE_Texture2D
 {
@@ -513,17 +526,10 @@ typedef struct SQUE_Texture2D
 	uint16_t var_size;
 	int32_t w, h;
 	int32_t channel_num;
-	void* pixels;
-	std::vector<SQUE_TexAttrib*> attributes;
 
-	// Usage Functions	
-	SQ_API void SetParameter(SQUE_TexAttrib* tex_attrib = NULL);
-	SQ_API void ApplyParameters();
-
-	SQ_API void CleanUp();
+	uint32_t tex_attrib_ref;
 
 } SQUE_Texture2D;
-
 
 // SQUE_Texture3D??...																													
 typedef struct SQUE_Texture3D
@@ -535,6 +541,14 @@ typedef struct SQUE_Texture3D
 
 	// Cp[y from SQUE_Texture2D																												
 } SQUE_Texture3D;
+
+SQ_API void SQUE_TEXTURES_DeclareTextureInts(const uint32_t tex_id, const uint16_t num_parameters);
+SQ_API void SQUE_TEXTURES_DeclareTextureFloats(const uint32_t tex, const uint16_t num_parameters);
+SQ_API void SQUE_TEXTURES_DeclareTextureWide(const uint32_t tex_id, const uint16_t num_parameters);
+
+SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddIntParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
+SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddFloatParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -580,22 +594,22 @@ SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
 SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
 
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_GenerateMeshBuffer(uint32_t& vert_id, uint32_t& index_id, uint32_t& attrib_obj);
-SQ_API void SQUE_BindMeshBuffer(const uint32_t vert_id = 0, const uint32_t index_id = 0, const uint32_t attrib_obj = 0);
+SQ_API void SQUE_RENDER_GenerateMeshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj);
+SQ_API void SQUE_RENDER_BindMeshBuffer(const uint32_t vert_id = 0, const uint32_t index_id = 0, const uint32_t attrib_obj = 0);
 SQ_API void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
-SQ_API void SQUE_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
+SQ_API void SQUE_RENDER_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
+SQ_API void SQUE_RENDER_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_SetTextureParameters(const SQUE_Texture2D& tex, const SQUE_TexAttrib& attr);
+SQ_API void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref);
 // Overload for Texture3D or at some point try to go back to C?
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_GenTextureData(SQUE_Texture2D* tex);
-SQ_API void SQUE_BindTexture(const SQUE_Texture2D& tex);
-SQ_API void SQUE_SetActiveTextureUnit(int32_t unit);
-SQ_API void SQUE_SendTextureToGPU(const SQUE_Texture2D& tex, int32_t mipmap_level = 0);
+SQ_API void SQUE_RENDER_GenTextureData(uint32_t* texid);
+SQ_API void SQUE_RENDER_BindTex2D(const uint32_t texture_id);
+SQ_API void SQUE_RENDER_SetActiveTextureUnit(int32_t unit);
+SQ_API void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t mipmap_level = 0);
 
 SQ_API void SQUE_RENDER_ActiveTexture(int32_t texture_id);
 SQ_API void SQUE_RENDER_BindExternalTexture(int tex_type, uint32_t id);
@@ -604,7 +618,7 @@ SQ_API void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id)
 // Shader Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Shader Program Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_CreateProgram(SQUE_Program* prog);
+SQ_API void SQUE_RENDER_CreateProgram(uint32_t* program_id);
 SQ_API void SQUE_RENDER_LinkProgram(const uint32_t program_id);
 SQ_API void SQUE_RENDER_UseProgram(const uint32_t program_id);
 

@@ -311,7 +311,7 @@ void SQUE_INPUT_DisplaySoftwareKeyboard(bool show)
 #endif
 }
 
-SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(SQUE_Gesture& g)
+SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
 {
     // Evaluate what the pointer has done during the time it was tracked
     int16_t delta_x = g.end_x - g.start_x;

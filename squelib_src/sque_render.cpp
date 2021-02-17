@@ -212,16 +212,16 @@ void SQUE_RENDER_SetViewport(int x, int y, int w, int h)
 // DATA MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_GenerateMeshBuffer(uint32_t& vert_id, uint32_t& index_id, uint32_t& attrib_obj)
+void SQUE_RENDER_GenerateMeshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenBuffers(1, &vert_id);
-    glGenBuffers(1, &index_id);
-    glGenVertexArrays(1, &attrib_obj);
+    glGenBuffers(1, vert_id);
+    glGenBuffers(1, index_id);
+    glGenVertexArrays(1, attrib_obj);
 #endif
 }
 
-void SQUE_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id, const uint32_t attrib_obj)
+void SQUE_RENDER_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id, const uint32_t attrib_obj)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindVertexArray(attrib_obj);
@@ -233,7 +233,7 @@ void SQUE_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id, const 
 void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
 {
     int buffer_size = SQUE_MESHES_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
-    SQUE_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
+    SQUE_RENDER_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, mesh.draw_mode);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
@@ -247,7 +247,7 @@ void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indi
 // VERTEX ATTRIBUTE MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr)
+void SQUE_RENDER_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     attr->id = glGetAttribLocation(prog.id, attr->name);
@@ -260,7 +260,7 @@ void SQUE_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_s
 #endif
 }
 
-void SQUE_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr)
+void SQUE_RENDER_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr)
 {
 
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
@@ -277,49 +277,54 @@ void SQUE_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib&
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+extern std::vector<SQUE_TexAttrib> int_parameters;
+extern std::vector<SQUE_TexAttrib> float_parameters;
+extern std::vector<SQUE_TexAttribIndex> tex_parameters_index;
 
-void SQUE_SetTextureParameters(const SQUE_Texture2D& tex, const SQUE_TexAttrib& attr)
+void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref)
 {
-    if (tex.id < 1 || attr.var_type < 0 || attr.id == UINT32_MAX || attr.data == NULL)
-        return;
+    // Have to bind previously the texture
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    if (attr.var_type == SQUE_FLOAT)
-        glTexParameterfv(SQUE_TEXTURE_2D, attr.id, (const float*)attr.data);
-    else
-        glTexParameteriv(SQUE_TEXTURE_2D, attr.id, (const int32_t*)attr.data);
+    SQUE_TexAttribIndex& ind = tex_parameters_index[tex_attrib_ref-1];
+    uint32_t int_s = ind.int_start + ind.int_last;
+    uint32_t float_s = ind.float_start + ind.float_last;
+    for (uint32_t i = ind.int_start; i < int_s; ++i)
+        glTexParameteriv(SQUE_TEXTURE_2D, int_parameters[i].id, (const int32_t*)int_parameters[i].data);
+    for (uint32_t i = ind.float_start; i < float_s; ++i)
+        glTexParameterfv(SQUE_TEXTURE_2D, float_parameters[i].id, (const float*)float_parameters[i].data);
 #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE MANAGEMENT ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SQUE_GenTextureData(SQUE_Texture2D* tex)
+void SQUE_RENDER_GenTextureData(uint32_t* tex_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenTextures(1, &tex->id);
+    glGenTextures(1, tex_id);
 #endif
 }
 
-void SQUE_BindTexture(const SQUE_Texture2D& tex)
+void SQUE_RENDER_BindTex2D(const uint32_t texture_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindTexture(GL_TEXTURE_2D, tex.id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
 #endif
 }
 
-void SQUE_SetActiveTextureUnit(int32_t unit)
+void SQUE_RENDER_SetActiveTextureUnit(int32_t unit)
 {
 #if defined(USE_OPENGL) | defined(USE_OPENGLES)
     glActiveTexture(unit);
 #endif
 }
 
-void SQUE_SendTextureToGPU(const SQUE_Texture2D& tex, int32_t mipmap_level)
+void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t mipmap_level)
 {
+    SQUE_RENDER_BindTex2D(tex.id);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindTexture(GL_TEXTURE_2D, tex.id);
     // TODO: read about texture border, uses...
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, tex.format, tex.w, tex.h, 0, tex.format, tex.var_type, tex.pixels);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, tex.format, tex.w, tex.h, 0, tex.format, tex.var_type, pixels);
 #endif
 }
 
@@ -345,10 +350,10 @@ void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id)
 // SHADER PROGRAM MANAGEMENT /////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_CreateProgram(SQUE_Program* prog)
+void SQUE_RENDER_CreateProgram(uint32_t* program_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    prog->id = glCreateProgram();
+    *program_id = glCreateProgram();
 #endif
 }
 
@@ -374,7 +379,7 @@ void SQUE_RENDER_UseProgram(const uint32_t program_id)
 void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices, int32_t count)
 {
     count = (count < 0) ? mesh.num_index : count;
-    SQUE_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
+    SQUE_RENDER_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glDrawElements(mesh.draw_config, count, mesh.index_var, (void*)(mesh.index_var_size * offset_indices));
 #else

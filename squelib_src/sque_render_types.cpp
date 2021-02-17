@@ -110,12 +110,12 @@ void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const
     }
     index.vert_size = vert_size;
 
-    SQUE_BindMeshBuffer(vert_id, ind_id, attr_obj);
+    SQUE_RENDER_BindMeshBuffer(vert_id, ind_id, attr_obj);
 
     for (uint32_t i = index.start_attrib; i < last; ++i)
     {
         vertex_attributes[i].id = i-index.start_attrib;
-        SQUE_EnableBufferAttribute(vert_size, vertex_attributes[i]);
+        SQUE_RENDER_EnableBufferAttribute(vert_size, vertex_attributes[i]);
     }
 }
 
@@ -149,7 +149,7 @@ uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char* name)
     return 0;
 }
 
-// TODO - Both here and uniforms, functions to move out/free memory from the vectors
+// TODO - Reference based Templated Dynamic Array
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,11 +161,14 @@ uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char* name)
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SQUE_TexAttrib::SQUE_TexAttrib() : id(0),   var_type(0),    data(NULL)
+SQUE_TexAttrib::SQUE_TexAttrib() : id(0), data(NULL)
 {}
 
-SQUE_TexAttrib::SQUE_TexAttrib(int32_t parameter_id, int32_t var_type_, void* data_) :
-    id(parameter_id),   var_type(var_type_),    data(data_)
+SQUE_TexAttrib::SQUE_TexAttrib(int32_t parameter_id, void* data_) :
+    id(parameter_id), data(data_)
+{}
+
+SQUE_TexAttrib::~SQUE_TexAttrib()
 {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,45 +178,79 @@ SQUE_TexAttrib::SQUE_TexAttrib(int32_t parameter_id, int32_t var_type_, void* da
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SQUE_Texture2D::SQUE_Texture2D() : id(UINT32_MAX),    format(0),  var_type(SQUE_FLOAT),    var_size(4),
-    w(0),   h(0),   channel_num(0),  pixels(NULL)
+    w(0),   h(0),   channel_num(0)
 {}
 
 SQUE_Texture2D::SQUE_Texture2D(int32_t format_, int32_t var_type_) : id(UINT32_MAX),    format(format_),  
-    var_type(var_type_),    w(0),   h(0),   channel_num(0),  pixels(NULL)
+    var_type(var_type_),    w(0),   h(0),   channel_num(0)
 {
     var_size = SQUE_VarGetSize(var_type);
 }
-SQUE_Texture2D::~SQUE_Texture2D() {CleanUp();}
+SQUE_Texture2D::~SQUE_Texture2D() {/*free from gpu*/}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::vector<SQUE_TexAttrib> int_parameters;
+std::vector<SQUE_TexAttrib> float_parameters;
+std::vector<SQUE_TexAttribIndex> tex_parameters_index;
 
-void SQUE_Texture2D::SetParameter(SQUE_TexAttrib* attr)
+void SQUE_TEXTURES_DeclareTextureInts(const uint32_t tex_id, const uint16_t num_parameters)
 {
-    if (attr == NULL) return;
-    uint16_t size = attributes.size();
-    for(int i = 0; i < size; ++i)
-    {
-        if (attributes[i]->id == attr->id)
-        {
-            delete attributes[i];
-            attributes[i] = attr;
-            return;
-        }
-    }
-    attributes.push_back(attr);
+    int cap = tex_parameters_index.size() - 1;
+    if (cap < tex_id) tex_parameters_index.resize(tex_id + 50);
+
+    SQUE_TexAttribIndex& t = tex_parameters_index[tex_id - 1];
+    t.int_start = int_parameters.size();
+    t.int_end = t.int_start + num_parameters - 1;
+    t.int_last = 0;
+
+    int_parameters.resize(t.int_start + num_parameters);
 }
 
-void SQUE_Texture2D::ApplyParameters()
+void SQUE_TEXTURES_DeclareTextureFloats(const uint32_t tex_id, const uint16_t num_parameters)
 {
-    SQUE_BindTexture(*this);
-    uint16_t size = attributes.size();
-    for(int i = 0; i < size; ++i)
-        SQUE_SetTextureParameters(*this, *attributes[i]);
+    int cap = tex_parameters_index.size() - 1;
+    if (cap < tex_id) tex_parameters_index.resize(tex_id + 50);
+
+    SQUE_TexAttribIndex& t = tex_parameters_index[tex_id -1];
+    t.float_start = float_parameters.size();
+    t.float_end = t.float_start + num_parameters - 1;
+    t.float_last = 0;
+
+    float_parameters.resize(t.float_start + num_parameters);
 }
 
-void SQUE_Texture2D::CleanUp()
+void SQUE_TEXTURES_DeclareTextureWide(const uint32_t tex_id, const uint16_t num_parameters)
 {
-    // TODO: Texture CleanUp
+    int cap = tex_parameters_index.size() - 1;
+    if (cap < (int32_t)tex_id) 
+        tex_parameters_index.resize(tex_id + 50);
+    SQUE_TexAttribIndex& t = tex_parameters_index[tex_id - 1];
+    t.id = tex_id;
+    
+    t.int_start = int_parameters.size();
+    t.int_end = t.int_start + num_parameters - 1;
+    t.int_last = 0;
+    t.float_start = float_parameters.size();
+    t.float_end = t.float_start + num_parameters - 1;
+    t.float_last = 0;
+    int_parameters.resize(t.int_start + num_parameters);
+    float_parameters.resize(t.float_start + num_parameters);
+}
+
+SQUE_TexAttrib* SQUE_TEXTURES_AddIntParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
+{
+    SQUE_TexAttribIndex& t = tex_parameters_index[tex_attrib_ref-1];
+    int_parameters[t.int_start + t.int_last] = tex_attrib;
+    ++t.int_last;
+    return &int_parameters[t.int_start + t.int_last - 1];
+}
+
+SQUE_TexAttrib* SQUE_TEXTURES_AddFloatParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
+{
+    SQUE_TexAttribIndex& t = tex_parameters_index[tex_attrib_ref-1];
+    float_parameters[t.float_start + t.float_last] = tex_attrib;
+    ++t.float_last;
+    return &float_parameters[t.float_start + t.float_last - 1];
 }
