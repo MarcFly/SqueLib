@@ -69,6 +69,15 @@ const char* rect_frag =
     "uniform vec3 col;\n"
     "void main(){FragColor = vec4(col,1.);}\0";
 
+void CheckResizeScreen(int32_t sizex, int32_t sizey, Ball& b, Paddle& p1, Paddle& p2)
+{
+    if (p1.x != sizex / 40.)
+    {
+        p1.x = sizex / 40.;
+        p2.x = sizex - sizex / 40.;
+    }
+}   
+
 void InitParams(Ball& b, Paddle& p1, Paddle& p2)
 {
 // BALL
@@ -87,8 +96,8 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_MESHES_SetDrawConfig(b.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
 
     
-    SQUE_GenerateMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
-    SQUE_BindMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
+    SQUE_RENDER_GenerateMeshBuffer(&b.rect.vert_id, &b.rect.index_id, &b.rect.attribute_object);
+    SQUE_RENDER_BindMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
     SQUE_MESHES_DeclareAttributes(b.rect.vert_id, b.rect.attrib_ref, 1);
     SQUE_MESHES_AddAttribute(b.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_MESHES_CalcVertSize(b.rect.attrib_ref);
@@ -105,8 +114,8 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_MESHES_SetDrawConfig(p1.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
 
     
-    SQUE_GenerateMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
-    SQUE_BindMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
+    SQUE_RENDER_GenerateMeshBuffer(&p1.rect.vert_id, &p1.rect.index_id, &p1.rect.attribute_object);
+    SQUE_RENDER_BindMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
     SQUE_MESHES_DeclareAttributes(p1.rect.vert_id, p1.rect.attrib_ref, 1);
     SQUE_MESHES_AddAttribute(p1.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_MESHES_CalcVertSize(p1.rect.attrib_ref);
@@ -123,8 +132,8 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_MESHES_SetDrawConfig(p2.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
 
     
-    SQUE_GenerateMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
-    SQUE_BindMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
+    SQUE_RENDER_GenerateMeshBuffer(&p2.rect.vert_id, &p2.rect.index_id, &p2.rect.attribute_object);
+    SQUE_RENDER_BindMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
     SQUE_MESHES_DeclareAttributes(p2.rect.vert_id, p2.rect.attrib_ref, 1);
     SQUE_MESHES_AddAttribute(p2.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
     SQUE_MESHES_CalcVertSize(p2.rect.attrib_ref);
@@ -146,8 +155,8 @@ char* easy_concat(const char* s1, const char* s2)
 
 void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 {
-    SQUE_RENDER_CreateProgram(b_p);
-    SQUE_RENDER_CreateProgram(p_p);
+    SQUE_RENDER_CreateProgram(&b_p->id);
+    SQUE_RENDER_CreateProgram(&p_p->id);
 
     const char* glsl = SQUE_RENDER_GetGLSLVer();
     std::string vert_source(easy_concat(glsl, vert_shader));
@@ -283,7 +292,7 @@ void MovePaddles(Paddle& p1, Paddle& p2)
 
 int main(int argc, char** argv)
 {
-    SQUE_LIB_Init("SquePong", NULL);
+    SQUE_LIB_Init("SquePong");
     InitGLDebug();
     SQUE_DISPLAY_SetVSYNC(0);
     SQUE_INPUT_SetMouseButtonCallback(0, ActivePointerCallback);
@@ -336,6 +345,7 @@ int main(int argc, char** argv)
         SQUE_RENDER_UseProgram(ball_program.id);
         int vx, vy;
         SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
+        CheckResizeScreen(vx, vy, ball, player1, player2);
         SQUE_DISPLAY_MakeContextMain(0);
 
         float y = vy;

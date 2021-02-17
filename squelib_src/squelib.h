@@ -640,11 +640,6 @@ SQ_API void InitGLDebug();
 //  i don't like having to inlcude std::stirng..........
 #include <string>
 
-enum SQUE_Assets
-{
-	
-};
-
 typedef struct SQUE_Dir
 {
 	SQUE_Dir* parent;
@@ -657,7 +652,6 @@ typedef struct SQUE_Dir
 
 typedef struct SQUE_Asset
 {
-	uint16_t type;
 	int64_t size;
 	char* raw_data;
 }	SQUE_Asset;
@@ -680,6 +674,7 @@ SQ_API SQUE_Asset* SQUE_FS_GetAssetRaw(SQUE_Dir* start_dir, const char* file);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SQ_API bool SQUE_LOAD_Texture(SQUE_Asset* tex_bytes, SQUE_Texture2D* texture);
-SQ_API void SQUE_SAVE_Texture(SQUE_Texture2D* texture);
+SQ_API void SQUE_FREE_Texture(SQUE_Asset* tex_bytes);
+//SQ_API void SQUE_SAVE_Texture(SQUE_Texture2D* texture);
 
 #endif // _SQUE_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
