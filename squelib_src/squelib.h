@@ -54,6 +54,7 @@
 #include <sque_remap_macros.h>																											
 #include <sque_simple_types.h>																											
 #include <stdint.h>
+#include <cstring>
 // Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
 #include<glm.hpp>
 // Initialization / State Control //////////////////////////////////////////////////////////////////////////////////////////////////////

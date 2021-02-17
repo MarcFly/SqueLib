@@ -334,8 +334,8 @@ void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h)
     w = mode->width;
     h = mode->height;
 #elif defined(USE_EGL)
-    w = sque_windows[0]->width;
-    h = sque_windows[0]->height;
+    w = sque_windows[0].width;
+    h = sque_windows[0].height;
 #endif
 }
 

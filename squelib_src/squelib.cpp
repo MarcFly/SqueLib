@@ -54,7 +54,7 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         else
         {
             SQUE_PRINT(SQUE_LogType::LT_INFO, "SQUE_LIB RE-INIT");
-            SQUE_LIB_Init("", NULL); // Way to remember flags and app name
+            SQUE_LIB_Init(""); // Way to remember flags and app name
             SQUE_DISPLAY_UpdateNativeWindowSize(0);
             on_resume_callback();
             have_resumed = true;

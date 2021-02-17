@@ -1,6 +1,7 @@
 #include <squelib.h>
 #include <math.h>
 #include <cmath>
+#include <cstring>
 
 bool on_background = false;
 void OnResume()
@@ -99,7 +100,8 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_RENDER_GenerateMeshBuffer(&b.rect.vert_id, &b.rect.index_id, &b.rect.attribute_object);
     SQUE_RENDER_BindMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
     SQUE_MESHES_DeclareAttributes(b.rect.vert_id, b.rect.attrib_ref, 1);
-    SQUE_MESHES_AddAttribute(b.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_VertAttrib vertPos("vertPos", SQUE_FLOAT, false, 2);
+    SQUE_MESHES_AddAttribute(b.rect.attrib_ref, vertPos);
     SQUE_MESHES_CalcVertSize(b.rect.attrib_ref);
     SQUE_RENDER_SendMeshToGPU(b.rect, quad, quad_indices);
     SQUE_MESHES_SetLocations(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object, b.rect.attrib_ref);
@@ -117,7 +119,8 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_RENDER_GenerateMeshBuffer(&p1.rect.vert_id, &p1.rect.index_id, &p1.rect.attribute_object);
     SQUE_RENDER_BindMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
     SQUE_MESHES_DeclareAttributes(p1.rect.vert_id, p1.rect.attrib_ref, 1);
-    SQUE_MESHES_AddAttribute(p1.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+
+    SQUE_MESHES_AddAttribute(p1.rect.attrib_ref, vertPos);
     SQUE_MESHES_CalcVertSize(p1.rect.attrib_ref);
     SQUE_RENDER_SendMeshToGPU(p1.rect, quad, quad_indices);
     SQUE_MESHES_SetLocations(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object, p1.rect.attrib_ref);
@@ -135,7 +138,7 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     SQUE_RENDER_GenerateMeshBuffer(&p2.rect.vert_id, &p2.rect.index_id, &p2.rect.attribute_object);
     SQUE_RENDER_BindMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
     SQUE_MESHES_DeclareAttributes(p2.rect.vert_id, p2.rect.attrib_ref, 1);
-    SQUE_MESHES_AddAttribute(p2.rect.attrib_ref, SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESHES_AddAttribute(p2.rect.attrib_ref, vertPos);
     SQUE_MESHES_CalcVertSize(p2.rect.attrib_ref);
     SQUE_RENDER_SendMeshToGPU(p2.rect, quad, quad_indices);
     SQUE_MESHES_SetLocations(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object, p2.rect.attrib_ref);
@@ -293,6 +296,9 @@ void MovePaddles(Paddle& p1, Paddle& p2)
 int main(int argc, char** argv)
 {
     SQUE_LIB_Init("SquePong");
+
+    SQUE_AddOnGoBackgroundCallback(OnGoBackground);
+    SQUE_AddOnResumeCallback(OnResume);
     InitGLDebug();
     SQUE_DISPLAY_SetVSYNC(0);
     SQUE_INPUT_SetMouseButtonCallback(0, ActivePointerCallback);
