@@ -253,7 +253,7 @@ void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* f
 
 void SQUE_ConsolePrint(int lt, const char* log)
 {
-#if defined(_WIN32) && defined(_DEBUG)
+#if defined(_WIN32) //&& defined(_DEBUG)
     OutputDebugString(log);
     OutputDebugString("\n");
 #elif defined ANDROID

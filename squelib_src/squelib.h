@@ -646,9 +646,9 @@ typedef struct SQUE_Dir
 	SQUE_Dir* parent;
 	std::vector<SQUE_Dir*> children;
 
-	const char* name;
-
+	char name[256];
 	char* native_dir_data;
+
 } SQUE_Dir;
 
 typedef struct SQUE_Asset
@@ -666,9 +666,7 @@ SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data);
 
 // Permission safe functions
 SQ_API SQUE_Dir* SQUE_FS_CreateBaseDirTree();
-SQ_API void SQUE_FS_UpdateTree(SQUE_Dir* root);
-SQ_API SQUE_Dir* SQUE_FS_GetDirInTree(SQUE_Dir* root, const char* leaf);
-SQ_API SQUE_Asset* SQUE_FS_GetAssetRaw(SQUE_Dir* start_dir, const char* file);
+SQ_API SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOAD/SAVE ASSETS ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

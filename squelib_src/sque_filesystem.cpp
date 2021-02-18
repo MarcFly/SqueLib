@@ -135,16 +135,16 @@ SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 	ret->name = "raw";
 	ret->native_dir_data = (char*)AAssetManager_openDir(my_app->activity->assetManager, ret->name);
 	int dirs = 1;
-	while(dirs)
+	while (dirs)
 	{
 		const char* name = AAssetDir_getNextFileName((AAssetDir*)ret->native_dir_data);
 		SQUE_PRINT(LT_INFO, " %s", name);
-		if(name == NULL)
+		if (name == NULL)
 			break;
 		else
 		{
 			AAssetDir* dir = AAssetManager_openDir(my_app->activity->assetManager, name);
-			if(dir != NULL)
+			if (dir != NULL)
 			{
 				SQUE_Dir* branch = new SQUE_Dir();
 				branch->name = name;
@@ -157,22 +157,14 @@ SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 		}
 	}
 #else
-	ret->name = SQUE_FS_GetExecPath().c_str();
+	std::string main_path = SQUE_FS_GetExecPath();
+	memcpy(ret->name, main_path.c_str(), main_path.length() + 1);
+
 #endif
 	return ret;
 }
 
-void SQUE_FS_UpdateTree(SQUE_Dir* root)
-{
-
-}
-
-SQUE_Dir* SQUE_FS_GetDirInTree(SQUE_Dir* root, const char* leaf)
-{
-	return NULL;
-}
-
-SQUE_Asset* SQUE_FS_GetAssetRaw(SQUE_Dir* start_dir, const char* file)
+SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 {
 	SQUE_Asset* ret = NULL;
 #if defined(ANDROID)
@@ -193,7 +185,6 @@ SQUE_Asset* SQUE_FS_GetAssetRaw(SQUE_Dir* start_dir, const char* file)
 		ret = NULL;
 	}
 #else
-	// Here I should construct path from main path then load raw file, for now, it will do LoadFileRaw with exec path
 	std::string dir = SQUE_FS_GetExecPath() + FOLDER_ENDING + file;
 	ret = SQUE_FS_LoadFileRaw(dir.c_str());
 #endif
