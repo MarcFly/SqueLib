@@ -12,9 +12,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
-project(All_Example     VERSION 2020.1
-                        DESCRIPTION "Multiplatform C++ Engine"
-                        LANGUAGES C CXX)
+project(SquePong    VERSION 2020.1
+                    DESCRIPTION "Multiplatform C++ Engine"
+                    LANGUAGES C CXX)
 # C/CXX Requirements
 set(CMAKE_CXX_STANDARD 17) # Currently using <filesystem> for easy output and folder creation
 # Probably I can downgrade to C++11 because most new things I don't really use with thought into it

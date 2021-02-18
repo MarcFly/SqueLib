@@ -332,7 +332,7 @@ void ImGui_ImplSqueLib_Init()
 	}
 	
     ImGuiIO &io = ImGui::GetIO();
-	io.Fonts->AddFontDefault();
+
     // Init KeyMap
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
     io.KeyMap[ImGuiKey_Tab] = SQUE_KEY_TAB;                     
@@ -354,14 +354,6 @@ void ImGui_ImplSqueLib_Init()
 	io.KeyMap[ImGuiKey_X] = SQUE_KEY_UPPER_X;
 	io.KeyMap[ImGuiKey_Y] = SQUE_KEY_UPPER_Y;
 	io.KeyMap[ImGuiKey_Z] = SQUE_KEY_UPPER_Z;
-
-    // Init Scale Based on DPI (have to tune it)
-    uint16_t dpi = SQUE_DISPLAY_GetDPIDensity();
-	uint16_t w, h; SQUE_DISPLAY_GetMainDisplaySize(w, h);
-	uint16_t bigger = (w > h) ? w : h;
-	float scale = (bigger / dpi)/2.3f;
-	io.FontGlobalScale = scale;
-	if(!init_registered) ImGui::GetStyle().ScaleAllSizes(scale);
 
     // BackendFlags and things...
     //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
