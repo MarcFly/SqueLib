@@ -277,9 +277,9 @@ void SQUE_RENDER_EnableBufferAttribute(const uint16_t vert_size, const SQUE_Vert
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-extern std::vector<SQUE_TexAttrib> int_parameters;
-extern std::vector<SQUE_TexAttrib> float_parameters;
-extern std::vector<SQUE_TexAttribIndex> tex_parameters_index;
+extern sque_vec<SQUE_TexAttrib> int_parameters;
+extern sque_vec<SQUE_TexAttrib> float_parameters;
+extern sque_vec<SQUE_TexAttribIndex> tex_parameters_index;
 
 void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref)
 {

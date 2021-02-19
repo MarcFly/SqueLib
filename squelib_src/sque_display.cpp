@@ -8,7 +8,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <vector>
 #include <mutex>
 
 struct SQUE_Window
@@ -22,7 +21,7 @@ struct SQUE_Window
 };
 
 static std::mutex display_mtx;
-std::vector<SQUE_Window> sque_windows;
+sque_vec<SQUE_Window> sque_windows;
 SQUE_Window* next_window = NULL;
 static uint16_t main_window_context = UINT16_MAX;
 int monitor_count;
@@ -83,7 +82,7 @@ static int32_t const def_buffer_options[] =
 #   include <GLFW/glfw3.h>
 #   include <GLFW/glfw3native.h>
     GLFWmonitor** glfw_monitors;
-    std::vector<GLFWwindow*> glfw_windows;
+    sque_vec<GLFWwindow*> glfw_windows;
     
     void GLFW_ErrorCallback(int error_code, const char* description)
     {
@@ -288,7 +287,6 @@ void SQUE_DISPLAY_Close()
     glfwTerminate();
 #endif
     sque_windows.clear();
-    sque_windows.shrink_to_fit();
 }
 
 void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val)

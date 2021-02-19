@@ -61,8 +61,8 @@ void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t ind
 }
 
 // LOCATIONS AND VERTEX ATTRIBUTES ///////////////////////////////////////////////////////////////////////
-std::vector<SQUE_VertAttrib> vertex_attributes;
-std::vector<SQUE_VertAttribIndex> mesh_attributes_index;
+sque_vec<SQUE_VertAttrib> vertex_attributes;
+sque_vec<SQUE_VertAttribIndex> mesh_attributes_index;
 int32_t last = 0;
 
 void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs)
@@ -191,42 +191,35 @@ SQUE_Texture2D::~SQUE_Texture2D() {/*free from gpu*/}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::vector<SQUE_TexAttrib> int_parameters;
-std::vector<SQUE_TexAttrib> float_parameters;
-std::vector<SQUE_TexAttribIndex> tex_parameters_index;
+sque_vec<SQUE_TexAttrib> int_parameters;
+sque_vec<SQUE_TexAttrib> float_parameters;
+sque_vec<SQUE_TexAttribIndex> tex_parameters_index;
 
 void SQUE_TEXTURES_DeclareTextureInts(const uint32_t tex_id, const uint16_t num_parameters)
 {
-    int cap = tex_parameters_index.size() - 1;
-    if (cap < tex_id) tex_parameters_index.resize(tex_id + 50);
-
-    SQUE_TexAttribIndex& t = tex_parameters_index[tex_id - 1];
+    SQUE_TexAttribIndex t;
     t.int_start = int_parameters.size();
     t.int_end = t.int_start + num_parameters - 1;
     t.int_last = 0;
 
     int_parameters.resize(t.int_start + num_parameters);
+    tex_parameters_index.push_back(t);
 }
 
 void SQUE_TEXTURES_DeclareTextureFloats(const uint32_t tex_id, const uint16_t num_parameters)
 {
-    int cap = tex_parameters_index.size() - 1;
-    if (cap < tex_id) tex_parameters_index.resize(tex_id + 50);
-
-    SQUE_TexAttribIndex& t = tex_parameters_index[tex_id -1];
+    SQUE_TexAttribIndex t;
     t.float_start = float_parameters.size();
     t.float_end = t.float_start + num_parameters - 1;
     t.float_last = 0;
 
     float_parameters.resize(t.float_start + num_parameters);
+    tex_parameters_index.push_back(t);
 }
 
 void SQUE_TEXTURES_DeclareTextureWide(const uint32_t tex_id, const uint16_t num_parameters)
 {
-    int cap = tex_parameters_index.size() - 1;
-    if (cap < (int32_t)tex_id) 
-        tex_parameters_index.resize(tex_id + 50);
-    SQUE_TexAttribIndex& t = tex_parameters_index[tex_id - 1];
+    SQUE_TexAttribIndex t;
     t.id = tex_id;
     
     t.int_start = int_parameters.size();
@@ -237,6 +230,8 @@ void SQUE_TEXTURES_DeclareTextureWide(const uint32_t tex_id, const uint16_t num_
     t.float_last = 0;
     int_parameters.resize(t.int_start + num_parameters);
     float_parameters.resize(t.float_start + num_parameters);
+
+    tex_parameters_index.push_back(t);
 }
 
 SQUE_TexAttrib* SQUE_TEXTURES_AddIntParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)

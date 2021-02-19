@@ -109,7 +109,7 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 #if defined(USE_GLFW)
 
 #include <GLFW/glfw3.h>
-extern std::vector<GLFWwindow*> glfw_windows;
+extern sque_vec<GLFWwindow*> glfw_windows;
 
 static void GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {

@@ -52,7 +52,8 @@
 
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <sque_remap_macros.h>																											
-#include <sque_simple_types.h>																											
+#include <sque_simple_types.h>
+#include <sque_vector.h>																											
 #include <stdint.h>
 #include <cstring>
 // Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
@@ -439,7 +440,6 @@ typedef struct SQUE_VertAttribIndex
 	uint16_t vert_size;
 };
 
-#include <vector> 																														
 // Maybe Swap to a custom array handler for specific sizes																				
 // I want to have afast search on less than 100 objects, probably a full array is good enough	
 typedef struct SQUE_Mesh
@@ -644,7 +644,7 @@ SQ_API void InitGLDebug();
 typedef struct SQUE_Dir
 {
 	SQUE_Dir* parent;
-	std::vector<SQUE_Dir*> children;
+	sque_vec<SQUE_Dir*> children;
 
 	char name[256];
 	char* native_dir_data;
