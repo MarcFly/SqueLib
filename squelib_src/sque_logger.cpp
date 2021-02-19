@@ -6,20 +6,17 @@
 #   include "squelib.h"
 #endif
 
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <mutex>
 #include <unordered_map>
-#include <vector>
 
 typedef std::pair<int, SQUE_Log> PairLOG;
 static std::mutex _mtx;
 static std::unordered_map<std::string, int> Push_LogKeys;
 static std::unordered_map<int, std::string*> Get_LogKeys;
-static std::vector<PairLOG> logs;
+static sque_vec<PairLOG> logs;
 static bool DUMPDATA = true;
 
 #include <ctime>
@@ -27,16 +24,6 @@ static bool DUMPDATA = true;
 #include <fstream>
 #include <algorithm>
 #include <cstring>
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PLATFORM SPECIFICS ////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef ANDROID
-#   include <filesystem> // Will probably be superseeded by squelib import/export/read/write
-#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE MANAGEMENT ///////////////////////////////////////////////////////////////////
@@ -104,11 +91,8 @@ void SQUE_LOGGER_Log(SQUE_LogType lt, const char file[], int line, const char* f
 void SQUE_LOGGER_DumpData()
 {
     // Replace by how asset manager does it
-#ifndef ANDROID
-    std::filesystem::create_directory("Logs");
-#else
+    SQUE_FS_CreateDirRelative("Logs");
 
-#endif
     std::time_t current = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     std::string filename("./Logs/");

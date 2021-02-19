@@ -233,7 +233,6 @@ void SQUE_RENDER_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id,
 void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
 {
     int buffer_size = SQUE_MESHES_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
-    SQUE_RENDER_BindMeshBuffer(mesh.vert_id, mesh.index_id, mesh.attribute_object);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, mesh.draw_mode);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
@@ -321,7 +320,6 @@ void SQUE_RENDER_SetActiveTextureUnit(int32_t unit)
 
 void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t mipmap_level)
 {
-    SQUE_RENDER_BindTex2D(tex.id);
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     // TODO: read about texture border, uses...
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, tex.format, tex.w, tex.h, 0, tex.format, tex.var_type, pixels);

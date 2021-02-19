@@ -63,13 +63,9 @@ void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t ind
 // LOCATIONS AND VERTEX ATTRIBUTES ///////////////////////////////////////////////////////////////////////
 sque_vec<SQUE_VertAttrib> vertex_attributes;
 sque_vec<SQUE_VertAttribIndex> mesh_attributes_index;
-int32_t last = 0;
 
 void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs)
 {
-    int32_t cap = mesh_attributes_index.size() - 1;
-    if (cap < last) mesh_attributes_index.resize(cap + 1 + 50);
-
     SQUE_VertAttribIndex index;
     index.id = vert_id;
     vertex_attributes.resize(vertex_attributes.size() + num_attribs);
@@ -77,16 +73,13 @@ void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, u
     index.end_attrib = index.start_attrib + num_attribs - 1;
     index.last = 0;
     
-    mesh_attributes_index[last] = index;
-    attrib_ref = last;
-    last++;
-    
+    mesh_attributes_index.push_back(index);
+    attrib_ref = mesh_attributes_index.size();
 }
 
 SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attr)
 {
-    SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref];
-    //++index.last;
+    SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
     return &(vertex_attributes[index.start_attrib + index.last++] = attr);
 }
 
@@ -99,7 +92,7 @@ SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAtt
 
 void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const int32_t attr_obj, const int32_t attrib_ref)
 {
-    SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref];
+    SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
     uint32_t last = index.start_attrib + index.last;
 
     uint16_t vert_size = 0;
@@ -109,8 +102,6 @@ void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const
         vert_size += vertex_attributes[i].var_size * vertex_attributes[i].num_comp;
     }
     index.vert_size = vert_size;
-
-    SQUE_RENDER_BindMeshBuffer(vert_id, ind_id, attr_obj);
 
     for (uint32_t i = index.start_attrib; i < last; ++i)
     {
@@ -134,7 +125,7 @@ uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref)
 
 uint16_t SQUE_MESHES_GetVertSize(const uint32_t attrib_ref)
 {
-    return mesh_attributes_index[attrib_ref].vert_size;
+    return mesh_attributes_index[attrib_ref-1].vert_size;
 }
 
 uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char* name)

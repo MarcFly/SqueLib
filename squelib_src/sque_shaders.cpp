@@ -69,10 +69,8 @@ void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id)
 sque_vec<SQUE_Uniform> uniforms;
 sque_vec<SQUE_ProgramUniforms> programs;
 
-void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms)
+void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id, const uint32_t num_uniforms)
 {
-    int cap = programs.size() - 1; 
-    if(cap < program_id) programs.resize(program_id+50);
     SQUE_ProgramUniforms p;
     p.id = program_id;
     
@@ -81,18 +79,18 @@ void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms)
     uniforms.resize(p.start_uniform + num_uniforms);
 
     programs.push_back(p);
+    uniform_ref = programs.size();
 }
 
-int32_t SQUE_SHADERS_DeclareUniform(int32_t program_id, const char* name)
+int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const int32_t program_id, const char* name)
 {
-    SQUE_ProgramUniforms& p = programs[program_id-1];
+    SQUE_ProgramUniforms& p = programs[uniform_ref -1];
 
-    SQUE_Uniform uni;
+    SQUE_Uniform& uni = uniforms[p.start_uniform + p.last];
     memcpy(uni.name, name, strlen(name));
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     uni.id = glGetUniformLocation(program_id, uni.name);
 #endif
-    uniforms[p.start_uniform + p.last] = uni;
     ++p.last;
 
     return uni.id;
@@ -211,9 +209,9 @@ void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[])
 }
 
 #include <cstring>
-int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t program_id, const char* name)
+int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t uniform_ref, const char* name)
 {
-    SQUE_ProgramUniforms& p = programs[program_id-1];
+    SQUE_ProgramUniforms& p = programs[uniform_ref-1];
 
     uint32_t last = p.start_uniform + p.last;
     for (int i = p.start_uniform; i < last; ++i)

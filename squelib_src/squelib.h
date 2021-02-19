@@ -74,6 +74,8 @@ SQ_API int SQUE_VarGetSize(int type_macro);
 SQ_API void SQUE_ConsolePrint(int lt, const char* log);
 SQ_API void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...);
 #define SQUE_PRINT(LogType, format,...) SQ_MACRO SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)				
+SQ_API uint32_t SQUE_RNG();
+
 
 // Permissions /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API int SQUE_AskPermissions(const char* permission_name);
@@ -378,8 +380,8 @@ typedef struct SQUE_ProgramUniforms
 	uint16_t last = 0;
 } SQUE_ProgramUniforms;
 
-SQ_API void SQUE_SHADERS_DeclareProgram(int32_t program_id, uint32_t num_uniforms = 10);
-SQ_API int32_t SQUE_SHADERS_DeclareUniform(int32_t program_id, const char* uniform_name);
+SQ_API void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id, const uint32_t num_uniforms = 10);
+SQ_API int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const int32_t program_id, const char* uniform_name);
 
 typedef struct SQUE_Program
 {
@@ -389,6 +391,7 @@ typedef struct SQUE_Program
 	// 0 Vertex -> 1 Geometry -> 2 Fragment 
 	// Tesselation and Compute will be added later if I want to and have time to
 	// They require more setup and steps
+	uint32_t uniform_ref;
 } SQUE_Program;
 
 SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, int32_t shader_id, uint32_t type);
@@ -396,7 +399,7 @@ SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required,
 SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
 
 // Usage Functions
-SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(uint32_t program_id, const char* name);
+SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t uniform_ref, const char* name);
 
 SQ_API void SetBool		(const int32_t uniform_id, bool value);
 SQ_API void SetInt		(const int32_t uniform_id, int32_t value);

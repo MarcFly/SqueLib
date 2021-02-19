@@ -88,8 +88,8 @@ void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_wi
 	};
 
 	SQUE_RENDER_UseProgram(sque_shaderProgram.id);
-	SetInt(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.id, "Texture"), 0);
-	SetMatrix4(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.id, "ProjMtx"), &ortho_projection[0][0]);
+	SetInt(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.uniform_ref, "Texture"), 0);
+	SetMatrix4(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.uniform_ref, "ProjMtx"), &ortho_projection[0][0]);
 }
 
 void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
@@ -106,6 +106,7 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 	ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
 	ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
+	SQUE_RENDER_BindMeshBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
 	for (int i = 0; i < draw_data->CmdListsCount; ++i)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
@@ -153,6 +154,7 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
 	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
 	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
+	SQUE_RENDER_BindMeshBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
 	SQUE_MESHES_SetLocations(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object, sque_dataHandle.attrib_ref);
 
 	sque_backupState.SetUp();
@@ -190,10 +192,10 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_fragShader.id, sque_fragShader.type);
 
 	SQUE_RENDER_LinkProgram(sque_shaderProgram.id);
-
-	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2);
-	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.id, "Texture");
-	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.id, "ProjMtx");
+	
+	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, 2);
+	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, "Texture");
+	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, "ProjMtx");
 
 	ImGui_ImplSqueLib_PrepareBuffers();
 
