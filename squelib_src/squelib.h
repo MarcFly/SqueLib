@@ -671,6 +671,105 @@ SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data);
 SQ_API SQUE_Dir* SQUE_FS_CreateBaseDirTree();
 SQ_API SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file);
 
+// OpenDDL style Serialization
+enum OPENDDL_IDS : class uint8_t
+{
+	b = 0,
+	i8, i16, i32, i64,
+	u8, u16, u32, u64,
+	f16, f32, f64,
+	string, ref, type, base64,
+	uid, strct,
+}
+
+// BruteForce Serialization
+class SQUE_OutStream
+{
+	char* _data = NULL;
+	uint64_t _capacity = 0;
+	uint64_t _size = 0;
+
+	static void copyRange(char* begin, char* end, char* dest)
+    {
+        while (begin != end)
+        {
+            new((void*)dest) T(*begin); // new ((convert to void*)at pointer dest) Value<T>(copy from *begin)
+            ++dest;
+            ++begin;
+        } // Why this in loop (guess it can be vectorized instead of single operation memcpy and then delete
+    }
+
+	static void deleteRange(char* begin, char* end)
+    {
+        while (begin != end)
+        {
+            begin->~T();
+            ++begin;
+        }
+    }
+
+	void reallocate(uint32_t new_capacity)
+    {
+        char* new_data = allocate(new_capacity);
+        copyRange(_data, _data + _size, new_data);
+        deleteRange(_data, _data + _size);
+        free(_data);
+        _data = new_data;
+        _capacity = new_capacity;
+    }
+
+public:
+	uint64_t GetSize() const {return _size;}
+	uint64_t GetCurrWritePos() const {return __writepos_n;}
+	
+	template<class T>
+	void WriteBytesAt(const T* from, uint32_t num_items = 1, uint64_t at = _size)
+	{
+		uint64_t end_write = at+sizeof(T)*num_items;
+		if(_capacity < end_write) reallocate(end_write*2);
+		memcpy(&_data[at], from, sizeof(T)*num_items);
+		if(at+sizeof(T)*num_items > _size) _size = end_write;
+	}
+
+	template<class T>
+	void WriteBytes(const T* from, uint32_t num_items = 1)
+	{
+		uint64_t end_write = _size+sizeof(T)*num_items;
+		if(_capacity < end_write) reallocate(end_write*2);
+		memcpy(&_data[_size], from, sizeof(T)*num_items);
+		_size = end_write;
+	}
+}
+
+class SQUE_InStream
+{
+	SQUE_Asset* _data;
+
+	char*  _readpos;
+	uint64_t _readpos_n;
+
+	
+	SQUE_InStream(SQUE_Asset* asset) : _data(asset), _readpos(asset.data), _readpos_n(0) {};
+	~SQUE_InStream() {delete _data; _readpos = NULL;}
+public:
+	uint64_t GetSize() const {return _data.size;};
+	uint64_t GetReadPos() const {return _readpos_n;}
+
+	void AttachAsset(SQUE_Asset* asset) { _data = asset; _readpos = _data.data; _readpos_n = 0;}
+	
+	template<class T>
+	void ReadBytesAt(T* to, uint32_t num_items, uint64_t at)
+	{
+		memcpy(to, &_data.data[at], num_items*sizeof(T));
+	}
+
+	template<class T>
+	void ReadBytes(T* to, uint32_t num_items)
+	{
+		memcpy(to, &_data.data[_readpos_n], num_items*sizeof(T));
+		_readpos_n+=num_items*sizeof(T);
+	}
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOAD/SAVE ASSETS ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

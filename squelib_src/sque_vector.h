@@ -51,6 +51,7 @@ class sque_vec
         _data = new_data;
         _capacity = new_capacity;
     }
+    
     static void constructRange(T* begin, T* end)
     {
         while (begin != end)
@@ -107,8 +108,8 @@ public:
     
     T& operator[] (uint32_t index) { return _data[index]; };
     //const T& operator[](uint32_t index) { return _data[index]; } const;
-    T* first() const { return _data; }
-    T* last() const { return _data + _size; }
+    T* begin() const { return _data; }
+    T* end() const { return _data + _size; }
     uint32_t size() { return _size; }
 
     void push_back(const T& value)
