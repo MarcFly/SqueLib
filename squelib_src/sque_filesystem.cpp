@@ -36,17 +36,18 @@
 // Return a const char* to a char* works, but does generate memory leak if untreated
 // Should I make my own easy string to return these types?
 // Should I use std::string?
-std::string SQUE_FS_GetExecPath()
+const char* SQUE_FS_GetExecPath()
 {
-	std::string ret;
+	char* ret = NULL;
 	char path[256];
 	int len = 0;
 #if defined(_WIN32)
 	len = GetModuleFileNameA(NULL, path, 256);
 	std::string exec_path(path);
 	std::string exe = strrchr(path, FE);
-	size_t v = exec_path.find(exe);
-	ret = exec_path.substr(0, exec_path.length() - exe.length());
+	exec_path = exec_path.substr(0, exec_path.length() - exe.length());
+	ret = new char[exec_path.length()+1];
+	memcpy(ret, exec_path.c_str(), exec_path.length()+1);
 #elif defined(ANDROID)
 #elif defined(__linux__)
 	int32_t pid = getpid();
@@ -55,6 +56,7 @@ std::string SQUE_FS_GetExecPath()
 	len = readlink("/proc/self/exe", path, 256);
 	ret = dirname(path);
 #endif
+
 	return ret;
 }
 
@@ -75,7 +77,7 @@ bool SQUE_FS_CreateDirFullPath(const char* path)
 bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 {
 	bool ret = true;
-	std::string exec_path = SQUE_FS_GetExecPath() + FOLDER_ENDING + path;
+	std::string exec_path = std::string(SQUE_FS_GetExecPath()) + FOLDER_ENDING + path;
 	
 
 	SQUE_FS_CreateDirFullPath(exec_path.c_str());
@@ -185,8 +187,10 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 		ret = NULL;
 	}
 #else
-	std::string dir = SQUE_FS_GetExecPath() + FOLDER_ENDING + file;
-	ret = SQUE_FS_LoadFileRaw(dir.c_str());
+	char* sprint_v;
+	int len = sprintf(sprint_v, "%s/%s", SQUE_FS_GetExecPath(), file);
+	ret = SQUE_FS_LoadFileRaw(sprint_v);
+	delete sprint_v;
 #endif
 
 	return ret;

@@ -3,7 +3,8 @@
 #else
 #   include "squelib.h"
 #endif
-// #define ANDROID //tests
+#include <list>
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13,7 +14,6 @@ KeyCallback key_fun = DebugKey;
 SQUE_Key keyboard[MAX_KEYS];
 void DebugMouseFloatCallback(float x, float y) { /*SQUE_PRINT(LT_INFO, "Pointer %.2f,%.2f", x, y);*/ }
 
-#include <list> // i don't like including libraries, but will do until I have a proven easier alternative
 std::list<int> char_buffer;
 
 float scrollx = INT32_MAX, scrolly = INT32_MAX;

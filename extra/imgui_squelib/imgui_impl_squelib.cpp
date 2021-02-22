@@ -1,7 +1,7 @@
-#include "imgui_impl_squelib.h"
-
-#include <squelib.h>
 #include <stdint.h>
+#include <squelib.h>
+
+#include "imgui_impl_squelib.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VAR DEFS //////////////////////////////////////////////////////////////////////////////////////////////
@@ -381,7 +381,6 @@ void ImGui_ImplSqueLib_Shutdown()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->TexID = 0;
-	//sque_shaderProgram.CleanUp();
 
 	delete sque_fontPixels;
 

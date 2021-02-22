@@ -238,7 +238,7 @@ void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* f
     va_start(ap, format);
     int len = vsnprintf(tmp, 1, format, ap) + 1;
     va_end(ap);
-    delete tmp;
+    delete[] tmp;
 
     tmp = new char[len];
     va_start(ap, format);
@@ -251,8 +251,8 @@ void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* f
 
     SQUE_ConsolePrint((int)lt, print);
 
-    delete tmp;
-    delete print;
+    delete[] tmp;
+    delete[] print;
 }
 
 void SQUE_ConsolePrint(int lt, const char* log)
