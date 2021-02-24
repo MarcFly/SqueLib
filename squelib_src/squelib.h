@@ -661,7 +661,7 @@ SQ_API void SQUE_RENDER_BindRenderBuffer(const uint32_t& renderbuffer_id);
 SQ_API void SQUE_RENDER_RenderBufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
 SQ_API void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
 SQ_API void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
-SQ_API void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t[] attachments, const uint32_t size = 1);
+SQ_API void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
 SQ_API void SQUE_RENDER_FramebufferCheckStatus();
 
 

@@ -212,7 +212,7 @@ void SQUE_RENDER_SetViewport(int x, int y, int w, int h)
 // DATA MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_eshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj)
+void SQUE_RENDER_GenerateMeshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGenBuffers(1, vert_id);
@@ -450,7 +450,7 @@ void InitGLDebug()
 // FRAMEBUFFER ///////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_GenFramebuffer(uint32_& framebuffer_id)
+void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGenFramebuffers(1, &framebuffer_id);
@@ -466,12 +466,12 @@ void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id)
 
 void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id)
 {
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenRendebuffers(GL_RENDERBUFFER, &renderbuffer_id);    
+#if defined(USE_OPENGL) || defined(USE_OPENGL)
+    glGenRenderbuffers(1, &renderbuffer_id);    
 #endif
 }
 
-void SQUE_RENDER_BindRenderbuffer(const uin32_t& renderbuffer_id)
+void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_id);
@@ -488,18 +488,18 @@ void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, 
 void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glFramebufferRenderBuffer(GL_FRAMEBUFFER, attachment_type, GL_RENDERBUFFER, attachment_id);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_type, GL_RENDERBUFFER, attachment_id);
 #endif
 }
 
-void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uin32_t texture_id, const uint32_t mipmap_level)
+void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment, texture_id, mipmap_level);
 #endif
 }
 
-void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t[] attachments, const uint32_t size);
+void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glDrawBuffers(size, attachments);
