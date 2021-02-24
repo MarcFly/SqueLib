@@ -611,6 +611,7 @@ SQ_API void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref);
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_GenTextureData(uint32_t* texid);
+SQ_API void SQUE_RENDER_GenTextureMipmaps(const uint32_t texture_type); // Have ot Bind before using this
 SQ_API void SQUE_RENDER_BindTex2D(const uint32_t texture_id);
 SQ_API void SQUE_RENDER_SetActiveTextureUnit(int32_t unit);
 SQ_API void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t mipmap_level = 0);
@@ -636,7 +637,34 @@ SQ_API void SQUE_RENDER_CheckProgramLog(const uint32_t program_id);
 SQ_API void CheckForRenderErrors(const char* file, int line);
 SQ_API void InitGLDebug();
 #define SQUE_CHECK_RENDER_ERRORS() SQ_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
-			
+
+// FRAMEBUFFER MANAGEMENT //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct SQUE_Framebuffer
+{
+	uint32_t id;
+	int32_t type; // Read, Write, Default
+
+	uint32_t width, height;
+
+	uint32_t depth_buffer_id;
+	int32_t depth_type;
+
+	uint32_t stencil_buffer_id;
+	int32_t stencil_type;
+
+	sque_vec<SQUE_Texture2D> textures;
+};
+SQ_API void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id);
+SQ_API void SQUE_RENDER_BindFrameBuffer(const int32_t& type, const uint32_t& id);
+SQ_API void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id);
+SQ_API void SQUE_RENDER_BindRenderBuffer(const uint32_t& renderbuffer_id);
+SQ_API void SQUE_RENDER_RenderBufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
+SQ_API void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
+SQ_API void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
+SQ_API void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t[] attachments, const uint32_t size = 1);
+SQ_API void SQUE_RENDER_FramebufferCheckStatus();
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FILESYSTEM //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

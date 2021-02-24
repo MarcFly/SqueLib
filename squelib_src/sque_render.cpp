@@ -212,7 +212,7 @@ void SQUE_RENDER_SetViewport(int x, int y, int w, int h)
 // DATA MANAGEMENT ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_GenerateMeshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj)
+void SQUE_RENDER_eshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGenBuffers(1, vert_id);
@@ -301,6 +301,13 @@ void SQUE_RENDER_GenTextureData(uint32_t* tex_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGenTextures(1, tex_id);
+#endif
+}
+
+void SQUE_RENDER_GenTetxureData(const uint32_t texture_type)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glGenerateMipmap(texture_type);
 #endif
 }
 
@@ -438,3 +445,98 @@ void InitGLDebug()
 void InitGLDebug()
 {}
 #endif
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// FRAMEBUFFER ///////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SQUE_RENDER_GenFramebuffer(uint32_& framebuffer_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glGenFramebuffers(1, &framebuffer_id);
+#endif
+}
+
+void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindFramebuffer(type, id);
+#endif
+}
+
+void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glGenRendebuffers(GL_RENDERBUFFER, &renderbuffer_id);    
+#endif
+}
+
+void SQUE_RENDER_BindRenderbuffer(const uin32_t& renderbuffer_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_id);
+#endif
+}
+
+void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glRenderbufferStorage(GL_RENDERBUFFER, type, width, height);
+#endif
+}
+
+void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glFramebufferRenderBuffer(GL_FRAMEBUFFER, attachment_type, GL_RENDERBUFFER, attachment_id);
+#endif
+}
+
+void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uin32_t texture_id, const uint32_t mipmap_level)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment, texture_id, mipmap_level);
+#endif
+}
+
+void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t[] attachments, const uint32_t size);
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glDrawBuffers(size, attachments);
+#endif
+}
+
+void SQUE_RENDER_FramebufferCheckStatus()
+{
+    bool fb_status;
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    fb_status = (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE);
+        
+#endif
+    if(!fb_status) SQUE_CHECK_RENDER_ERRORS();
+}
+
+/*
+void Test2()
+{
+    // Bind Framebuffer
+    // call to Viewport to set where you are rendering
+    // glViewport(0,0, textuerWidth, textureHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the texture because it was dirty last frame
+    // glDrawIndices / glDrawArrays / ...
+
+    // set to the required framebuffer again
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glViewport(...)
+    glClear()...
+    glBindTexture(GL_TEXTURE_2D, renderetTexture);
+    glDraw(...) // Basically you can call setup/backup before doing render pipeline and on end render pipeline
+    // thens(...)
+     setup adn will render to expected!
+    // You can generate mipmaps after if it is NEEDED!
+    // glGenMipMap
+    // could also just pick the previous...
+    GLint prevFB;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevFB);
+}
+*/
