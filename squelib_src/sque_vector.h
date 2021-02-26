@@ -8,10 +8,11 @@ class sque_vec
     uint32_t _size;
     uint32_t _capacity;
 
+    uint32_t _populated;
     uint32_t* _empty_data;
     uint32_t _empty_size;
     uint32_t _empty_capacity;
-    
+
     static T* allocate(uint32_t size)
     {
         return (T*)malloc(sizeof(T) * size);
@@ -51,7 +52,7 @@ class sque_vec
         _data = new_data;
         _capacity = new_capacity;
     }
-    
+
     static void constructRange(T* begin, T* end)
     {
         while (begin != end)
@@ -93,6 +94,7 @@ public:
     {
         _size = 0;
         _capacity = 0;
+        _populated = 0;
         _empty_size = 0;
         _empty_capacity = 0;
         _data = nullptr;
@@ -105,15 +107,17 @@ public:
         deleteRangeU(_empty_data, _empty_data + _empty_size);
         free(_empty_data);
     }
-    
+
     T& operator[] (uint32_t index) { return _data[index]; };
-    //const T& operator[](uint32_t index) { return _data[index]; } const;
     T* begin() const { return _data; }
     T* end() const { return _data + _size; }
-    uint32_t size() { return _size; }
+    uint32_t size() const { return _size; }
+    uint32_t populated() const { return _populated; }
 
     void push_back(const T& value)
     {
+        ++_populated;
+
         if (_size != _capacity) // Capacity does nto need increase, fastes possible
         {
             new((void*)(_data + _size)) T(value);
@@ -130,17 +134,23 @@ public:
         free(_data);
         _data = new_data;
         ++_size;
+        
     }
 
-    bool try_insert(const T& value)
+    uint32_t try_insert(const T& value)
     {
-        if (_empty_size > 0)
+        uint32_t ret;
+        if (_empty_size == 0)
         {
-            new((void*)(_data + _empty_data[_empty_size-- - 1])) T(value);
-            return true;
+            push_back(value);
+            return (_size - 1);
         }
-        push_back(value);
-        return false;
+
+        ret = _empty_data[_empty_size-- - 1];
+        new((void*)(_data + ret)) T(value);
+        ++_populated;
+        return ret;
+        
     }
 
     void free_index(uint32_t index)
@@ -150,6 +160,7 @@ public:
         {
             new((uint32_t*)(_empty_data + _empty_size)) uint32_t(index);
             ++_empty_size;
+            --_populated;
             return;
         }
         _empty_capacity = _empty_capacity * 2 + 1;
