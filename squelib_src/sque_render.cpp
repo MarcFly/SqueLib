@@ -516,6 +516,19 @@ void SQUE_RENDER_FramebufferCheckStatus()
     if(!fb_status) SQUE_CHECK_RENDER_ERRORS();
 }
 
+void SQUE_RENDER_FramebufferDelete(uint32_t framebuffer_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glDeleteFramebuffers(1, &framebuffer_id);
+#endif
+}
+
+void SQUE_RENDER_RenderbufferDelete(uint32_t renderbuffer_id)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glDeleteRenderbuffers(1, &renderbuffer_id);
+#endif
+}
 /*
 void Test2()
 {
