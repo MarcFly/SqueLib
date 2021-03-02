@@ -37,7 +37,7 @@ class sque_vec
     {
         while (begin != end)
         {
-            new((void*)dest) T(*begin); // new ((convert to void*)at pointer dest) Value<T>(copy from *begin)
+            new((void*)dest) uint32_t(*begin); // new ((convert to void*)at pointer dest) Value<T>(copy from *begin)
             ++dest;
             ++begin;
         } // Why this in loop (guess it can be vectorized instead of single operation memcpy and then delete
@@ -97,15 +97,38 @@ public:
         _populated = 0;
         _empty_size = 0;
         _empty_capacity = 0;
-        _data = nullptr;
-        _empty_data = nullptr;
+        _data = NULL;
+        _empty_data = NULL;
     }
+
+    sque_vec(const sque_vec<T>& cpy_vec)
+    {
+        _size = cpy_vec._size;
+        _capacity = cpy_vec._capacity;
+        _populated = cpy_vec._populated;
+        _empty_size = cpy_vec._empty_size;
+        _empty_capacity = cpy_vec._empty_capacity;
+
+        _data = allocate(_capacity);
+        copyRange(cpy_vec._data, cpy_vec._data + _size, _data);
+
+        _empty_data = allocateU(_empty_size);
+        copyRangeU(cpy_vec._empty_data, cpy_vec._empty_data + _empty_size, _empty_data);
+    }
+
     ~sque_vec()
     {
-        deleteRange(_data, _data + _size);
+        if (_capacity > 0) deleteRange(_data, _data + _size);
         free(_data);
-        deleteRangeU(_empty_data, _empty_data + _empty_size);
+
+        if (_empty_capacity > 0) deleteRangeU(_empty_data, _empty_data + _empty_size);
         free(_empty_data);
+
+        _capacity = 0;
+        _data = NULL;
+
+        _empty_capacity = 0;
+        _empty_data = NULL;
     }
 
     T& operator[] (uint32_t index) { return _data[index]; };
@@ -130,7 +153,7 @@ public:
         copyRange(_data, _data + _size, new_data);
         new((void*)(new_data + _size)) T(value);
         deleteRange(_data, _data + _size);
-        _data = nullptr;
+        //_data = nullptr;
         free(_data);
         _data = new_data;
         ++_size;
