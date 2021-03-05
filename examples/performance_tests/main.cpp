@@ -261,7 +261,7 @@ void TestVecWrap()
 
 int main(int argc, char** argv)
 {
-    LoggingPerformance();
+    //LoggingPerformance();
     TimerPerformance();
     
     Resize_VS_Reserve();

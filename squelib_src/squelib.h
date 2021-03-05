@@ -117,11 +117,11 @@ SQ_API void SQUE_LOGGER_DumpData();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TIMER ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-																																		
-#include <atomic>																														
+																																																															
 // Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct SQUE_Timer																												
-{																																		
+class SQUE_Timer																												
+{		
+public:																																
 	SQ_API SQUE_Timer();																													
 																																		
 	SQ_API void Start();																												
@@ -133,7 +133,7 @@ typedef struct SQUE_Timer
 	SQ_API double ReadMicroSec() const;																										
 	SQ_API double ReadNanoSec() const;																										
 																																		
-private:																																
+private:
 	double start_at_ms;																													
 	double start_at_ns;																													
 	double start_at_us;																													
@@ -142,9 +142,9 @@ private:
 	double stop_at_ns;																													
 	double stop_at_us;																													
 																																		
-	std::atomic<bool> is_stopped;																										
-	std::atomic<bool> is_active;																										
-} SQUE_Timer;																															
+	bool is_stopped;																										
+	bool is_active;																										
+};																															
 																																		
 																																		
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,10 +467,6 @@ typedef struct SQUE_Mesh
 	uint16_t num_index = 0;
 	uint32_t index_var = SQUE_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
 	uint16_t index_var_size = 0;
-	
-	
-
-
 } SQUE_Mesh;
 // Usage Functions
 SQ_API void SQUE_MESHES_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
@@ -611,7 +607,7 @@ SQ_API void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref);
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_GenTextureData(uint32_t* texid);
-SQ_API void SQUE_RENDER_GenTextureMipmaps(const uint32_t texture_type); // Have ot Bind before using this
+SQ_API void SQUE_RENDER_GenTextureMipmaps(const uint32_t texture_type); // Have to Bind before using this
 SQ_API void SQUE_RENDER_BindTex2D(const uint32_t texture_id);
 SQ_API void SQUE_RENDER_SetActiveTextureUnit(int32_t unit);
 SQ_API void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t mipmap_level = 0);
@@ -654,11 +650,12 @@ struct SQUE_Framebuffer
 
 	sque_vec<SQUE_Texture2D> textures;
 };
+
 SQ_API void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id);
-SQ_API void SQUE_RENDER_BindFrameBuffer(const int32_t& type, const uint32_t& id);
+SQ_API void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id);
 SQ_API void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id);
-SQ_API void SQUE_RENDER_BindRenderBuffer(const uint32_t& renderbuffer_id);
-SQ_API void SQUE_RENDER_RenderBufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
+SQ_API void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id);
+SQ_API void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
 SQ_API void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
 SQ_API void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
 SQ_API void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
