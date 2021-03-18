@@ -1,0 +1,87 @@
+# SqueLib Development
+
+### Why not use SDL or RayLib?
+
+Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials when supporting major platforms. The approach of this thesis is directly inspired by these libraries but with a research approach to what is required to accomplish their purpose.
+
+When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support, with RayLib getting constant updates and support for more platforms and programming language bindings.
+
+Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for android seem outdated as of the latest releases available for both and more straightforward approaches would help in the development for that platform.
+
+### Libraries Used
+
+An introduction to the library or framework will be provided, as well as the reasons provided for its usage, or lack of it:
+
+#### Rendering Graphics: OpenGL and OpenGLES
+
+OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D raster graphics, targetting the GPU in order to havehardware-accelerated rendering. Initially released in 1992 by Silicon Graphics Inc., it has been receiving first party support until 2017 with the 4.6 release, being developed by the Khronos Group since 2006.
+
+During the coursing of the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most project alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such library that is cross-platform capable for the targetted platforms.
+
+OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targetting other graphics API for Android.
+
+The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL systax the best, allowing for further simplicty in writing a portable OpenGL backend. As it is a cut down version, as well as an older one, there are still some compatibility issues with newest core versions. For that reason, core version 3.3 will be used because the GSLS syntax is the msot similar as well as being the step closest contemporary core OpenGL which I am more familiar with.
+
+The remaining differences between versions will be circumvented as how cross-platform issues should be dealt with, by writing backend specific code.
+
+#### Context Management: EGL and GLFW
+
+In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platfom interface between the Khronos Group rendering APIs and the operating systems windowing systems in order to allow the display of graphics.
+
+The use case in context management for both libraries is to take care of binding of surfaces and buffers to write to, synchronization of the rending with the displays and enibling the accelerating of such operations with the underlying hardware.
+
+GLFW<sub>[#W18]</sub> has more functionalinity in creation of windows and taking care of input, the catch is that it is only available in desktop platforms. EGL is a native library to Android, which creates the first platform divide for taking care of different subsystems.
+
+#### User Input: Android NDK and GLFW
+
+The big issue when handling user input between the proposed platforms is that they are completely different. Android input is touch based and in desktop platforms the keyboard and mosue combo are the msot widely used. They are by no means incompatible but by default there are not many options that take care of them in a similar fashion. It was a clear area where a new approach for cross-platform apprach was needed.
+
+The Android NDK<sub>[#W21]</sub> is the provided API by Google in order to interact with Android devices in native C and C++ code. Most interaction to Android requires calling from Java environments, the NDK provides JNI, a Java Native Interface through which access the native systems. Theses native systems includes the main input system.
+
+GLFW takes care of user input in desktop environments in a per window basis, meaning that you can setup direct access to what the user performs and receive that information when needed in each window created.
+
+#### File Access: Native through C++ STL and Android NDK
+
+When developing games, getting hold of files is pretty straightforward, you have load them into memory and then perform any complicated operations with other methods, the same way to write files to the system. 
+
+On Android subsystems the user does not have direct write access, special permissions are required and as such specific functions are required from the NDK in order to access and write files. In desktop environments, using plain C++ is the most straightforward way alongsides some OS specific provided standard libraries.
+
+The meat of this system is to make it truly platform agnostic to the end user.
+
+
+### Libraries Not Used
+
+It is important to remark that there are many other open-source alternatives to most of the libraries that have been used or will be used for the main subsystems of this project. While the great majority are not covered here, most either could be interchangeable or require a lower level understanding of the required subsystem.
+
+The information on the unused libraries should serve as a brief introduction and simple reasons on why they were not used.
+
+| Graphics APIs | Reason |
+|---|---|
+| Magnum Engine | Unfamiliarity and few entry level documentation |
+| Vulkan | Unfamiliarity and oriented to much lower level programming |
+| Ogre | Unfamiliarity and provides much more features for animation, scene, effects,etc, which are not required, bloating the project initially with higher entry cost |
+| Direct3D/DirectX | Support only for Windows / UWP |
+
+| Context Management | Reason |
+|---|---|
+| WGL | Windows only support |
+| GLEW | Could have been an interchangeable option, but extensions are supported different in Android, incompatible with OpenGLES |
+
+!!! note
+    Most context management libraries take only part in generating the OpenGL context, as they should, leaving mroe work into taking care of managing windows through the native systems on Windows and Linux. Although in Windows that would have been more straightforward, due the high variance between distros, that would have been a great time cost.
+
+
+| Input Libraries | Reason |
+|---|---|
+| Gainput | Outdated Android toolchain, would have had a lot of costs for building on current versions |
+
+!!! note
+    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen in use in recent years although it would be much better and has an Android port but with an outdated toolchain.
+
+# SqueMaker Development
+
+# SqueLib Sample Projects
+
+# SqueMaker Sample Projects
+
+# Conclusions
