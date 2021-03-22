@@ -15,7 +15,7 @@ function processMarkdeepThesisOptions() {
         , titlePage: null
         , fontSize: 10.5
         , pageSize: {width: '21cm', height: '29.7cm'}
-        , pageMargins: {top: '2.5cm', inner: '3.5cm', outer: '2.5cm', bottom: '2.5cm'}
+        , pageMargins: {top: '2.5cm', inner: '2.5cm', outer: '2.5cm', bottom: '2.5cm'}
         , extraBinderyRules: []  // this option is why bindery must be loaded before the options are defined in demo.md.html
         , runningHeader: (p => `${p.number}`)
         , markdeepDiagramScale: 1.0
@@ -319,9 +319,9 @@ function loadBindery() {
                 selector: '.title-page',
                 continue: 'same'
             }),
-            Bindery.PageBreak({ selector: 'h1', position: 'before', continue: 'right' }),
-            Bindery.PageBreak({ selector: '.nonumberh1', position: 'before', continue: 'right' }),
-            Bindery.PageBreak({ selector: 'hr:not(.ignore)', position: 'before', continue: 'right' }),
+            Bindery.PageBreak({ selector: 'h1', position: 'before', continue: 'next' }),
+            Bindery.PageBreak({ selector: '.nonumberh1', position: 'before', continue: 'next' }),
+            Bindery.PageBreak({ selector: 'hr:not(.ignore)', position: 'before', continue: 'next' }),
             Bindery.PageBreak({ selector: '.pagebreak', position: 'before' }),  // just write <span class="pagebreak"></span> to force a page break
             Bindery.PageBreak({ selector: '.image', position: 'avoid'}),  // figures
             Bindery.PageBreak({ selector: '.table', position: 'avoid'}),  // figures
