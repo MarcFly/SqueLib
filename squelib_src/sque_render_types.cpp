@@ -79,6 +79,7 @@ void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, u
 
 SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attr)
 {
+    SQ_ASSERT(attrib_ref <= mesh_attributes_index.size()); // Error if you have not declared previously the attributes of a mesh or are adding more attributes than declared!
     SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
     return &(vertex_attributes[index.start_attrib + index.last++] = attr);
 }
@@ -113,7 +114,7 @@ void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const
 // Getters ///////////////////////////////////////////////////////////////////////////////////////////////
 uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref)
 {
-    SQUE_VertAttribIndex& ind = mesh_attributes_index[attrib_ref];
+    SQUE_VertAttribIndex& ind = mesh_attributes_index[attrib_ref-1];
     ind.vert_size = 0;
     uint32_t last = ind.start_attrib + ind.last;
 

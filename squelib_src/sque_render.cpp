@@ -151,16 +151,19 @@ const char* SQUE_RENDER_GetGLSLVer()
 #if defined(USE_OPENGL) ||defined(USE_OPENGLES)
     char* str = NULL;
     int ver = GLVersion.major * 100 + GLVersion.minor * 10;
-    int16_t size = 16;
+    // +9 #version +3 char num version + 1 space
+    int16_t size = 13;
     if (ver >= 320)
     {        
-        const char* gles = "\n";
+        const char* term = "\n";
 #if defined(USE_OPENGLES)
-        size += 42;
-        gles = " es\nprecision mediump float;\n";
+        term = "es\nprecision mediump float;\n";        
+#else 
+        term = "core\n";
 #endif
+        size += strlen(term);
         str = new char[size];
-        sprintf(str, "#version %d %s", ver, gles);            
+        sprintf(str, "#version %d %s", ver, term);
         ret = str;
     }
     else
@@ -230,16 +233,25 @@ void SQUE_RENDER_BindMeshBuffer(const uint32_t vert_id, const uint32_t index_id,
 #endif
 }
 
-void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
+void SQUE_MESHES_SendVertsToGPU(const SQUE_Mesh& mesh, void* vertices)
 {
     int buffer_size = SQUE_MESHES_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, mesh.draw_mode);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-                mesh.num_index * mesh.index_var_size, 
-                indices, 
-                mesh.draw_mode);
 #endif
+}
+void SQUE_MESHES_SendIndicesToGPU(const SQUE_Mesh& mesh, void* indices)
+{
+#if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.num_index * mesh.index_var_size, indices, mesh.draw_mode);
+#endif
+}
+
+void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
+{
+    SQUE_MESHES_SendVertsToGPU(mesh, vertices);
+    SQUE_CHECK_RENDER_ERRORS();
+    if (indices != NULL) SQUE_MESHES_SendIndicesToGPU(mesh, indices);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

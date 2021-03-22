@@ -1,4 +1,5 @@
 macro(SqueLib_PrepareBuild target OrgName SrcFiles)
+    add_compile_definitions(${CMAKE_BUILD_TYPE})
     if(ToAndroid)
         add_compile_definitions(ANDROID)
         add_library(${target} SHARED "${SrcFiles}")

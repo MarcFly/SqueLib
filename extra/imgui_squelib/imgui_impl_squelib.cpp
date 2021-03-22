@@ -160,7 +160,7 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	sque_backupState.SetUp();
 }
 
-char* easy_concat(const char* s1, const char* s2)
+static char* easy_concat(const char* s1, const char* s2)
 {
 	const size_t len1 = strlen(s1);
 	const size_t len2 = strlen(s2);

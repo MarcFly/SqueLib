@@ -106,7 +106,7 @@ SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 	char* data = NULL;
 	std::ifstream in;
 	in.open(file, std::ios::binary | std::ios::in);
-	if(!in.good()) return NULL;
+	if(!in) return NULL;
 	in.seekg(0, std::ios::end);
 	int len = in.tellg();
 	in.seekg(0, std::ios::beg);
@@ -187,8 +187,14 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 		ret = NULL;
 	}
 #else
-	char* sprint_v;
+	char* sprint_v = new char[256];
 	int len = sprintf(sprint_v, "%s/%s", SQUE_FS_GetExecPath(), file);
+	if (len > 256)
+	{
+		delete sprint_v;
+		sprint_v = new char[len];
+		sprintf(sprint_v, "%s/%s", SQUE_FS_GetExecPath(), file);
+	}
 	ret = SQUE_FS_LoadFileRaw(sprint_v);
 	delete sprint_v;
 #endif

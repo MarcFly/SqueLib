@@ -50,6 +50,14 @@
 #	endif																						
 #endif																																	
 
+
+#if defined(Debug) || defined(_DEBUG)
+#include <assert.h>
+#define SQ_ASSERT(_EXPR) assert(_EXPR)
+#else
+#define SQ_ASSERT(_EXPR)
+#endif
+
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <sque_remap_macros.h>																											
 #include <sque_simple_types.h>
