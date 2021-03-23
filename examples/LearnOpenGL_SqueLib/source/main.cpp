@@ -61,7 +61,7 @@ SQUE_Shader vert_s1;
 SQUE_Shader frag_s1;
 
 
-void LearnOpenGL_1()
+void LearnOpenGL_1_Vertices()
 {
     if(!loaded_ch1)
     {
@@ -82,7 +82,6 @@ void LearnOpenGL_1()
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_s1_file->raw_data, vert_s1_file->size));
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s1_file->raw_data, frag_s1_file->size));
 
-
         SQUE_SHADERS_Generate(vert_s1, SQUE_VERTEX_SHADER);
         SQUE_SHADERS_SetSource(vert_s1.id, vert_source.c_str());
         SQUE_SHADERS_Compile(vert_s1.id);
@@ -101,8 +100,14 @@ void LearnOpenGL_1()
 
         SQUE_SHADERS_FreeFromGPU(vert_s1.id);
         SQUE_SHADERS_FreeFromGPU(frag_s1.id);
+
+        delete vert_s1_file->raw_data;
+        delete vert_s1_file;
+        delete frag_s1_file->raw_data;
+        delete frag_s1_file;
+        loaded_ch1 = true;
     }
-    loaded_ch1 = true;
+    
 
     SQUE_RENDER_UseProgram(triangle_program1.id);
     //SQUE_RENDER_BindMeshBuffer(triangle1.vert_id, triangle1.index_id, triangle1.attribute_object);
@@ -122,7 +127,7 @@ unsigned int indices1[] = {  // note that we start from 0!
 
 SQUE_Mesh quad1;
 static bool loaded_ch1_2 = false;
-void LearnOpenGL_1_2()
+void LearnOpenGL_1_2_Indices()
 {
     if (!loaded_ch1_2)
     {
@@ -140,12 +145,200 @@ void LearnOpenGL_1_2()
         SQUE_RENDER_SendMeshToGPU(quad1, vertices1_2, indices1);
 
         SQUE_CHECK_RENDER_ERRORS();
+        loaded_ch1_2 = true;
     }
-    loaded_ch1_2 = true;
+    
 
     SQUE_RENDER_UseProgram(triangle_program1.id);
     //SQUE_RENDER_BindMeshBuffer(quad1.vert_id, quad1.index_id, quad1.attribute_object);
     SQUE_RENDER_DrawIndices(quad1); // Drawing with indices instead of Vertices
+}
+
+
+// LearnOpenGL_2_Shaders
+static bool loaded_ch2 = false;
+static bool render_ch2 = true;
+SQUE_Mesh triangle2;
+SQUE_Program triangle_program2;
+SQUE_Shader vert_s2;
+SQUE_Shader frag_s2;
+SQUE_Asset* vert_s2_file;
+SQUE_Asset* frag_s2_file;
+void LearnOpenGL_2_Shaders()
+{
+    if (!loaded_ch2)
+    {
+        SQUE_MESHES_SetDrawConfig(triangle2, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+        SQUE_MESHES_SetVertData(triangle2, 3);
+        SQUE_RENDER_GenerateMeshBuffer(&triangle2.vert_id, &triangle2.index_id, &triangle2.attribute_object);
+        SQUE_RENDER_BindMeshBuffer(triangle2.vert_id, triangle2.index_id, triangle2.attribute_object);
+        SQUE_MESHES_DeclareAttributes(triangle2.vert_id, triangle2.attrib_ref, 1);
+        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
+        SQUE_MESHES_AddAttribute(triangle2.attrib_ref, aPos);
+
+        SQUE_MESHES_CalcVertSize(triangle2.attrib_ref);
+        SQUE_MESHES_SetLocations(triangle2.vert_id, triangle2.index_id, triangle2.attribute_object, triangle2.attrib_ref);
+        SQUE_RENDER_SendMeshToGPU(triangle2, vertices1);
+
+        vert_s2_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s2.vert");
+        frag_s2_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s2.frag");
+        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_s2_file->raw_data, vert_s2_file->size));
+        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_file->raw_data, frag_s2_file->size));
+
+        SQUE_SHADERS_Generate(vert_s2, SQUE_VERTEX_SHADER);
+        SQUE_SHADERS_SetSource(vert_s2.id, vert_source.c_str());
+        SQUE_SHADERS_Compile(vert_s2.id);
+
+        SQUE_SHADERS_Generate(frag_s2, SQUE_FRAGMENT_SHADER);
+        SQUE_SHADERS_SetSource(frag_s2.id, frag_source.c_str());
+        SQUE_SHADERS_Compile(frag_s2.id);
+
+        // TODO: Have to Change names so that mesh, is for mesh, program for program,...
+        // Consistency so that things make sense and are easy to find!
+        SQUE_RENDER_CreateProgram(&triangle_program2.id);
+        // Type in attaching could be avoided by passing the whole shader directly, it only holds type and id and needs both
+        SQUE_PROGRAM_AttachShader(triangle_program2, vert_s2.id, vert_s2.type);
+        SQUE_PROGRAM_AttachShader(triangle_program2, frag_s2.id, frag_s2.type);
+        SQUE_RENDER_LinkProgram(triangle_program2.id);
+
+        SQUE_SHADERS_FreeFromGPU(frag_s2.id);
+
+        delete frag_s2_file->raw_data;
+        delete frag_s2_file;
+
+        loaded_ch2 = true;
+    }
+    
+    if (render_ch2)
+    {
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+        SQUE_RENDER_UseProgram(triangle_program2.id);
+        SQUE_RENDER_DrawVertices(triangle2);
+    }
+}
+
+static bool loaded_ch2_2 = false;
+static bool render_ch2_2 = true;
+SQUE_Asset* vert_s3_file;
+SQUE_Asset* frag_s3_file;
+SQUE_Timer timer1;
+SQUE_Program uniform_program1;
+SQUE_Shader frag_uniform_s1;
+
+int32_t ourColor_id;
+void LearnOpenGL_2_2_Uniforms()
+{
+    if (!loaded_ch2_2)
+    {
+        frag_s3_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s3.frag");
+        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s3_file->raw_data, frag_s3_file->size));
+
+        SQUE_SHADERS_Generate(frag_uniform_s1, SQUE_FRAGMENT_SHADER);
+        SQUE_SHADERS_SetSource(frag_uniform_s1.id, frag_source.c_str());
+        SQUE_SHADERS_Compile(frag_uniform_s1.id);
+
+
+        SQUE_RENDER_CreateProgram(&uniform_program1.id);
+        SQUE_PROGRAM_AttachShader(uniform_program1, vert_s2.id, vert_s2.type);
+        SQUE_PROGRAM_AttachShader(uniform_program1, frag_uniform_s1.id, frag_uniform_s1.type);
+        SQUE_RENDER_LinkProgram(uniform_program1.id);
+
+        SQUE_SHADERS_DeclareProgram(uniform_program1.uniform_ref, uniform_program1.id, 1);
+        ourColor_id = SQUE_SHADERS_DeclareUniform(uniform_program1.uniform_ref, uniform_program1.id, "ourColor");
+        // TODO: There should be a function to get the id based on the uniform name, non opengl, but to search own struct...
+
+
+        SQUE_SHADERS_FreeFromGPU(vert_s2.id);
+        delete vert_s2_file->raw_data;
+        delete vert_s2_file;
+
+        timer1.Start();
+        loaded_ch2_2 = true;
+    }
+    if (render_ch2_2)
+    {
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+        float green = (sin(timer1.ReadMilliSec() / 2.f) + .5f);
+        SQUE_RENDER_UseProgram(uniform_program1.id);
+        SetFloat(ourColor_id, green);
+        SQUE_RENDER_DrawVertices(triangle2);
+        SQUE_CHECK_RENDER_ERRORS();
+    }
+}
+
+static bool loaded_ch2_3 = false;
+static bool render_ch2_3 = true;
+
+float vertices2_3[] = {
+    // positions         // colors
+     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
+};
+
+SQUE_Mesh triangle2_3;
+SQUE_Program attribute_program1;
+SQUE_Shader vert_attributes_s1;
+SQUE_Shader frag_attributes_s1;
+SQUE_Asset* vert_attributes_s1_file;
+SQUE_Asset* frag_attributes_s1_file;
+
+void LearnOpenGL_2_3_Attributes()
+{
+    if (!loaded_ch2_3)
+    {
+        SQUE_MESHES_SetDrawConfig(triangle2_3, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+        SQUE_MESHES_SetVertData(triangle2_3, 3);
+        SQUE_RENDER_GenerateMeshBuffer(&triangle2_3.vert_id, &triangle2_3.index_id, &triangle2_3.attribute_object);
+        SQUE_RENDER_BindMeshBuffer(triangle2_3.vert_id, triangle2_3.index_id, triangle2_3.attribute_object);
+        SQUE_MESHES_DeclareAttributes(triangle2_3.vert_id, triangle2_3.attrib_ref, 2); // We setup 2 attributes, Position and Color
+        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
+        SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 3);
+        SQUE_MESHES_AddAttribute(triangle2_3.attrib_ref, aPos);
+        SQUE_MESHES_AddAttribute(triangle2_3.attrib_ref, aCol);
+
+        SQUE_MESHES_CalcVertSize(triangle2_3.attrib_ref);
+        SQUE_MESHES_SetLocations(triangle2_3.vert_id, triangle2_3.index_id, triangle2_3.attribute_object, triangle2_3.attrib_ref);
+        SQUE_RENDER_SendMeshToGPU(triangle2_3, vertices2_3);
+
+        vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s3.vert");
+        frag_attributes_s1_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s4.frag");
+        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_attributes_s1_file->raw_data, vert_attributes_s1_file->size));
+        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_attributes_s1_file->raw_data, frag_attributes_s1_file->size));
+
+        SQUE_SHADERS_Generate(vert_attributes_s1, SQUE_VERTEX_SHADER);
+        SQUE_SHADERS_Generate(frag_attributes_s1, SQUE_FRAGMENT_SHADER);
+
+        SQUE_SHADERS_SetSource(vert_attributes_s1.id, vert_source.c_str());
+        SQUE_SHADERS_SetSource(frag_attributes_s1.id, frag_source.c_str());
+
+        SQUE_SHADERS_Compile(vert_attributes_s1.id);
+        SQUE_SHADERS_Compile(frag_attributes_s1.id);
+
+        SQUE_RENDER_CreateProgram(&attribute_program1.id);
+        SQUE_PROGRAM_AttachShader(attribute_program1, vert_attributes_s1.id, vert_attributes_s1.type);
+        SQUE_PROGRAM_AttachShader(attribute_program1, frag_attributes_s1.id, frag_attributes_s1.type);
+        SQUE_RENDER_LinkProgram(attribute_program1.id);
+
+        SQUE_SHADERS_FreeFromGPU(vert_attributes_s1.id);
+        SQUE_SHADERS_FreeFromGPU(frag_attributes_s1.id);
+
+        delete vert_attributes_s1_file->raw_data;
+        delete vert_attributes_s1_file;
+        delete frag_attributes_s1_file->raw_data;
+        delete frag_attributes_s1_file;
+
+        loaded_ch2_3 = true;
+
+        SQUE_CHECK_RENDER_ERRORS();
+    }
+    if (render_ch2_3)
+    {
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+        SQUE_RENDER_UseProgram(attribute_program1.id);
+        SQUE_RENDER_DrawVertices(triangle2_3);
+        SQUE_CHECK_RENDER_ERRORS();
+    }
 }
 
 int main(int argc, char**argv)
@@ -174,9 +367,14 @@ int main(int argc, char**argv)
             continue;
         }
         {
-            // All LearnOpenGL chapters, each a function
-            LearnOpenGL_1();
-            LearnOpenGL_1_2();
+            // All LearnOpenGL chapters, each has functions per the steps shown
+            // Hello Triangle
+            LearnOpenGL_1_Vertices();
+            LearnOpenGL_1_2_Indices();
+            // Shaders
+            LearnOpenGL_2_Shaders();
+            LearnOpenGL_2_2_Uniforms();
+            LearnOpenGL_2_3_Attributes();
         }
         
         SQUE_DISPLAY_SwapAllBuffers();

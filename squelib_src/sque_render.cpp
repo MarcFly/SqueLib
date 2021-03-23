@@ -407,6 +407,7 @@ void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, int32_t count)
 {
     count = (count == 0) ? mesh.num_verts : count;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
+    glBindVertexArray(mesh.attribute_object);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vert_id);
     glDrawArrays(mesh.draw_config, 0, count);
 #endif
