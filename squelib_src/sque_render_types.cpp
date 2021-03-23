@@ -91,7 +91,7 @@ SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAtt
 //        SQUE_EnableProgramAttribute(program, attributes[i]);
 //}
 
-void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const int32_t attr_obj, const int32_t attrib_ref)
+void SQUE_MESHES_SetLocations(const int32_t attrib_ref)
 {
     SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
     uint32_t last = index.start_attrib + index.last;
@@ -169,12 +169,13 @@ SQUE_TexAttrib::~SQUE_TexAttrib()
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SQUE_Texture2D::SQUE_Texture2D() : id(UINT32_MAX),    format(0),  var_type(SQUE_FLOAT),    var_size(4),
-    w(0),   h(0),   channel_num(0)
+// TODO: Constructors for all or for none, rather go for none (i prefer none and go for C style)
+SQUE_Texture2D::SQUE_Texture2D() : id(UINT32_MAX), use_format(0), data_format(0), var_type(SQUE_FLOAT), 
+var_size(4), w(0), h(0), channel_num(0)
 {}
 
-SQUE_Texture2D::SQUE_Texture2D(int32_t format_, int32_t var_type_) : id(UINT32_MAX),    format(format_),  
-    var_type(var_type_),    w(0),   h(0),   channel_num(0)
+SQUE_Texture2D::SQUE_Texture2D(int32_t format_, int32_t var_type_) : id(UINT32_MAX), use_format(format_),  
+    data_format(format_), var_type(var_type_),    w(0),   h(0),   channel_num(0)
 {
     var_size = SQUE_VarGetSize(var_type);
 }
@@ -183,61 +184,62 @@ SQUE_Texture2D::~SQUE_Texture2D() {/*free from gpu*/}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-sque_vec<SQUE_TexAttrib> int_parameters;
-sque_vec<SQUE_TexAttrib> float_parameters;
-sque_vec<SQUE_TexAttribIndex> tex_parameters_index;
+sque_vec<SQUE_TexAttrib> int_attributes;
+sque_vec<SQUE_TexAttrib> float_attributes;
+sque_vec<SQUE_TexAttribIndex> tex_attributes_index;
 
-void SQUE_TEXTURES_DeclareTextureInts(const uint32_t tex_id, const uint16_t num_parameters)
+void SQUE_TEXTURES_DeclareIntAttributes(const uint32_t tex_id, const uint16_t num_attributes)
 {
     SQUE_TexAttribIndex t;
-    t.int_start = int_parameters.size();
-    t.int_end = t.int_start + num_parameters - 1;
+    t.id = tex_id;
+    t.int_start = int_attributes.size();
+    t.int_end = t.int_start + num_attributes - 1;
     t.int_last = 0;
 
-    int_parameters.resize(t.int_start + num_parameters);
-    tex_parameters_index.push_back(t);
+    int_attributes.resize(t.int_start + num_attributes);
+    tex_attributes_index.push_back(t);
 }
 
-void SQUE_TEXTURES_DeclareTextureFloats(const uint32_t tex_id, const uint16_t num_parameters)
+void SQUE_TEXTURES_DeclareFloatAttributes(const uint32_t tex_id, const uint16_t num_attributes)
 {
     SQUE_TexAttribIndex t;
-    t.float_start = float_parameters.size();
-    t.float_end = t.float_start + num_parameters - 1;
+    t.float_start = float_attributes.size();
+    t.float_end = t.float_start + num_attributes - 1;
     t.float_last = 0;
 
-    float_parameters.resize(t.float_start + num_parameters);
-    tex_parameters_index.push_back(t);
+    float_attributes.resize(t.float_start + num_attributes);
+    tex_attributes_index.push_back(t);
 }
 
-void SQUE_TEXTURES_DeclareTextureWide(const uint32_t tex_id, const uint16_t num_parameters)
+void SQUE_TEXTURES_DeclareAttributesWide(const uint32_t tex_id, const uint16_t num_attributes)
 {
     SQUE_TexAttribIndex t;
     t.id = tex_id;
     
-    t.int_start = int_parameters.size();
-    t.int_end = t.int_start + num_parameters - 1;
+    t.int_start = int_attributes.size();
+    t.int_end = t.int_start + num_attributes - 1;
     t.int_last = 0;
-    t.float_start = float_parameters.size();
-    t.float_end = t.float_start + num_parameters - 1;
+    t.float_start = float_attributes.size();
+    t.float_end = t.float_start + num_attributes - 1;
     t.float_last = 0;
-    int_parameters.resize(t.int_start + num_parameters);
-    float_parameters.resize(t.float_start + num_parameters);
+    int_attributes.resize(t.int_start + num_attributes);
+    float_attributes.resize(t.float_start + num_attributes);
 
-    tex_parameters_index.push_back(t);
+    tex_attributes_index.push_back(t);
 }
 
-SQUE_TexAttrib* SQUE_TEXTURES_AddIntParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
+SQUE_TexAttrib* SQUE_TEXTURES_AddIntAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
 {
-    SQUE_TexAttribIndex& t = tex_parameters_index[tex_attrib_ref-1];
-    int_parameters[t.int_start + t.int_last] = tex_attrib;
+    SQUE_TexAttribIndex& t = tex_attributes_index[tex_attrib_ref-1];
+    int_attributes[t.int_start + t.int_last] = tex_attrib;
     ++t.int_last;
-    return &int_parameters[t.int_start + t.int_last - 1];
+    return &int_attributes[t.int_start + t.int_last - 1];
 }
 
-SQUE_TexAttrib* SQUE_TEXTURES_AddFloatParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
+SQUE_TexAttrib* SQUE_TEXTURES_AddFloatAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
 {
-    SQUE_TexAttribIndex& t = tex_parameters_index[tex_attrib_ref-1];
-    float_parameters[t.float_start + t.float_last] = tex_attrib;
+    SQUE_TexAttribIndex& t = tex_attributes_index[tex_attrib_ref-1];
+    float_attributes[t.float_start + t.float_last] = tex_attrib;
     ++t.float_last;
-    return &float_parameters[t.float_start + t.float_last - 1];
+    return &float_attributes[t.float_start + t.float_last - 1];
 }

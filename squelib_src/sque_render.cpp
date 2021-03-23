@@ -288,21 +288,21 @@ void SQUE_RENDER_EnableBufferAttribute(const uint16_t vert_size, const SQUE_Vert
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-extern sque_vec<SQUE_TexAttrib> int_parameters;
-extern sque_vec<SQUE_TexAttrib> float_parameters;
-extern sque_vec<SQUE_TexAttribIndex> tex_parameters_index;
+extern sque_vec<SQUE_TexAttrib> int_attributes;
+extern sque_vec<SQUE_TexAttrib> float_attributes;
+extern sque_vec<SQUE_TexAttribIndex> tex_attributes_index;
 
-void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref)
+void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref)
 {
     // Have to bind previously the texture
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    SQUE_TexAttribIndex& ind = tex_parameters_index[tex_attrib_ref-1];
+    SQUE_TexAttribIndex& ind = tex_attributes_index[tex_attrib_ref-1];
     uint32_t int_s = ind.int_start + ind.int_last;
     uint32_t float_s = ind.float_start + ind.float_last;
     for (uint32_t i = ind.int_start; i < int_s; ++i)
-        glTexParameteriv(SQUE_TEXTURE_2D, int_parameters[i].id, (const int32_t*)int_parameters[i].data);
+        glTexParameteriv(SQUE_TEXTURE_2D, int_attributes[i].id, (const int32_t*)int_attributes[i].data);
     for (uint32_t i = ind.float_start; i < float_s; ++i)
-        glTexParameterfv(SQUE_TEXTURE_2D, float_parameters[i].id, (const float*)float_parameters[i].data);
+        glTexParameterfv(SQUE_TEXTURE_2D, float_attributes[i].id, (const float*)float_attributes[i].data);
 #endif
 }
 
@@ -341,7 +341,7 @@ void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     // TODO: read about texture border, uses...
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, tex.format, tex.w, tex.h, 0, tex.format, tex.var_type, pixels);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, tex.use_format, tex.w, tex.h, 0, tex.data_format, tex.var_type, pixels);
 #endif
 }
 

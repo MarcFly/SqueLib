@@ -488,7 +488,7 @@ SQ_API uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char*
 
 SQ_API void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs);
 SQ_API SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attrib);
-SQ_API void SQUE_MESHES_SetLocations(const int32_t vert_id, const int32_t ind_id, const int32_t attr_obj, const int32_t attrib_ref);
+SQ_API void SQUE_MESHES_SetLocations(const int32_t attrib_ref);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -510,12 +510,12 @@ typedef struct SQUE_TexAttribIndex
 {
 	uint32_t id = -1;
 
-	uint32_t int_start = -1;
-	uint32_t int_end = -1;
+	uint32_t int_start = 0;
+	uint32_t int_end = 0;
 	uint16_t int_last = 0;
 
-	uint32_t float_start = -1;
-	uint32_t float_end = -1;
+	uint32_t float_start = 0;
+	uint32_t float_end = 0;
 	uint16_t float_last = 0;
 
 } SQUE_TexAttribIndex;
@@ -529,7 +529,8 @@ typedef struct SQUE_Texture2D
 
 	// Variables
 	uint32_t id;
-	int32_t format;
+	int32_t use_format;
+	int32_t data_format;
 	int32_t var_type;
 	uint16_t var_size;
 	int32_t w, h;
@@ -550,12 +551,12 @@ typedef struct SQUE_Texture3D
 	// Cp[y from SQUE_Texture2D																												
 } SQUE_Texture3D;
 
-SQ_API void SQUE_TEXTURES_DeclareTextureInts(const uint32_t tex_id, const uint16_t num_parameters);
-SQ_API void SQUE_TEXTURES_DeclareTextureFloats(const uint32_t tex, const uint16_t num_parameters);
-SQ_API void SQUE_TEXTURES_DeclareTextureWide(const uint32_t tex_id, const uint16_t num_parameters);
+SQ_API void SQUE_TEXTURES_DeclareIntAttributes(const uint32_t tex_id, const uint16_t num_attributes);
+SQ_API void SQUE_TEXTURES_DeclareFloatAttributes(const uint32_t tex, const uint16_t num_attributes);
+SQ_API void SQUE_TEXTURES_DeclareAttributesWide(const uint32_t tex_id, const uint16_t num_attributes);
 
-SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddIntParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddFloatParameter(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
+SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddIntAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
+SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddFloatAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -610,7 +611,7 @@ SQ_API void SQUE_RENDER_EnableProgramAttribute(const SQUE_Program& prog, const u
 SQ_API void SQUE_RENDER_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_SetTextureParameters(const uint32_t tex_attrib_ref);
+SQ_API void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref);
 // Overload for Texture3D or at some point try to go back to C?
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

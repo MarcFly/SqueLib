@@ -155,7 +155,7 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
 	SQUE_MESHES_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
 	SQUE_RENDER_BindMeshBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
-	SQUE_MESHES_SetLocations(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object, sque_dataHandle.attrib_ref);
+	SQUE_MESHES_SetLocations(sque_dataHandle.attrib_ref);
 
 	sque_backupState.SetUp();
 }
@@ -210,15 +210,16 @@ void ImGui_ImplSqueLib_CreateFontsTexture()
 	SQUE_RENDER_GenTextureData(&sque_fontTexture.id);
 	sque_fontTexture.var_type = SQUE_UBYTE;
 	sque_fontTexture.var_size = 1;
-	sque_fontTexture.format = SQUE_RGBA;
+	sque_fontTexture.data_format = SQUE_RGBA;
+	sque_fontTexture.use_format = SQUE_RGBA;
 	io.Fonts->GetTexDataAsRGBA32((uchar**)&sque_fontPixels, &sque_fontTexture.w, &sque_fontTexture.h);
 
 	int32_t filter = SQUE_LINEAR;
-	SQUE_TEXTURES_DeclareTextureWide(sque_fontTexture.id, 2);
-	SQUE_TEXTURES_AddIntParameter(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MIN_FILTER, &filter));
-	SQUE_TEXTURES_AddIntParameter(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MAG_FILTER, &filter));
+	SQUE_TEXTURES_DeclareIntAttributes(sque_fontTexture.id, 2);
+	SQUE_TEXTURES_AddIntAttribute(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MIN_FILTER, &filter));
+	SQUE_TEXTURES_AddIntAttribute(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MAG_FILTER, &filter));
 	SQUE_RENDER_BindTex2D(sque_fontTexture.id);
-	SQUE_RENDER_SetTextureParameters(sque_fontTexture.id);
+	SQUE_RENDER_SetTextureAttributes(sque_fontTexture.id);
 	SQUE_RENDER_SendTex2DToGPU(sque_fontTexture, sque_fontPixels);
 
 	io.Fonts->TexID = (ImTextureID)(intptr_t)sque_fontTexture.id;
