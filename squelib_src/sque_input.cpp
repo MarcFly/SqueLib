@@ -211,6 +211,7 @@ void SQUE_INPUT_InitForWindow(uint16_t window)
 {
 
 #if defined USE_GLFW
+    pointers[0].active = true;
     if (window > glfw_windows.size())
     {
         SQUE_PRINT(LT_WARNING, "Tried to Init input for window out of range!");
@@ -383,6 +384,11 @@ void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active)
 // GETTERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key)
+{
+    return (SQUE_INPUT_Actions)keyboard[key].state;
+}
+
 int SQUE_INPUT_GetCharFromBuffer()
 {
     int ret = (char_buffer.size() > 0) ? char_buffer.front() : -1;
@@ -396,16 +402,32 @@ SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button)
     return (SQUE_INPUT_Actions)mouse_buttons[button].state;
 }
 
-void SQUE_INPUT_GetPointerAvg(float* x, float* y, uint16_t points)
+void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points)
 {
     *x = *y = 0;
+    uint16_t inactive_p = 0;
+    for (uint16_t i = 0; i < points; ++i)
+    {
+        inactive_p += !pointers[i].active;
+        *x += (pointers[i].x) * pointers[i].active;
+        *y += (pointers[i].y) * pointers[i].active;
+    }
+    *x /= (float)(points - inactive_p);
+    *y /= (float)(points - inactive_p);
+}
+
+void SQUE_INPUT_GetPointerAvgPrevPos(float* px, float* py, uint16_t points)
+{
+    *px = *py = 0;
+    uint16_t inactive_p = 0;
     for(uint16_t i = 0; i < points; ++i)
     {
-        *x+=pointers[i].x;
-        *y+=pointers[i].y;
+        inactive_p += !pointers[i].active;
+        *px +=(pointers[i].prev_x)*pointers[i].active;
+        *py +=(pointers[i].prev_y)*pointers[i].active;
     }
-    *x/=(float)points;
-    *y/=(float)points;
+    *px/=(float)(points-inactive_p);
+    *py/=(float)(points-inactive_p);
 }
 
 bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer)
@@ -414,6 +436,16 @@ bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer)
     SQUE_Pointer& p = pointers[pointer];
     *x = p.x;
     *y = p.y;
+
+    return p.active;
+}
+
+bool SQUE_INPUT_GetPointerPrevPos(float* px, float* py, uint16_t pointer)
+{
+    if(pointer > MAX_POINTERS) return false;
+    SQUE_Pointer& p = pointers[pointer];
+    *px = p.prev_x;
+    *py = p.prev_y;
 
     return p.active;
 }

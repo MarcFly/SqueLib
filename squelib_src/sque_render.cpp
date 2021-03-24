@@ -132,7 +132,7 @@ void SQUE_RENDER_Clear(const ColorRGBA& color, int clear_flags)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glClearColor(color.r, color.g, color.b, color.a);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(clear_flags);
 #endif
 }
 
@@ -250,7 +250,6 @@ void SQUE_MESHES_SendIndicesToGPU(const SQUE_Mesh& mesh, void* indices)
 void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
 {
     SQUE_MESHES_SendVertsToGPU(mesh, vertices);
-    SQUE_CHECK_RENDER_ERRORS();
     if (indices != NULL) SQUE_MESHES_SendIndicesToGPU(mesh, indices);
 }
 

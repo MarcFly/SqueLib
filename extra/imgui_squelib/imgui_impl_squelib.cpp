@@ -194,8 +194,8 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 	SQUE_RENDER_LinkProgram(sque_shaderProgram.id);
 	
 	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, 2);
-	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, "Texture");
-	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, "ProjMtx");
+	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "Texture");
+	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "ProjMtx");
 
 	ImGui_ImplSqueLib_PrepareBuffers();
 

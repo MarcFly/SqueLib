@@ -244,7 +244,7 @@ void LearnOpenGL_2_2_Uniforms()
         SQUE_RENDER_LinkProgram(uniform_program1.id);
 
         SQUE_SHADERS_DeclareProgram(uniform_program1.uniform_ref, uniform_program1.id, 1);
-        ourColor_id = SQUE_SHADERS_DeclareUniform(uniform_program1.uniform_ref, uniform_program1.id, "ourColor");
+        ourColor_id = SQUE_SHADERS_DeclareUniform(uniform_program1.uniform_ref, "ourColor");
         // TODO: There should be a function to get the id based on the uniform name, non opengl, but to search own struct...
 
 
@@ -321,7 +321,7 @@ void LearnOpenGL_2_3_Attributes()
         SQUE_RENDER_LinkProgram(attribute_program1.id);
 
         SQUE_SHADERS_FreeFromGPU(vert_attributes_s1.id);
-        SQUE_SHADERS_FreeFromGPU(frag_attributes_s1.id);
+        //SQUE_SHADERS_FreeFromGPU(frag_attributes_s1.id);
 
         delete vert_attributes_s1_file->raw_data;
         delete vert_attributes_s1_file;
@@ -490,8 +490,8 @@ void LearnOpenGL_3_2_MixTextures()
         SQUE_RENDER_LinkProgram(textured_program_ch3_2.id);
 
         SQUE_SHADERS_DeclareProgram(textured_program_ch3_2.uniform_ref, textured_program_ch3_2.id, 2);
-        texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, textured_program_ch3_2.id, "texture1");
-        texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, textured_program_ch3_2.id, "texture2");
+        texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, "texture1");
+        texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, "texture2");
 
         delete frag_texture_s_ch3_2_file;
         loaded_ch3_2 = true;
@@ -512,6 +512,591 @@ void LearnOpenGL_3_2_MixTextures()
         // TODO: Have separate bind functions (vertex, indices, attribute_object, and mix of them)
 
         SQUE_RENDER_DrawIndices(quad_textured_ch3);
+    }
+}
+
+
+// LearnOpenGL_4_Transformations
+
+static bool loaded_ch4 = false;
+static bool render_ch4 = true;
+
+#include<glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+SQUE_Program transform_program_ch4;
+SQUE_Shader vert_transform_s_ch4;
+SQUE_Asset* vert_transform_s_ch4_file;
+glm::mat4 transform_ch4;
+
+int32_t transf_text1_uni;
+int32_t transf_text2_uni;
+int32_t transf_mat1_uni;
+static double last_time;
+void LearnOpenGL_4_Transformations()
+{
+    if (!loaded_ch4)
+    {
+        transform_ch4 = glm::mat4(1.0f);
+        transform_ch4 = glm::rotate(transform_ch4, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+        transform_ch4 = glm::scale(transform_ch4, glm::vec3(0.5, 0.5, 0.5));
+
+        vert_transform_s_ch4_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s4.vert");
+
+        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_transform_s_ch4_file->raw_data, vert_transform_s_ch4_file->size));
+        SQUE_SHADERS_Generate(vert_transform_s_ch4, SQUE_VERTEX_SHADER);
+        SQUE_SHADERS_SetSource(vert_transform_s_ch4.id, vert_source.c_str());
+        SQUE_SHADERS_Compile(vert_transform_s_ch4.id);
+
+        SQUE_RENDER_CreateProgram(&transform_program_ch4.id);
+        SQUE_PROGRAM_AttachShader(transform_program_ch4, vert_transform_s_ch4.id, vert_transform_s_ch4.type);
+        SQUE_PROGRAM_AttachShader(transform_program_ch4, frag_texture_s_ch3_2.id, frag_texture_s_ch3_2.type);
+        SQUE_RENDER_LinkProgram(transform_program_ch4.id);
+
+
+        SQUE_SHADERS_DeclareProgram(transform_program_ch4.uniform_ref, transform_program_ch4.id, 3);
+        transf_text1_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "texture1");
+        transf_text2_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "texture2");
+        transf_mat1_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "transform");
+
+        SQUE_SHADERS_FreeFromGPU(frag_texture_s_ch3_2.id);
+
+        delete vert_transform_s_ch4_file->raw_data;
+        delete vert_transform_s_ch4_file;
+
+        loaded_ch4 = true;
+    }
+    if (render_ch4)
+    {
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+        SQUE_RENDER_UseProgram(transform_program_ch4.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(transf_text1_uni, 0);
+        SetInt(transf_text2_uni, 1);
+
+        // Transform over time, not worth to make a full function for it
+        double curr_time = timer1.ReadMilliSec();
+        transform_ch4 = glm::rotate(transform_ch4, (float)(curr_time - last_time)/100.f, glm::vec3(0.f, 0.f, 1.f));
+        last_time = curr_time;
+        SetMatrix4(transf_mat1_uni, glm::value_ptr(transform_ch4));
+
+        SQUE_RENDER_DrawIndices(quad_textured_ch3);
+    }
+}
+
+// LearnOpenGL_5_CoordinateSystems
+
+static bool loaded_ch5 = false;
+static bool render_ch5 = true;
+
+glm::mat4 proj_mat_ch5;
+glm::mat4 model_mat_ch5;
+glm::mat4 view_mat_ch5;
+
+SQUE_Program coordinate_program_ch5;
+SQUE_Shader vert_coordinate_s_ch5;
+SQUE_Asset* vert_coordinate_s_ch5_file;
+
+int32_t view_uniform_ch5;
+int32_t proj_uniform_ch5;
+int32_t model_uniform_ch5;
+int32_t texture1_uniform_ch5;
+int32_t texture2_uniform_ch5;
+
+void LearnOpenGL_5_CoordinateSystems()
+{
+    if (!loaded_ch5)
+    {
+        view_mat_ch5 = glm::translate(glm::mat4(1.f) , glm::vec3(0.f, 0.f, -3.f));
+
+        model_mat_ch5 = glm::rotate(glm::mat4(1.f), glm::radians(-55.f), glm::vec3(1.f, 0.f, 0.f));
+
+        vert_coordinate_s_ch5_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s5.vert");
+        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_coordinate_s_ch5_file->raw_data, vert_coordinate_s_ch5_file->size));
+
+        SQUE_SHADERS_Generate(vert_coordinate_s_ch5, SQUE_VERTEX_SHADER);
+        SQUE_SHADERS_SetSource(vert_coordinate_s_ch5.id, vert_source.c_str());
+        SQUE_SHADERS_Compile(vert_coordinate_s_ch5.id);
+
+        SQUE_RENDER_CreateProgram(&coordinate_program_ch5.id);
+        SQUE_PROGRAM_AttachShader(coordinate_program_ch5, vert_coordinate_s_ch5.id, vert_coordinate_s_ch5.type);
+        SQUE_PROGRAM_AttachShader(coordinate_program_ch5, frag_texture_s_ch3_2.id, frag_texture_s_ch3_2.type);
+        SQUE_RENDER_LinkProgram(coordinate_program_ch5.id);
+
+        SQUE_SHADERS_DeclareProgram(coordinate_program_ch5.uniform_ref, coordinate_program_ch5.id, 5);
+        view_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "view");
+        proj_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "projection");
+        model_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "model");
+        texture1_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "texture1");
+        texture2_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "texture2");
+        
+        loaded_ch5 = true;
+
+        delete vert_coordinate_s_ch5_file->raw_data;
+        delete vert_coordinate_s_ch5_file;
+    }
+    if (render_ch5)
+    {
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(0, &vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+        SQUE_RENDER_UseProgram(coordinate_program_ch5.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+        
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch5));
+        SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        SQUE_RENDER_DrawIndices(quad_textured_ch3);
+    }
+}
+
+static bool loaded_ch5_1 = false;
+static bool render_ch5_1 = true;
+
+float vertices_ch5_1[] = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+SQUE_Mesh cube_ch5_1;
+SQUE_Timer timer_ch5_1;
+double last_time_ch5_1;
+SQUE_RenderState render_state_ch5_1;
+void LearnOpenGL_5_1_3DCubeRotating()
+{
+    if (!loaded_ch5_1)
+    {
+        SQUE_MESHES_SetDrawConfig(cube_ch5_1, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+        SQUE_MESHES_SetVertData(cube_ch5_1, 36);
+        SQUE_RENDER_GenerateMeshBuffer(&cube_ch5_1.vert_id, &cube_ch5_1.index_id, &cube_ch5_1.attribute_object);
+        SQUE_RENDER_BindMeshBuffer(cube_ch5_1.vert_id, cube_ch5_1.index_id, cube_ch5_1.attribute_object);
+        SQUE_MESHES_DeclareAttributes(cube_ch5_1.vert_id, cube_ch5_1.attrib_ref, 3);
+        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
+        SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 0);
+        SQUE_VertAttrib aUV("aTexCoord", SQUE_FLOAT, true, 2);
+        SQUE_MESHES_AddAttribute(cube_ch5_1.attrib_ref, aPos);
+        SQUE_MESHES_AddAttribute(cube_ch5_1.attrib_ref, aCol);
+        SQUE_MESHES_AddAttribute(cube_ch5_1.attrib_ref, aUV);
+        // For the attributes I wanted to reuse some code, because it was unnecessary at first, but current vertex shaders
+        // had meshes with a color attribute. So in this one that is mostly the same but without color attribute
+        // I declare it anyways without components, so vertex calculations stay the same but now in shader it will not have data for color
+        // so it can't be USED on that mesh!!!
+
+        SQUE_MESHES_SetLocations(cube_ch5_1.attrib_ref);
+        SQUE_RENDER_SendMeshToGPU(cube_ch5_1, vertices_ch5_1);
+
+        render_state_ch5_1.BackUp();
+        render_state_ch5_1.depth_test = true;
+
+        loaded_ch5_1 = true;
+        timer_ch5_1.Start();
+    }
+    if (render_ch5_1)
+    {
+        SQUE_RenderState last;
+        last.BackUp();
+
+        render_state_ch5_1.SetUp();
+
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(0, &vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
+        SQUE_RENDER_UseProgram(coordinate_program_ch5.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch5));
+        
+        double curr_time = timer1.ReadMilliSec();
+        model_mat_ch5 = glm::rotate(model_mat_ch5, ((float)(curr_time - last_time_ch5_1)/1000.f), glm::vec3(.5f, 1.f,0.f));
+        last_time_ch5_1 = curr_time;
+
+        SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        SQUE_RENDER_DrawVertices(cube_ch5_1);
+
+        last.SetUp();
+    }
+}
+
+static bool loaded_ch5_2 = false;
+static bool render_ch5_2 = true;
+
+glm::vec3 cubePositions[] = {
+    glm::vec3(0.0f,  0.0f,  0.0f),
+    glm::vec3(2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3(2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3(1.3f, -2.0f, -2.5f),
+    glm::vec3(1.5f,  2.0f, -2.5f),
+    glm::vec3(1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
+double last_time_ch5_2 = 0;
+
+void LearnOpenGL_5_2_More3DCubes()
+{
+    if (!loaded_ch5_2)
+    {
+        loaded_ch5_2 = true;
+    }
+    if (render_ch5_2)
+    {
+        SQUE_RenderState last;
+        last.BackUp();
+
+        render_state_ch5_1.SetUp();
+
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(0, &vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
+        SQUE_RENDER_UseProgram(coordinate_program_ch5.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch5));
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        for (uint16_t i = 0; i < 10; ++i)
+        {
+            model_mat_ch5 = glm::translate(glm::mat4(1.f), cubePositions[i]);
+            double curr_time = timer1.ReadMilliSec();
+            float angle = (i*(curr_time)) / 100.f;
+            model_mat_ch5 = glm::rotate(model_mat_ch5, glm::radians(angle), glm::vec3(1.f, .3f, .5f));
+            SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+
+            SQUE_RENDER_DrawVertices(cube_ch5_1);
+        }
+
+        last.SetUp();
+    }
+}
+
+// LearnOpenGL_6_Camera
+
+static bool loaded_ch6 = false;
+static bool render_ch6 = true;
+
+glm::vec3 camera_pos;
+glm::vec3 camera_target;
+glm::vec3 camera_direction;
+glm::vec3 up;
+glm::vec3 camera_right;
+glm::vec3 camera_up;
+
+glm::mat4 view_mat_ch6;
+void LearnOpenGL_6_Camera()
+{
+    if (!loaded_ch6)
+    {
+        camera_pos = glm::vec3(0.f, 0.f, 3.f);
+        camera_target = glm::vec3(0.f, 0.f, 0.f);
+        camera_direction = glm::normalize(camera_pos - camera_target);
+        up = glm::vec3(0.f, 1.f, 0.f);
+        camera_right = glm::normalize(glm::cross(up, camera_direction));
+        camera_up = glm::cross(camera_direction, camera_right);
+
+        //view_mat_ch6 = glm::lookAt(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f,0.f,0.f), glm::vec3(0.f,1.f,0.f));
+
+        loaded_ch6 = true;
+    }
+    if(render_ch6 && render_ch5_2)
+    {
+        SQUE_RenderState last;
+        last.BackUp();
+
+        render_state_ch5_1.SetUp();
+
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(0, &vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
+        SQUE_RENDER_UseProgram(coordinate_program_ch5.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+
+        
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        // Changes from previous are to th view matrix
+        const float radius = 10.f;
+        double curr_time = timer1.ReadMilliSec();
+        float camX = sin(curr_time / 1000.f)*radius;
+        float camZ = cos(curr_time / 1000.f)*radius;
+        view_mat_ch6 = glm::lookAt(glm::vec3(camX, 0., camZ), glm::vec3(0., 0., 0.), glm::vec3(0., 1., 0.));
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch6));
+
+        for (uint16_t i = 0; i < 10; ++i)
+        {
+            model_mat_ch5 = glm::translate(glm::mat4(1.f), cubePositions[i]);
+            double curr_time = timer1.ReadMilliSec();
+            float angle = (i * (curr_time)) / 100.f;
+            model_mat_ch5 = glm::rotate(model_mat_ch5, glm::radians(angle), glm::vec3(1.f, .3f, .5f));
+            SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+
+            SQUE_RENDER_DrawVertices(cube_ch5_1);
+        }
+
+        last.SetUp();
+
+    }
+}
+
+static bool loaded_ch6_1 = false;
+static bool render_ch6_1 = true;
+
+glm::vec3 camera_pos_ch6_1;
+glm::vec3 camera_up_ch6_1;
+glm::vec3 camera_front;
+double last_time_ch6_1;
+float camera_speed;
+
+void LearnOpenGL_6_1_CameraMovement()
+{
+    if (!loaded_ch6_1)
+    {
+        camera_pos_ch6_1 = glm::vec3(0.f, 0.f, 3.f);
+        camera_front = glm::vec3(0.f, 0.f, -1.f);
+        camera_up_ch6_1 = glm::vec3(0.f, 1.f, 0.f);
+        loaded_ch6_1 = true;
+    }
+    // Get Mouse and keyboard input
+    double curr_time = timer1.ReadMilliSec();
+
+    {
+        camera_speed = 10.f * (curr_time - last_time_ch6_1)/1000.f;
+        //SQUE_PRINT(LT_INFO, "%f", (curr_time - last_time_ch6_1) / 1000.f);
+        last_time_ch6_1 = curr_time;
+        
+
+        SQUE_INPUT_Actions w, a, s, d;
+        w = SQUE_INPUT_GetKey(0, SQUE_KEY_UPPER_W);
+        a = SQUE_INPUT_GetKey(0, SQUE_KEY_UPPER_A);
+        s = SQUE_INPUT_GetKey(0, SQUE_KEY_UPPER_S);
+        d = SQUE_INPUT_GetKey(0, SQUE_KEY_UPPER_D);
+        if (w == SQUE_ACTION_PRESS || w == SQUE_ACTION_REPEAT)
+            camera_pos_ch6_1 += camera_speed * camera_front;
+        if (a == SQUE_ACTION_PRESS || a == SQUE_ACTION_REPEAT)
+            camera_pos_ch6_1 -= glm::normalize(glm::cross(camera_front, camera_up_ch6_1)) * camera_speed;
+        if (s == SQUE_ACTION_PRESS || s == SQUE_ACTION_REPEAT)
+            camera_pos_ch6_1 -= camera_speed * camera_front;
+        if (d == SQUE_ACTION_PRESS || d == SQUE_ACTION_REPEAT)
+            camera_pos_ch6_1 += glm::normalize(glm::cross(camera_front, camera_up_ch6_1)) * camera_speed;
+    }
+
+    if (render_ch6_1)
+    {
+        SQUE_RenderState last;
+        last.BackUp();
+
+        render_state_ch5_1.SetUp();
+
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(0, &vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
+        SQUE_RENDER_UseProgram(coordinate_program_ch5.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+
+
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        // Changes from previous are to th view matrix
+        
+
+        view_mat_ch6 = glm::lookAt(camera_pos_ch6_1, camera_pos_ch6_1 + camera_front, camera_up_ch6_1);
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch6));
+
+        for (uint16_t i = 0; i < 10; ++i)
+        {
+            model_mat_ch5 = glm::translate(glm::mat4(1.f), cubePositions[i]);
+            float angle = (i * (curr_time)) / 100.f;
+            model_mat_ch5 = glm::rotate(model_mat_ch5, glm::radians(angle), glm::vec3(1.f, .3f, .5f));
+            SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+
+            SQUE_RENDER_DrawVertices(cube_ch5_1);
+        }
+
+        last.SetUp();
+    }
+}
+
+static bool loaded_ch6_2 = false;
+static bool render_ch6_2 = true;
+glm::vec3 direction_ch6_2;
+float yaw, pitch;
+double last_time_ch6_2;
+float lx, ly;
+void LearnOpenGL_6_2_CameraLook()
+{
+    if (!loaded_ch6_2)
+    {
+        last_time_ch6_2 = 0;
+        yaw = -90.f;
+        pitch = 0.f;
+        SQUE_INPUT_GetPointerAvgPos(&lx, &ly, 10);
+
+        loaded_ch6_2 = true;
+    }
+    double curr_time = timer1.ReadMilliSec();
+    {
+
+        // TODO: Investigate issues with prev_mouse
+        // because glfw works on callback, prev_pos and curr_pos stay the same when no events are called
+        // that way i the mouse stops out of window it will have a static prev-curr relationship
+        // on mouse leave window, it should put the delta at the same so it could be usable I think
+        float mx, my;
+        SQUE_INPUT_GetPointerAvgPos(&mx, &my,10);
+        
+        if(mx)
+        yaw += (mx-lx) * .1f;
+        pitch += (ly-my) * .1f;
+        lx = mx;
+        ly = my;
+
+        direction_ch6_2.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction_ch6_2.y = sin(glm::radians(pitch));
+        direction_ch6_2.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        camera_front = glm::normalize(direction_ch6_2);
+    }
+    if (render_ch6_2)
+    {
+        SQUE_RenderState last;
+        last.BackUp();
+
+        render_state_ch5_1.SetUp();
+
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(0, &vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
+        SQUE_RENDER_UseProgram(coordinate_program_ch5.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE0);
+        SQUE_RENDER_BindTex2D(texture_ch3.id);
+
+        SQUE_RENDER_SetActiveTextureUnit(SQUE_TEXTURE1);
+        SQUE_RENDER_BindTex2D(texture_ch3_2.id);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+
+
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        // Changes from previous are to th view matrix
+
+
+        view_mat_ch6 = glm::lookAt(camera_pos_ch6_1, camera_pos_ch6_1 + camera_front, camera_up_ch6_1);
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch6));
+
+        for (uint16_t i = 0; i < 10; ++i)
+        {
+            model_mat_ch5 = glm::translate(glm::mat4(1.f), cubePositions[i]);
+            float angle = (i * (curr_time)) / 100.f;
+            model_mat_ch5 = glm::rotate(model_mat_ch5, glm::radians(angle), glm::vec3(1.f, .3f, .5f));
+            SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+
+            SQUE_RENDER_DrawVertices(cube_ch5_1);
+        }
+
+        last.SetUp();
     }
 }
 
@@ -552,6 +1137,17 @@ int main(int argc, char**argv)
             // Textures
             LearnOpenGL_3_Textures();
             LearnOpenGL_3_2_MixTextures();
+            // Transformations
+            LearnOpenGL_4_Transformations();
+            // Coordinate Systems and Projection
+            LearnOpenGL_5_CoordinateSystems();
+            LearnOpenGL_5_1_3DCubeRotating();
+            LearnOpenGL_5_2_More3DCubes();
+            // Camera
+            LearnOpenGL_6_Camera();
+            LearnOpenGL_6_1_CameraMovement();
+            LearnOpenGL_6_2_CameraLook();
+
         }
         
         SQUE_DISPLAY_SwapAllBuffers();

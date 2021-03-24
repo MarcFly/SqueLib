@@ -81,14 +81,14 @@ void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id
     uniform_ref = programs.size();
 }
 
-int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const int32_t program_id, const char* name)
+int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* name)
 {
     SQUE_ProgramUniforms& p = programs[uniform_ref -1];
 
     SQUE_Uniform& uni = uniforms[p.start_uniform + p.last];
     memcpy(uni.name, name, strlen(name));
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    uni.id = glGetUniformLocation(program_id, uni.name);
+    uni.id = glGetUniformLocation(p.id, uni.name);
 #endif
     ++p.last;
 

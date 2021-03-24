@@ -343,9 +343,12 @@ SQ_API void SQUE_INPUT_SetMousePos(float x, float y);
 SQ_API void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active);
 
 // Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key);
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button);
-SQ_API void SQUE_INPUT_GetPointerAvg(float* x, float* y, uint16_t points = 1);
+SQ_API void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points = 1);
+SQ_API void SQUE_INPUT_GetPointerAvgPrevPos(float* px, float* py, uint16_t points = 1);
 SQ_API bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer = 0);
+SQ_API bool SQUE_INPUT_GetPointerPrevPos(float* px, float* py, uint16_t pointer = 0);
 SQ_API void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 SQ_API int SQUE_INPUT_GetCharFromBuffer();
 
@@ -389,7 +392,7 @@ typedef struct SQUE_ProgramUniforms
 } SQUE_ProgramUniforms;
 
 SQ_API void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id, const uint32_t num_uniforms = 10);
-SQ_API int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const int32_t program_id, const char* uniform_name);
+SQ_API int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* uniform_name);
 
 typedef struct SQUE_Program
 {
@@ -592,7 +595,7 @@ SQ_API void SQUE_RENDER_Close();
 																																		
 SQ_API void SQUE_RENDER_ChangeFramebufferSize(int32_t width, int32_t height);		
 SQ_API void SQUE_RENDER_GetFramebufferSize(int32_t* width, int32_t* height);
-SQ_API void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = NULL);
+SQ_API void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = SQUE_COLOR_BIT);
 SQ_API const char* SQUE_RENDER_GetGLSLVer();																								
 																																		
 // Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
