@@ -41,17 +41,17 @@ SQUE_Mesh::SQUE_Mesh() : draw_config(SQUE_POINTS), draw_mode(SQUE_STATIC_DRAW),
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CHANGING DATA DYNAMICALLY /////////////////////////////////////////////////////////////////////////////
-void SQUE_MESHES_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config_, int32_t draw_mode_)
+void SQUE_MESH_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config_, int32_t draw_mode_)
 {
     mesh.draw_config = draw_config_;
     mesh.draw_mode = draw_mode_;
 }
-void SQUE_MESHES_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts_)
+void SQUE_MESH_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts_)
 {
     mesh.num_verts = num_verts_;
 }
 
-void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_)
+void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_)
 {
     mesh.num_index = num_index_;
     mesh.index_var = index_var_;
@@ -64,7 +64,7 @@ void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t ind
 sque_vec<SQUE_VertAttrib> vertex_attributes;
 sque_vec<SQUE_VertAttribIndex> mesh_attributes_index;
 
-void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs)
+void SQUE_MESH_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs)
 {
     SQUE_VertAttribIndex index;
     index.id = vert_id;
@@ -77,7 +77,7 @@ void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, u
     attrib_ref = mesh_attributes_index.size();
 }
 
-SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attr)
+SQUE_VertAttrib* SQUE_MESH_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attr)
 {
     SQ_ASSERT(attrib_ref <= mesh_attributes_index.size()); // Error if you have not declared previously the attributes of a mesh or are adding more attributes than declared!
     SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
@@ -91,7 +91,7 @@ SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAtt
 //        SQUE_EnableProgramAttribute(program, attributes[i]);
 //}
 
-void SQUE_MESHES_SetLocations(const int32_t attrib_ref)
+void SQUE_MESH_SetLocations(const int32_t attrib_ref)
 {
     SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
     uint32_t last = index.start_attrib + index.last;
@@ -107,12 +107,12 @@ void SQUE_MESHES_SetLocations(const int32_t attrib_ref)
     for (uint32_t i = index.start_attrib; i < last; ++i)
     {
         vertex_attributes[i].id = i-index.start_attrib;
-        SQUE_RENDER_EnableBufferAttribute(vert_size, vertex_attributes[i]);
+        SQUE_MESH_EnableAttribute(vert_size, vertex_attributes[i]);
     }
 }
 
 // Getters ///////////////////////////////////////////////////////////////////////////////////////////////
-uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref)
+uint16_t SQUE_MESH_CalcVertSize(const uint32_t attrib_ref)
 {
     SQUE_VertAttribIndex& ind = mesh_attributes_index[attrib_ref-1];
     ind.vert_size = 0;
@@ -124,12 +124,12 @@ uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref)
     return ind.vert_size;
 }
 
-uint16_t SQUE_MESHES_GetVertSize(const uint32_t attrib_ref)
+uint16_t SQUE_MESH_GetVertSize(const uint32_t attrib_ref)
 {
     return mesh_attributes_index[attrib_ref-1].vert_size;
 }
 
-uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char* name)
+uint16_t SQUE_MESH_GetAttribSize(const uint32_t attrib_ref, const char* name)
 {
     SQUE_VertAttribIndex& ind = mesh_attributes_index[attrib_ref];
     
@@ -169,17 +169,14 @@ SQUE_TexAttrib::~SQUE_TexAttrib()
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Constructors for all or for none, rather go for none (i prefer none and go for C style)
-SQUE_Texture2D::SQUE_Texture2D() : id(UINT32_MAX), use_format(0), data_format(0), var_type(SQUE_FLOAT), 
-var_size(4), w(0), h(0), channel_num(0)
-{}
-
-SQUE_Texture2D::SQUE_Texture2D(int32_t format_, int32_t var_type_) : id(UINT32_MAX), use_format(format_),  
-    data_format(format_), var_type(var_type_),    w(0),   h(0),   channel_num(0)
+void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type)
 {
-    var_size = SQUE_VarGetSize(var_type);
+    texture->dim_format = dimentions_format;
+    texture->use_format = use_f;
+    texture->data_format = data_f;
+    texture->var_type = var_type;
+    texture->var_size = SQUE_VarGetSize(var_type);
 }
-SQUE_Texture2D::~SQUE_Texture2D() {/*free from gpu*/}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
@@ -188,7 +185,7 @@ sque_vec<SQUE_TexAttrib> int_attributes;
 sque_vec<SQUE_TexAttrib> float_attributes;
 sque_vec<SQUE_TexAttribIndex> tex_attributes_index;
 
-void SQUE_TEXTURES_DeclareIntAttributes(const uint32_t tex_id, const uint16_t num_attributes)
+void SQUE_TEXTURE_DeclareIntAttributes(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes)
 {
     SQUE_TexAttribIndex t;
     t.id = tex_id;
@@ -197,10 +194,11 @@ void SQUE_TEXTURES_DeclareIntAttributes(const uint32_t tex_id, const uint16_t nu
     t.int_last = 0;
 
     int_attributes.resize(t.int_start + num_attributes);
+    *attrib_ref = tex_attributes_index.size();
     tex_attributes_index.push_back(t);
 }
 
-void SQUE_TEXTURES_DeclareFloatAttributes(const uint32_t tex_id, const uint16_t num_attributes)
+void SQUE_TEXTURE_DeclareFloatAttributes(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes)
 {
     SQUE_TexAttribIndex t;
     t.float_start = float_attributes.size();
@@ -208,10 +206,11 @@ void SQUE_TEXTURES_DeclareFloatAttributes(const uint32_t tex_id, const uint16_t 
     t.float_last = 0;
 
     float_attributes.resize(t.float_start + num_attributes);
+    *attrib_ref = tex_attributes_index.size();
     tex_attributes_index.push_back(t);
 }
 
-void SQUE_TEXTURES_DeclareAttributesWide(const uint32_t tex_id, const uint16_t num_attributes)
+void SQUE_TEXTURE_DeclareAttributesWide(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes)
 {
     SQUE_TexAttribIndex t;
     t.id = tex_id;
@@ -225,20 +224,21 @@ void SQUE_TEXTURES_DeclareAttributesWide(const uint32_t tex_id, const uint16_t n
     int_attributes.resize(t.int_start + num_attributes);
     float_attributes.resize(t.float_start + num_attributes);
 
+    *attrib_ref = tex_attributes_index.size();
     tex_attributes_index.push_back(t);
 }
 
-SQUE_TexAttrib* SQUE_TEXTURES_AddIntAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
+SQUE_TexAttrib* SQUE_TEXTURE_AddIntAttribute(const uint32_t attrib_ref, const SQUE_TexAttrib& tex_attrib)
 {
-    SQUE_TexAttribIndex& t = tex_attributes_index[tex_attrib_ref-1];
+    SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref -1];
     int_attributes[t.int_start + t.int_last] = tex_attrib;
     ++t.int_last;
     return &int_attributes[t.int_start + t.int_last - 1];
 }
 
-SQUE_TexAttrib* SQUE_TEXTURES_AddFloatAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib)
+SQUE_TexAttrib* SQUE_TEXTURE_AddFloatAttribute(const uint32_t attrib_ref, const SQUE_TexAttrib& tex_attrib)
 {
-    SQUE_TexAttribIndex& t = tex_attributes_index[tex_attrib_ref-1];
+    SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref -1];
     float_attributes[t.float_start + t.float_last] = tex_attrib;
     ++t.float_last;
     return &float_attributes[t.float_start + t.float_last - 1];

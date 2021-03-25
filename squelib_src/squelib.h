@@ -393,6 +393,7 @@ typedef struct SQUE_ProgramUniforms
 
 SQ_API void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id, const uint32_t num_uniforms = 10);
 SQ_API int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* uniform_name);
+SQ_API int32_t SQUE_SHADERS_GetUniformID(const uint32_t uniform_ref, const char* name);
 
 typedef struct SQUE_Program
 {
@@ -405,9 +406,9 @@ typedef struct SQUE_Program
 	uint32_t uniform_ref;
 } SQUE_Program;
 
-SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, int32_t shader_id, uint32_t type);
+SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader);
 SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
-SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
+//SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
 
 // Usage Functions
 SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t uniform_ref, const char* name);
@@ -423,7 +424,7 @@ SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t n
 	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESHES //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESH //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct SQUE_VertAttrib
 {
@@ -480,18 +481,18 @@ typedef struct SQUE_Mesh
 	uint16_t index_var_size = 0;
 } SQUE_Mesh;
 // Usage Functions
-SQ_API void SQUE_MESHES_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
-SQ_API void SQUE_MESHES_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
-SQ_API void SQUE_MESHES_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
+SQ_API void SQUE_MESH_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
+SQ_API void SQUE_MESH_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
+SQ_API void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
 
 
-SQ_API uint16_t SQUE_MESHES_CalcVertSize(const uint32_t attrib_ref);
-SQ_API uint16_t SQUE_MESHES_GetVertSize(const uint32_t attrib_ref);
-SQ_API uint16_t SQUE_MESHES_GetAttribSize(const uint32_t attrib_ref, const char* name);
+SQ_API uint16_t SQUE_MESH_CalcVertSize(const uint32_t attrib_ref);
+SQ_API uint16_t SQUE_MESH_GetVertSize(const uint32_t attrib_ref);
+SQ_API uint16_t SQUE_MESH_GetAttribSize(const uint32_t attrib_ref, const char* name);
 
-SQ_API void SQUE_MESHES_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs);
-SQ_API SQUE_VertAttrib* SQUE_MESHES_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attrib);
-SQ_API void SQUE_MESHES_SetLocations(const int32_t attrib_ref);
+SQ_API void SQUE_MESH_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs);
+SQ_API SQUE_VertAttrib* SQUE_MESH_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attrib);
+SQ_API void SQUE_MESH_SetLocations(const int32_t attrib_ref);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -523,15 +524,10 @@ typedef struct SQUE_TexAttribIndex
 
 } SQUE_TexAttribIndex;
 
-typedef struct SQUE_Texture2D
+typedef struct SQUE_Texture
 {
-	// Constructors / Destructor
-	SQ_API SQUE_Texture2D();
-	SQ_API SQUE_Texture2D(int32_t format, int32_t var_type);
-	SQ_API ~SQUE_Texture2D();
-
-	// Variables
 	uint32_t id;
+	int32_t dim_format;
 	int32_t use_format;
 	int32_t data_format;
 	int32_t var_type;
@@ -539,27 +535,16 @@ typedef struct SQUE_Texture2D
 	int32_t w, h;
 	int32_t channel_num;
 
-	uint32_t tex_attrib_ref;
+	uint32_t attrib_ref;
+} SQUE_Texture;
 
-} SQUE_Texture2D;
+SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
+SQ_API void SQUE_TEXTURE_DeclareIntAttributes(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes);
+SQ_API void SQUE_TEXTURE_DeclareFloatAttributes(const uint32_t tex, uint32_t* attrib_ref, const uint16_t num_attributes);
+SQ_API void SQUE_TEXTURE_DeclareAttributesWide(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes);
 
-// SQUE_Texture3D??...																													
-typedef struct SQUE_Texture3D
-{
-	uint32_t id = 0;
-	int32_t format = 0;
-	int w, h;
-	uchar** pixels = nullptr;
-
-	// Cp[y from SQUE_Texture2D																												
-} SQUE_Texture3D;
-
-SQ_API void SQUE_TEXTURES_DeclareIntAttributes(const uint32_t tex_id, const uint16_t num_attributes);
-SQ_API void SQUE_TEXTURES_DeclareFloatAttributes(const uint32_t tex, const uint16_t num_attributes);
-SQ_API void SQUE_TEXTURES_DeclareAttributesWide(const uint32_t tex_id, const uint16_t num_attributes);
-
-SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddIntAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURES_AddFloatAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
+SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddIntAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
+SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddFloatAttribute(const uint32_t tex_attrib_ref, const SQUE_TexAttrib& tex_attrib);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -606,34 +591,37 @@ SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
 SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
 
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_GenerateMeshBuffer(uint32_t* vert_id, uint32_t* index_id, uint32_t* attrib_obj);
-SQ_API void SQUE_RENDER_BindMeshBuffer(const uint32_t vert_id = 0, const uint32_t index_id = 0, const uint32_t attrib_obj = 0);
-SQ_API void SQUE_RENDER_SendMeshToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
+SQ_API void SQUE_MESH_GenBufferIDs(const uint32_t num, uint32_t* ids);
+SQ_API void SQUE_MESH_GenAttributeObjects(const uint32_t num, uint32_t* attribute_objects);
+SQ_API void SQUE_MESH_GenBuffer(SQUE_Mesh* mesh);
+SQ_API void SQUE_MESH_BindBuffer(const uint32_t vert_id = 0, const uint32_t index_id = 0, const uint32_t attrib_obj = 0);
+SQ_API void SQUE_MESH_BindVertices(const uint32_t vert_id);
+SQ_API void SQUE_MESH_BindIndices(const uint32_t index_id);
+SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
+SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_EnableProgramAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
-SQ_API void SQUE_RENDER_EnableBufferAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
+SQ_API void SQUE_PROGRAM_EnableAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
+SQ_API void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref);
 // Overload for Texture3D or at some point try to go back to C?
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_GenTextureData(uint32_t* texid);
-SQ_API void SQUE_RENDER_GenTextureMipmaps(const uint32_t texture_type); // Have to Bind before using this
-SQ_API void SQUE_RENDER_BindTex2D(const uint32_t texture_id);
-SQ_API void SQUE_RENDER_SetActiveTextureUnit(int32_t unit);
-SQ_API void SQUE_RENDER_SendTex2DToGPU(const SQUE_Texture2D& tex, void* pixels, int32_t mipmap_level = 0);
+SQ_API void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
+SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
+SQ_API void SQUE_TEXTURE_SetActiveUnit(int32_t unit);
+SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level = 0);
 
-SQ_API void SQUE_RENDER_ActiveTexture(int32_t texture_id);
-SQ_API void SQUE_RENDER_BindExternalTexture(int tex_type, uint32_t id);
 SQ_API void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id);
 
 // Shader Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Shader Program Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_CreateProgram(uint32_t* program_id);
-SQ_API void SQUE_RENDER_LinkProgram(const uint32_t program_id);
-SQ_API void SQUE_RENDER_UseProgram(const uint32_t program_id);
+SQ_API void SQUE_PROGRAM_GenID(uint32_t* program_id);
+SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
+SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
 
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices = 0, int32_t count = -1);
@@ -641,7 +629,7 @@ SQ_API void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, int32_t count = 0);
 
 // Debugging
 SQ_API void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id);
-SQ_API void SQUE_RENDER_CheckProgramLog(const uint32_t program_id);
+SQ_API void SQUE_PROGRAM_CheckLinkLog(const uint32_t program_id);
 SQ_API void CheckForRenderErrors(const char* file, int line);
 SQ_API void InitGLDebug();
 #define SQUE_CHECK_RENDER_ERRORS() SQ_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
@@ -660,7 +648,7 @@ struct SQUE_Framebuffer
 	uint32_t stencil_buffer_id;
 	int32_t stencil_type;
 
-	sque_vec<SQUE_Texture2D> textures;
+	sque_vec<SQUE_Texture> textures;
 };
 
 SQ_API void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id);
@@ -815,8 +803,8 @@ public:
 // LOAD/SAVE ASSETS ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SQ_API bool SQUE_LOAD_Texture(SQUE_Asset* tex_bytes, SQUE_Texture2D* texture);
+SQ_API bool SQUE_LOAD_Texture(SQUE_Asset* tex_bytes, SQUE_Texture* texture);
 SQ_API void SQUE_FREE_Texture(SQUE_Asset* tex_bytes);
-//SQ_API void SQUE_SAVE_Texture(SQUE_Texture2D* texture);
+//SQ_API void SQUE_SAVE_Texture(SQUE_Texture* texture);
 
 #endif // _SQUE_LIB_ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,7 +4,7 @@
 #include <stb_image.h>
 
 
-bool SQUE_LOAD_Texture(SQUE_Asset* tex_bytes, SQUE_Texture2D* texture)
+bool SQUE_LOAD_Texture(SQUE_Asset* tex_bytes, SQUE_Texture* texture)
 {
     char* data = (char*)stbi_load_from_memory((unsigned char*)tex_bytes->raw_data, tex_bytes->size, &texture->w, &texture->h, &texture->channel_num, 0);
     delete tex_bytes->raw_data;

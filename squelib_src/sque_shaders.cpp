@@ -68,6 +68,14 @@ void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id)
 sque_vec<SQUE_Uniform> uniforms;
 sque_vec<SQUE_ProgramUniforms> programs;
 
+int32_t SQUE_SHADERS_GetUniformID(const uint32_t uniform_ref, const char* name)
+{
+    SQUE_ProgramUniforms& p = programs[uniform_ref - 1];
+    for (uint16_t i = 0; i < p.end_uniform - p.start_uniform; ++i)
+        if (strcmp(uniforms[p.start_uniform + i].name, name) == 0) return uniforms[p.start_uniform + i].id;
+    return -1;
+}
+
 void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id, const uint32_t num_uniforms)
 {
     SQUE_ProgramUniforms p;
@@ -187,16 +195,18 @@ void SetMatrix4(const int32_t uniform_id, const float* value, uint16_t number_of
 // USAGE FUNCTIONS ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_PROGRAM_AttachShader(SQUE_Program& program, int32_t shader_id, uint32_t type)
+void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader)
 {
-    int32_t pos = -1 + (type == SQUE_VERTEX_SHADER) * 1 + (type == SQUE_GEOMETRY_SHADER) * 2 + (type == SQUE_FRAGMENT_SHADER) * 3;
+    int32_t pos = -1 + (shader.type == SQUE_VERTEX_SHADER) * 1 
+                     + (shader.type == SQUE_GEOMETRY_SHADER) * 2 
+                     + (shader.type == SQUE_FRAGMENT_SHADER) * 3;
 
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
     //glDetachShader(program.id, program.shaders[pos]); // No issues detaching non existing shader, just make sure
-    glAttachShader(program.id, shader_id);
+    glAttachShader(program.id, shader.id);
 #endif
 
-    program.shaders[pos] = shader_id;
+    program.shaders[pos] = shader.id;
 }
 
 void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[])
@@ -232,7 +242,7 @@ void SQUE_PROGRAM_FreeFromGPU(int32_t program_id)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void SQUE_RENDER_CheckProgramLog(const uint32_t program_id)
+void SQUE_PROGRAM_CheckLinkLog(const uint32_t program_id)
 {
     int success;
     char infoLog[512];

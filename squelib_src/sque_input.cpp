@@ -423,8 +423,10 @@ void SQUE_INPUT_GetPointerAvgPrevPos(float* px, float* py, uint16_t points)
     for(uint16_t i = 0; i < points; ++i)
     {
         inactive_p += !pointers[i].active;
-        *px +=(pointers[i].prev_x)*pointers[i].active;
-        *py +=(pointers[i].prev_y)*pointers[i].active;
+        *px += ((pointers[i].prev_x == INT_MAX) ? pointers[i].x : pointers[i].prev_x) * pointers[i].active;
+        *py += ((pointers[i].prev_y == INT_MAX) ? pointers[i].x : pointers[i].prev_y) * pointers[i].active;
+        pointers[i].prev_x = pointers[i].x;
+        pointers[i].prev_y = pointers[i].y;
     }
     *px/=(float)(points-inactive_p);
     *py/=(float)(points-inactive_p);
@@ -434,8 +436,10 @@ bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer)
 {
     if(pointer > MAX_POINTERS) return false;
     SQUE_Pointer& p = pointers[pointer];
-    *x = p.x;
-    *y = p.y;
+    *x = ((p.prev_x == INT_MAX) ? p.x : p.prev_x) * p.active;
+    *y = ((p.prev_y == INT_MAX) ? p.x : p.prev_y) * p.active;
+    p.prev_x = p.x;
+    p.prev_y = p.y;
 
     return p.active;
 }
