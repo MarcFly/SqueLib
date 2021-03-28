@@ -78,8 +78,8 @@ void LearnOpenGL_1_Vertices()
         SQUE_MESH_SetLocations(triangle1.attrib_ref);
         SQUE_MESH_SendToGPU(triangle1, vertices1);
 
-        vert_s1_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s1.vert");
-        frag_s1_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s1.frag");
+        vert_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s1.vert");
+        frag_s1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s1.frag");
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_s1_file->raw_data, vert_s1_file->size));
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s1_file->raw_data, frag_s1_file->size));
 
@@ -183,8 +183,8 @@ void LearnOpenGL_2_Shaders()
         SQUE_MESH_SetLocations(triangle2.attrib_ref);
         SQUE_MESH_SendToGPU(triangle2, vertices1);
 
-        vert_s2_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s2.vert");
-        frag_s2_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s2.frag");
+        vert_s2_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2.vert");
+        frag_s2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2.frag");
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_s2_file->raw_data, vert_s2_file->size));
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_file->raw_data, frag_s2_file->size));
 
@@ -230,7 +230,7 @@ void LearnOpenGL_2_2_Uniforms()
 {
     if (!loaded_ch2_2)
     {
-        frag_s2_2_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s2_2.frag");
+        frag_s2_2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_2.frag");
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_2_file->raw_data, frag_s2_2_file->size));
 
         SQUE_SHADERS_Generate(frag_uniform_s1, SQUE_FRAGMENT_SHADER);
@@ -301,8 +301,8 @@ void LearnOpenGL_2_3_Attributes()
         SQUE_MESH_SetLocations(triangle2_3.attrib_ref);
         SQUE_MESH_SendToGPU(triangle2_3, vertices2_3);
 
-        vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s2_2.vert");
-        frag_attributes_s1_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s2_3.frag");
+        vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2_2.vert");
+        frag_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_3.frag");
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_attributes_s1_file->raw_data, vert_attributes_s1_file->size));
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_attributes_s1_file->raw_data, frag_attributes_s1_file->size));
 
@@ -381,7 +381,7 @@ void LearnOpenGL_3_Textures()
         SQUE_TEXTURE_AddIntAttribute(texture_ch3.id, mag_filter);
         SQUE_RENDER_SetTextureAttributes(texture_ch3.id);
 
-        texture_ch3_file = SQUE_FS_LoadAssetRaw("EngineAssets/container.jpeg");
+        texture_ch3_file = SQUE_FS_LoadAssetRaw("container.jpeg");
         SQUE_LOAD_Texture(texture_ch3_file, &texture_ch3);
         SQUE_TEXTURE_SendAs2DToGPU(texture_ch3, texture_ch3_file->raw_data);
         SQUE_FREE_Texture(texture_ch3_file);
@@ -405,8 +405,8 @@ void LearnOpenGL_3_Textures()
         SQUE_MESH_SetLocations(quad_textured_ch3.attrib_ref);
         SQUE_MESH_SendToGPU(quad_textured_ch3, vertices_ch3, indices1);
 
-        vert_texture_s_ch3_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s3.vert");
-        frag_texture_ch3_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s3.frag");
+        vert_texture_s_ch3_file = SQUE_FS_LoadAssetRaw("shaders/vert_s3.vert");
+        frag_texture_ch3_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3.frag");
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_texture_s_ch3_file->raw_data, vert_texture_s_ch3_file->size));
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_ch3_file->raw_data, frag_texture_ch3_file->size));
 
@@ -468,13 +468,13 @@ void LearnOpenGL_3_2_MixTextures()
         SQUE_TEXTURE_AddIntAttribute(texture_ch3_2.id, mag_filter);
         SQUE_RENDER_SetTextureAttributes(texture_ch3_2.id);
 
-        texture_ch3_2_file = SQUE_FS_LoadAssetRaw("EngineAssets/awesomeface.png");
+        texture_ch3_2_file = SQUE_FS_LoadAssetRaw("awesomeface.png");
         SQUE_LOAD_Texture(texture_ch3_2_file, &texture_ch3_2);
         SQUE_TEXTURE_SendAs2DToGPU(texture_ch3_2, texture_ch3_2_file->raw_data);
         SQUE_FREE_Texture(texture_ch3_2_file);
         delete texture_ch3_2_file;
 
-        frag_texture_s_ch3_2_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/frag_s3_2.frag");
+        frag_texture_s_ch3_2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3_2.frag");
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_s_ch3_2_file->raw_data, frag_texture_s_ch3_2_file->size));
 
         SQUE_SHADERS_Generate(frag_texture_s_ch3_2, SQUE_FRAGMENT_SHADER);
@@ -538,7 +538,7 @@ void LearnOpenGL_4_Transformations()
         transform_ch4 = glm::rotate(transform_ch4, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
         transform_ch4 = glm::scale(transform_ch4, glm::vec3(0.5, 0.5, 0.5));
 
-        vert_transform_s_ch4_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s4.vert");
+        vert_transform_s_ch4_file = SQUE_FS_LoadAssetRaw("shaders/vert_s4.vert");
 
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_transform_s_ch4_file->raw_data, vert_transform_s_ch4_file->size));
         SQUE_SHADERS_Generate(vert_transform_s_ch4, SQUE_VERTEX_SHADER);
@@ -614,7 +614,7 @@ void LearnOpenGL_5_CoordinateSystems()
 
         model_mat_ch5 = glm::rotate(glm::mat4(1.f), glm::radians(-55.f), glm::vec3(1.f, 0.f, 0.f));
 
-        vert_coordinate_s_ch5_file = SQUE_FS_LoadAssetRaw("EngineAssets/shaders/vert_s5.vert");
+        vert_coordinate_s_ch5_file = SQUE_FS_LoadAssetRaw("shaders/vert_s5.vert");
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_coordinate_s_ch5_file->raw_data, vert_coordinate_s_ch5_file->size));
 
         SQUE_SHADERS_Generate(vert_coordinate_s_ch5, SQUE_VERTEX_SHADER);

@@ -37,7 +37,9 @@ class sque_vec
     {
         while (begin != end)
         {
-            new((void*)dest) uint32_t(*begin); // new ((convert to void*)at pointer dest) Value<T>(copy from *begin)
+            dest = new uint32_t(*begin);
+            //new((void*)dest) uint32_t(*begin); // new ((convert to void*)at pointer dest) Value<T>(copy from *begin)
+            // This syntax does not work on unix... ?
             ++dest;
             ++begin;
         } // Why this in loop (guess it can be vectorized instead of single operation memcpy and then delete
@@ -181,7 +183,8 @@ public:
         if(index > (_size-2)) return;
         if (_empty_size != _empty_capacity)
         {
-            new((uint32_t*)(_empty_data + _empty_size)) uint32_t(index);
+            _empty_data[_empty_size] = new uint32_t(index);
+            //new((uint32_t*)(_empty_data + _empty_size)) uint32_t(index);
             ++_empty_size;
             --_populated;
             return;
@@ -189,7 +192,8 @@ public:
         _empty_capacity = _empty_capacity * 2 + 1;
         uint32_t* new_data = allocateU(_empty_capacity);
         copyRangeU(_empty_data, _empty_data + _empty_size, new_data);
-        new((void*)(new_data + _empty_size)) uint32_t(index);
+        new_data +_empty_size = new uint32_t(index);
+        //new((void*)(new_data + _empty_size)) uint32_t(index);
         deleteRangeU(_empty_data, _empty_data + _empty_size);
         _empty_data = nullptr;
         free(_empty_data);
@@ -227,7 +231,8 @@ public:
             {
                 if (*iter < new_size)
                 {
-                    new((void*)dest_iter) uint32_t(*iter);
+                    dest_iter = new uint32_t(*iter);
+                    //new((void*)dest_iter) uint32_t(*iter);
                     ++dest_iter;
                     ++iter;
                     ++new_empty_size;

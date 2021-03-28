@@ -16,7 +16,7 @@ include(${SQUE_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
-project(SqueLib_  VERSION 2020.1
+project(SqueLib     VERSION 2021.1
                     DESCRIPTION "Multiplatform C++ Library for making apps and games easily"
                     LANGUAGES C CXX)
 

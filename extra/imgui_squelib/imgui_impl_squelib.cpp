@@ -152,9 +152,12 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	SQUE_MESH_SetDrawConfig(sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
 	SQUE_MESH_DeclareAttributes(sque_dataHandle.vert_id, sque_dataHandle.attrib_ref, 3);
-	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
-	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
-	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
+	SQUE_VertAttrib pos("Position", SQUE_FLOAT, false, 2);
+	SQUE_VertAttrib uv("UV", SQUE_FLOAT, false, 2);
+	SQUE_VertAttrib col("Color", SQUE_UBYTE, true, 4);
+	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, pos);
+	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, uv);
+	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, col);
 	SQUE_MESH_BindBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
 	SQUE_MESH_SetLocations(sque_dataHandle.attrib_ref);
 

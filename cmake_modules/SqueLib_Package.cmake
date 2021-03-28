@@ -35,9 +35,11 @@ macro(SqueLib_Package asset_folder resource_folder)
     endif()
     if("${asset_folder}" STREQUAL "")
         set(own_asset "${SqueLib_defaults}/Assets")
+        
         message(STATUS ${own_asset})
     endif()
     message(STATUS ${asset_folder} ${resource_folder} ${SqueLib_defaults})
+    
     if(ToAndroid)        
         execute_process(COMMAND mkdir -p ${CMAKE_BINARY_DIR}/makecapk/assets)
         execute_process(COMMAND mkdir -p ${CMAKE_BINARY_DIR}/makecapk/res)

@@ -710,9 +710,9 @@ enum class OPENDDL_IDS : uint8_t
 // BruteForce Serialization
 class SQUE_OutStream
 {
-	char* _data = NULL;
 	uint64_t _capacity = 0;
 	uint64_t _size = 0;
+	char* _data = NULL;	
 
 	static char* allocate(uint32_t size)
 	{
@@ -752,7 +752,7 @@ public:
 	uint64_t GetSize() const { return _size; }
 
 	template<class T>
-	void WriteBytesAt(const T* from, uint32_t num_items = 1, uint64_t at = _size)
+	void WriteBytesAt(const T* from, uint64_t at, uint32_t num_items = 1)
 	{
 		uint64_t end_write = at + sizeof(T) * num_items;
 		if (_capacity < end_write) reallocate(end_write * 2);
@@ -789,13 +789,13 @@ public:
 	template<class T>
 	void ReadBytesAt(T* to, uint32_t num_items, uint64_t at)
 	{
-		memcpy(to, &_data.data[at], num_items * sizeof(T));
+		memcpy(to, &_data->raw_data[at], num_items * sizeof(T));
 	}
 
 	template<class T>
 	void ReadBytes(T* to, uint32_t num_items)
 	{
-		memcpy(to, &_data.data[_readpos_n], num_items * sizeof(T));
+		memcpy(to, &_data->raw_data[_readpos_n], num_items * sizeof(T));
 		_readpos_n += num_items * sizeof(T);
 	}
 };
