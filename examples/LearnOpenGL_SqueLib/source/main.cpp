@@ -1024,22 +1024,26 @@ void LearnOpenGL_6_2_CameraLook()
         last_time_ch6_2 = 0;
         yaw = -90.f;
         pitch = 0.f;
-        SQUE_INPUT_GetPointerAvgPos(&lx, &ly, 10);
+        lx = ly = -1;
 
         loaded_ch6_2 = true;
     }
     double curr_time = timer1.ReadMilliSec();
     if(render_ch6_2){
-        float mx, my;
+        float mx = -1, my = -1;
         SQUE_INPUT_GetPointerAvgPos(&mx, &my,10);
+        SQUE_INPUT_Actions action = SQUE_INPUT_GetMouseButton(SQUE_MOUSE_LEFT);
 
-        if (SQUE_INPUT_GetMouseButton(SQUE_MOUSE_LEFT) == SQUE_ACTION_PRESS && !ImGui::IsAnyWindowHovered())
+        if ((action == SQUE_ACTION_PRESS || action == SQUE_ACTION_REPEAT) && !ImGui::IsAnyWindowHovered() && !ImGui::IsAnyItemHovered())
         {
-            yaw += (mx - lx) * .1f;
-            pitch += (ly - my) * .1f;
+            yaw += (mx - ((lx == -1) ? mx : lx)) * .1f;
+            pitch += (((ly == -1)?my : ly) - my) * .1f;
+            
         }
+
         lx = mx;
         ly = my;
+
 
         direction_ch6_2.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         direction_ch6_2.y = sin(glm::radians(pitch));
@@ -1109,9 +1113,9 @@ int main(int argc, char**argv)
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
         ImGui_ImplSqueLib_Init();
-
-        
-
+        ImGuiIO& io = ImGui::GetIO();
+        io.FontGlobalScale*=SQUE_DISPLAY_GetDPIDensity()/144;
+        ImGui::GetStyle().ScaleAllSizes(SQUE_DISPLAY_GetDPIDensity()/144);
     }
     const char* items[] = {
         "1-Vertices", "1.1-Indices", "2-Shaders", "2.1-Uniforms", "2.2-Attributes",

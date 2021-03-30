@@ -402,6 +402,7 @@ SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button)
 
 void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points)
 {
+    int lx = *x, ly = *y;
     *x = *y = 0;
     uint16_t inactive_p = 0;
     for (uint16_t i = 0; i < points; ++i)
@@ -410,8 +411,15 @@ void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points)
         *x += (pointers[i].x) * pointers[i].active;
         *y += (pointers[i].y) * pointers[i].active;
     }
-    *x /= (float)(points - inactive_p);
-    *y /= (float)(points - inactive_p);
+    if(points == inactive_p)
+    {
+        *x = lx;
+        *y = ly;
+    }
+    else{
+        *x /= (float)(points - inactive_p);
+        *y /= (float)(points - inactive_p);
+    }
 }
 
 bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer)
@@ -480,6 +488,30 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
     APPLY_MASK(action, AMOTION_EVENT_ACTION_MASK);
     bool motion_ended = true;
     // On Pointer 0, update mouse data for other libraries to use
+    if(num_pointers > 0)
+    {   
+        SQUE_PRINT(LT_INFO, "Pointer 0 as fake mouse");
+        int pointer = GetPointer(AMotionEvent_getPointerId(ev,0));
+        int x = AMotionEvent_getX(ev, 0);
+        int y = AMotionEvent_getY(ev, 0);
+        SQUE_Pointer& p = pointers[0];
+        if(whichsource == p.id)
+        {
+            mouse_buttons[0].prev_state = mouse_buttons[0].state;
+            switch (action)
+            {
+            case AMOTION_EVENT_ACTION_DOWN:
+                mouse_buttons[0].state = SQUE_ACTION_PRESS;
+                break;
+            case AMOTION_EVENT_ACTION_MOVE:
+                mouse_buttons[0].state = SQUE_ACTION_REPEAT;
+                break;
+            case AMOTION_EVENT_ACTION_UP:
+                mouse_buttons[0].state = SQUE_ACTION_RELEASE;
+                break;
+            }
+        }
+    }
     for (int i = 0; i < num_pointers; ++i)
     {
         SQUE_PRINT(LT_INFO, "Get Pointer %d Status...", i);
@@ -498,6 +530,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             p.y = y;
             g.start_x = x;
             g.start_y = y;
+            p.pos_callback(x,y);
             ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
             SQUE_PRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
             break;
@@ -506,6 +539,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
             p.x = x;
             p.y = y;
+            p.pos_callback(x,y);
             break;
         case AMOTION_EVENT_ACTION_UP:
             p.active = false;
@@ -514,6 +548,49 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
             g.end_x = x;
             g.end_y = y;
             g.timer.Stop();
+            p.pos_callback(x,y);    
+            SQUE_PRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
+            break;
+        }
+        if(motion_ended == true) motion_ended = !p.active;
+    }
+    for (int i = 0; i < num_pointers; ++i)
+    {
+        SQUE_PRINT(LT_INFO, "Get Pointer %d Status...", i);
+        int x, y;
+        int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
+        x = AMotionEvent_getX(ev, i);
+        y = AMotionEvent_getY(ev, i);
+        SQUE_Pointer& p = pointers[pointer];
+        SQUE_Gesture& g = gestures[pointer];
+        if(whichsource != p.id) continue;
+        switch (action)
+        {
+        case AMOTION_EVENT_ACTION_DOWN:
+            p.active = true;
+            p.x = x;
+            p.y = y;
+            g.start_x = x;
+            g.start_y = y;
+            p.pos_callback(x,y);
+            ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
+            SQUE_PRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
+            break;
+        case AMOTION_EVENT_ACTION_MOVE:
+        // Redo MidPoints of a Gesture properly
+            SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
+            p.x = x;
+            p.y = y;
+            p.pos_callback(x,y);
+            break;
+        case AMOTION_EVENT_ACTION_UP:
+            p.active = false;
+            p.x = x;
+            p.y = y;
+            g.end_x = x;
+            g.end_y = y;
+            g.timer.Stop();
+            p.pos_callback(x,y);    
             SQUE_PRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
             break;
         }
