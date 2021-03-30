@@ -64,7 +64,7 @@ void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index
 sque_vec<SQUE_VertAttrib> vertex_attributes;
 sque_vec<SQUE_VertAttribIndex> mesh_attributes_index;
 
-void SQUE_MESH_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uint32_t num_attribs)
+void SQUE_MESH_DeclareAttributes(const int32_t vert_id, const uint16_t num_attribs, int32_t& attrib_ref)
 {
     SQUE_VertAttribIndex index;
     index.id = vert_id;
@@ -79,17 +79,11 @@ void SQUE_MESH_DeclareAttributes(const int32_t vert_id, int32_t& attrib_ref, uin
 
 SQUE_VertAttrib* SQUE_MESH_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attr)
 {
-    SQ_ASSERT(attrib_ref <= mesh_attributes_index.size()); // Error if you have not declared previously the attributes of a mesh or are adding more attributes than declared!
+    SQ_ASSERT(attrib_ref <= mesh_attributes_index.size() && "Texture not declared to have attributes");
     SQUE_VertAttribIndex& index = mesh_attributes_index[attrib_ref-1];
+    SQ_ASSERT(index.end_attrib >= index.start_attrib + index.last && "Adding more texture attributes than declared initially");
     return &(vertex_attributes[index.start_attrib + index.last++] = attr);
 }
-
-//void EnableAttributesForProgram(const SQUE_Program& program)
-//{
-//    uint16_t size = attributes.size();
-//    for (int i = 0; i < size; ++i)
-//        SQUE_EnableProgramAttribute(program, attributes[i]);
-//}
 
 void SQUE_MESH_SetLocations(const int32_t attrib_ref)
 {
@@ -153,15 +147,15 @@ uint16_t SQUE_MESH_GetAttribSize(const uint32_t attrib_ref, const char* name)
 // CONSTRUCTORS / DESTRUCTORS ////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SQUE_TexAttrib::SQUE_TexAttrib() : id(0), data(NULL)
-{}
+SQUE_TexAttrib* SQUE_TEXTURE_GenAttrib(const int32_t attribute_id, const void* data_, const uint16_t data_size)
+{
+    SQUE_TexAttrib* tex_attrib = new SQUE_TexAttrib();
+    tex_attrib->id = attribute_id;
+    tex_attrib->data = malloc(data_size);
+    memcpy(tex_attrib->data, data_, data_size);
 
-SQUE_TexAttrib::SQUE_TexAttrib(int32_t parameter_id, void* data_) :
-    id(parameter_id), data(data_)
-{}
-
-SQUE_TexAttrib::~SQUE_TexAttrib()
-{}
+    return tex_attrib;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE MANAGEMENT ////////////////////////////////////////////////////////////////////////////////////
@@ -185,61 +179,75 @@ sque_vec<SQUE_TexAttrib> int_attributes;
 sque_vec<SQUE_TexAttrib> float_attributes;
 sque_vec<SQUE_TexAttribIndex> tex_attributes_index;
 
-void SQUE_TEXTURE_DeclareIntAttributes(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes)
-{
-    SQUE_TexAttribIndex t;
-    t.id = tex_id;
-    t.int_start = int_attributes.size();
-    t.int_end = t.int_start + num_attributes - 1;
-    t.int_last = 0;
-
-    int_attributes.resize(t.int_start + num_attributes);
-    *attrib_ref = tex_attributes_index.size();
-    tex_attributes_index.push_back(t);
-}
-
-void SQUE_TEXTURE_DeclareFloatAttributes(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes)
-{
-    SQUE_TexAttribIndex t;
-    t.float_start = float_attributes.size();
-    t.float_end = t.float_start + num_attributes - 1;
-    t.float_last = 0;
-
-    float_attributes.resize(t.float_start + num_attributes);
-    *attrib_ref = tex_attributes_index.size();
-    tex_attributes_index.push_back(t);
-}
-
-void SQUE_TEXTURE_DeclareAttributesWide(const uint32_t tex_id, uint32_t* attrib_ref, const uint16_t num_attributes)
+void SQUE_TEXTURE_DeclareAttributes(const uint32_t tex_id, const uint16_t num_ints, const uint16_t num_floats, uint32_t* attrib_ref)
 {
     SQUE_TexAttribIndex t;
     t.id = tex_id;
     
     t.int_start = int_attributes.size();
-    t.int_end = t.int_start + num_attributes - 1;
+    t.int_end = t.int_start + num_ints - 1;
     t.int_last = 0;
     t.float_start = float_attributes.size();
-    t.float_end = t.float_start + num_attributes - 1;
+    t.float_end = t.float_start + num_floats - 1;
     t.float_last = 0;
-    int_attributes.resize(t.int_start + num_attributes);
-    float_attributes.resize(t.float_start + num_attributes);
+    int_attributes.resize(t.int_start + num_ints);
+    float_attributes.resize(t.float_start + num_floats);
 
-    *attrib_ref = tex_attributes_index.size();
     tex_attributes_index.push_back(t);
+    *attrib_ref = tex_attributes_index.size();
 }
 
-SQUE_TexAttrib* SQUE_TEXTURE_AddIntAttribute(const uint32_t attrib_ref, const SQUE_TexAttrib& tex_attrib)
+SQUE_TexAttrib* SQUE_TEXTURE_AddInt(const uint32_t attrib_ref, const int32_t attribute_id, const int32_t value)
 {
-    SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref -1];
-    int_attributes[t.int_start + t.int_last] = tex_attrib;
-    ++t.int_last;
-    return &int_attributes[t.int_start + t.int_last - 1];
+    SQ_ASSERT(attrib_ref <= tex_attributes_index.size() && "Texture not declare to have attributes");
+    SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref - 1];
+    SQ_ASSERT(t.int_end >= t.int_start + t.int_last && "Adding more INT attributes than declared");
+    SQUE_TexAttrib& t_a = int_attributes[t.int_start + t.int_last];
+    t_a.id = attribute_id;
+    t_a.data = malloc(sizeof(int32_t));
+    memcpy(t_a.data, &value, sizeof(int32_t));
+    return &int_attributes[t.int_start + t.int_last++ - 1];
 }
 
-SQUE_TexAttrib* SQUE_TEXTURE_AddFloatAttribute(const uint32_t attrib_ref, const SQUE_TexAttrib& tex_attrib)
+SQUE_TexAttrib* SQUE_TEXTURE_AddIntVs(const uint32_t attrib_ref, const int32_t attribute_id, void* data_, const uint16_t num_ints)
 {
+    SQ_ASSERT(attrib_ref < tex_attributes_index.size() && "Texture not declare to have attributes");
     SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref -1];
-    float_attributes[t.float_start + t.float_last] = tex_attrib;
-    ++t.float_last;
-    return &float_attributes[t.float_start + t.float_last - 1];
+    SQ_ASSERT(t.int_end <= t.int_start + t.int_last && "Adding more INT attributes than declared");
+    SQUE_TexAttrib& t_a = int_attributes[t.int_start + t.int_last];
+    t_a.data = malloc(sizeof(int32_t)*num_ints);
+    memcpy(t_a.data, data_, sizeof(int32_t)*num_ints);
+    return &int_attributes[t.int_start + t.int_last++ - 1];
+}
+
+SQUE_TexAttrib* SQUE_TEXTURE_AddFloat(const uint32_t attrib_ref, const int32_t attribute_id, const float value)
+{
+    SQ_ASSERT(attrib_ref < tex_attributes_index.size() && "Texture not declare to have attributes");
+    SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref - 1];
+    SQ_ASSERT(t.float_end <= t.float_start + t.float_last && "Adding more FLOAT attributes than declared");
+    SQUE_TexAttrib& t_a = float_attributes[t.float_start + t.float_last];
+    t_a.data = malloc(sizeof(float));
+    memcpy(t_a.data, &value, sizeof(float));
+    return &float_attributes[t.float_start + t.float_last++ - 1];
+}
+
+SQUE_TexAttrib* SQUE_TEXTURE_AddFloatVs(const uint32_t attrib_ref, const int32_t attribute_id, void* data_, const uint16_t num_floats)
+{
+    SQ_ASSERT(attrib_ref < tex_attributes_index.size() && "Texture not declare to have attributes");
+    SQUE_TexAttribIndex& t = tex_attributes_index[attrib_ref - 1];
+    SQ_ASSERT(t.float_end <= t.float_start + t.float_last && "Adding more FLOAT attributes than declared");
+    SQUE_TexAttrib& t_a = float_attributes[t.float_start + t.float_last];
+    t_a.data = malloc(sizeof(float) * num_floats);
+    memcpy(t_a.data, data_, sizeof(float) * num_floats);
+    return &float_attributes[t.float_start + t.float_last++ - 1];
+}
+
+void SQUE_TEXTURE_FreeAttributes()
+{
+    for (uint16_t i = 0; i < int_attributes.size(); ++i)
+        free(int_attributes[i].data);
+    for (uint16_t i = 0; i < float_attributes.size(); ++i)
+        free(float_attributes[i].data);
+
+    // Make sure these vectors don't hold the data and create a memory leak, have to test
 }

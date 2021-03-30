@@ -68,15 +68,7 @@ void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id)
 sque_vec<SQUE_Uniform> uniforms;
 sque_vec<SQUE_ProgramUniforms> programs;
 
-int32_t SQUE_SHADERS_GetUniformID(const uint32_t uniform_ref, const char* name)
-{
-    SQUE_ProgramUniforms& p = programs[uniform_ref - 1];
-    for (uint16_t i = 0; i < p.end_uniform - p.start_uniform; ++i)
-        if (strcmp(uniforms[p.start_uniform + i].name, name) == 0) return uniforms[p.start_uniform + i].id;
-    return -1;
-}
-
-void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id, const uint32_t num_uniforms)
+void SQUE_SHADERS_DeclareProgram(const int32_t program_id, const uint16_t num_uniforms, uint32_t& uniform_ref)
 {
     SQUE_ProgramUniforms p;
     p.id = program_id;
@@ -91,8 +83,9 @@ void SQUE_SHADERS_DeclareProgram(uint32_t& uniform_ref, const int32_t program_id
 
 int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* name)
 {
-    SQUE_ProgramUniforms& p = programs[uniform_ref -1];
-
+    SQ_ASSERT(uniform_ref <= programs.size() && "The program has not been declare to have uniforms");
+    SQUE_ProgramUniforms& p = programs[uniform_ref-1];
+    SQ_ASSERT(p.end_uniform >= p.start_uniform + p.last && "Adding more uniforms than declared for program");
     SQUE_Uniform& uni = uniforms[p.start_uniform + p.last];
     memcpy(uni.name, name, strlen(name));
 #if defined(USE_OPENGL)  || defined(USE_OPENGLES)
@@ -101,6 +94,14 @@ int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* name
     ++p.last;
 
     return uni.id;
+}
+
+int32_t SQUE_SHADERS_GetUniformID(const uint32_t uniform_ref, const char* name)
+{
+    SQUE_ProgramUniforms& p = programs[uniform_ref - 1];
+    for (uint16_t i = 0; i < p.end_uniform - p.start_uniform; ++i)
+        if (strcmp(uniforms[p.start_uniform + i].name, name) == 0) return uniforms[p.start_uniform + i].id;
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

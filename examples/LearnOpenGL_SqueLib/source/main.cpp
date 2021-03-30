@@ -1,6 +1,7 @@
 #include <iostream>
 #include <squelib.h>
-
+#include <imgui.h>
+#include <imgui_impl_squelib.h>
 enum main_states
 {
 	MAIN_CREATION = 0,
@@ -53,6 +54,7 @@ static float vertices1[] = {
 };
 
 static bool loaded_ch1 = false; 
+static bool render_ch1 = true;
 SQUE_Mesh triangle1;
 SQUE_Asset* vert_s1_file = NULL;
 SQUE_Asset* frag_s1_file = NULL;
@@ -69,8 +71,8 @@ void LearnOpenGL_1_Vertices()
         SQUE_MESH_SetVertData(triangle1, 3);
         SQUE_MESH_GenBuffer(&triangle1);
         //SQUE_RENDER_GenerateMeshBuffer(&triangle1.vert_id, &triangle1.index_id, &triangle1.attribute_object);
-        SQUE_MESH_BindBuffer(triangle1.vert_id, triangle1.index_id, triangle1.attribute_object);
-        SQUE_MESH_DeclareAttributes(triangle1.vert_id, triangle1.attrib_ref, 1);
+        SQUE_MESH_BindBuffer(triangle1);
+        SQUE_MESH_DeclareAttributes(triangle1.vert_id, 1, triangle1.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
         SQUE_MESH_AddAttribute(triangle1.attrib_ref, aPos);        
 
@@ -109,13 +111,15 @@ void LearnOpenGL_1_Vertices()
         loaded_ch1 = true;
     }
     
-
-    SQUE_PROGRAM_Use(triangle_program1.id);
-    //SQUE_RENDER_BindMeshBuffer(triangle1.vert_id, triangle1.index_id, triangle1.attribute_object);
-    SQUE_RENDER_DrawVertices(triangle1);
+    if (render_ch1)
+    {
+        SQUE_PROGRAM_Use(triangle_program1.id);
+        //SQUE_RENDER_BindMeshBuffer(triangle1.vert_id, triangle1.index_id, triangle1.attribute_object);
+        SQUE_RENDER_DrawVertices(triangle1);
+    }
 }
 
-float vertices1_2[] = {
+float vertices1_1[] = {
      0.5f,  0.5f, 0.0f,  // top right
      0.5f, -0.5f, 0.0f,  // bottom right
     -0.5f, -0.5f, 0.0f,  // bottom left
@@ -127,39 +131,42 @@ unsigned int indices1[] = {  // note that we start from 0!
 };
 
 SQUE_Mesh quad1;
-static bool loaded_ch1_2 = false;
-void LearnOpenGL_1_2_Indices()
+static bool loaded_ch1_1 = false;
+static bool render_ch1_1 = false;
+void LearnOpenGL_1_1_Indices()
 {
-    if (!loaded_ch1_2)
+    if (!loaded_ch1_1)
     {
         SQUE_MESH_SetDrawConfig(quad1, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
         SQUE_MESH_SetVertData(quad1, 4); // We have 4 vertex for a quad
         SQUE_MESH_SetIndexData(quad1, 6, SQUE_UINT); // When using indices it is required to initialize amount of indices and index variable type
         SQUE_MESH_GenBuffer(&quad1);
         //SQUE_MESH_GenBuffer(&quad1.vert_id, &quad1.index_id, &quad1.attribute_object);
-        SQUE_MESH_BindBuffer(quad1.vert_id, quad1.index_id, quad1.attribute_object);
-        SQUE_MESH_DeclareAttributes(quad1.vert_id, quad1.attrib_ref, 1);
+        SQUE_MESH_BindBuffer(quad1);
+        SQUE_MESH_DeclareAttributes(quad1.vert_id, 1, quad1.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
         SQUE_MESH_AddAttribute(quad1.attrib_ref, aPos);
 
         SQUE_MESH_CalcVertSize(quad1.attrib_ref);
         SQUE_MESH_SetLocations(quad1.attrib_ref);
-        SQUE_MESH_SendToGPU(quad1, vertices1_2, indices1);
+        SQUE_MESH_SendToGPU(quad1, vertices1_1, indices1);
 
         SQUE_CHECK_RENDER_ERRORS();
-        loaded_ch1_2 = true;
+        loaded_ch1_1 = true;
     }
-    
 
-    SQUE_PROGRAM_Use(triangle_program1.id);
-    //SQUE_RENDER_BindMeshBuffer(quad1.vert_id, quad1.index_id, quad1.attribute_object);
-    SQUE_RENDER_DrawIndices(quad1); // Drawing with indices instead of Vertices
+    if (render_ch1_1)
+    {
+        SQUE_PROGRAM_Use(triangle_program1.id);
+        //SQUE_RENDER_BindMeshBuffer(quad1.vert_id, quad1.index_id, quad1.attribute_object);
+        SQUE_RENDER_DrawIndices(quad1); // Drawing with indices instead of Vertices
+    }
 }
 
 
 // LearnOpenGL_2_Shaders
 static bool loaded_ch2 = false;
-static bool render_ch2 = true;
+static bool render_ch2 = false;
 SQUE_Mesh triangle2;
 SQUE_Program triangle_program2;
 SQUE_Shader vert_s2;
@@ -173,9 +180,8 @@ void LearnOpenGL_2_Shaders()
         SQUE_MESH_SetDrawConfig(triangle2, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
         SQUE_MESH_SetVertData(triangle2, 3);
         SQUE_MESH_GenBuffer(&triangle2);
-        //SQUE_RENDER_GenerateMeshBuffer(&triangle2.vert_id, &triangle2.index_id, &triangle2.attribute_object);
-        SQUE_MESH_BindBuffer(triangle2.vert_id, triangle2.index_id, triangle2.attribute_object);
-        SQUE_MESH_DeclareAttributes(triangle2.vert_id, triangle2.attrib_ref, 1);
+        SQUE_MESH_BindBuffer(triangle2);
+        SQUE_MESH_DeclareAttributes(triangle2.vert_id, 1, triangle2.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
         SQUE_MESH_AddAttribute(triangle2.attrib_ref, aPos);
 
@@ -217,21 +223,21 @@ void LearnOpenGL_2_Shaders()
     }
 }
 
-static bool loaded_ch2_2 = false;
-static bool render_ch2_2 = true;
-SQUE_Asset* vert_s2_2_file;
-SQUE_Asset* frag_s2_2_file;
+static bool loaded_ch2_1 = false;
+static bool render_ch2_1 = false;
+SQUE_Asset* vert_s2_1_file;
+SQUE_Asset* frag_s2_1_file;
 SQUE_Timer timer1;
 SQUE_Program uniform_program1;
 SQUE_Shader frag_uniform_s1;
 
 int32_t ourColor_id;
-void LearnOpenGL_2_2_Uniforms()
+void LearnOpenGL_2_1_Uniforms()
 {
-    if (!loaded_ch2_2)
+    if (!loaded_ch2_1)
     {
-        frag_s2_2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_2.frag");
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_2_file->raw_data, frag_s2_2_file->size));
+        frag_s2_1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_1.frag");
+        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_1_file->raw_data, frag_s2_1_file->size));
 
         SQUE_SHADERS_Generate(frag_uniform_s1, SQUE_FRAGMENT_SHADER);
         SQUE_SHADERS_SetSource(frag_uniform_s1.id, frag_source.c_str());
@@ -243,7 +249,7 @@ void LearnOpenGL_2_2_Uniforms()
         SQUE_PROGRAM_AttachShader(uniform_program1, frag_uniform_s1);
         SQUE_PROGRAM_Link(uniform_program1.id);
 
-        SQUE_SHADERS_DeclareProgram(uniform_program1.uniform_ref, uniform_program1.id, 1);
+        SQUE_SHADERS_DeclareProgram(uniform_program1.id, 1, uniform_program1.uniform_ref);
         ourColor_id = SQUE_SHADERS_DeclareUniform(uniform_program1.uniform_ref, "ourColor");
 
 
@@ -252,9 +258,9 @@ void LearnOpenGL_2_2_Uniforms()
         delete vert_s2_file;
 
         timer1.Start();
-        loaded_ch2_2 = true;
+        loaded_ch2_1 = true;
     }
-    if (render_ch2_2)
+    if (render_ch2_1)
     {
         SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
         float green = (sin(timer1.ReadMilliSec() / 2.f) + .5f);
@@ -265,44 +271,44 @@ void LearnOpenGL_2_2_Uniforms()
     }
 }
 
-static bool loaded_ch2_3 = false;
-static bool render_ch2_3 = true;
+static bool loaded_ch2_2 = false;
+static bool render_ch2_2 = false;
 
-float vertices2_3[] = {
+float vertices2_2[] = {
     // positions         // colors
      0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
     -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
      0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
 };
 
-SQUE_Mesh triangle2_3;
+SQUE_Mesh triangle2_2;
 SQUE_Program attribute_program1;
 SQUE_Shader vert_attributes_s1;
 SQUE_Shader frag_attributes_s1;
 SQUE_Asset* vert_attributes_s1_file;
 SQUE_Asset* frag_attributes_s1_file;
 
-void LearnOpenGL_2_3_Attributes()
+void LearnOpenGL_2_2_Attributes()
 {
-    if (!loaded_ch2_3)
+    if (!loaded_ch2_2)
     {
-        SQUE_MESH_SetDrawConfig(triangle2_3, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
-        SQUE_MESH_SetVertData(triangle2_3, 3);
-        SQUE_MESH_GenBuffer(&triangle2_3);
-        //SQUE_RENDER_GenerateMeshBuffer(&triangle2_3.vert_id, &triangle2_3.index_id, &triangle2_3.attribute_object);
-        SQUE_MESH_BindBuffer(triangle2_3.vert_id, triangle2_3.index_id, triangle2_3.attribute_object);
-        SQUE_MESH_DeclareAttributes(triangle2_3.vert_id, triangle2_3.attrib_ref, 2); // We setup 2 attributes, Position and Color
+        SQUE_MESH_SetDrawConfig(triangle2_2, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+        SQUE_MESH_SetVertData(triangle2_2, 3);
+        SQUE_MESH_GenBuffer(&triangle2_2);
+        //SQUE_RENDER_GenerateMeshBuffer(&triangle2_2.vert_id, &triangle2_2.index_id, &triangle2_2.attribute_object);
+        SQUE_MESH_BindBuffer(triangle2_2);
+        SQUE_MESH_DeclareAttributes(triangle2_2.vert_id, 2, triangle2_2.attrib_ref); // We setup 2 attributes, Position and Color
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
         SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 3);
-        SQUE_MESH_AddAttribute(triangle2_3.attrib_ref, aPos);
-        SQUE_MESH_AddAttribute(triangle2_3.attrib_ref, aCol);
+        SQUE_MESH_AddAttribute(triangle2_2.attrib_ref, aPos);
+        SQUE_MESH_AddAttribute(triangle2_2.attrib_ref, aCol);
 
-        SQUE_MESH_CalcVertSize(triangle2_3.attrib_ref);
-        SQUE_MESH_SetLocations(triangle2_3.attrib_ref);
-        SQUE_MESH_SendToGPU(triangle2_3, vertices2_3);
+        SQUE_MESH_CalcVertSize(triangle2_2.attrib_ref);
+        SQUE_MESH_SetLocations(triangle2_2.attrib_ref);
+        SQUE_MESH_SendToGPU(triangle2_2, vertices2_2);
 
-        vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2_2.vert");
-        frag_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_3.frag");
+        vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2_1.vert");
+        frag_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_2.frag");
         std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_attributes_s1_file->raw_data, vert_attributes_s1_file->size));
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_attributes_s1_file->raw_data, frag_attributes_s1_file->size));
 
@@ -328,22 +334,22 @@ void LearnOpenGL_2_3_Attributes()
         delete frag_attributes_s1_file->raw_data;
         delete frag_attributes_s1_file;
 
-        loaded_ch2_3 = true;
+        loaded_ch2_2 = true;
 
         SQUE_CHECK_RENDER_ERRORS();
     }
-    if (render_ch2_3)
+    if (render_ch2_2)
     {
         SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
         SQUE_PROGRAM_Use(attribute_program1.id);
-        SQUE_RENDER_DrawVertices(triangle2_3);
+        SQUE_RENDER_DrawVertices(triangle2_2);
         SQUE_CHECK_RENDER_ERRORS();
     }
 }
 
 // LearnOpenGL_3_Textures
 static bool loaded_ch3 = false;
-static bool render_ch3 = true;
+static bool render_ch3 = false;
 
 SQUE_Texture texture_ch3;
 SQUE_Asset* texture_ch3_file;
@@ -372,13 +378,9 @@ void LearnOpenGL_3_Textures()
         SQUE_TEXTURE_SetFormat(&texture_ch3, SQUE_TEXTURE_2D, SQUE_RGB, SQUE_RGB, SQUE_UBYTE);
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
-        SQUE_TEXTURE_DeclareIntAttributes(texture_ch3.id, &texture_ch3.attrib_ref, 2);
-        int nearest = SQUE_NEAREST;
-        int linear = SQUE_LINEAR;
-        SQUE_TexAttrib min_filter(SQUE_MIN_FILTER, &nearest);
-        SQUE_TexAttrib mag_filter(SQUE_MAG_FILTER, &linear);
-        SQUE_TEXTURE_AddIntAttribute(texture_ch3.id, min_filter);
-        SQUE_TEXTURE_AddIntAttribute(texture_ch3.id, mag_filter);
+        SQUE_TEXTURE_DeclareAttributes(texture_ch3.id, 2, 0, &texture_ch3.attrib_ref);
+        SQUE_TEXTURE_AddInt(texture_ch3.attrib_ref, SQUE_MIN_FILTER, SQUE_NEAREST);
+        SQUE_TEXTURE_AddInt(texture_ch3.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
         SQUE_RENDER_SetTextureAttributes(texture_ch3.id);
 
         texture_ch3_file = SQUE_FS_LoadAssetRaw("container.jpeg");
@@ -392,8 +394,8 @@ void LearnOpenGL_3_Textures()
         SQUE_MESH_SetIndexData(quad_textured_ch3, 6, SQUE_UINT);
         SQUE_MESH_GenBuffer(&quad_textured_ch3);
         //SQUE_RENDER_GenerateMeshBuffer(&quad_textured_ch3.vert_id, &quad_textured_ch3.index_id, &quad_textured_ch3.attribute_object);
-        SQUE_MESH_BindBuffer(quad_textured_ch3.vert_id, quad_textured_ch3.index_id, quad_textured_ch3.attribute_object);
-        SQUE_MESH_DeclareAttributes(quad_textured_ch3.vert_id, quad_textured_ch3.attrib_ref, 3);
+        SQUE_MESH_BindBuffer(quad_textured_ch3);
+        SQUE_MESH_DeclareAttributes(quad_textured_ch3.vert_id, 3, quad_textured_ch3.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
         SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 3);
         SQUE_VertAttrib aUV("aTexCoord", SQUE_FLOAT, true, 2);
@@ -439,71 +441,66 @@ void LearnOpenGL_3_Textures()
     }
 }
 
-static bool loaded_ch3_2 = false;
-static bool render_ch3_2 = true;
+static bool loaded_ch3_1 = false;
+static bool render_ch3_1 = false;
 
-SQUE_Program textured_program_ch3_2;
-SQUE_Shader frag_texture_s_ch3_2;
-SQUE_Asset* frag_texture_s_ch3_2_file;
+SQUE_Program textured_program_ch3_1;
+SQUE_Shader frag_texture_s_ch3_1;
+SQUE_Asset* frag_texture_s_ch3_1_file;
 int32_t texture1_uniform;
 int32_t texture2_uniform;
 
-SQUE_Texture texture_ch3_2;
-SQUE_Asset* texture_ch3_2_file;
+SQUE_Texture texture_ch3_1;
+SQUE_Asset* texture_ch3_1_file;
 
-void LearnOpenGL_3_2_MixTextures()
+void LearnOpenGL_3_1_MixTextures()
 {
-    if (!loaded_ch3_2)
+    if (!loaded_ch3_1)
     {
-        SQUE_TEXTURE_GenIDs(1,&texture_ch3_2.id);
-        SQUE_TEXTURE_SetFormat(&texture_ch3_2, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_GenIDs(1,&texture_ch3_1.id);
+        SQUE_TEXTURE_SetFormat(&texture_ch3_1, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
+        SQUE_TEXTURE_DeclareAttributes(texture_ch3_1.id, 2, 0, &texture_ch3_1.attrib_ref);
+        SQUE_TEXTURE_AddInt(texture_ch3_1.attrib_ref, SQUE_MIN_FILTER, SQUE_NEAREST);
+        SQUE_TEXTURE_AddInt(texture_ch3_1.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
+        SQUE_RENDER_SetTextureAttributes(texture_ch3_1.id);
 SQUE_CHECK_RENDER_ERRORS();
-        SQUE_TEXTURE_DeclareIntAttributes(texture_ch3_2.id, &texture_ch3_2.attrib_ref, 2);
-        int nearest = SQUE_NEAREST;
-        int linear = SQUE_LINEAR;
-        SQUE_TexAttrib min_filter(SQUE_MIN_FILTER, &nearest);
-        SQUE_TexAttrib mag_filter(SQUE_MAG_FILTER, &linear);
-        SQUE_TEXTURE_AddIntAttribute(texture_ch3_2.id, min_filter);
-        SQUE_TEXTURE_AddIntAttribute(texture_ch3_2.id, mag_filter);
-        SQUE_RENDER_SetTextureAttributes(texture_ch3_2.id);
+        texture_ch3_1_file = SQUE_FS_LoadAssetRaw("awesomeface.png");
+        SQUE_LOAD_Texture(texture_ch3_1_file, &texture_ch3_1);
+        SQUE_TEXTURE_SendAs2DToGPU(texture_ch3_1, texture_ch3_1_file->raw_data);
+        SQUE_FREE_Texture(texture_ch3_1_file);
+        delete texture_ch3_1_file;
 SQUE_CHECK_RENDER_ERRORS();
-        texture_ch3_2_file = SQUE_FS_LoadAssetRaw("awesomeface.png");
-        SQUE_LOAD_Texture(texture_ch3_2_file, &texture_ch3_2);
-        SQUE_TEXTURE_SendAs2DToGPU(texture_ch3_2, texture_ch3_2_file->raw_data);
-        SQUE_FREE_Texture(texture_ch3_2_file);
-        delete texture_ch3_2_file;
+        frag_texture_s_ch3_1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3_1.frag");
+        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_s_ch3_1_file->raw_data, frag_texture_s_ch3_1_file->size));
 SQUE_CHECK_RENDER_ERRORS();
-        frag_texture_s_ch3_2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3_2.frag");
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_s_ch3_2_file->raw_data, frag_texture_s_ch3_2_file->size));
+        SQUE_SHADERS_Generate(frag_texture_s_ch3_1, SQUE_FRAGMENT_SHADER);
+        SQUE_SHADERS_SetSource(frag_texture_s_ch3_1.id, frag_source.c_str());
+        SQUE_SHADERS_Compile(frag_texture_s_ch3_1.id);
 SQUE_CHECK_RENDER_ERRORS();
-        SQUE_SHADERS_Generate(frag_texture_s_ch3_2, SQUE_FRAGMENT_SHADER);
-        SQUE_SHADERS_SetSource(frag_texture_s_ch3_2.id, frag_source.c_str());
-        SQUE_SHADERS_Compile(frag_texture_s_ch3_2.id);
+        SQUE_PROGRAM_GenID(&textured_program_ch3_1.id);
+        SQUE_PROGRAM_AttachShader(textured_program_ch3_1, vert_texture_s_ch3);
+        SQUE_PROGRAM_AttachShader(textured_program_ch3_1, frag_texture_s_ch3_1);
+        SQUE_PROGRAM_Link(textured_program_ch3_1.id);
 SQUE_CHECK_RENDER_ERRORS();
-        SQUE_PROGRAM_GenID(&textured_program_ch3_2.id);
-        SQUE_PROGRAM_AttachShader(textured_program_ch3_2, vert_texture_s_ch3);
-        SQUE_PROGRAM_AttachShader(textured_program_ch3_2, frag_texture_s_ch3_2);
-        SQUE_PROGRAM_Link(textured_program_ch3_2.id);
+        SQUE_SHADERS_DeclareProgram(textured_program_ch3_1.id, 2, textured_program_ch3_1.uniform_ref);
+        texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_1.uniform_ref, "texture1");
+        texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_1.uniform_ref, "texture2");
 SQUE_CHECK_RENDER_ERRORS();
-        SQUE_SHADERS_DeclareProgram(textured_program_ch3_2.uniform_ref, textured_program_ch3_2.id, 2);
-        texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, "texture1");
-        texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, "texture2");
-SQUE_CHECK_RENDER_ERRORS();
-        delete frag_texture_s_ch3_2_file;
-        loaded_ch3_2 = true;
+        delete frag_texture_s_ch3_1_file;
+        loaded_ch3_1 = true;
     }
-    if (render_ch3_2)
+    if (render_ch3_1)
     {
         SQUE_CHECK_RENDER_ERRORS();
         SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
-        SQUE_PROGRAM_Use(textured_program_ch3_2.id);
+        SQUE_PROGRAM_Use(textured_program_ch3_1.id);
 SQUE_CHECK_RENDER_ERRORS();
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE0);
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 SQUE_CHECK_RENDER_ERRORS();
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3.dim_format);
 SQUE_CHECK_RENDER_ERRORS();
         SetInt(texture1_uniform, 0);
         SetInt(texture2_uniform, 1);
@@ -516,7 +513,7 @@ SQUE_CHECK_RENDER_ERRORS();
 // LearnOpenGL_4_Transformations
 
 static bool loaded_ch4 = false;
-static bool render_ch4 = true;
+static bool render_ch4 = false;
 
 #include<glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -548,16 +545,16 @@ void LearnOpenGL_4_Transformations()
 
         SQUE_PROGRAM_GenID(&transform_program_ch4.id);
         SQUE_PROGRAM_AttachShader(transform_program_ch4, vert_transform_s_ch4);
-        SQUE_PROGRAM_AttachShader(transform_program_ch4, frag_texture_s_ch3_2);
+        SQUE_PROGRAM_AttachShader(transform_program_ch4, frag_texture_s_ch3_1);
         SQUE_PROGRAM_Link(transform_program_ch4.id);
 
 
-        SQUE_SHADERS_DeclareProgram(transform_program_ch4.uniform_ref, transform_program_ch4.id, 3);
+        SQUE_SHADERS_DeclareProgram(transform_program_ch4.id, 3, transform_program_ch4.uniform_ref);
         transf_text1_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "texture1");
         transf_text2_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "texture2");
         transf_mat1_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "transform");
 
-        SQUE_SHADERS_FreeFromGPU(frag_texture_s_ch3_2.id);
+        SQUE_SHADERS_FreeFromGPU(frag_texture_s_ch3_1.id);
 
         delete vert_transform_s_ch4_file->raw_data;
         delete vert_transform_s_ch4_file;
@@ -573,7 +570,7 @@ void LearnOpenGL_4_Transformations()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(transf_text1_uni, 0);
         SetInt(transf_text2_uni, 1);
@@ -591,7 +588,7 @@ void LearnOpenGL_4_Transformations()
 // LearnOpenGL_5_CoordinateSystems
 
 static bool loaded_ch5 = false;
-static bool render_ch5 = true;
+static bool render_ch5 = false;
 
 glm::mat4 proj_mat_ch5;
 glm::mat4 model_mat_ch5;
@@ -624,10 +621,10 @@ void LearnOpenGL_5_CoordinateSystems()
 
         SQUE_PROGRAM_GenID(&coordinate_program_ch5.id);
         SQUE_PROGRAM_AttachShader(coordinate_program_ch5, vert_coordinate_s_ch5);
-        SQUE_PROGRAM_AttachShader(coordinate_program_ch5, frag_texture_s_ch3_2);
+        SQUE_PROGRAM_AttachShader(coordinate_program_ch5, frag_texture_s_ch3_1);
         SQUE_PROGRAM_Link(coordinate_program_ch5.id);
 
-        SQUE_SHADERS_DeclareProgram(coordinate_program_ch5.uniform_ref, coordinate_program_ch5.id, 5);
+        SQUE_SHADERS_DeclareProgram(coordinate_program_ch5.id, 5, coordinate_program_ch5.uniform_ref);
         view_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "view");
         proj_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "projection");
         model_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "model");
@@ -652,7 +649,7 @@ void LearnOpenGL_5_CoordinateSystems()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(texture1_uniform_ch5, 0);
         SetInt(texture1_uniform_ch5, 1);
@@ -666,7 +663,7 @@ void LearnOpenGL_5_CoordinateSystems()
 }
 
 static bool loaded_ch5_1 = false;
-static bool render_ch5_1 = true;
+static bool render_ch5_1 = false;
 
 float vertices_ch5_1[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -723,8 +720,8 @@ void LearnOpenGL_5_1_3DCubeRotating()
         SQUE_MESH_SetVertData(cube_ch5_1, 36);
         SQUE_MESH_GenBuffer(&cube_ch5_1);
         //SQUE_RENDER_GenerateMeshBuffer(&cube_ch5_1.vert_id, &cube_ch5_1.index_id, &cube_ch5_1.attribute_object);
-        SQUE_MESH_BindBuffer(cube_ch5_1.vert_id, cube_ch5_1.index_id, cube_ch5_1.attribute_object);
-        SQUE_MESH_DeclareAttributes(cube_ch5_1.vert_id, cube_ch5_1.attrib_ref, 3);
+        SQUE_MESH_BindBuffer(cube_ch5_1);
+        SQUE_MESH_DeclareAttributes(cube_ch5_1.vert_id, 3, cube_ch5_1.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
         SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 0);
         SQUE_VertAttrib aUV("aTexCoord", SQUE_FLOAT, true, 2);
@@ -763,7 +760,7 @@ void LearnOpenGL_5_1_3DCubeRotating()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(texture1_uniform_ch5, 0);
         SetInt(texture1_uniform_ch5, 1);
@@ -784,7 +781,7 @@ void LearnOpenGL_5_1_3DCubeRotating()
 }
 
 static bool loaded_ch5_2 = false;
-static bool render_ch5_2 = true;
+static bool render_ch5_2 = false;
 
 glm::vec3 cubePositions[] = {
     glm::vec3(0.0f,  0.0f,  0.0f),
@@ -825,7 +822,7 @@ void LearnOpenGL_5_2_More3DCubes()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(texture1_uniform_ch5, 0);
         SetInt(texture1_uniform_ch5, 1);
@@ -851,7 +848,7 @@ void LearnOpenGL_5_2_More3DCubes()
 // LearnOpenGL_6_Camera
 
 static bool loaded_ch6 = false;
-static bool render_ch6 = true;
+static bool render_ch6 = false;
 
 glm::vec3 camera_pos;
 glm::vec3 camera_target;
@@ -876,7 +873,7 @@ void LearnOpenGL_6_Camera()
 
         loaded_ch6 = true;
     }
-    if(render_ch6 && render_ch5_2)
+    if(render_ch6 )
     {
         SQUE_RenderState last;
         last.BackUp();
@@ -894,7 +891,7 @@ void LearnOpenGL_6_Camera()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(texture1_uniform_ch5, 0);
         SetInt(texture1_uniform_ch5, 1);
@@ -927,7 +924,7 @@ void LearnOpenGL_6_Camera()
 }
 
 static bool loaded_ch6_1 = false;
-static bool render_ch6_1 = true;
+static bool render_ch6_1 = false;
 
 glm::vec3 camera_pos_ch6_1;
 glm::vec3 camera_up_ch6_1;
@@ -986,7 +983,7 @@ void LearnOpenGL_6_1_CameraMovement()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(texture1_uniform_ch5, 0);
         SetInt(texture1_uniform_ch5, 1);
@@ -1015,11 +1012,11 @@ void LearnOpenGL_6_1_CameraMovement()
 }
 
 static bool loaded_ch6_2 = false;
-static bool render_ch6_2 = true;
+static bool render_ch6_2 = false;
 glm::vec3 direction_ch6_2;
 float yaw, pitch;
 double last_time_ch6_2;
-//float lx, ly;
+float lx, ly;
 void LearnOpenGL_6_2_CameraLook()
 {
     if (!loaded_ch6_2)
@@ -1027,18 +1024,22 @@ void LearnOpenGL_6_2_CameraLook()
         last_time_ch6_2 = 0;
         yaw = -90.f;
         pitch = 0.f;
-        //SQUE_INPUT_GetPointerAvgPos(&lx, &ly, 10);
+        SQUE_INPUT_GetPointerAvgPos(&lx, &ly, 10);
 
         loaded_ch6_2 = true;
     }
     double curr_time = timer1.ReadMilliSec();
-    {
-        float mx, my, lx,ly;
+    if(render_ch6_2){
+        float mx, my;
         SQUE_INPUT_GetPointerAvgPos(&mx, &my,10);
-        SQUE_INPUT_GetPointerAvgPrevPos(&lx, &ly, 10);
 
-        //yaw += (mx-lx) * .1f;
-        //pitch += (ly-my) * .1f;
+        if (SQUE_INPUT_GetMouseButton(SQUE_MOUSE_LEFT) == SQUE_ACTION_PRESS && !ImGui::IsAnyWindowHovered())
+        {
+            yaw += (mx - lx) * .1f;
+            pitch += (ly - my) * .1f;
+        }
+        lx = mx;
+        ly = my;
 
         direction_ch6_2.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         direction_ch6_2.y = sin(glm::radians(pitch));
@@ -1063,7 +1064,7 @@ void LearnOpenGL_6_2_CameraLook()
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
-        SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
 
         SetInt(texture1_uniform_ch5, 0);
         SetInt(texture1_uniform_ch5, 1);
@@ -1104,8 +1105,25 @@ int main(int argc, char**argv)
 
         glsl_ver = SQUE_RENDER_GetGLSLVer();
         InitGLDebug();
-    }
 
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+        ImGui_ImplSqueLib_Init();
+
+        
+
+    }
+    const char* items[] = {
+        "1-Vertices", "1.1-Indices", "2-Shaders", "2.1-Uniforms", "2.2-Attributes",
+        "3-Textures", "3.1-Mix Textures", "4-Transformations", "5-Coordinate Systems",
+        "5.1-3D Cube Rotating", "5.2-More 3D Cubes", "6-Camera", "6.1-Camera Movement",
+        "6.2-Camera Look"
+    };
+    bool* renders[] = { 
+        &render_ch1, &render_ch1_1,& render_ch2,& render_ch2_1,& render_ch2_2,
+        & render_ch3,& render_ch3_1,& render_ch4,& render_ch5,& render_ch5_1,
+        & render_ch5_2,& render_ch6,& render_ch6_1,& render_ch6_2
+    };
     while(!SQUE_DISPLAY_ShouldWindowClose(0))
     {
         SQUE_INPUT_Process(0);
@@ -1118,18 +1136,41 @@ int main(int argc, char**argv)
             continue;
         }
         {
+            ImGui_ImplSqueLib_NewFrame();
+            ImGui::NewFrame();
+            ImGui::Begin("Settings");
+            {
+                static int current_it = 0;
+                if (ImGui::BeginCombo("Example Selection", items[current_it]))
+                {
+                    for (uint16_t i = 0; i < IM_ARRAYSIZE(items); ++i)
+                        if (ImGui::Selectable(items[i], renders[i]))
+                        {
+                            for (uint16_t j = 0; j < IM_ARRAYSIZE(items); ++j)
+                            {
+                                *renders[j] = false;
+                            }
+                            *renders[i] = true;
+                            current_it = i;
+                        }
+                    ImGui::EndCombo();
+                }
+            }
+            ImGui::End();
+            ImGui::Render();
+
             // All LearnOpenGL chapters, each has functions per the steps shown
             // Hello Triangle
             LearnOpenGL_1_Vertices();
-            LearnOpenGL_1_2_Indices();
+            LearnOpenGL_1_1_Indices();
             // Shaders
             LearnOpenGL_2_Shaders();
-            LearnOpenGL_2_2_Uniforms();
-            LearnOpenGL_2_3_Attributes();
+            LearnOpenGL_2_1_Uniforms();
+            LearnOpenGL_2_2_Attributes();
             // Textures
             LearnOpenGL_3_Textures();
             SQUE_CHECK_RENDER_ERRORS();
-            LearnOpenGL_3_2_MixTextures();
+            LearnOpenGL_3_1_MixTextures();
             SQUE_CHECK_RENDER_ERRORS();
             // Transformations
             LearnOpenGL_4_Transformations();
@@ -1141,6 +1182,8 @@ int main(int argc, char**argv)
             LearnOpenGL_6_Camera();
             LearnOpenGL_6_1_CameraMovement();
             LearnOpenGL_6_2_CameraLook();
+
+            ImGui_ImplSqueLib_Render(ImGui::GetDrawData());
         }
         
         SQUE_DISPLAY_SwapAllBuffers();

@@ -106,7 +106,7 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 	ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
 	ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
-	SQUE_MESH_BindBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
+	SQUE_MESH_BindBuffer(sque_dataHandle);
 	for (int i = 0; i < draw_data->CmdListsCount; ++i)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
@@ -151,14 +151,14 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	//SQUE_RENDER_GenerateMeshBuffer(&sque_dataHandle.vert_id, &sque_dataHandle.index_id, &sque_dataHandle.attribute_object);
 	SQUE_MESH_SetDrawConfig(sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
-	SQUE_MESH_DeclareAttributes(sque_dataHandle.vert_id, sque_dataHandle.attrib_ref, 3);
+	SQUE_MESH_DeclareAttributes(sque_dataHandle.vert_id, 3, sque_dataHandle.attrib_ref);
 	SQUE_VertAttrib pos("Position", SQUE_FLOAT, false, 2);
 	SQUE_VertAttrib uv("UV", SQUE_FLOAT, false, 2);
 	SQUE_VertAttrib col("Color", SQUE_UBYTE, true, 4);
 	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, pos);
 	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, uv);
 	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, col);
-	SQUE_MESH_BindBuffer(sque_dataHandle.vert_id, sque_dataHandle.index_id, sque_dataHandle.attribute_object);
+	SQUE_MESH_BindBuffer(sque_dataHandle);
 	SQUE_MESH_SetLocations(sque_dataHandle.attrib_ref);
 
 	sque_backupState.SetUp();
@@ -197,7 +197,7 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 
 	SQUE_PROGRAM_Link(sque_shaderProgram.id);
 	
-	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.uniform_ref, sque_shaderProgram.id, 2);
+	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2, sque_shaderProgram.uniform_ref);
 	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "Texture");
 	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "ProjMtx");
 
@@ -216,9 +216,9 @@ void ImGui_ImplSqueLib_CreateFontsTexture()
 	io.Fonts->GetTexDataAsRGBA32((uchar**)&sque_fontPixels, &sque_fontTexture.w, &sque_fontTexture.h);
 
 	int32_t filter = SQUE_LINEAR;
-	SQUE_TEXTURE_DeclareIntAttributes(sque_fontTexture.id, &sque_fontTexture.attrib_ref, 2);
-	SQUE_TEXTURE_AddIntAttribute(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MIN_FILTER, &filter));
-	SQUE_TEXTURE_AddIntAttribute(sque_fontTexture.id, SQUE_TexAttrib(SQUE_MAG_FILTER, &filter));
+	SQUE_TEXTURE_DeclareAttributes(sque_fontTexture.id, 2, 0, &sque_fontTexture.attrib_ref);
+	SQUE_TEXTURE_AddInt(sque_fontTexture.attrib_ref, SQUE_MIN_FILTER, SQUE_LINEAR);
+	SQUE_TEXTURE_AddInt(sque_fontTexture.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
 	SQUE_TEXTURE_Bind(sque_fontTexture.id, sque_fontTexture.dim_format);
 	SQUE_RENDER_SetTextureAttributes(sque_fontTexture.id);
 	SQUE_TEXTURE_SendAs2DToGPU(sque_fontTexture, sque_fontPixels);

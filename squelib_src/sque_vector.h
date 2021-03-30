@@ -222,7 +222,7 @@ public:
 
     void resize(uint32_t new_size)
     {
-        if (new_size <= _size)
+        if (new_size < _size)
         {
             deleteRange(_data + new_size, _data + _size);
             _size = new_size;

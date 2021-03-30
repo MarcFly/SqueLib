@@ -114,56 +114,56 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     // function that inits: draw_config, draw_mode
     // function that sets: verts + vert_num,  index+index_var+index_num
     // 3 Functions but it makes more sense in the long run (variable verts, variable index, variable draw_config/mode)
-    SQUE_MESHES_SetVertData(b.rect, 4);
-    SQUE_MESHES_SetIndexData(b.rect, 6, SQUE_UINT);
-    SQUE_MESHES_SetDrawConfig(b.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+    SQUE_MESH_SetVertData(b.rect, 4);
+    SQUE_MESH_SetIndexData(b.rect, 6, SQUE_UINT);
+    SQUE_MESH_SetDrawConfig(b.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
 
     
-    SQUE_RENDER_GenerateMeshBuffer(&b.rect.vert_id, &b.rect.index_id, &b.rect.attribute_object);
-    SQUE_RENDER_BindMeshBuffer(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object);
-    SQUE_MESHES_DeclareAttributes(b.rect.vert_id, b.rect.attrib_ref, 1);
+    SQUE_MESH_GenBuffer(&b.rect);
+    SQUE_MESH_BindBuffer(b.rect);
+    SQUE_MESH_DeclareAttributes(b.rect.vert_id, 1, b.rect.attrib_ref);
     SQUE_VertAttrib vertPos("vertPos", SQUE_FLOAT, false, 2);
-    SQUE_MESHES_AddAttribute(b.rect.attrib_ref, vertPos);
-    SQUE_MESHES_CalcVertSize(b.rect.attrib_ref);
-    SQUE_RENDER_SendMeshToGPU(b.rect, quad, quad_indices);
-    SQUE_MESHES_SetLocations(b.rect.vert_id, b.rect.index_id, b.rect.attribute_object, b.rect.attrib_ref);
+    SQUE_MESH_AddAttribute(b.rect.attrib_ref, vertPos);
+    SQUE_MESH_CalcVertSize(b.rect.attrib_ref);
+    SQUE_MESH_SendToGPU(b.rect, quad, quad_indices);
+    SQUE_MESH_SetLocations(b.rect.attrib_ref);
 
 // PLAYER 1
     p1.sizex = b.y / 20;
     p1.sizey = b.y / 4;
     p1.x = b.x/20;
     p1.y = vy / 2;
-    SQUE_MESHES_SetVertData(p1.rect, 4);
-    SQUE_MESHES_SetIndexData(p1.rect, 6, SQUE_UINT);
-    SQUE_MESHES_SetDrawConfig(p1.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+    SQUE_MESH_SetVertData(p1.rect, 4);
+    SQUE_MESH_SetIndexData(p1.rect, 6, SQUE_UINT);
+    SQUE_MESH_SetDrawConfig(p1.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
 
     
-    SQUE_RENDER_GenerateMeshBuffer(&p1.rect.vert_id, &p1.rect.index_id, &p1.rect.attribute_object);
-    SQUE_RENDER_BindMeshBuffer(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object);
-    SQUE_MESHES_DeclareAttributes(p1.rect.vert_id, p1.rect.attrib_ref, 1);
+    SQUE_MESH_GenBuffer(&p1.rect);
+    SQUE_MESH_BindBuffer(p1.rect);
+    SQUE_MESH_DeclareAttributes(p1.rect.vert_id, 1, p1.rect.attrib_ref);
 
-    SQUE_MESHES_AddAttribute(p1.rect.attrib_ref, vertPos);
-    SQUE_MESHES_CalcVertSize(p1.rect.attrib_ref);
-    SQUE_RENDER_SendMeshToGPU(p1.rect, quad, quad_indices);
-    SQUE_MESHES_SetLocations(p1.rect.vert_id, p1.rect.index_id, p1.rect.attribute_object, p1.rect.attrib_ref);
+    SQUE_MESH_AddAttribute(p1.rect.attrib_ref, vertPos);
+    SQUE_MESH_CalcVertSize(p1.rect.attrib_ref);
+    SQUE_MESH_SendToGPU(p1.rect, quad, quad_indices);
+    SQUE_MESH_SetLocations(p1.rect.attrib_ref);
 
 // PLAYER 2
     p2.sizex = p1.sizex;
     p2.sizey = p1.sizey;
     p2.x = vx - b.x/20;
     p2.y = p1.y;
-    SQUE_MESHES_SetVertData(p2.rect, 4);
-    SQUE_MESHES_SetIndexData(p2.rect, 6, SQUE_UINT);
-    SQUE_MESHES_SetDrawConfig(p2.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+    SQUE_MESH_SetVertData(p2.rect, 4);
+    SQUE_MESH_SetIndexData(p2.rect, 6, SQUE_UINT);
+    SQUE_MESH_SetDrawConfig(p2.rect, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
 
     
-    SQUE_RENDER_GenerateMeshBuffer(&p2.rect.vert_id, &p2.rect.index_id, &p2.rect.attribute_object);
-    SQUE_RENDER_BindMeshBuffer(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object);
-    SQUE_MESHES_DeclareAttributes(p2.rect.vert_id, p2.rect.attrib_ref, 1);
-    SQUE_MESHES_AddAttribute(p2.rect.attrib_ref, vertPos);
-    SQUE_MESHES_CalcVertSize(p2.rect.attrib_ref);
-    SQUE_RENDER_SendMeshToGPU(p2.rect, quad, quad_indices);
-    SQUE_MESHES_SetLocations(p2.rect.vert_id, p2.rect.index_id, p2.rect.attribute_object, p2.rect.attrib_ref);
+    SQUE_MESH_GenBuffer(&p2.rect);
+    SQUE_MESH_BindBuffer(p2.rect);
+    SQUE_MESH_DeclareAttributes(p2.rect.vert_id, 1, p2.rect.attrib_ref);
+    SQUE_MESH_AddAttribute(p2.rect.attrib_ref, vertPos);
+    SQUE_MESH_CalcVertSize(p2.rect.attrib_ref);
+    SQUE_MESH_SendToGPU(p2.rect, quad, quad_indices);
+    SQUE_MESH_SetLocations(p2.rect.attrib_ref);
 }
 
 
@@ -180,8 +180,8 @@ char* easy_concat(const char* s1, const char* s2)
 
 void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 {
-    SQUE_RENDER_CreateProgram(&b_p->id);
-    SQUE_RENDER_CreateProgram(&p_p->id);
+    SQUE_PROGRAM_GenID(&b_p->id);
+    SQUE_PROGRAM_GenID(&p_p->id);
 
     const char* glsl = SQUE_RENDER_GetGLSLVer();
     std::string vert_source(easy_concat(glsl, vert_shader));
@@ -206,17 +206,17 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 
     SQUE_SHADERS_Compile(vert_s2.id);
     SQUE_SHADERS_Compile(rect_f.id);
-    SQUE_PROGRAM_AttachShader(*p_p, vert_s2.id, vert_s2.type);
-    SQUE_PROGRAM_AttachShader(*p_p, rect_f.id, rect_f.type);
-    SQUE_RENDER_LinkProgram(p_p->id);
+    SQUE_PROGRAM_AttachShader(*p_p, vert_s2);
+    SQUE_PROGRAM_AttachShader(*p_p, rect_f);
+    SQUE_PROGRAM_Link(p_p->id);
 
     SQUE_SHADERS_Compile(vert_s.id);
     SQUE_SHADERS_Compile(ball_f.id);
     
 
-    SQUE_PROGRAM_AttachShader(*b_p, vert_s.id, vert_s.type);
-    SQUE_PROGRAM_AttachShader(*b_p, ball_f.id, ball_f.type);
-    SQUE_RENDER_LinkProgram(b_p->id);
+    SQUE_PROGRAM_AttachShader(*b_p, vert_s);
+    SQUE_PROGRAM_AttachShader(*b_p, ball_f);
+    SQUE_PROGRAM_Link(b_p->id);
 
     SQUE_CHECK_RENDER_ERRORS();
 
@@ -225,16 +225,16 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
 
     // Fault 1 -> Uniform Declaration should be per shader
     // Then the Program should have a method to set ids for the declared uniforms
-    SQUE_RENDER_UseProgram(b_p->id);
-    SQUE_SHADERS_DeclareProgram(b_p->id, 5);
+    SQUE_PROGRAM_Use(b_p->id);
+    SQUE_SHADERS_DeclareProgram(b_p->id, 5, b_p->uniform_ref);
     SQUE_SHADERS_DeclareUniform(b_p->id, "vp");
     SQUE_SHADERS_DeclareUniform(b_p->id, "center");
     SQUE_SHADERS_DeclareUniform(b_p->id, "size");
     SQUE_SHADERS_DeclareUniform(b_p->id, "radius");
     SQUE_SHADERS_DeclareUniform(b_p->id, "col_in");
 
-    SQUE_RENDER_UseProgram(p_p->id);
-    SQUE_SHADERS_DeclareProgram(p_p->id, 4);
+    SQUE_PROGRAM_Use(p_p->id);
+    SQUE_SHADERS_DeclareProgram(p_p->id, 4, p_p->uniform_ref);
     SQUE_SHADERS_DeclareUniform(p_p->id, "vp");
     SQUE_SHADERS_DeclareUniform(p_p->id, "center");
     SQUE_SHADERS_DeclareUniform(p_p->id, "size");
@@ -305,12 +305,11 @@ void MovePaddles(Paddle& p1, Paddle& p2)
     int sx, sy;
     SQUE_DISPLAY_GetWindowPos(0, wx, wy);
     SQUE_DISPLAY_GetWindowSize(0, &sx, &sy);
-    if(SQUE_INPUT_GetPointerPos(&x, &y, 0)) 
-        p1.y = sy-(y);
-
-    SQUE_INPUT_GetPointerPos(&x, &y, 0);
-        p2.y = sy-(y);
-
+    if (SQUE_INPUT_GetPointerPos(&x, &y, 0))
+    {
+        p1.y = sy - (y);
+        p2.y = sy - (y);
+    }
 }
 
 
@@ -370,7 +369,7 @@ int main(int argc, char** argv)
         SQUE_RENDER_Clear(col);
 
         // Ball Render
-        SQUE_RENDER_UseProgram(ball_program.id);
+        SQUE_PROGRAM_Use(ball_program.id);
         int vx, vy;
         SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
         CheckResizeScreen(vx, vy, ball, player1, player2);
@@ -398,7 +397,7 @@ int main(int argc, char** argv)
         
         
         // Player 1 Render
-        SQUE_RENDER_UseProgram(paddle_program.id);
+        SQUE_PROGRAM_Use(paddle_program.id);
         SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "vp"), glm::vec2(vx, vy));
         
         SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "center"), glm::vec2(player1.x, player1.y));
@@ -406,7 +405,7 @@ int main(int argc, char** argv)
         SetFloat3(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "col"), glm::vec3(1, 0, 0));
         SQUE_RENDER_DrawIndices(player1.rect);
 
-        SQUE_RENDER_UseProgram(paddle_program.id);
+        SQUE_PROGRAM_Use(paddle_program.id);
         SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "vp"), glm::vec2(vx, vy));
 
         SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "center"), glm::vec2(player2.x, player2.y));
