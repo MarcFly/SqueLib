@@ -620,8 +620,8 @@ SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
 SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
 
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices = 0, int32_t count = -1);
-SQ_API void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, int32_t count = 0);
+SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, const int32_t offset_indices = 0, int32_t count = -1);
+SQ_API void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, const int32_t count = 0);
 
 // Debugging
 SQ_API void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id);

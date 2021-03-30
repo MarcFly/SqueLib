@@ -438,7 +438,7 @@ void SQUE_PROGRAM_Use(const uint32_t program_id)
 // RENDERING /////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, int32_t offset_indices, int32_t count)
+void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, const int32_t offset_indices, int32_t count)
 {
     count = (count < 0) ? mesh.num_index : count;
     SQUE_MESH_BindBuffer(mesh);

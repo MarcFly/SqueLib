@@ -135,6 +135,7 @@ static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action,
     mouse_buttons[button].prev_state = mouse_buttons[button].state;
     mouse_buttons[button].state = action;
     mouse_buttons[button].callback(button, mouse_buttons[button].state);
+    pointers[0].active = mouse_buttons[button].state > SQUE_ACTION_RELEASE;
 }
 
 static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
