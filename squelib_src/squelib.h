@@ -328,7 +328,7 @@ typedef struct SQUE_Pointer
 	bool active = false;																												
 	int32_t id;	
 																							
-	float x = INT32_MAX, y = INT32_MAX;																									
+	float x = -1, y = -1;																									
 	MouseFloatCallback pos_callback = DebugMouseFloatCallback;
 } SQUE_Pointer;																															
 																																		
