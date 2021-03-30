@@ -164,6 +164,9 @@ void AndroidSendToBack(int param)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <ctime>
 static pcg32_random_t random_t;
+// un struct tipo sque_lib instance
+// o un struct global en el que se mantienen las variables
+// Para organizar o para tener multiples instancies de una libreria
 void SQUE_LIB_Init(const char* app_name)
 {
     pcg32_srandom_r(&random_t, time(NULL), (intptr_t)&random_t);

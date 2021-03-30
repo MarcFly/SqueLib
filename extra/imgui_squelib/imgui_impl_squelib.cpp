@@ -179,16 +179,12 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 {
 	sque_backupState.BackUp();
 
-	const char* glsl = SQUE_RENDER_GetGLSLVer();
-
 	SQUE_SHADERS_Generate(sque_vertShader, SQUE_VERTEX_SHADER);
-	std::string vert(easy_concat(glsl, vertex_shader));
-	SQUE_SHADERS_SetSource(sque_vertShader.id, vert.c_str());
+	SQUE_SHADERS_SetSource(sque_vertShader.id, vertex_shader);
 	SQUE_SHADERS_Compile(sque_vertShader.id);
 
 	SQUE_SHADERS_Generate(sque_fragShader, SQUE_FRAGMENT_SHADER);
-	std::string frag(easy_concat(glsl, fragment_shader));
-	SQUE_SHADERS_SetSource(sque_fragShader.id, frag.c_str());
+	SQUE_SHADERS_SetSource(sque_fragShader.id, fragment_shader);
 	SQUE_SHADERS_Compile(sque_fragShader.id);
 
 	SQUE_PROGRAM_GenID(&sque_shaderProgram.id);

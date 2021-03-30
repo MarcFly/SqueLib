@@ -11,6 +11,8 @@
 #   include <GLES3/gl3ext.h>
 #   include <EGL/egl.h>
 #endif
+
+char glsl_ver[64] = {'\0'};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE CONTROL //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,6 +116,22 @@ bool SQUE_RENDER_Init()
 #elif defined USE_OPENGLES
     SQUE_PRINT(SQUE_LogType::LT_INFO, "OpenGLES Version: %d.%d", GLVersion.major, GLVersion.minor);
 #endif
+    // TODO: Hacer el GLSL Ver
+#if defined(USE_OPENGL) ||defined(USE_OPENGLES)
+    int ver = GLVersion.major * 100 + GLVersion.minor * 10;
+    // +9 #version +3 char num version + 1 space
+    int16_t size = 13;
+    SQ_ASSERT(ver > 320 && "Minimum version is 320 es");
+    const char* term = "\n";
+#if defined(USE_OPENGLES)
+    term = "es\nprecision mediump float;\n";
+#else 
+    term = "core\n";
+#endif
+    sprintf(glsl_ver, "#version %d %s", ver, term);
+       
+#endif
+    SQUE_PRINT(LT_INFO, "%s", glsl_ver);
     // Generate Viewport with window size
     uint16_t w, h;
     /*SQUE_DISPLAY_MakeContextMain(0);
@@ -145,32 +163,12 @@ int32_t GetGLVer()
 
 // should it?
 #include <stdio.h>
-const char* SQUE_RENDER_GetGLSLVer()
+// Generar una global la string generada por esta funcion
+// En un array de tamaño fijo y lo rellenas cn un memcpy y ale
+// GetGLSLVer que devuelva la string.
+const char* SQUE_RENDER_GetShaderHeader()
 {
-    const char* ret = "";
-#if defined(USE_OPENGL) ||defined(USE_OPENGLES)
-    char* str = NULL;
-    int ver = GLVersion.major * 100 + GLVersion.minor * 10;
-    // +9 #version +3 char num version + 1 space
-    int16_t size = 13;
-    if (ver >= 320)
-    {        
-        const char* term = "\n";
-#if defined(USE_OPENGLES)
-        term = "es\nprecision mediump float;\n";        
-#else 
-        term = "core\n";
-#endif
-        size += strlen(term);
-        str = new char[size];
-        sprintf(str, "#version %d %s", ver, term);
-        ret = str;
-    }
-    else
-        ret = "";
-#endif
-    SQUE_PRINT(LT_INFO, "%s", ret);
-    return ret;
+    return glsl_ver;
 }
 
 void SQUE_RENDER_Scissor(int x, int y, int w, int h)

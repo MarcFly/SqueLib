@@ -113,13 +113,14 @@ SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 	in.seekg(0, std::ios::end);
 	int len = in.tellg();
 	in.seekg(0, std::ios::beg);
-	data = new char[len];
+	data = new char[len+1];
 	in.read((char*)data, len);
 	in.close();
 
 	SQUE_Asset* ret = new SQUE_Asset();
-	ret->size = len;
+	ret->size = len+1;
 	ret->raw_data = data;
+	memcpy(&ret->raw_data[len], "\0", 1);
 	
 	return ret;
 }
@@ -181,8 +182,9 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 	if(asset != NULL)
 	{
 		ret->size = AAsset_getLength(asset);
-		char* tmp = new char[ret->size];
+		char* tmp = new char[ret->size+1];
 		memcpy(tmp, AAsset_getBuffer(asset), ret->size);
+		memcpy(tmp[ret->size], "\0", 1);
 		ret->raw_data = tmp;
 		AAsset_close(asset);
 	}

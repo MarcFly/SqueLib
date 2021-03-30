@@ -29,8 +29,9 @@ void SQUE_SHADERS_Generate(SQUE_Shader& shader, const int32_t shader_type)
 
 void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_)
 {
+    const char* strs[2] = { SQUE_RENDER_GetShaderHeader(), source_ };
 #if defined (USE_OPENGL) || defined(USE_OPENGLES)
-    glShaderSource(shader_id, 1, &source_, NULL);
+    glShaderSource(shader_id, 2, strs, NULL);
 #endif
 }
 

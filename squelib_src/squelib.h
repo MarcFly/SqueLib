@@ -477,6 +477,8 @@ typedef struct SQUE_Mesh
 	uint32_t vert_id = 0;
 	uint32_t num_verts = 0;
 	
+	// Vertex Layout
+	// vector<Attributos>
 
 	// Index Data																											
 	uint32_t index_id = 0;
@@ -577,7 +579,7 @@ SQ_API void SQUE_RENDER_Close();
 SQ_API void SQUE_RENDER_ChangeFramebufferSize(int32_t width, int32_t height);		
 SQ_API void SQUE_RENDER_GetFramebufferSize(int32_t* width, int32_t* height);
 SQ_API void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = SQUE_COLOR_BIT);
-SQ_API const char* SQUE_RENDER_GetGLSLVer();																								
+SQ_API const char* SQUE_RENDER_GetShaderHeader();																								
 																																		
 // Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_Scissor(int x, int y, int w, int h);

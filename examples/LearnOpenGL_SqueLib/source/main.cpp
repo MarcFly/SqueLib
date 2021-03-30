@@ -70,7 +70,6 @@ void LearnOpenGL_1_Vertices()
         SQUE_MESH_SetDrawConfig(triangle1, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
         SQUE_MESH_SetVertData(triangle1, 3);
         SQUE_MESH_GenBuffer(&triangle1);
-        //SQUE_RENDER_GenerateMeshBuffer(&triangle1.vert_id, &triangle1.index_id, &triangle1.attribute_object);
         SQUE_MESH_BindBuffer(triangle1);
         SQUE_MESH_DeclareAttributes(triangle1.vert_id, 1, triangle1.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
@@ -82,15 +81,13 @@ void LearnOpenGL_1_Vertices()
 
         vert_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s1.vert");
         frag_s1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s1.frag");
-        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_s1_file->raw_data, vert_s1_file->size));
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s1_file->raw_data, frag_s1_file->size));
 
         SQUE_SHADERS_Generate(vert_s1, SQUE_VERTEX_SHADER);
-        SQUE_SHADERS_SetSource(vert_s1.id, vert_source.c_str());
+        SQUE_SHADERS_SetSource(vert_s1.id, vert_s1_file->raw_data);
         SQUE_SHADERS_Compile(vert_s1.id);
 
         SQUE_SHADERS_Generate(frag_s1, SQUE_FRAGMENT_SHADER);
-        SQUE_SHADERS_SetSource(frag_s1.id, frag_source.c_str());
+        SQUE_SHADERS_SetSource(frag_s1.id, frag_s1_file->raw_data);
         SQUE_SHADERS_Compile(frag_s1.id);
 
         // Have to Change names so that mesh, is for mesh, program for program,...
@@ -191,15 +188,13 @@ void LearnOpenGL_2_Shaders()
 
         vert_s2_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2.vert");
         frag_s2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2.frag");
-        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_s2_file->raw_data, vert_s2_file->size));
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_file->raw_data, frag_s2_file->size));
 
         SQUE_SHADERS_Generate(vert_s2, SQUE_VERTEX_SHADER);
-        SQUE_SHADERS_SetSource(vert_s2.id, vert_source.c_str());
+        SQUE_SHADERS_SetSource(vert_s2.id, vert_s2_file->raw_data);
         SQUE_SHADERS_Compile(vert_s2.id);
 
         SQUE_SHADERS_Generate(frag_s2, SQUE_FRAGMENT_SHADER);
-        SQUE_SHADERS_SetSource(frag_s2.id, frag_source.c_str());
+        SQUE_SHADERS_SetSource(frag_s2.id, frag_s2_file->raw_data);
         SQUE_SHADERS_Compile(frag_s2.id);
 
         SQUE_PROGRAM_GenID(&triangle_program2.id);
@@ -237,10 +232,9 @@ void LearnOpenGL_2_1_Uniforms()
     if (!loaded_ch2_1)
     {
         frag_s2_1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_1.frag");
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_s2_1_file->raw_data, frag_s2_1_file->size));
 
         SQUE_SHADERS_Generate(frag_uniform_s1, SQUE_FRAGMENT_SHADER);
-        SQUE_SHADERS_SetSource(frag_uniform_s1.id, frag_source.c_str());
+        SQUE_SHADERS_SetSource(frag_uniform_s1.id, frag_s2_1_file->raw_data);
         SQUE_SHADERS_Compile(frag_uniform_s1.id);
 
 
@@ -309,14 +303,12 @@ void LearnOpenGL_2_2_Attributes()
 
         vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2_1.vert");
         frag_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s2_2.frag");
-        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_attributes_s1_file->raw_data, vert_attributes_s1_file->size));
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_attributes_s1_file->raw_data, frag_attributes_s1_file->size));
 
         SQUE_SHADERS_Generate(vert_attributes_s1, SQUE_VERTEX_SHADER);
         SQUE_SHADERS_Generate(frag_attributes_s1, SQUE_FRAGMENT_SHADER);
 
-        SQUE_SHADERS_SetSource(vert_attributes_s1.id, vert_source.c_str());
-        SQUE_SHADERS_SetSource(frag_attributes_s1.id, frag_source.c_str());
+        SQUE_SHADERS_SetSource(vert_attributes_s1.id, vert_attributes_s1_file->raw_data);
+        SQUE_SHADERS_SetSource(frag_attributes_s1.id, frag_attributes_s1_file->raw_data);
 
         SQUE_SHADERS_Compile(vert_attributes_s1.id);
         SQUE_SHADERS_Compile(frag_attributes_s1.id);
@@ -409,15 +401,13 @@ void LearnOpenGL_3_Textures()
 
         vert_texture_s_ch3_file = SQUE_FS_LoadAssetRaw("shaders/vert_s3.vert");
         frag_texture_ch3_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3.frag");
-        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_texture_s_ch3_file->raw_data, vert_texture_s_ch3_file->size));
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_ch3_file->raw_data, frag_texture_ch3_file->size));
 
         SQUE_SHADERS_Generate(vert_texture_s_ch3, SQUE_VERTEX_SHADER);
-        SQUE_SHADERS_SetSource(vert_texture_s_ch3.id, vert_source.c_str());
+        SQUE_SHADERS_SetSource(vert_texture_s_ch3.id, vert_texture_s_ch3_file->raw_data);
         SQUE_SHADERS_Compile(vert_texture_s_ch3.id);
 
         SQUE_SHADERS_Generate(frag_texture_ch3, SQUE_FRAGMENT_SHADER);
-        SQUE_SHADERS_SetSource(frag_texture_ch3.id, frag_source.c_str());
+        SQUE_SHADERS_SetSource(frag_texture_ch3.id, frag_texture_ch3_file->raw_data);
         SQUE_SHADERS_Compile(frag_texture_ch3.id);
 
         SQUE_PROGRAM_GenID(&textured_program_ch3.id);
@@ -464,29 +454,28 @@ void LearnOpenGL_3_1_MixTextures()
         SQUE_TEXTURE_AddInt(texture_ch3_1.attrib_ref, SQUE_MIN_FILTER, SQUE_NEAREST);
         SQUE_TEXTURE_AddInt(texture_ch3_1.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
         SQUE_RENDER_SetTextureAttributes(texture_ch3_1.id);
-SQUE_CHECK_RENDER_ERRORS();
+        
         texture_ch3_1_file = SQUE_FS_LoadAssetRaw("awesomeface.png");
         SQUE_LOAD_Texture(texture_ch3_1_file, &texture_ch3_1);
         SQUE_TEXTURE_SendAs2DToGPU(texture_ch3_1, texture_ch3_1_file->raw_data);
         SQUE_FREE_Texture(texture_ch3_1_file);
         delete texture_ch3_1_file;
-SQUE_CHECK_RENDER_ERRORS();
+
         frag_texture_s_ch3_1_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3_1.frag");
-        std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_s_ch3_1_file->raw_data, frag_texture_s_ch3_1_file->size));
-SQUE_CHECK_RENDER_ERRORS();
+
         SQUE_SHADERS_Generate(frag_texture_s_ch3_1, SQUE_FRAGMENT_SHADER);
-        SQUE_SHADERS_SetSource(frag_texture_s_ch3_1.id, frag_source.c_str());
+        SQUE_SHADERS_SetSource(frag_texture_s_ch3_1.id, frag_texture_s_ch3_1_file->raw_data);
         SQUE_SHADERS_Compile(frag_texture_s_ch3_1.id);
-SQUE_CHECK_RENDER_ERRORS();
+
         SQUE_PROGRAM_GenID(&textured_program_ch3_1.id);
         SQUE_PROGRAM_AttachShader(textured_program_ch3_1, vert_texture_s_ch3);
         SQUE_PROGRAM_AttachShader(textured_program_ch3_1, frag_texture_s_ch3_1);
         SQUE_PROGRAM_Link(textured_program_ch3_1.id);
-SQUE_CHECK_RENDER_ERRORS();
+
         SQUE_SHADERS_DeclareProgram(textured_program_ch3_1.id, 2, textured_program_ch3_1.uniform_ref);
         texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_1.uniform_ref, "texture1");
         texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_1.uniform_ref, "texture2");
-SQUE_CHECK_RENDER_ERRORS();
+
         delete frag_texture_s_ch3_1_file;
         loaded_ch3_1 = true;
     }
@@ -538,9 +527,8 @@ void LearnOpenGL_4_Transformations()
 
         vert_transform_s_ch4_file = SQUE_FS_LoadAssetRaw("shaders/vert_s4.vert");
 
-        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_transform_s_ch4_file->raw_data, vert_transform_s_ch4_file->size));
         SQUE_SHADERS_Generate(vert_transform_s_ch4, SQUE_VERTEX_SHADER);
-        SQUE_SHADERS_SetSource(vert_transform_s_ch4.id, vert_source.c_str());
+        SQUE_SHADERS_SetSource(vert_transform_s_ch4.id, vert_transform_s_ch4_file->raw_data);
         SQUE_SHADERS_Compile(vert_transform_s_ch4.id);
 
         SQUE_PROGRAM_GenID(&transform_program_ch4.id);
@@ -613,10 +601,8 @@ void LearnOpenGL_5_CoordinateSystems()
         model_mat_ch5 = glm::rotate(glm::mat4(1.f), glm::radians(-55.f), glm::vec3(1.f, 0.f, 0.f));
 
         vert_coordinate_s_ch5_file = SQUE_FS_LoadAssetRaw("shaders/vert_s5.vert");
-        std::string vert_source(concat_len(glsl_ver, strlen(glsl_ver), vert_coordinate_s_ch5_file->raw_data, vert_coordinate_s_ch5_file->size));
-
         SQUE_SHADERS_Generate(vert_coordinate_s_ch5, SQUE_VERTEX_SHADER);
-        SQUE_SHADERS_SetSource(vert_coordinate_s_ch5.id, vert_source.c_str());
+        SQUE_SHADERS_SetSource(vert_coordinate_s_ch5.id, vert_coordinate_s_ch5_file->raw_data);
         SQUE_SHADERS_Compile(vert_coordinate_s_ch5.id);
 
         SQUE_PROGRAM_GenID(&coordinate_program_ch5.id);
@@ -719,7 +705,6 @@ void LearnOpenGL_5_1_3DCubeRotating()
         SQUE_MESH_SetDrawConfig(cube_ch5_1, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
         SQUE_MESH_SetVertData(cube_ch5_1, 36);
         SQUE_MESH_GenBuffer(&cube_ch5_1);
-        //SQUE_RENDER_GenerateMeshBuffer(&cube_ch5_1.vert_id, &cube_ch5_1.index_id, &cube_ch5_1.attribute_object);
         SQUE_MESH_BindBuffer(cube_ch5_1);
         SQUE_MESH_DeclareAttributes(cube_ch5_1.vert_id, 3, cube_ch5_1.attrib_ref);
         SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
@@ -1107,7 +1092,6 @@ int main(int argc, char**argv)
         SQUE_AddOnGoBackgroundCallback(OnGoBackground);
         SQUE_AddOnResumeCallback(OnResume);
 
-        glsl_ver = SQUE_RENDER_GetGLSLVer();
         InitGLDebug();
 
         ImGui::CreateContext();
