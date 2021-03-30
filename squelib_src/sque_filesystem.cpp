@@ -137,7 +137,8 @@ SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 {
 	SQUE_Dir* ret = new SQUE_Dir();
 #if defined(ANDROID)
-	ret->name = "raw";
+	memcpy(ret->name, "raw", 4);
+	//ret->name = "raw";
 	ret->native_dir_data = (char*)AAssetManager_openDir(my_app->activity->assetManager, ret->name);
 	int dirs = 1;
 	while (dirs)
@@ -152,7 +153,8 @@ SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 			if (dir != NULL)
 			{
 				SQUE_Dir* branch = new SQUE_Dir();
-				branch->name = name;
+				memcpy(branch->name, name, strlen(name));
+				//branch->name = name;
 				branch->native_dir_data = (char*)branch;
 				branch->parent = ret;
 				ret->children.push_back(branch);

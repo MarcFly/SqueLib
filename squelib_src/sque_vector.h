@@ -1,6 +1,10 @@
 #ifndef _SQUE_VEC_
 #define _SQUE_VEC_
 
+#ifdef ANDROID
+#include <malloc.h>
+#endif
+
 template<class T>
 class sque_vec
 {
@@ -183,7 +187,7 @@ public:
         if(index > (_size-2)) return;
         if (_empty_size != _empty_capacity)
         {
-            _empty_data[_empty_size] = new uint32_t(index);
+            _empty_data[_empty_size] = index;
             //new((uint32_t*)(_empty_data + _empty_size)) uint32_t(index);
             ++_empty_size;
             --_populated;
@@ -192,7 +196,7 @@ public:
         _empty_capacity = _empty_capacity * 2 + 1;
         uint32_t* new_data = allocateU(_empty_capacity);
         copyRangeU(_empty_data, _empty_data + _empty_size, new_data);
-        new_data +_empty_size = new uint32_t(index);
+        new_data[_empty_size] = index;
         //new((void*)(new_data + _empty_size)) uint32_t(index);
         deleteRangeU(_empty_data, _empty_data + _empty_size);
         _empty_data = nullptr;

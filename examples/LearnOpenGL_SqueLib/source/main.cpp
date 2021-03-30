@@ -458,7 +458,7 @@ void LearnOpenGL_3_2_MixTextures()
         SQUE_TEXTURE_GenIDs(1,&texture_ch3_2.id);
         SQUE_TEXTURE_SetFormat(&texture_ch3_2, SQUE_TEXTURE_2D, SQUE_RGB, SQUE_RGBA, SQUE_UBYTE);
         SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_TEXTURE_DeclareIntAttributes(texture_ch3_2.id, &texture_ch3_2.attrib_ref, 2);
         int nearest = SQUE_NEAREST;
         int linear = SQUE_LINEAR;
@@ -467,46 +467,47 @@ void LearnOpenGL_3_2_MixTextures()
         SQUE_TEXTURE_AddIntAttribute(texture_ch3_2.id, min_filter);
         SQUE_TEXTURE_AddIntAttribute(texture_ch3_2.id, mag_filter);
         SQUE_RENDER_SetTextureAttributes(texture_ch3_2.id);
-
+SQUE_CHECK_RENDER_ERRORS();
         texture_ch3_2_file = SQUE_FS_LoadAssetRaw("awesomeface.png");
         SQUE_LOAD_Texture(texture_ch3_2_file, &texture_ch3_2);
         SQUE_TEXTURE_SendAs2DToGPU(texture_ch3_2, texture_ch3_2_file->raw_data);
         SQUE_FREE_Texture(texture_ch3_2_file);
         delete texture_ch3_2_file;
-
+SQUE_CHECK_RENDER_ERRORS();
         frag_texture_s_ch3_2_file = SQUE_FS_LoadAssetRaw("shaders/frag_s3_2.frag");
         std::string frag_source(concat_len(glsl_ver, strlen(glsl_ver), frag_texture_s_ch3_2_file->raw_data, frag_texture_s_ch3_2_file->size));
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_SHADERS_Generate(frag_texture_s_ch3_2, SQUE_FRAGMENT_SHADER);
         SQUE_SHADERS_SetSource(frag_texture_s_ch3_2.id, frag_source.c_str());
         SQUE_SHADERS_Compile(frag_texture_s_ch3_2.id);
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_PROGRAM_GenID(&textured_program_ch3_2.id);
         SQUE_PROGRAM_AttachShader(textured_program_ch3_2, vert_texture_s_ch3);
         SQUE_PROGRAM_AttachShader(textured_program_ch3_2, frag_texture_s_ch3_2);
         SQUE_PROGRAM_Link(textured_program_ch3_2.id);
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_SHADERS_DeclareProgram(textured_program_ch3_2.uniform_ref, textured_program_ch3_2.id, 2);
         texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, "texture1");
         texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_2.uniform_ref, "texture2");
-
+SQUE_CHECK_RENDER_ERRORS();
         delete frag_texture_s_ch3_2_file;
         loaded_ch3_2 = true;
     }
     if (render_ch3_2)
     {
+        SQUE_CHECK_RENDER_ERRORS();
         SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
         SQUE_PROGRAM_Use(textured_program_ch3_2.id);
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE0);
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
         SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3.dim_format);
-
+SQUE_CHECK_RENDER_ERRORS();
         SetInt(texture1_uniform, 0);
         SetInt(texture2_uniform, 1);
-
+SQUE_CHECK_RENDER_ERRORS();
         SQUE_RENDER_DrawIndices(quad_textured_ch3);
     }
 }
@@ -1036,8 +1037,8 @@ void LearnOpenGL_6_2_CameraLook()
         SQUE_INPUT_GetPointerAvgPos(&mx, &my,10);
         SQUE_INPUT_GetPointerAvgPrevPos(&lx, &ly, 10);
 
-        yaw += (mx-lx) * .1f;
-        pitch += (ly-my) * .1f;
+        //yaw += (mx-lx) * .1f;
+        //pitch += (ly-my) * .1f;
 
         direction_ch6_2.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         direction_ch6_2.y = sin(glm::radians(pitch));
@@ -1126,7 +1127,9 @@ int main(int argc, char**argv)
             LearnOpenGL_2_3_Attributes();
             // Textures
             LearnOpenGL_3_Textures();
+            SQUE_CHECK_RENDER_ERRORS();
             LearnOpenGL_3_2_MixTextures();
+            SQUE_CHECK_RENDER_ERRORS();
             // Transformations
             LearnOpenGL_4_Transformations();
             // Coordinate Systems and Projection
@@ -1137,7 +1140,6 @@ int main(int argc, char**argv)
             LearnOpenGL_6_Camera();
             LearnOpenGL_6_1_CameraMovement();
             LearnOpenGL_6_2_CameraLook();
-
         }
         
         SQUE_DISPLAY_SwapAllBuffers();

@@ -58,7 +58,7 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 #------------------------------------------------------------------------------------------------
 
 SqueLib_PrepareBuild(All_Example MarcTorresJimenez ${ALL_SRC})
-SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/EngineAssets ${CMAKE_CURRENT_SOURCE_DIR}/EngineResources)
+SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/EngineAssets "")
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
