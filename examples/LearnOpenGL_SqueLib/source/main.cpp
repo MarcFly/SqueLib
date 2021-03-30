@@ -456,7 +456,7 @@ void LearnOpenGL_3_2_MixTextures()
     if (!loaded_ch3_2)
     {
         SQUE_TEXTURE_GenIDs(1,&texture_ch3_2.id);
-        SQUE_TEXTURE_SetFormat(&texture_ch3_2, SQUE_TEXTURE_2D, SQUE_RGB, SQUE_RGBA, SQUE_UBYTE);
+        SQUE_TEXTURE_SetFormat(&texture_ch3_2, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
         SQUE_TEXTURE_Bind(texture_ch3_2.id, texture_ch3_2.dim_format);
 SQUE_CHECK_RENDER_ERRORS();
         SQUE_TEXTURE_DeclareIntAttributes(texture_ch3_2.id, &texture_ch3_2.attrib_ref, 2);
