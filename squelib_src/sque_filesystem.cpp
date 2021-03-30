@@ -40,7 +40,7 @@ const char* SQUE_FS_GetExecPath()
 {
 	char* ret = NULL;
 	char* path = new char[256];
-	path = NULL;
+	//path = NULL;
 	int len = 0;
 #if defined(_WIN32)
 	len = GetModuleFileNameA(NULL, path, 256);

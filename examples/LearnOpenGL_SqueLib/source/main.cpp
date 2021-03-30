@@ -1103,6 +1103,7 @@ int main(int argc, char**argv)
         SQUE_AddOnResumeCallback(OnResume);
 
         glsl_ver = SQUE_RENDER_GetGLSLVer();
+        InitGLDebug();
     }
 
     while(!SQUE_DISPLAY_ShouldWindowClose(0))

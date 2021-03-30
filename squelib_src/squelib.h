@@ -523,7 +523,17 @@ typedef struct SQUE_TexAttribIndex
 	uint16_t float_last = 0;
 
 } SQUE_TexAttribIndex;
-STBI_FAILURE_
+typedef struct SQUE_Texture
+{
+	uint32_t id;
+	int32_t dim_format;
+	int32_t use_format;
+	int32_t data_format;
+	int32_t var_type;
+	uint16_t var_size;
+	int32_t w, h;
+	int32_t channel_num;
+	uint32_t attrib_ref;
 } SQUE_Texture;
 
 SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
