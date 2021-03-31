@@ -289,165 +289,6 @@ void SQUE_DISPLAY_Close()
     sque_windows.clear();
 }
 
-void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val)
-{
-    if (main_window_context == UINT16_MAX)
-    {
-        SQUE_PRINT(SQUE_LogType::LT_WARNING, "No main context to act on, dismissed change of SwapInterval!");
-        return;
-    }
-#if defined(USE_EGL)
-    // should pass monitor uint to change refresh rate
-    eglSwapInterval(egl_display, vsync_val);
-#elif defined USE_GLFW
-    glfwSwapInterval(vsync_val);
-#endif
-}
-
-int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window)
-{
-#if defined(ANDROID)
-    AConfiguration* config = AConfiguration_new();
-    AConfiguration_fromAssetManager(config, my_app->activity->assetManager);
-    int32_t density = AConfiguration_getDensity(config);
-    AConfiguration_delete(config);
-    return density;
-#elif defined (USE_GLFW)
-    const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
-    int width_mm, height_mm;
-    glfwGetMonitorPhysicalSize(glfw_monitors[0], &width_mm, &height_mm);
-    float inches = (width_mm * height_mm) / 25.4f;
-
-    return (mode->width * mode->height) / inches;
-#endif
-
-    return 400;
-
-}
-
-void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h)
-{
-#if defined(USE_GLFW)
-    const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
-    w = mode->width;
-    h = mode->height;
-#elif defined(USE_EGL)
-    w = sque_windows[0].width;
-    h = sque_windows[0].height;
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CONTROL SPECIFIC WINDOWS //////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window)
-{
-#if defined(USE_GLFW)
-#   if defined(_WIN32)
-    return (void*)glfwGetWin32Window(glfw_windows[window]);
-#   endif
-#else
-#endif
-
-    return nullptr;
-}
-
-void SQUE_DISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h)
-{
-    if(window >= sque_windows.size()) return;
-
-    sque_windows[window].width = w;
-    sque_windows[window].height = h;
-#if defined(USE_GLFW)
-    glfwSetWindowSize(glfw_windows[window], w, h);
-#elif defined(USE_EGL)
-#endif
-    uint16_t prev_main = main_window_context;
-    SQUE_DISPLAY_MakeContextMain(window);
-    viewport_resize_callback(w,h);
-    SQUE_DISPLAY_MakeContextMain(prev_main);
-}
-
-void SQUE_DISPLAY_UpdateNativeWindowSize(uint16_t window)
-{
-    int32_t w, h;
-#if defined(USE_EGL)
-    w = ANativeWindow_getWidth(egl_window);
-    h = ANativeWindow_getHeight(egl_window);
-#else if defined(USE_GLFW)
-    glfwGetWindowSize(glfw_windows[window], &w, &h);
-#endif
-
-    SQUE_DISPLAY_ResizeWindow(window, w,h);
-}
-void SQUE_DISPLAY_GetWindowSize(uint16_t window, int32_t* x, int32_t* y)
-{
-    if (window < sque_windows.size())
-    {
-        *x = sque_windows[window].width;
-        *y = sque_windows[window].height;
-    }
-    else
-    {
-        SQUE_PRINT(SQUE_LogType::LT_WARNING, "Window not available!");
-    }
-}
-
-void SQUE_DISPLAY_GetViewportSize(uint16_t window, int32_t* w, int32_t* h)
-{
-    uint16_t prev_main = main_window_context;
-    SQUE_DISPLAY_MakeContextMain(window);
-    if (window < sque_windows.size())
-        viewport_size_callback(w, h);
-    else
-        SQUE_PRINT(SQUE_LogType::LT_WARNING, "Window not available!");
-
-    SQUE_DISPLAY_MakeContextMain(prev_main);
-}
-
-
-uint16_t SQUE_DISPLAY_GetAmountWindows() { return sque_windows.size(); }
-
-void SQUE_DISPLAY_SetWindowClose(uint16_t window)
-{
-    if (window < sque_windows.size())
-        SET_FLAG(sque_windows[window].working_flags, SQUE_WINDOW_TO_CLOSE);
-    else
-        SQUE_PRINT(LT_WARNING, "Invalid window...");
-}
-
-bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window)
-{
-    if(window < sque_windows.size())
-        return CHK_FLAG(sque_windows[window].working_flags, SQUE_WINDOW_TO_CLOSE);
-    return false;
-}
-
-uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window)
-{
-    uint16_t size = sque_windows.size();
-    if(window < size)
-    {
-        SQUE_PRINT(SQUE_LogType::LT_INFO, "Closing window n*%d with title %s", window, sque_windows[window].title);
-        sque_windows[window] = sque_windows[size-1];
-        sque_windows.pop_back();
-
-#if defined(USE_EGL)
-
-#elif defined(USE_GLFW)
-        glfwDestroyWindow(glfw_windows[window]);
-        glfw_windows[window] = glfw_windows[size - 1]; // This changes the order drastically, but fast
-        glfw_windows.pop_back();
-#endif
-        SQUE_PRINT(SQUE_LogType::LT_INFO, "Window n*%d with title %s is now n*%d", size-1, sque_windows[window].title, window);
-    }
-    else
-    {
-        SQUE_PRINT(SQUE_LogType::LT_WARNING, "Window n*%d not available!");
-    }
-    return window; // When a window is popped that is not last, last becomes this window, thus return position of previous last window
-}
-
 void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
 {
     if (!next_window)
@@ -457,7 +298,7 @@ void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
     }
 
 #ifdef USE_GLFW
-    for (uint16_t i = 0; i < size; i+2)
+    for (uint16_t i = 0; i < size; i + 2)
         glfwWindowHint(options[i], options[i + 1]);
 #elif defined(USE_EGL)
 
@@ -496,16 +337,13 @@ void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
 #endif
 }
 
-
-void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uint16_t monitor)
+uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uint16_t monitor)
 {
-#if defined(ANDROID)
-    if(sque_windows.size() > 0)
+    if (sque_windows.size() > 0)
     {
-        SQUE_PRINT(LT_WARNING, "On Android I am not supporting multiple windows currently...");
-        return;
+        SQUE_PRINT(LT_WARNING, "Multiple windows/viewports not supported on SqueLib");
+        return 0;
     }
-#endif
 
     // Set to monitor[0] for fullscreen at 4th parameter
     if (!next_window)
@@ -521,14 +359,28 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
 
 #if defined(USE_GLFW)
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
-    width = (width != 0) ?width : w * .7;
+    width = (width != 0) ? width : w * .7;
     height = (height != 0) ? height : h * .7;
 
     GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
     if (!glfw_window)
     {
         SQUE_PRINT(LT_WARNING, "Unable to create GLFW window...");
-        return;
+        // Try if max gl version was the issue
+        int major = SQUE_CONTEXT_MAJOR_MAX, minor = SQUE_CONTEXT_MINOR_MAX - 1;
+        for (; minor >= 0 && !glfw_window; --minor)
+        {
+            glfwWindowHint(SQUE_WINDOW_CONTEXT_MAJOR, major);
+            glfwWindowHint(SQUE_WINDOW_CONTEXT_MINOR, minor);
+            glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
+        }
+        if (!glfw_window)
+        {
+            glfwWindowHint(SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN);
+            glfwWindowHint(SQUE_WINDOW_CONTEXT_MINOR, SQUE_CONTEXT_MINOR_MIN);
+            if (!glfw_window)
+                return -1;
+        }
     }
     glfw_windows.push_back(glfw_window);
     glfwSetWindowCloseCallback(glfw_window, GLFW_CloseCallback);
@@ -543,19 +395,205 @@ void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, u
     next_window->height = height;
 #endif
     sque_windows.push_back(*next_window);
-    SQUE_DISPLAY_MakeContextMain(sque_windows.size()-1);
+    SQUE_DISPLAY_MakeContextMain(sque_windows.size() - 1);
     delete next_window;
     next_window = NULL;
+
+    return sque_windows.size() - 1;
 }
 
-void SQUE_DISPLAY_GetWindowPos(uint16_t window, int32_t& x, int32_t& y)
+uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window)
+{
+    uint16_t size = sque_windows.size();
+    if (window < size)
+    {
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "Closing window n*%d with title %s", window, sque_windows[window].title);
+        sque_windows[window] = sque_windows[size - 1];
+        sque_windows.pop_back();
+
+#if defined(USE_EGL)
+
+#elif defined(USE_GLFW)
+        glfwDestroyWindow(glfw_windows[window]);
+        glfw_windows[window] = glfw_windows[size - 1]; // This changes the order drastically, but fast
+        glfw_windows.pop_back();
+#endif
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "Window n*%d with title %s is now n*%d", size - 1, sque_windows[window].title, window);
+    }
+    else
+    {
+        SQUE_PRINT(SQUE_LogType::LT_WARNING, "Window n*%d not available!");
+    }
+    return window; // When a window is popped that is not last, last becomes this window, thus return position of previous last window
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GETTERS /////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window)
+{
+#if defined(ANDROID)
+    AConfiguration* config = AConfiguration_new();
+    AConfiguration_fromAssetManager(config, my_app->activity->assetManager);
+    int32_t density = AConfiguration_getDensity(config);
+    AConfiguration_delete(config);
+    return density;
+#elif defined (USE_GLFW)
+    const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
+    int width_mm, height_mm;
+    glfwGetMonitorPhysicalSize(glfw_monitors[0], &width_mm, &height_mm);
+    float inches = (width_mm * height_mm) / 25.4f;
+
+    return (mode->width * mode->height) / inches;
+#endif
+
+    return 400;
+
+}
+
+void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h)
 {
 #if defined(USE_GLFW)
-    glfwGetWindowPos(glfw_windows[window], &x, &y);
+    const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
+    w = mode->width;
+    h = mode->height;
+#elif defined(USE_EGL)
+    w = sque_windows[0].width;
+    h = sque_windows[0].height;
+#endif
+}
+
+void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window)
+{
+#if defined(USE_GLFW)
+#   if defined(_WIN32)
+    return (void*)glfwGetWin32Window(glfw_windows[window]);
+#   endif
 #else
-    //?
-    x = 0; 
-    y = 0;
+#endif
+
+    return nullptr;
+}
+
+void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, uint16_t window)
+{
+#if defined(USE_GLFW)
+    glfwGetWindowPos(glfw_windows[window], x, y);
+#else
+    * x = 0;
+    *y = 0;
+#endif
+}
+
+void SQUE_DISPLAY_GetWindowSize(int32_t* x, int32_t* y, uint16_t window)
+{
+    if (window < sque_windows.size())
+    {
+        *x = sque_windows[window].width;
+        *y = sque_windows[window].height;
+    }
+    else
+    {
+        SQUE_PRINT(SQUE_LogType::LT_WARNING, "Window not available!");
+    }
+}
+
+void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, uint16_t window)
+{
+    uint16_t prev_main = main_window_context;
+    SQUE_DISPLAY_MakeContextMain(window);
+    if (window < sque_windows.size())
+        viewport_size_callback(w, h);
+    else
+        SQUE_PRINT(SQUE_LogType::LT_WARNING, "Window not available!");
+
+    SQUE_DISPLAY_MakeContextMain(prev_main);
+}
+
+
+uint16_t SQUE_DISPLAY_GetAmountWindows() { return sque_windows.size(); }
+
+bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window)
+{
+    if (window < sque_windows.size())
+        return CHK_FLAG(sque_windows[window].working_flags, SQUE_WINDOW_TO_CLOSE);
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SETTERS /////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val)
+{
+    if (main_window_context == UINT16_MAX)
+    {
+        SQUE_PRINT(SQUE_LogType::LT_WARNING, "No main context to act on, dismissed change of SwapInterval!");
+        return;
+    }
+#if defined(USE_EGL)
+    // should pass monitor uint to change refresh rate
+    eglSwapInterval(egl_display, vsync_val);
+#elif defined USE_GLFW
+    glfwSwapInterval(vsync_val);
+#endif
+}
+
+void SQUE_DISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h)
+{
+    if(window >= sque_windows.size()) return;
+
+    sque_windows[window].width = w;
+    sque_windows[window].height = h;
+#if defined(USE_GLFW)
+    glfwSetWindowSize(glfw_windows[window], w, h);
+#elif defined(USE_EGL)
+#endif
+    uint16_t prev_main = main_window_context;
+    SQUE_DISPLAY_MakeContextMain(window);
+    viewport_resize_callback(w,h);
+    SQUE_DISPLAY_MakeContextMain(prev_main);
+}
+
+void SQUE_DISPLAY_UpdateNativeWindowSize(uint16_t window)
+{
+    int32_t w, h;
+#if defined(USE_EGL)
+    w = ANativeWindow_getWidth(egl_window);
+    h = ANativeWindow_getHeight(egl_window);
+#else if defined(USE_GLFW)
+    glfwGetWindowSize(glfw_windows[window], &w, &h);
+#endif
+
+    SQUE_DISPLAY_ResizeWindow(window, w,h);
+}
+
+
+void SQUE_DISPLAY_SetWindowClose(uint16_t window)
+{
+    if (window < sque_windows.size())
+        SET_FLAG(sque_windows[window].working_flags, SQUE_WINDOW_TO_CLOSE);
+    else
+        SQUE_PRINT(LT_WARNING, "Invalid window...");
+}
+
+void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, uint16_t window)
+{
+#if defined(USE_GLFW)
+    GLFWimage image;
+    image.width = width;
+    image.height = height;
+    image.pixels = (unsigned char*)pixels;
+    glfwSetWindowIcon(glfw_windows[window], 1, &image);
+    image.pixels = NULL;
+#endif
+}
+
+void SQUE_DISPLAY_SetMouseMode(const int32_t value, uint16_t window)
+{
+#if defined(USE_GLFW)
+    glfwSetInputMode(glfw_windows[window], GLFW_CURSOR, value);
 #endif
 }
 

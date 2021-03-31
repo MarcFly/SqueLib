@@ -403,11 +403,11 @@ void ImGui_ImplSqueLib_NewFrame()
 	IM_ASSERT(io.Fonts->IsBuilt());
 
 	int32_t w, h;
-	SQUE_DISPLAY_GetWindowSize(0, &w, &h); 
+	SQUE_DISPLAY_GetWindowSize(&w, &h); 
 	w = (w <= 0) ? 1 : w;
 	h = (h <= 0) ? 1 : h;
 	io.DisplaySize = ImVec2(w, h);
-	SQUE_DISPLAY_GetViewportSize(0, &w, &h);
+	SQUE_DISPLAY_GetViewportSize(&w, &h);
 	//SQUE_PRINT(LT_INFO, "%d,%d %d,%d", w,h, io.DisplaySize.x, io.DisplaySize.y);
 	io.DisplayFramebufferScale = ImVec2(((float)w/ io.DisplaySize.x), ( (float)h / io.DisplaySize.y));
 

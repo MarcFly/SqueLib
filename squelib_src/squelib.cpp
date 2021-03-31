@@ -167,7 +167,14 @@ static pcg32_random_t random_t;
 // un struct tipo sque_lib instance
 // o un struct global en el que se mantienen las variables
 // Para organizar o para tener multiples instancies de una libreria
-void SQUE_LIB_Init(const char* app_name)
+static int32_t default_context_options[] =
+{
+    SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN,
+    SQUE_WINDOW_CONTEXT_MINOR, SQUE_CONTEXT_MINOR_MIN,
+    SQUE_DEBUG_CONTEXT, 1
+};
+
+void SQUE_LIB_Init(const char* app_name, int32_t flags)
 {
     pcg32_srandom_r(&random_t, time(NULL), (intptr_t)&random_t);
 
@@ -180,15 +187,33 @@ void SQUE_LIB_Init(const char* app_name)
     SQUE_DISPLAY_SetViewportSizeCallback(SQUE_RENDER_GetFramebufferSize);
     SQUE_DISPLAY_Init();
 
-    // Default options, 
-    int32_t options[] =
+    if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_OPENWINDOW))
     {
-        SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN,
-        SQUE_WINDOW_CONTEXT_MINOR, SQUE_CONTEXT_MINOR_MIN,
-        SQUE_DEBUG_CONTEXT, 1
-    };
-    SQUE_DISPLAY_NextWindow_ContextHints(options, sizeof(options)/sizeof(int32_t));
-    SQUE_DISPLAY_OpenWindow(app_name);
+        sque_vec<int32_t> options;
+        
+        if (CHK_FLAG(flags, SQ_INIT_MAX_RENDER_VER))
+        {
+            options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
+            options.push_back(SQUE_CONTEXT_MAJOR_MAX);
+            options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
+            options.push_back(SQUE_CONTEXT_MINOR_MAX);
+        }
+        else if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_MIN_RENDER_VER))
+        {
+            options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
+            options.push_back(SQUE_CONTEXT_MAJOR_MIN);
+            options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
+            options.push_back(SQUE_CONTEXT_MINOR_MIN);
+        }
+        if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER) )
+        {
+            options.push_back(SQUE_DEBUG_CONTEXT);
+            options.push_back(1);
+        }
+
+        SQUE_DISPLAY_NextWindow_ContextHints(options.begin(), options.size());
+        SQUE_DISPLAY_OpenWindow(app_name);
+    }
 
     // For testing
     SQUE_DISPLAY_MakeContextMain(0);

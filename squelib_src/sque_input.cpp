@@ -317,7 +317,7 @@ SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
     int16_t delta_x = g.end_x - g.start_x;
     int16_t delta_y = g.end_y - g.start_y;
     int32_t screen_w, screen_h;
-    SQUE_DISPLAY_GetWindowSize(0, &screen_w, &screen_h);
+    SQUE_DISPLAY_GetWindowSize(&screen_w, &screen_h);
 
     uint16_t abs_delta_x = delta_x;
     uint16_t abs_delta_y = delta_y;

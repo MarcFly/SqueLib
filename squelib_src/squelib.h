@@ -71,9 +71,7 @@
 #define SQUE_VERSION_MINOR 1																												
 #define SQUE_VERSION ((SQUE_VERSION_MAJOR << 16) | SQUE_VERSION_MINOR)																		
 
-// SQUE_LIB should not have an init/close
-// User should do that with specifics per module really
-SQ_API void SQUE_LIB_Init(const char* app_name);																									
+SQ_API void SQUE_LIB_Init(const char* app_name, int32_t flags = NULL);																									
 SQ_API void SQUE_LIB_Close();																									
 SQ_API unsigned int SQUE_LIB_GetVersion();																							
 SQ_API int SQUE_LIB_IsCompatibleDLL();		
@@ -165,41 +163,40 @@ enum SQUE_WindowFlags
 	SQUE_WINDOW_MOUSE_IN = BITSET1,
 	SQUE_WINDOW_TO_MAXIMIZE = BITSET4,
 	SQUE_WINDOW_TO_CLOSE = BITSET5,
-	SQUE_WINDOW_DEBUG = BITSET6,	
+	SQUE_WINDOW_DEBUG = BITSET6,
 };																																	
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_DISPLAY_Init();
-SQ_API void SQUE_DISPLAY_Close();																											
-SQ_API void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val);																						
-SQ_API int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window = 0);																				
-SQ_API void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
-
-																																		
-// Control Specific Windows ////////////////////////////////////////////////////////////////////////////////////////////////////////////		
-// I don't like having user setup a SQUE_Window directly
+SQ_API void SQUE_DISPLAY_Close();		
 SQ_API void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size);
 SQ_API void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size);
 SQ_API void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size);
-
-SQ_API void SQUE_DISPLAY_OpenWindow(const char* title, int32_t width=0, int32_t height=0, uint16_t monitor = 0);
-SQ_API bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window);
-
+SQ_API uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width = 0, int32_t height = 0, uint16_t monitor = 0);
+																														
 // Setters
-SQ_API void SQUE_DISPLAY_SetWindowClose(uint16_t window);																																									
-SQ_API uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window);																																											
-SQ_API void SQUE_DISPLAY_ResizeWindow(uint16_t window, uint16_t w, uint16_t h);
-SQ_API void SQUE_DISPLAY_UpdateNativeWindowSize(uint16_t window);
+SQ_API void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val);
+SQ_API bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SetWindowClose(uint16_t window = 0);																																									
+SQ_API uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window = 0);																																											
+SQ_API void SQUE_DISPLAY_ResizeWindow(const uint16_t w, const uint16_t h, uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_UpdateNativeWindowSize(uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SetMouseMode(const int32_t value, uint16_t window = 0);
 // Getters
 SQ_API uint16_t SQUE_DISPLAY_GetAmountWindows();
-SQ_API void SQUE_DISPLAY_GetWindowPos(uint16_t window, int32_t& x, int32_t& y);																	
-SQ_API void SQUE_DISPLAY_GetWindowSize(uint16_t window, int32_t* w, int32_t* h);
-SQ_API void SQUE_DISPLAY_GetViewportSize(uint16_t window, int32_t* w, int32_t* h);
-SQ_API void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window);
+SQ_API void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_GetWindowSize(int32_t* w, int32_t* h, uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, uint16_t window = 0);
+SQ_API void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window = 0);
+SQ_API int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
+
+// TODO: Android Notifications + GLFW Attention Request
 
 // Controlling Contexts ////////////////////////////////////////////////////////////////////////////////////////////////////////////////																										
-SQ_API void SQUE_DISPLAY_SwapBuffer(uint16_t window);
+SQ_API void SQUE_DISPLAY_SwapBuffer(uint16_t window = 0);
 SQ_API void SQUE_DISPLAY_SwapAllBuffers();																								
-SQ_API void SQUE_DISPLAY_MakeContextMain(uint16_t window);
+SQ_API void SQUE_DISPLAY_MakeContextMain(uint16_t window = 0);
 SQ_API ResizeCallback SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb);
 SQ_API ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb);
 																																		
@@ -276,7 +273,11 @@ enum SQUE_MOUSE_BUTTONS
 #define MAX_POINTERS 10																													
 #define GESTURE_REFRESH 10 // in ms																										
 #define MAX_MIDPOINTS 10																												
-																																		
+		
+// TODO: merge Mouse and Touch controls somehow
+// Find a way to think of pointer intro mouse but not actually
+// Have to call thing like a traditional mouse
+
 enum SQUE_INPUT_Actions																													
 {																																		
 	SQUE_ACTION_UNKNOWN = -1,																											
