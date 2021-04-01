@@ -2,14 +2,6 @@
 #include <squelib.h>
 #include <imgui.h>
 #include <imgui_impl_squelib.h>
-enum main_states
-{
-	MAIN_CREATION = 0,
-	MAIN_UPDATE,
-	MAIN_FINISH,
-	MAIN_EXIT
-};
-
 #include <cmath>
 
 bool on_background = false;
