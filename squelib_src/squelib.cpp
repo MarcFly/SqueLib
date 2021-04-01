@@ -224,6 +224,9 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
     // Rendering Lib
     SQUE_RENDER_Init();
 
+    // Filesystem Lib
+    SQUE_FS_Init();
+
     // If you use core lib, you will get these default initialization states per library
 }
 

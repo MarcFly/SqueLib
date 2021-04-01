@@ -684,6 +684,7 @@ typedef struct SQUE_Asset
 	char* raw_data;
 }	SQUE_Asset;
 
+SQ_API void SQUE_FS_Init();
 SQ_API const char* SQUE_FS_GetExecPath();
 // On Android, all these functions require permissions
 SQ_API bool SQUE_FS_CreateDirFullPath(const char* path);

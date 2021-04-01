@@ -12,7 +12,7 @@
 #   include <EGL/egl.h>
 #endif
 
-char glsl_ver[64] = {'\0'};
+static char glsl_ver[64] = {'\0'};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE CONTROL //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,27 +116,21 @@ bool SQUE_RENDER_Init()
 #elif defined USE_OPENGLES
     SQUE_PRINT(SQUE_LogType::LT_INFO, "OpenGLES Version: %d.%d", GLVersion.major, GLVersion.minor);
 #endif
-    // TODO: Hacer el GLSL Ver
+
 #if defined(USE_OPENGL) ||defined(USE_OPENGLES)
     int ver = GLVersion.major * 100 + GLVersion.minor * 10;
-    // +9 #version +3 char num version + 1 space
-    int16_t size = 13;
     SQ_ASSERT(ver > 320 && "Minimum version is 320 es");
     const char* term = "\n";
 #if defined(USE_OPENGLES)
-    term = "es\nprecision mediump float;\n";
+    term = " es\nprecision mediump float;\n";
 #else 
-    term = "core\n";
+    term = " core\n";
 #endif
-    sprintf(glsl_ver, "#version %d %s", ver, term);
-       
+    memcpy(glsl_ver, "#version ", 9); // Count directly
+    memcpy(&glsl_ver[9], std::to_string(ver).c_str(), 3); // 3 digit number always / TODO: Find something better than std::to_string
+    memcpy(&glsl_ver[12], term, strlen(term)); // Version termination, variable so quick strlen   
 #endif
     SQUE_PRINT(LT_INFO, "%s", glsl_ver);
-    // Generate Viewport with window size
-    uint16_t w, h;
-    /*SQUE_DISPLAY_MakeContextMain(0);
-    SQUE_DISPLAY_GetWindowSize(0, &w, &h);
-    SQUE_RENDER_ChangeViewPortSize(w, h);*/
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Main Viewport init...");
     return ret;
 }
@@ -164,7 +158,7 @@ int32_t GetGLVer()
 // should it?
 #include <stdio.h>
 // Generar una global la string generada por esta funcion
-// En un array de tamaño fijo y lo rellenas cn un memcpy y ale
+// En un array de tamaï¿½o fijo y lo rellenas cn un memcpy y ale
 // GetGLSLVer que devuelva la string.
 const char* SQUE_RENDER_GetShaderHeader()
 {

@@ -33,34 +33,25 @@
 	#include <libgen.h>
 #endif
 
-// Return a const char* to a char* works, but does generate memory leak if untreated
-// Should I make my own easy string to return these types?
-// Should I use std::string?
-const char* SQUE_FS_GetExecPath()
+static char exec_path[512];
+
+void SQUE_FS_Init()
 {
-	char* ret = NULL;
-	char* path = new char[256];
-	//path = NULL;
 	int len = 0;
 #if defined(_WIN32)
-	len = GetModuleFileNameA(NULL, path, 256);
-	std::string exec_path(path);
-	std::string exe = strrchr(path, FE);
-	exec_path = exec_path.substr(0, exec_path.length() - exe.length());
-	ret = new char[exec_path.length()+1];
-	memcpy(ret, exec_path.c_str(), exec_path.length()+1);
-	delete path;
+	len = GetModuleFileNameA(NULL, exec_path, 512);
+	char* exe = strrchr(exec_path, FE);
+	exec_path[len-strlen(exe)] = '\0';
 #elif defined(ANDROID)
 #elif defined(__linux__)
-	int32_t pid = getpid();
-	char string[50];
-	sprintf(string, "/proc/self/exe/%d\0", pid);
-	len = readlink("/proc/self/exe", path, 256);
-	ret = dirname(path);
-	//delete path;
+	len = readlink("/proc/self/exe", exec_path, 512);
+	sprintf(exec_path, "%s", dirname(exec_path));
 #endif
+}
 
-	return ret;
+const char* SQUE_FS_GetExecPath()
+{
+	return exec_path;
 }
 
 bool SQUE_FS_CreateDirFullPath(const char* path)
@@ -184,7 +175,7 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 		ret->size = AAsset_getLength(asset);
 		char* tmp = new char[ret->size+1];
 		memcpy(tmp, AAsset_getBuffer(asset), ret->size);
-		memcpy(tmp[ret->size], "\0", 1);
+		tmp[ret->size] = '\0';
 		ret->raw_data = tmp;
 		AAsset_close(asset);
 	}
@@ -195,12 +186,12 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 	}
 #else
 	char* sprint_v = new char[256];
-	int len = sprintf(sprint_v, "%s/Assets/%s", SQUE_FS_GetExecPath(), file);
+	int len = sprintf(sprint_v, "%s/Assets/%s\0", SQUE_FS_GetExecPath(), file);
 	if (len > 256)
 	{
 		delete sprint_v;
 		sprint_v = new char[len];
-		sprintf(sprint_v, "%s/Assets/%s", SQUE_FS_GetExecPath(), file);
+		sprintf(sprint_v, "%s/Assets/%s\0", SQUE_FS_GetExecPath(), file);
 	}
 	ret = SQUE_FS_LoadFileRaw(sprint_v);
 	delete sprint_v;
