@@ -1,7 +1,3 @@
-<style class="fallback">@media screen{body{background:#0F0F0F;color:#ccc}}</style>
-<link rel="stylesheet" href="./libs/markdeep_slate.css">
-<script src="https://kit.fontawesome.com/ed883494f6.js" crossorigin="anonymous"></script>
-
 # SqueLib
 
 
@@ -62,9 +58,11 @@ Have never read or got into it, please forward me any good introduction on those
 
 Setup
 ===
+## Download
+You can download the repo at [](https://github.com/MarcFly/SqueLib).
 ## Dependencies
-
-Although most dependencies are pulled by the building process (GLFW, GLMath,...) there are some platform specific dependencies that require specific setup, besides **CMAKE** which is a given.
+First of all you will need [CMake](https://cmake.org/download/) and your usual compiler/linker pair, G++ and GCC 9.3.0 is what I've been using on Linux, MSVS 2017/2019 on Windows (Android Build is provided through the NDK).
+Although most dependencies are pulled by the building process (GLFW, GLMath,...) there are some platform specific dependencies that require specific setup, besides OpenGL which it is assume most vendors bring a version at least compatible with core 3.3 which is the minimum supported on desktop by SqueLib.
 
 ### Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash
@@ -135,12 +133,12 @@ You can basically copy the style of any example found, but the main parts will b
 
  - Add SqueLib as a subdirectory, specifying any Binary Directory:
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    add_subdirectory(${path_to_SqueLib} ${path_to_binary_dir})
+    add_subdirectory(path_to_SqueLib path_to_binary_dir)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - Setup the install targets process
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    SqueLib_PrepareBuld(target organization_name ${source_files})
-    SqueLib_Package(asset_folder resource_folder)
+    SqueLib_PrepareBuild(target organization_name source_files)
+    SqueLib_Package(path_to_asset_folder path_to_resource_folder)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ***In the Command Line***
  - Build with cmake adding the target platform - command line
@@ -148,15 +146,15 @@ You can basically copy the style of any example found, but the main parts will b
     cmake <dir> ( -DToWindows=1 OR -DToLinux=1 OR -DToAndroid=1 ) -DCMAKE_BUILD_TYPE=(Release OR Debug)
     cmake --build <dir>
     # Optional for Android, install into android device from Linux only... 
-    make uninstall push # This will remove the app if exists, create the apk and install on device
+    make uninstall push # This will remove the app if exists, create the packaged app and install on device
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - You can also check/use the examples/all command-line executables (FromLinux_BuildAll.sh / FromWin_BuildAll.batch) to have an even easier build experience 
 For getting into building with CMake, I strongly recommend **[Jeff Preshing's introduction](https://preshing.com/20170522/learn-cmakes-scripting-language-in-15-minutes/)**.
-There is a lot of info available and the documentation is extensive, but this carried me heavily starting out. The posts on plywood and arch80 engine have been also really interesting!
+There is a lot of info available and the documentation is extensive, but this blog post carried me heavily starting out. The posts on Plywood and Arch80 engine have been also really interesting!
 
 Resources
 ===
-When packaging apps and building, you'd want to have your data properly packaged together. Until ***SqueLib*** supports proper packaging , currently the only option is to have assets and files under separate folders for _AppAssets_ and _AppResources_, when building it will be packaged directly as long as the folders are provided on the SqueLib_Package() call.
+When packaging apps and building, you'd want to have your data properly packaged together. Until ***SqueLib*** supports proper packaging , currently the only option is to have assets and files under separate folders for _Assets_ and _Resources_, when building it will be packaged directly as long as the folders are provided on the SqueLib_Package() call.
 
 For android it is required to have a folder _AppResources/icon/mipmap.png_ which will be used as the app icon when installing. On desktop platofmrs, the options for using a window icon is also provided through Display part of the library, but not yet part of the main init.
 
@@ -164,7 +162,7 @@ In any case, you can go through the code and change it however you want to, have
 
 Debugging
 ===
-The step of going from Windows to Linux and Linux to Android, have been as difficult as expected at first. As ***SqueLib*** provides what it can platform agnostically, you can debug your code that uses ***SqueLib*** (and no platform dependant extra code) on your preferred IDE, or that's what I would like to say.
+The step of going from Windows to Linux and Linux to Android, have been as difficult as expected at first. As ***SqueLib*** provides what it can platform agnostically, you can debug your code that uses ***SqueLib*** (and no plt atform dependant extra code) on your preferred IDE, or that's what I would like to say.
 
 Currently I have only tried and get to work on **GDB** and **Android Studio**, besides MSVS which just plain works. None of these introduction steps are great tutorials but will get you going fast.
 
@@ -221,27 +219,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 Acknowledgements
 ===
+ - **[Jesus Diaz Garcia](https://es.linkedin.com/in/jesusdz)** for guidance and bearing with me as my tutor!
  - **[Raysan5](https://github.com/raysan5/)** for a short but deep introductory talk on libraries and about write more agnostic and reusable code, and obviously for **[_RayLib_](https://www.raylib.com/)** as a whole.
- - **[CNLohr](https://github.com/cnlohr)** for **[_RawDraw_](https://github.com/cntools/rawdraw/tree/27f05afe1747e3dc7a5dd02eaf2b761ef3624762)** and specifically **[_RawDrawAndroid_](https://github.com/cnlohr/rawdrawandroid)**,.
+ - **[CNLohr](https://github.com/cnlohr)** for **[_RawDraw_](https://github.com/cntools/rawdraw/tree/27f05afe1747e3dc7a5dd02eaf2b761ef3624762)** and specifically **[_RawDrawAndroid_](https://github.com/cnlohr/rawdrawandroid)**.
  - **[Morgan McGuire](https://casual-effects.com/)** for providing **[_Markdeep_](https://casual-effects.com/markdeep)** in an open source way, writing this readme has been a pleasure.
 
  The full project documentation and bibliography will be available as the project documentation nears its completion.
 
  Contact
  ===
-
+<div class="center">
 [<i class="fab fa-discord"></i> MarcTorresDev#0001](https://discord.com)
 [<i class="fab fa-twitter-square"></i> MarcTorres_Dev](https://twitter.com/MarcTorres_Dev)
-[mtorres.form@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=mtorres.form@gmail.com)
-
-
-
-
-<!-- -------------------------------------------------------------------------------------------- -->
-<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-
-<!-- Markdeep: -->
-<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style>
-
-<script src="./libs/markdeep.min.js" charset="utf-8"></script>
-<script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
+[<i class="fab fa-twitch"></i> MarcTorresDev](https://www.twitch.tv/marctorresdev)
+[<i class="fas fa-envelope"></i> mtorres.form@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=mtorres.form@gmail.com)
+</div>
