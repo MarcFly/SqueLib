@@ -1,3 +1,7 @@
+<style class="fallback">@media screen{body{background:#0F0F0F;color:#ccc}}</style>
+<link rel="stylesheet" href="./libs/markdeep_slate.css">
+<script src="https://kit.fontawesome.com/ed883494f6.js" crossorigin="anonymous"></script>
+
 # SqueLib
 
 
@@ -197,12 +201,10 @@ Currently I have only tried and get to work on **GDB** and **Android Studio**, b
 ===
 All pages are still being worked on, including the thesis which will be completed by the 24th of June 2021.
  
- * [Documentation Index]() 
- * [Examples]("./doc_index.md.html") 
+ * [Documentation Index]("./doc_index.md.html") 
 
  * [Thesis]("./SqueLib-Thesis/SqueLib_Bachelor_Thesis_Marc_Torres_Jimenez.md.html")
  
-
 License
 ===
 Copyright 2021 Marc Torres Jimenez
@@ -231,3 +233,15 @@ Acknowledgements
 [<i class="fab fa-discord"></i> MarcTorresDev#0001](https://discord.com)
 [<i class="fab fa-twitter-square"></i> MarcTorres_Dev](https://twitter.com/MarcTorres_Dev)
 [mtorres.form@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=mtorres.form@gmail.com)
+
+
+
+
+<!-- -------------------------------------------------------------------------------------------- -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+<!-- Markdeep: -->
+<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style>
+
+<script src="./libs/markdeep.min.js" charset="utf-8"></script>
+<script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>

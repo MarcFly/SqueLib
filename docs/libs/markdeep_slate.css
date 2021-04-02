@@ -193,7 +193,7 @@ body#md {
 
     body {
         color: #ccc;
-        background: #3a3a3a;
+        background: #2c2c2c;
     }
 
     .md div.title, .md h1, .md h2, .md h3, .md h4, .md h5, .md h6, .md .longTOC a, .md .longTOC code, .md a:link, .md a:visited {
@@ -247,3 +247,43 @@ body#md {
    
 }
 
+body, .md a:link.url {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: lighter;
+   }
+   
+   
+   div.subtitle {
+    text-transform: uppercase;
+    margin: 80px auto 30px auto;
+    font-size: 115%;
+    font-weight: 100;
+   }
+   
+   code {
+    font-weight: bold;
+    color: #060;
+   }
+   
+   hr {
+    width: 70%;
+    border-width: 0;
+    height: 1px;
+    margin: 50px auto 50px auto;
+   }
+   
+   ul {
+     margin-bottom: 50px;
+   }
+   
+   .md .longTOC a, .md .longTOC code, .md a:link, .md a:visited, .md a:link code, .md a:visited code, a code .hljs-keyword, a code .hljs-built_in, a code .hljs-selector-tag {
+   color: #80bfff !important;
+   }
+
+.center {
+    display: grid;
+    place-items:left;
+    font-size: 1.5rem;
+}
+
+   
