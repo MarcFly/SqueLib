@@ -1,7 +1,3 @@
-<style class="fallback">@media screen{body{background:#0F0F0F;color:#ccc}}</style>
-<link rel="stylesheet" href="./libs/markdeep_slate.css">
-<script src="https://kit.fontawesome.com/ed883494f6.js" crossorigin="anonymous"></script>
-
 # SqueLib
 
 
@@ -233,15 +229,3 @@ Acknowledgements
 [<i class="fab fa-discord"></i> MarcTorresDev#0001](https://discord.com)
 [<i class="fab fa-twitter-square"></i> MarcTorres_Dev](https://twitter.com/MarcTorres_Dev)
 [mtorres.form@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=mtorres.form@gmail.com)
-
-
-
-
-<!-- -------------------------------------------------------------------------------------------- -->
-<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-
-<!-- Markdeep: -->
-<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style>
-
-<script src="./libs/markdeep.min.js" charset="utf-8"></script>
-<script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
