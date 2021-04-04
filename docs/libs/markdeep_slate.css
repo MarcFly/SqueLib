@@ -282,7 +282,7 @@ body, .md a:link.url {
 
 .center {
     display: grid;
-    place-items:left;
+    place-items:center;
     font-size: 1.5rem;
 }
 

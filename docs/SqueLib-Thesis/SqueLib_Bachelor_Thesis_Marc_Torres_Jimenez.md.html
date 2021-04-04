@@ -60,17 +60,17 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | KDE | K Desktop Environment, Linux desktop environment |
 | CMake | Open-source cross-platform tols for building, testing and packaging software |
 | OpenGL | Open Graphics Library, cross-language and cross-platform graphics programming interface |
-| GLFW | Open-source API for creating windows, contexts and surfaces for OpenGL, OpenGL ES and Vulkan; as well as receiving inputs and events |
+| GLFW | Open-source API used in this project for creating windows and main contexts for OpenGL, with capabilities for context for OpenGL ES and Vulkan; as well as receiving inputs and events. Usable on main desktop platforms such as Linux and Windows, as well as MacOS which is not targetted in this thesis. Android specifically requires EGL to interface with OpenGLES. |
 | EGL | Native window management API for interfacing with OpenGL, OpenGLES and Vulkan |
-| Android NDK | Toolset for implementing native android apps in C/C++ |
+| Android NDK | Toolset for implementing native android apps in pure C/C++, also allowing for calls to Java Native code. Previous to it is was strictly necessary to explicitly create a Java based application and load C/C++ code from it, as well as interact with a Java Native Interface, which is still required for some functionality |
 | Web Stack | Commonly referred to a package for tacking care of a website which require a base Operative Syste, a Web Serve, a database manager and the programming languages for interfacing with them |
-| (Programming) library | Set of portable code that focuses in tackling a set of issues |
-| Game Engine | Software Tool that streamlines the process of making a game |
-| Framework | Set of solutions for dealign with a problem |
+| (Programming) library | Set of portable code that focuses in tackling a set of issues. **Examples: GLM**: a library for performing geometric mathematical operations with the same syntax as OpenGL. **/ Parson**: a C++ library that facilitate the parsing of JSON files |
+| Game Engine | Software Tool that streamlines the process of making a game by including most technology required for a game developer to focus on designing and developing a game |
+| Software Framework | Set of solutions for dealing with a software need, which may include a programming library. **Examples: Plywood problem |
 
 | Term | Description |
 | --- | --- |
-| Direct3D | Graphics API for interfacing on Microsoft Windows, tagetting realtime 3D graphics |
+| Direct3D | Graphics API for interfacing on Microsoft Platforms such as Windows desktop PCs and XBox consoles, tagetting realtime 3D graphics. There are multiple versions, with the latest, DirectX12, focusing on a lower level approach to interfacing with hardware |
 | Vulkan | Low level graphics and computing API, oriented at high performance with 3D graphics applications, across multiple platforms |
 | Metal | Apple's low level graphics API for usage in iOS, iPadOS, macOS and tvOS (Apple's proprietaty Operative Systems) |
 
@@ -91,7 +91,7 @@ Resulting from this thesis is an introduction to taking control on the process o
 
 During the coursing of the Bachelor's Degree in Videogame Design and Development, the introduction to other platforms came at the cost of being locked in specific environments. This experience mirrors closely what can be found easily as better practices,which create a higher entry cost to newer platforms, when working with C++.
 
-If you want to work in Android you will be introduced to Java/Kotlin and Android Studio, Flutter, React Native,... , if you want to work in Web Development you will be mostly forced into one of the infinite variants of the Web Stack and generating infinity dependecies.
+If you want to work in Android you will be introduced to languages and tools such as Java/Kotlin and Android Studio, Flutter or React Native. If you want to work in Web Development you will be mostly forced into one of the infinite variants of the Web Stack and generating infinite dependecies.
 
 As an opportunity to grow as a C++ programmer and provide a learning experience for others to come, the creation of a library that allows a faster introduction to other platforms without the buffer time of learning a completely new environment and language, seem to fit me the most.
 
@@ -194,9 +194,9 @@ The amount of features will be closely examined and mostly non-expanded or even 
 
 Visual polish and accessibility might be cut down too, although it is an area of interest for making it more available as a learning environment.
 
-All in all, this project is aimed at providing a learning introduction and a multiplatform library for game development in C++, targeted at game development students with a basic understanding of the C++ programming language.
+All in all, this project is aimed at providing C++ developers with an introduction and a multiplatform library for game development in C++, without distinction between professionals or students, individuals or companies.
 
-Under the following section, how this problem has been tackled currently will be explained.
+Under the State of the Art section, how this problem has been tackled by contemporary solutions will be explained.
 
 # State of the Art
 
@@ -226,7 +226,7 @@ The project is very mature, with a major version change in 2013 to SDL 2.0 which
 
 ### RayLib
 
-RayLib<sub>[#W20]</sub> is self-described as a simple and easy-to-use library to enjoy videogames library. Ramon Santamaria open sourced the project in 2013 and had a recent major update in RayLib 3.5 in December 2020. 
+RayLib<sub>[#W20]</sub> is self-described as a simple and easy-to-use library to enjoy programming videogames. Ramon Santamaria open sourced the project in 2013 and had a recent major update in RayLib 3.5 in December 2020. 
 
 The project is not just a library but a whole development suite for making games and applications in C/C++, including tools and all subsystems necessary for making a game, as well as a math module for the main operations and structures used in games (**Figure 1**).
 
@@ -384,6 +384,19 @@ In 2015, Amazon licensed CryEngine from Crytek in order to create an engine with
 !!! Tip: Game Examples
     Star Citizen (Cloud Imperium Games, Never...), The Grand Tour Game (Amazon Game Studios, 2019), New World (Amazon Game Studios, 2021+), Coffence (Sweet Bandits Studios, 2018),... mostly TBA or canceled projects.
 
+### Other Engines
+
+There is a vast amount of both open and proprietary game engines out 
+there, from fully featured to starting in the development process such as this thesis. As the reach for this project is limited it is not possible to delve into them, a list of engines and articles gathering and providing information about more engines is provided:
+
+#### Articles
+
+ * CUSTOM GAME ENGINES: A Small Study. Ramon Santamaria. <https://gist.github.com/raysan5/909dc6cf33ed40223eb0dfe625c0de74>
+
+#### More Open Source Engines
+
+ * Diligent Engine. Diligent Graphics. <https://github.com/DiligentGraphics/DiligentEngine>
+
 ## SqueLib and SqueMaker as Resources
 
 Both SqueLib and SqueMaker as tools fall in an already big and deep market as long as you're willing to look out for the tools and learn them. The market cap and current interests are probably well taken care of.
@@ -404,7 +417,12 @@ The process of developing and refining a framework to build applications is a lo
 
 It is crucial to maintain a strictly timed environment for tackling the multiple challenges faced.
 
+Under **Section 3.1**, the tools used for managing the project in a high level way will be show. Then **Section 3.2** will provide the method for validating the results of each step of development.
+On **Sections 3.3 through 3.5** a SWOT (strengths, weaknesses, opportinities and threats) analysis, fallback strategy and cost analysis are provided.
+
 ## Planification Tools
+
+The following section will provide information about the tools used for initially planning the project, tracking the progress of each step and mantaining the project up to date and in working conditions at all times.
 
 ### Gantt Project
 
@@ -552,7 +570,7 @@ Although the project is aimed at producing open-source content, thus not having 
 !!! note
     The average gross salary of a C++ programmer in Spain ranges from 22.000€ to 32.000€, for entry to mid-level positions on an open-ended and fulltime contract. This project would fall under a temporal contract, which is statistically paid 25% less<sub>[#W28]</sub>, as well as an entry-level position; a monthly salary of 1.375€ can be estimated.
 
-![Table [tables]: Approximated costs](images/Cost_Table.png)
+![Table [tables]: Approximated costs over a 9 month long development time. Amortization time is divided through its expected amortization time and then multiplied by development time to get amortized cost.](images/Cost_Table.png)
 
 # Methodology
 
@@ -619,6 +637,10 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 **HnP.9. Sub-Task Window:** As most tasks are completed dynamically, this becomes very handy for tracking quick subtask that would pollute the visibility in task names or generate too small of tasks that pollute the board.
 
 **HnP.10. Comment Window:** After logging work, a comment is created with that session information. Imperative for both teams and individuals participating in each task.
+
+## Conclusion
+
+
 
 # SqueLib Development
 ## Introduction to Development

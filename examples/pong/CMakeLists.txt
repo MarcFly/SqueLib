@@ -34,7 +34,7 @@ SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${CMAKE_CURRENT_SOURCE_DIR}/mai
 SqueLib_Package("" "")
 
 #------------------------------------------------------------------------------------------------
-# SETTING FINAL PROPERTIES FOR THE PROJECT
+# SETTING FINAL PROPERTIES FOR THE PROJECT - SHould be done on Prepare Build
 #------------------------------------------------------------------------------------------------
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
 set_target_properties(SquePong
@@ -43,7 +43,7 @@ set_target_properties(SquePong
         LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
         RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
 )
-# INCLUDE AND LINK TO SQUELIB
+# INCLUDE AND LINK TO SQUELIB this have to be done on prepare build!
 target_link_libraries(SquePong 
     PUBLIC 
         SqueLib)
