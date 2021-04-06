@@ -172,7 +172,6 @@ body#md {
     }
 
     .md code {
-        color: #fff;
         background: unset;
     }
 
@@ -262,7 +261,7 @@ body, .md a:link.url {
    
    code {
     font-weight: bold;
-    color: #060;
+    color: rgb(81, 170, 81);
    }
    
    hr {
@@ -286,4 +285,11 @@ body, .md a:link.url {
     font-size: 1.5rem;
 }
 
+.md .hljs-built_in {font-weight: bold; color: #f7a8fd}
+.md .hljs-keyword {font-weight: bold; color: #a1aefe}
+.md .hljs-title {font-weight: bold; color: #FFF}
+
+.md .longTOC a, .md .longTOC code, .md a:link, .md a:visited, .md a:link code, .md a:visited code, a code .hljs-keyword, a code .hljs-built_in, a code .hljs-selector-tag {
+color: #80bfff !important;
+}
    

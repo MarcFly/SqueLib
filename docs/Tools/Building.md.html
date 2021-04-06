@@ -29,7 +29,7 @@ The most basic build script will consist in some form of this pseudocode:
 
 **Line 3:** Generate the build files for compilation
  
- * `open_console`: call to your preferred konsole instance to open and later execute a command
+ * `open_console`: call to your preferred console instance to open and then execute a command
  * `--no_close`: console option to avoid closing and be able to read output
  * `-execute`: call function to execute a command. -e on Konsole and 
  * `cmake "dir"`: call cmake under a specified directory (CMAKE_SOURCE_DIR variable). I personally store scripts in the same folder as CMakeList.txt, because we navigated one folder up, i leave it as "**../**".
@@ -65,7 +65,7 @@ Throughout the use of CMake, you will encounter multiplatform pitfalls in which 
  * `robocopy "source" "destination" /Options`: copy files/directories in Windows, [fast documentation](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy).
  * `rm -options "path"`: remove files/directories.
  * `VARIABLE="Value"`: Declare a local variable for using in following calls
- * `envsubst '$$Local_Variables' < path_to/text_file_with_Variables.extension > path_to/final_file_with_name.extension`: Great funcion to define a template file and then substitute with defined variables preceded by 2 dollar signs. Examples are **Android.xml.template** and **squelib_add_targets** macro in **AndroidInstallTargets.cmake**.
+ * `envsubst '$$Local_Variables' < path_to/text_file_with_Variables.extension > path_to/final_file_with_name.extension`: Great funcion to define a template file and then substitute with defined variables preceded by 2 dollar signs(`$$`). Examples are **Android.xml.template** and **squelib_add_targets** macro in **AndroidInstallTargets.cmake**.
  * `ls -options "directory/file"`: list the contents in a directory or file.
 
 Command Line Interfaces are one hell of a powerful tool anyone into programming has to master. I don't think I even get to beginner, I just use these usual commands and go by looking up what I am told to do to understand it, more commands will be introduced explaining the CMake Android Modules as there are specific commands required for the build.
@@ -76,18 +76,21 @@ First of all, if you want a truly great introduction, go to Jeff Preshing's [Lea
 
 SqueLib is not a heavy CMake project as some experienced users might easily discern, there are a couple not recommended to say the least uses and ugly things, but they work just as intended.
 
-CMake's documentation is extensive but straight to the point with examples of usage in complicated function calls. To make it easier to read, here are a small list of general rules:
+CMake's documentation is extensive but straight to the point with examples of usage in complicated function calls. Always keep it near but to make it easier to read, here are the most basic things you will find:
 
  * `set(VARIABLE_NAME VALUE)`: Declare/Define a Variable
  * `${VARIABLE_NAME}`: Access the value of a variable
  * `function(VARIABLE value_input ...)`: Most functions have a string that declare which variable they target as function might have a plethora of unordered variable to set. As an example: `project(SqueLib VERSION 2021.1)`, the project function has a lot of variables or options to set, we are specifying that VERSION is set to 2021.1, these variable setting can be concatenated with more like `... DESCRIPTION "Something" LANGUAGES C ...)`.
  * `macros` substitute the call with the code itself, thus making all variables accessible to the local space.
  * `functions` don't make the variables declared inside available unless specified
+ * `file(...)`: command for gathering files or searching for files, look up examples but it is not recommended to use if you have low source file count or know exactly which files to use (I use it because it is fast and compact to write).
+ * A CMake variable can be a list, by means that you can `set(LIST_NAME var1 var2 var3 ..)` or `set(LIST_NAME "var1;var2;var3;...")`. There is a `list()` command to interact easily with them, and when you want to pass the whole list as a variable you usually pass as `"${LIST_NAME}"` which will convert the list into a string list rather than a variable list.
 
  With these simple directives set, let's get through the following example:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~cmake linenumbers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
     cmake_minimum_required(VERSION 3.1)
+    
     # Project Settings
     project(SquePong VERSION 2021.1 LANGUAGES C CXX)
     set(CMAKE_CXX_STANDARD 17)
@@ -95,7 +98,7 @@ CMake's documentation is extensive but straight to the point with examples of us
     set(CMAKE_CXX_EXTENSIONS ON)
     
     # Add source directory where SqueLib's CMakeList.txt is, and where to write files
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/SqueLib ${CMAKE_CURRENT_BINARY_DIR}/SqueLib)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/SqueLib ${CMAKE_CURRENT_BINARY_DIR}/SqueLib)
 
     # Setup the Build paths
     execute_process(COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/builds)
@@ -108,15 +111,17 @@ CMake's documentation is extensive but straight to the point with examples of us
 
 First of all you setup the minimum version of CMake to use, you don't want to use functions that a user might not support, rather throw an error.
 
-Then you setup your basic project settings, I recommend taking a look at documentation on which language and project options are. For this we are making sure that the build can compile C and C++ code, making sure to compile with C++17 standard.
+Then you setup your basic project settings, I recommend taking a look at documentation on which language and project options are. Then we target C/C++ (CXX in CMake) and make sure we compile with C++17 standard,currently needed for `std::filesystem` but will be dropped in later releases to C++11 for `unordered_map`.
 
 To add a subproject, it is usual to add the subdirectory where the CMakeList.txt is, then specifying where CMake should write the generated files.
 
 I personally setup the build paths under a build folder and then point the CMAKE_BINARY_DIR to write files at that directory.
 
-Finally, we call the preparation calls for SqueLib:
- * `SqueLib_PrepareBuild(target OrganizationName "${List_of_files_to_build_with}")`:
- * `SqueLib_Package("Path_To_App_Assets" "Path_to_Base_Resources")`:
+Finally, we call the preparation calls for SqueLib, which can be explored under Squelib_Package.cmake:
+ * `SqueLib_PrepareBuild(target OrganizationName "${List_of_files_to_build_with}")`: A simple function to help setting specific compiler an dlinker flags for the target platforms. Requires the project you are building, organization name (personal, nickname,...) that corresponds to your developer/publisher account for a platform and the source files in a list.
+ * `SqueLib_Package("Path_To_App_Assets" "Path_to_Base_Resources")`: Simple function that will copy the assets and resources used to the final application. It is not the best way but necessary specially for Android as it requires a specific folder structure that SqueLib will take care of it. The distinction between assets and resources are given because Android separates between loadable data and static resources for app information such as an Icon or a Manifest file.
+
+ With this introduction, you can write your own `CMakeList.txt` and build your source files into full SqueLib based applications!
 
 # CMake Modules
 
@@ -124,6 +129,6 @@ Finally, we call the preparation calls for SqueLib:
 <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style>
-<script>markdeepOptions={tocStyle:'long'};</script>
+<script>markdeepOptions={tocStyle:'long',inlineCodeLang: 'Bash'};</script>
 <script src="../libs/markdeep.min.js" charset="utf-8"></script>
 <script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
