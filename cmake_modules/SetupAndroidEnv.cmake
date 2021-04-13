@@ -65,6 +65,7 @@ macro(link_android_all_libs target NDK_PATH OS_USED ANDR_V)
         ${LIBLINK}/libEGL.so
         ${LIBLINK}/libGLESv3.so
         ${LIBLINK}/liblog.so
+        ${LIBLINK}/libOpenSLES.so
         atomic
     )
 endmacro()

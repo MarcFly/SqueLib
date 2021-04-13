@@ -434,7 +434,7 @@ int main(int argc, char** argv)
         SQUE_CHECK_RENDER_ERRORS();
         SQUE_DISPLAY_SwapAllBuffers();
     }
-
+    audio_master.deinit();
     SQUE_LIB_Close();
 
     return 0;
