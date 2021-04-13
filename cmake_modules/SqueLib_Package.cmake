@@ -1,12 +1,12 @@
-macro(SqueLib_PrepareBuild target OrgName SrcFiles)
-    add_compile_definitions(${CMAKE_BUILD_TYPE})
+macro(SqueLib_PrepareBuild target orgName srcFiles)
+    #add_compile_definitions(${CMAKE_BUILD_TYPE}) #Release is a common word, should be names something else... MiniAudio has issue!
     if(ToAndroid)
         add_compile_definitions(ANDROID)
-        add_library(${target} SHARED "${SrcFiles}")
+        add_library(${target} SHARED "${srcFiles}")
 
         include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
         include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
-        set_app_properties(${target} ${OrgName})
+        set_app_properties(${target} ${orgName} 29)
         set_android_link_flags()
         set_android_compile_flags()    
         set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})    
@@ -16,12 +16,20 @@ macro(SqueLib_PrepareBuild target OrgName SrcFiles)
         squelib_add_targets(${target})
         message(STATUS "Slow 4")        
     elseif(ToWindows OR ToLinux)
-        add_executable(${target} "${SrcFiles}")
+        add_executable(${target} "${srcFiles}")
         if(ToWindows)
             set_target_properties(${target} PROPERTIES
                 LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") # Hide Console Always
         endif(ToWindows)
     endif()
+
+    # SOLOUD ----- Has to be included directly to final project... I don't know how from lib and use soloud directly
+    set(soloud_base "${SqueLib_external}/soloud")
+    file(GLOB_RECURSE soloud_src "${soloud_base}/src/*.cpp" "${soloud_base}/src/*.c" "${soloud_base}/*.h")
+    set(soloud_include "${soloud_base}/include")
+    target_sources(${target} PUBLIC "${soloud_src}")
+    target_include_directories(${target} PUBLIC ${soloud_include})
+    source_group(/soloud FILES ${soloud_src})
 endmacro()
 
 macro(SqueLib_Package asset_folder resource_folder)

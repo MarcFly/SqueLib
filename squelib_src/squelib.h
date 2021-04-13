@@ -71,7 +71,7 @@
 #define SQUE_VERSION_MINOR 1																												
 #define SQUE_VERSION ((SQUE_VERSION_MAJOR << 16) | SQUE_VERSION_MINOR)																		
 
-SQ_API void SQUE_LIB_Init(const char* app_name, int32_t flags = NULL);																									
+SQ_API void SQUE_LIB_Init(const char* app_name, int32_t flags = SQ_INIT_DEFAULTS);																									
 SQ_API void SQUE_LIB_Close();																									
 SQ_API unsigned int SQUE_LIB_GetVersion();																							
 SQ_API int SQUE_LIB_IsCompatibleDLL();		

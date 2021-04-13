@@ -24,6 +24,24 @@ SQUE_FS_CreateDirRelative("../../TestPermissions");
     SQUE_AskPermissions("DELETE_PACKAGES");
     SQUE_AskPermissions("INTERACT_ACROSS_USERS_FULL");
 */
+#define WITH_MINIAUDIO
+#include <soloud.h>
+#include <soloud_wav.h>
+
+SoLoud::Soloud audio_master;
+SoLoud::Wav audio_source;
+int32_t channel_handle;
+
+void InitAudio()
+{
+    audio_master.init();
+    SQUE_Asset* beep_sound = SQUE_FS_LoadAssetRaw("beep.wav");
+    audio_source.loadMem((uchar*)beep_sound->raw_data, beep_sound->size);
+    
+
+    //channel_handle = audio_master.play(audio_source, -1, 0, true);
+
+}
 
 bool on_background = false;
 void OnResume()
@@ -105,7 +123,7 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
 {
 // BALL
     int vx, vy;
-    SQUE_DISPLAY_GetViewportSize(0,&vx, &vy);
+    SQUE_DISPLAY_GetViewportSize(&vx, &vy);
     b.x = (float)vx / 2.f;
     b.y = (float)vy / 2.f;
     b.radius = 40;
@@ -183,26 +201,21 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
     SQUE_PROGRAM_GenID(&b_p->id);
     SQUE_PROGRAM_GenID(&p_p->id);
 
-    const char* glsl = SQUE_RENDER_GetGLSLVer();
-    std::string vert_source(easy_concat(glsl, vert_shader));
-    std::string ball_source(easy_concat(glsl, ball_frag));
-    std::string rect_source(easy_concat(glsl, rect_frag));
-
     SQUE_Shader vert_s2;
     SQUE_SHADERS_Generate(vert_s2, SQUE_VERTEX_SHADER);
-    SQUE_SHADERS_SetSource(vert_s2.id, vert_source.c_str());
+    SQUE_SHADERS_SetSource(vert_s2.id, vert_shader);
 
     SQUE_Shader vert_s;
     SQUE_SHADERS_Generate(vert_s, SQUE_VERTEX_SHADER);
-    SQUE_SHADERS_SetSource(vert_s.id, vert_source.c_str());
+    SQUE_SHADERS_SetSource(vert_s.id, vert_shader);
 
     SQUE_Shader ball_f;
     SQUE_SHADERS_Generate(ball_f, SQUE_FRAGMENT_SHADER);
-    SQUE_SHADERS_SetSource(ball_f.id, ball_source.c_str());
+    SQUE_SHADERS_SetSource(ball_f.id, ball_frag);
 
     SQUE_Shader rect_f;
     SQUE_SHADERS_Generate(rect_f, SQUE_FRAGMENT_SHADER);
-    SQUE_SHADERS_SetSource(rect_f.id, rect_source.c_str());
+    SQUE_SHADERS_SetSource(rect_f.id, rect_frag);
 
     SQUE_SHADERS_Compile(vert_s2.id);
     SQUE_SHADERS_Compile(rect_f.id);
@@ -252,7 +265,7 @@ void CleanObjects(Ball& b, Paddle& p1, Paddle& p2)
 void BallCollisionWalls(float dt, Ball& b)
 {
     int vx, vy;
-    SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
+    SQUE_DISPLAY_GetViewportSize(&vx, &vy);
     float bx = b.x + b.dirx*b.speed*dt;
     float by = b.y + b.diry*b.speed*dt;
 
@@ -260,6 +273,7 @@ void BallCollisionWalls(float dt, Ball& b)
     {
         b.y = vy/2;
         b.x = vx/2;
+        b.speed = 300;
         // random ball y dir
     }
 
@@ -270,10 +284,11 @@ void BallCollisionWalls(float dt, Ball& b)
     }
 }
 
+static int32_t collision_downtime_ms = 200;
+static SQUE_Timer collision_timer;
 void BallCollisionPaddle(float dt, Paddle& p, Ball& b)
 {
-
-    //if (((b.y - b.radius) > p.y && (b.y + b.radius) < (p.y + p.sizey)) && ((b.x - b.radius) > p.x && (b.x + b.radius) < (p.x + p.sizex)))
+    if (collision_timer.ReadMilliSec() < collision_downtime_ms) return;
     // Left is in paddle
     float b_left = b.x - b.radius;
     float b_right = b.x + b.radius;
@@ -286,10 +301,21 @@ void BallCollisionPaddle(float dt, Paddle& p, Ball& b)
     float p_bottom = p.y + p.sizey;
     bool y_in = (b_top < p_bottom && b_top > p_top) || (b_bottom < p_bottom && b_bottom > p_top);
     bool x_in = (b_left < p_right&& b_left > p_left) || (b_right < p_right&& b_right > p_left);
+    
+
     if( y_in && x_in)
     {
+        b.speed *= 1.1;
+        collision_timer.Start();
         b.dirx *= -1;
         b.x += b.dirx*b.speed*dt;
+        audio_master.play(audio_source);
+
+        if (b.y > p.y + 2*p.sizey / 3 || b.y < p.y - 2* p.sizey / 3)
+        {
+            b.diry *= -1;
+            b.y += b.diry * b.speed * dt;
+        }
     }
 }
 
@@ -303,8 +329,8 @@ void MovePaddles(Paddle& p1, Paddle& p2)
     float x,y;
     int wx, wy;
     int sx, sy;
-    SQUE_DISPLAY_GetWindowPos(0, wx, wy);
-    SQUE_DISPLAY_GetWindowSize(0, &sx, &sy);
+    SQUE_DISPLAY_GetWindowPos(&wx, &wy);
+    SQUE_DISPLAY_GetWindowSize(&sx, &sy);
     if (SQUE_INPUT_GetPointerPos(&x, &y, 0))
     {
         p1.y = sy - (y);
@@ -317,7 +343,7 @@ void MovePaddles(Paddle& p1, Paddle& p2)
 int main(int argc, char** argv)
 {
     SQUE_LIB_Init("SquePong");
-
+    InitAudio();
     SQUE_AddOnGoBackgroundCallback(OnGoBackground);
     SQUE_AddOnResumeCallback(OnResume);
     InitGLDebug();
@@ -371,7 +397,7 @@ int main(int argc, char** argv)
         // Ball Render
         SQUE_PROGRAM_Use(ball_program.id);
         int vx, vy;
-        SQUE_DISPLAY_GetViewportSize(0, &vx, &vy);
+        SQUE_DISPLAY_GetViewportSize(&vx, &vy);
         CheckResizeScreen(vx, vy, ball, player1, player2);
         SQUE_DISPLAY_MakeContextMain(0);
 
@@ -381,14 +407,6 @@ int main(int argc, char** argv)
         SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "size"), glm::vec2(ball.radius*2, ball.radius*2));
         SetFloat(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "radius"), ball.radius);
         SetFloat3(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "col_in"), glm::vec3(1, 0, 0));
-
-        // state.SetUp();
-        // Fault 4 -> SetUp will override ViewPort (duh)
-        // If it is not setup as expected when resizing a window or a viewport, setup will then change back the active framebuffer
-        // Fault 5 -> SetUp overrides the Program (duh) -> then if you want some quick and dirty it fucks it up
-        state.blend = false;
-        state.SetUp();
-        SQUE_RENDER_DrawIndices(ball.rect);
 
         SetFloat3(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "col_in"), glm::vec3(0, 1, 1));
         state.blend = true;
@@ -416,11 +434,6 @@ int main(int argc, char** argv)
         SQUE_CHECK_RENDER_ERRORS();
         SQUE_DISPLAY_SwapAllBuffers();
     }
-
-    // Fault 3 -> Shader Cleanup
-    // When a program is *deleted* it will clean the intern shaders
-    // If shaders are shared between programs, one will clean it and others won't know
-    // Stuck in loop of deleting memory of shader after ending the execution...
 
     SQUE_LIB_Close();
 

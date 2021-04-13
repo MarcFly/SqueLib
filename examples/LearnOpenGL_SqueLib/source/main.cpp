@@ -1075,7 +1075,6 @@ void LearnOpenGL_6_2_CameraLook()
 
 int main(int argc, char**argv)
 {
-    main_states state = MAIN_CREATION;
     bool ret = true;
 
     // SqueLib basic Initialization

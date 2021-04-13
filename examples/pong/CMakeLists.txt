@@ -31,12 +31,13 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 #------------------------------------------------------------------------------------------------
 
 SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
-SqueLib_Package("" "")
+SqueLib_Package("${CMAKE_CURRENT_SOURCE_DIR}/Assets" "")
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT - SHould be done on Prepare Build
 #------------------------------------------------------------------------------------------------
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
+target_compile_definitions(SquePong PUBLIC WITH_MINIAUDIO)
 set_target_properties(SquePong
     PROPERTIES 
         ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"

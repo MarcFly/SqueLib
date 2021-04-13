@@ -17,7 +17,7 @@ include(${SQUE_cmake}/Helpers.cmake)
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
 project(SqueLib     VERSION 2021.1
-                    DESCRIPTION "Multiplatform C++ Library for making apps and games easily"
+                    DESCRIPTION "C++ Library for getting introduced to multiplatform C++ development."
                     LANGUAGES C CXX)
 
 # C/CXX Requirements
@@ -81,6 +81,8 @@ set(stb_include "${CMAKE_CURRENT_SOURCE_DIR}/external/stb")
 # PCG ----------------------------------------------------------------------------------------
 set(pcg_include "${CMAKE_CURRENT_SOURCE_DIR}/external/pcg")
 set(pcg_src ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.c ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.h)
+# SOLOUD - MINIAUDIO BACKEND ONLY -------------------------------------------------------------------------------------
+
 
 # DEBUG ONLY
 if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -98,7 +100,7 @@ set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
 
 # DESKTOP DEPENDENCIES---------------------------------------------------------------------------
-if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) 
+if(ToWindows OR ToLinux OR ToDesktop) 
     message(STATUS "Pulling DESKTOP Dependencies")
     # GLFW---------------------------------------------------------------------------------------
     option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -148,7 +150,7 @@ if(ToAndroid)
     set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
     link_android_all_libs(SqueLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
     include_android(SqueLib ${NDK} ${OS_NAME})
-elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
+elseif(ToWindows OR ToLinux OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # SET MINIMAL C/CXX FLAGS
     #---------------------------------------------------------------------------------------------
@@ -178,13 +180,6 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
             ${CMAKE_DL_LIBS}
         )
     elseif(ToWindows)
-
-    elseif(ToDarwin OR ToMacOS)
-        target_link_libraries(SqueLib PUBLIC
-            "-framework Cocoa"
-            "-framework IOKit"
-            "-framework CoreVideo"
-        )
     endif()
 endif()
 #------------------------------------------------------------------------------------------------
@@ -194,7 +189,6 @@ target_include_directories(SqueLib PUBLIC
     ${glm_include}
     ${stb_include}
     ${pcg_include}
-    
 )
 target_link_libraries(SqueLib PUBLIC
     glad
@@ -202,7 +196,6 @@ target_link_libraries(SqueLib PUBLIC
 )
 target_sources(SqueLib PRIVATE
     "${pcg_src}"
-    
 )
 
 # DEBUG ONLY
@@ -219,6 +212,8 @@ endif()
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
+target_compile_definitions(SqueLib PUBLIC WITH_MINIAUDIO)
+
 set_target_properties(SqueLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
@@ -227,6 +222,7 @@ set_target_properties(SqueLib
         POSITION_INDEPENDENT_CODE ON
         PUBLIC_HEADER "squelib.h"
 )
+
 target_compile_options(glad PUBLIC
     -fPIC
 )
@@ -239,10 +235,12 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/squelib_src"
     FILES ${SQUELIB_SRC})
 source_group(/pcg FILES ${pcg_src})
 source_group(/mmgr FILES ${mmgr_src})
+source_group(/soloud FILES ${soloud_src})
 
 set(SqueLib_include ${CMAKE_CURRENT_SOURCE_DIR}/squelib_src PARENT_SCOPE)
 set(SqueLib_Output ${SQUE_OutputFolder} PARENT_SCOPE) 
 set(SqueLib_defaults ${CMAKE_CURRENT_SOURCE_DIR}/defaults PARENT_SCOPE)
 set(SqueLib_extra ${CMAKE_CURRENT_SOURCE_DIR}/extra PARENT_SCOPE)
+set(SqueLib_external ${CMAKE_CURRENT_SOURCE_DIR}/external PARENT_SCOPE)
 
 include(${SQUE_cmake}/SqueLib_Package.cmake PARENT_SCOPE)

@@ -272,7 +272,7 @@ body, .md a:link.url {
    }
    
    ul {
-     margin-bottom: 50px;
+     margin-bottom: 15px;
    }
    
    .md .longTOC a, .md .longTOC code, .md a:link, .md a:visited, .md a:link code, .md a:visited code, a code .hljs-keyword, a code .hljs-built_in, a code .hljs-selector-tag {
