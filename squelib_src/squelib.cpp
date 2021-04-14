@@ -174,9 +174,15 @@ static int32_t default_context_options[] =
     SQUE_DEBUG_CONTEXT, 1
 };
 
+void SQUE_LIB_InitRNG(uint64_t seed)
+{
+    // basic init for RNG
+    pcg32_srandom_r(&random_t, seed, (intptr_t)&random_t);
+}
+
 void SQUE_LIB_Init(const char* app_name, int32_t flags)
 {
-    pcg32_srandom_r(&random_t, time(NULL), (intptr_t)&random_t);
+    SQUE_LIB_InitRNG(time(NULL));
 
     // Call Init for all loaded modules and with required flags
     // Logger Lib
@@ -304,9 +310,9 @@ void SQUE_ConsolePrint(int lt, const char* log)
 // RANDOM NUMBER ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t SQUE_RNG()
+uint32_t SQUE_RNG(uint32_t max)
 {
-    return pcg32_random();
+    return pcg32_random_r(&random_t) / (UINT32_MAX / max);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

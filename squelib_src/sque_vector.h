@@ -1,6 +1,9 @@
 #ifndef _SQUE_VEC_
 #define _SQUE_VEC_
 
+// Do a list, but memory stacked
+// Compact the Vector without the functions of empty data and such, just take care of the memory
+
 #ifdef ANDROID
 #include <malloc.h>
 #endif
@@ -137,6 +140,24 @@ public:
         _empty_data = NULL;
     }
 
+    sque_vec<T>& operator=(const sque_vec<T>& cpy_vec)
+    {
+        if (this == &cpy_vec)
+            return *this;
+
+        _size = cpy_vec._size;
+        _capacity = cpy_vec._capacity;
+        _populated = cpy_vec._populated;
+        _empty_size = cpy_vec._empty_size;
+        _empty_capacity = cpy_vec._empty_capacity;
+
+        _data = allocate(_capacity);
+        copyRange(cpy_vec._data, cpy_vec._data + _size, _data);
+
+        _empty_data = allocateU(_empty_size);
+        copyRangeU(cpy_vec._empty_data, cpy_vec._empty_data + _empty_size, _empty_data);
+    }
+
     T& operator[] (uint32_t index) { return _data[index]; };
     T* begin() const { return _data; }
     T* end() const { return _data + _size; }
@@ -264,6 +285,10 @@ public:
         _size = new_size;
     }
 
+    void absorb_free()
+    {
+
+    }
 };
 
 #endif
