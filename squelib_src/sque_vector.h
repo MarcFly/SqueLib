@@ -291,4 +291,15 @@ public:
     }
 };
 
+
+template<class T>
+void BrutePrintVec(sque_vec<T>& vec)
+{
+    for (uint32_t i = 0; i < vec.size(); ++i)
+        printf("%d ", vec[i]);
+
+    printf("\n\n");
+
+}
+
 #endif

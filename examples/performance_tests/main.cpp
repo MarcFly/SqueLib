@@ -267,16 +267,6 @@ static SQUE_Timer sort_timer;
 #include <sque_sort.h>
 #include <ctime>
 
-template<class T>
-void BrutePrintVec(sque_vec<T>& vec)
-{
-    for (uint32_t i = 0; i < vec.size(); ++i)
-        printf("%d ", vec[i]);
-
-    printf("\n\n");
-
-}
-
 void Test10Sorts()
 {
     sque_vec<uint32_t> values_10;
@@ -300,6 +290,14 @@ void Test10Sorts()
 
         values = values_10;
         SQUE_SORT_InsertionRecursive<uint32_t>(values.begin(), values.size());
+        BrutePrintVec<uint32_t>(values);
+
+        values = values_10;
+        SQUE_SORT_Merge<uint32_t>(values.begin(), values.size());
+        BrutePrintVec<uint32_t>(values);
+
+        values = values_10;
+        SQUE_SORT_Quick<uint32_t>(values.begin(), values.size());
         BrutePrintVec<uint32_t>(values);
     }
 
@@ -340,23 +338,17 @@ void TestSorts()
         sort_timer.Stop();
         SQUE_LOG(LT_INFO, "SQUE_SORT_Selection 100: %f us", sort_timer.ReadMicroSec());
 
-        BrutePrintVec(selection_values);
-
         selection_values = values_1000;
         sort_timer.Start();
         SQUE_SORT_Selection<uint32_t>(selection_values.begin(), selection_values.size());
         sort_timer.Stop();
         SQUE_LOG(LT_INFO, "SQUE_SORT_Selection 1000: %f us", sort_timer.ReadMicroSec());
 
-        BrutePrintVec(selection_values);
-
         selection_values = values_10000;
         sort_timer.Start();
         SQUE_SORT_Selection<uint32_t>(selection_values.begin(), selection_values.size());
         sort_timer.Stop();
         SQUE_LOG(LT_INFO, "SQUE_SORT_Selection 10000: %f us", sort_timer.ReadMicroSec());
-
-        BrutePrintVec(selection_values);
     }
 
     { // Bubble Sort
@@ -398,6 +390,46 @@ void TestSorts()
         sort_timer.Stop();
         SQUE_LOG(LT_INFO, "SQUE_SORT_Insertion 10000: %f us", sort_timer.ReadMicroSec());
     }
+
+    { // Merge Sort
+        sque_vec<uint32_t> Merge_values = values_100;
+        sort_timer.Start();
+        SQUE_SORT_Merge<uint32_t>(Merge_values.begin(), Merge_values.size());
+        sort_timer.Stop();
+        SQUE_LOG(LT_INFO, "SQUE_SORT_Merge 100: %f us", sort_timer.ReadMicroSec());
+
+        Merge_values = values_1000;
+        sort_timer.Start();
+        SQUE_SORT_Merge<uint32_t>(Merge_values.begin(), Merge_values.size());
+        sort_timer.Stop();
+        SQUE_LOG(LT_INFO, "SQUE_SORT_Merge 1000: %f us", sort_timer.ReadMicroSec());
+
+        Merge_values = values_10000;
+        sort_timer.Start();
+        SQUE_SORT_Merge<uint32_t>(Merge_values.begin(), Merge_values.size());
+        sort_timer.Stop();
+        SQUE_LOG(LT_INFO, "SQUE_SORT_Merge 10000: %f us", sort_timer.ReadMicroSec());
+    }
+
+    { // Quick Sort
+        sque_vec<uint32_t> Quick_values = values_100;
+        sort_timer.Start();
+        SQUE_SORT_Quick<uint32_t>(Quick_values.begin(), Quick_values.size());
+        sort_timer.Stop();
+        SQUE_LOG(LT_INFO, "SQUE_SORT_Quick 100: %f us", sort_timer.ReadMicroSec());
+
+        Quick_values = values_1000;
+        sort_timer.Start();
+        SQUE_SORT_Quick<uint32_t>(Quick_values.begin(), Quick_values.size());
+        sort_timer.Stop();
+        SQUE_LOG(LT_INFO, "SQUE_SORT_Quick 1000: %f us", sort_timer.ReadMicroSec());
+
+        Quick_values = values_10000;
+        sort_timer.Start();
+        SQUE_SORT_Quick<uint32_t>(Quick_values.begin(), Quick_values.size());
+        sort_timer.Stop();
+        SQUE_LOG(LT_INFO, "SQUE_SORT_Quick 10000: %f us", sort_timer.ReadMicroSec());
+    }
 }
 
 int main(int argc, char** argv)
@@ -412,6 +444,6 @@ int main(int argc, char** argv)
     //SQUE_LIB_Close();
     
     Test10Sorts();
-    //TestSorts();
+    TestSorts();
     return 0;
 }
