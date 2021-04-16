@@ -312,7 +312,7 @@ void SQUE_ConsolePrint(int lt, const char* log)
 
 uint32_t SQUE_RNG(uint32_t max)
 {
-    return pcg32_random_r(&random_t) / (UINT32_MAX / max);
+    return ((double)pcg32_random_r(&random_t) / (UINT32_MAX / (double)max));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -241,6 +241,12 @@ public:
         _empty_size = 0;
     }
 
+    void reserve(uint32_t new_capacity)
+    {
+        if (new_capacity < _capacity)
+            reallocate(new_capacity);        
+    }
+
     void resize(uint32_t new_size)
     {
         if (new_size < _size)
