@@ -8,15 +8,20 @@
 #include <malloc.h>
 #endif
 
+// Do a Vec - Assures Positions, erase will not swap positions
+// Indexable Unordered Vec - FreeAble Vec + Index by a uint32_t
+// - Uses uint32_t as ids that are assumed unique but not checked
+// Freeable Vec - Pop from any position, try_insert and free_index
+
 template<class T>
 class sque_vec
 {
-    T* _data;
+    T* _data = NULL;
     uint32_t _size;
     uint32_t _capacity;
 
     uint32_t _populated;
-    uint32_t* _empty_data;
+    uint32_t* _empty_data = NULL;
     uint32_t _empty_size;
     uint32_t _empty_capacity;
 
@@ -127,11 +132,17 @@ public:
 
     ~sque_vec()
     {
-        if (_capacity > 0) deleteRange(_data, _data + _size);
-        free(_data);
+        if (_capacity > 0 && _size > 0)
+        {
+            deleteRange(_data, _data + _size);
+            free(_data);
+        }
 
-        if (_empty_capacity > 0) deleteRangeU(_empty_data, _empty_data + _empty_size);
-        free(_empty_data);
+        if (_empty_capacity > 0 && _empty_size > 0)
+        {
+            deleteRangeU(_empty_data, _empty_data + _empty_size);
+            free(_empty_data);
+        }
 
         _capacity = 0;
         _data = NULL;
@@ -158,9 +169,11 @@ public:
         copyRangeU(cpy_vec._empty_data, cpy_vec._empty_data + _empty_size, _empty_data);
     }
 
-    T& operator[] (uint32_t index) { return _data[index]; };
+    T& operator[] (const uint32_t index) { return _data[index]; };
+    const T& operator[] (uint32_t index) const { return _data[index]; };
     T* begin() const { return _data; }
     T* end() const { return _data + _size; }
+    T* last() { return _data + (_size - 1); }
     uint32_t size() const { return _size; }
     uint32_t populated() const { return _populated; }
 
@@ -231,6 +244,7 @@ public:
         if(_size == 0) return;
         _data[_size-1].~T();
         --_size;
+        --_populated;
     }
 
     void clear()
@@ -295,6 +309,8 @@ public:
     {
 
     }
+
+    
 };
 
 

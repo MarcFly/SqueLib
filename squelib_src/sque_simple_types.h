@@ -65,6 +65,8 @@ typedef unsigned char uchar;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Core
 typedef void(*VoidFun)();
+typedef void VoidFun2();
+#define VoidFun_Empty [](){}
 
 // Display
 typedef void(*ResizeCallback)(int32_t width, int height);
