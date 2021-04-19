@@ -44,8 +44,10 @@ void SQUE_FS_Init()
 	exec_path[len-strlen(exe)] = '\0';
 #elif defined(ANDROID)
 #elif defined(__linux__)
-	len = readlink("/proc/self/exe", exec_path, 512);
-	sprintf(exec_path, "%s", dirname(exec_path));
+	char link_temp[512] = "\0";
+	len = readlink("/proc/self/exe", link_temp, 512);
+	const char* dir = dirname(link_temp);
+	sprintf(exec_path, "%s", dir);
 #endif
 }
 

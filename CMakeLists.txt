@@ -85,7 +85,7 @@ set(pcg_src ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.c ${CMAKE_CURRENT
 
 
 # DEBUG ONLY
-if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     # MMGR ----------------------------------------------------------------------------------------
     set(mmgr_include "${CMAKE_CURRENT_SOURCE_DIR}/external/mmgr")
     set(mmgr_src ${mmgr_include}/mmgr.cpp ${mmgr_include}/mmgr.h ${mmgr_include}/nommgr.h)
@@ -199,13 +199,14 @@ target_sources(SqueLib PRIVATE
 )
 
 # DEBUG ONLY
-if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_sources(SqueLib PRIVATE
-        "${mmgr_src}"
-    )
-    target_include_directories(SqueLib PUBLIC
-        ${mmgr_include}
-    )
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_compile_options(SqueLib BEFORE PUBLIC -g)
+    #target_sources(SqueLib PRIVATE
+    #    "${mmgr_src}"
+    #)
+    #target_include_directories(SqueLib PUBLIC
+    #    ${mmgr_include}
+    #)
 endif()
 
 #------------------------------------------------------------------------------------------------

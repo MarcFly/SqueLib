@@ -16,6 +16,7 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         squelib_add_targets(${target})
         message(STATUS "Slow 4")        
     elseif(ToWindows OR ToLinux)
+        message(STATUS "${srcFiles}")
         add_executable(${target} "${srcFiles}")
         if(ToWindows)
             set_target_properties(${target} PROPERTIES
@@ -30,6 +31,10 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
     target_sources(${target} PUBLIC "${soloud_src}")
     target_include_directories(${target} PUBLIC ${soloud_include})
     source_group(/soloud FILES ${soloud_src})
+
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        target_compile_options(${target} BEFORE PUBLIC -g)
+    endif()
 endmacro()
 
 macro(SqueLib_Package asset_folder resource_folder)

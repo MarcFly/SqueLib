@@ -242,7 +242,7 @@ SQUE_TexAttrib* SQUE_TEXTURE_AddFloatVs(const uint32_t attrib_ref, const int32_t
     return &float_attributes[t.float_start + t.float_last++ - 1];
 }
 
-void SQUE_TEXTURE_FreeAttributes()
+void SQUE_TEXTURE_FreeAttributes() // TODO: Free Attributes - Mem Leak Valgrind 20/235
 {
     for (uint16_t i = 0; i < int_attributes.size(); ++i)
         free(int_attributes[i].data);
