@@ -89,6 +89,7 @@ class sque_vec
         while (begin != end)
         {
             begin->~T();
+            //delete begin;//begin->~T();
             ++begin;
         }
     }

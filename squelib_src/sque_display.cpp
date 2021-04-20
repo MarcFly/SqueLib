@@ -82,7 +82,7 @@ static int32_t const def_buffer_options[] =
 #   include <GLFW/glfw3.h>
 #   include <GLFW/glfw3native.h>
     GLFWmonitor** glfw_monitors;
-    sque_vec<GLFWwindow*> glfw_windows;
+    sque_vec<GLFWwindow*> glfw_windows; //  TOD: Check GLFW documentation if I have to free them or GLFW takes care Valgrind 125/235
     
     void GLFW_ErrorCallback(int error_code, const char* description)
     {

@@ -200,14 +200,15 @@ target_sources(SqueLib PRIVATE
 )
 
 # DEBUG ONLY
-#if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-#    target_sources(SqueLib PUBLIC
-#        "${mmgr_src}"
-#    )
-#    target_include_directories(SqueLib PUBLIC
-#        ${mmgr_include}
-#    )
-#endif()
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_compile_options(SqueLib BEFORE PUBLIC -g)
+    #target_sources(SqueLib PRIVATE
+    #    "${mmgr_src}"
+    #)
+    #target_include_directories(SqueLib PUBLIC
+    #    ${mmgr_include}
+    #)
+endif()
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT

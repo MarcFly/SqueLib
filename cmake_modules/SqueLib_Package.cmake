@@ -16,6 +16,7 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         squelib_add_targets(${target})
         message(STATUS "Slow 4")        
     elseif(ToWindows OR ToLinux)
+        message(STATUS "${srcFiles}")
         add_executable(${target} "${srcFiles}")
         if(ToWindows)
             set_target_properties(${target} PROPERTIES
@@ -30,15 +31,10 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
     target_sources(${target} PUBLIC "${soloud_src}")
     target_include_directories(${target} PUBLIC ${soloud_include})
     source_group(/soloud FILES ${soloud_src})
-    # MMGR ----- For memory checking on debug on final project, changed asm assert that is not compatible with x64 with squelib assert...
-    # DEBUG ONLY
-    #if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    #    set(mmgr_include "${SqueLib_external}/mmgr")
-    #    set(mmgr_src ${mmgr_include}/mmgr.cpp ${mmgr_include}/mmgr.h ${mmgr_include}/nommgr.h)
-    #    target_sources(${target} PUBLIC "${mmgr_src}")
-    #    target_include_directories(${target} PUBLIC ${mmgr_include})
-    #    source_group(/mmgr FILES ${mmgr_src})
-    #endif()
+
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        target_compile_options(${target} BEFORE PUBLIC -g)
+    endif()
 endmacro()
 
 macro(SqueLib_Package asset_folder resource_folder)
