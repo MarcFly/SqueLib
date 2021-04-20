@@ -85,11 +85,12 @@ set(pcg_src ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.c ${CMAKE_CURRENT
 
 
 # DEBUG ONLY
-if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     # MMGR ----------------------------------------------------------------------------------------
     set(mmgr_include "${CMAKE_CURRENT_SOURCE_DIR}/external/mmgr")
     set(mmgr_src ${mmgr_include}/mmgr.cpp ${mmgr_include}/mmgr.h ${mmgr_include}/nommgr.h)
 endif()
+
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
@@ -199,14 +200,14 @@ target_sources(SqueLib PRIVATE
 )
 
 # DEBUG ONLY
-if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_sources(SqueLib PRIVATE
-        "${mmgr_src}"
-    )
-    target_include_directories(SqueLib PUBLIC
-        ${mmgr_include}
-    )
-endif()
+#if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+#    target_sources(SqueLib PUBLIC
+#        "${mmgr_src}"
+#    )
+#    target_include_directories(SqueLib PUBLIC
+#        ${mmgr_include}
+#    )
+#endif()
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
@@ -235,7 +236,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/squelib_src"
     FILES ${SQUELIB_SRC})
 source_group(/pcg FILES ${pcg_src})
 source_group(/mmgr FILES ${mmgr_src})
-source_group(/soloud FILES ${soloud_src})
+#source_group(/soloud FILES ${soloud_src})
 
 set(SqueLib_include ${CMAKE_CURRENT_SOURCE_DIR}/squelib_src PARENT_SCOPE)
 set(SqueLib_Output ${SQUE_OutputFolder} PARENT_SCOPE) 

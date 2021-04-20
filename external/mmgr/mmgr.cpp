@@ -132,13 +132,13 @@
 // cluttered and hard to read.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-//#define	TEST_MEMORY_MANAGER
+#define	TEST_MEMORY_MANAGER
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- Enable this sucker if you really want to stress-test your app's memory usage, or to help find hard-to-find bugs
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-//#define	STRESS_TEST
+#define	STRESS_TEST
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- Enable this sucker if you want to stress-test your app's error-handling. Set RANDOM_FAIL to the percentage of failures you
@@ -176,9 +176,11 @@ static	const	unsigned int	paddingSize            = 4;
 // The BEOS assert added by Arvid Norberg <arvid@iname.com>.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
+#include <squelib.h>
+
 #ifdef	WIN32
 	#ifdef	_DEBUG
-	#define	m_assert(x) if ((x) == false) __asm { int 3 }
+	#define	m_assert(x) {if((x) == false) __debugbreak();} //if ((x) == false) __asm { int 3 }
 	#else
 	#define	m_assert(x) {}
 	#endif
@@ -280,7 +282,7 @@ static	void	log(const char *format, ...)
 	if (!fp) return;
 
 	// Spit out the data to the log
-
+	SQUE_PRINT(LT_INFO, "MMGR: %s", buffer);
 	fprintf(fp, "%s\r\n", buffer);
 	fclose(fp);
 }

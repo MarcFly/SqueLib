@@ -1,8 +1,6 @@
 #include "squelib.h"
 
 // really want to stop using these includes,.... will do my own simplified string and types?
-#include <string>
-#include <cstring>
 
 #if defined(ANDROID) || defined(__linux__)
 #   include <unistd.h>
@@ -269,7 +267,8 @@ int SQUE_IsCompatibleDLL(void)
 
 void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...)
 {
-    std::string sttr(strrchr(file, FOLDER_ENDING));
+    const char* sttr = strrchr(file, FOLDER_ENDING);
+    uint32_t sttr_len = strlen(sttr);
 
     static va_list ap;
     char* tmp = new char[1];
@@ -283,9 +282,9 @@ void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* f
     vsnprintf(tmp, len, format, ap);
     va_end(ap);
 
-    int print_len = len + (sttr.length() + 4 + 4);
+    int print_len = len + (sttr_len + 4 + 4);
     char* print = new char[print_len];
-    sprintf(print, "%s(%d): %s", sttr.c_str(), line, tmp);
+    sprintf(print, "%s(%d): %s", sttr, line, tmp);
 
     SQUE_ConsolePrint((int)lt, print);
 

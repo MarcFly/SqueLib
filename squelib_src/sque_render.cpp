@@ -126,9 +126,7 @@ bool SQUE_RENDER_Init()
 #else 
     term = " core\n";
 #endif
-    memcpy(glsl_ver, "#version ", 9); // Count directly
-    memcpy(&glsl_ver[9], std::to_string(ver).c_str(), 3); // 3 digit number always / TODO: Find something better than std::to_string
-    memcpy(&glsl_ver[12], term, strlen(term)); // Version termination, variable so quick strlen   
+    sprintf(glsl_ver, "#version %d %s", ver, term);  
 #endif
     SQUE_PRINT(LT_INFO, "%s", glsl_ver);
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Main Viewport init...");
@@ -370,7 +368,7 @@ void SQUE_TEXTURE_SetActiveUnit(int32_t unit)
 
 // Why as 2D
 // glTexImage1D and glTexImage3D are separate and use different types of texture inputs
-// i will not deal with them but they have different 
+// i will not deal with them
 void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
@@ -500,10 +498,10 @@ void InitGLDebug()
 // FRAMEBUFFER ///////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id)
+void SQUE_RENDER_GenFramebuffer(uint32_t* framebuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenFramebuffers(1, &framebuffer_id);
+    glGenFramebuffers(1, framebuffer_id);
 #endif
 }
 
@@ -514,10 +512,10 @@ void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id)
 #endif
 }
 
-void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id)
+void SQUE_RENDER_GenRenderbuffer(uint32_t* renderbuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGL)
-    glGenRenderbuffers(1, &renderbuffer_id);    
+    glGenRenderbuffers(1, renderbuffer_id);    
 #endif
 }
 

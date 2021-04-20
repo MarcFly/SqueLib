@@ -58,16 +58,34 @@
 #define SQ_ASSERT(_EXPR)
 #endif
 
+// Includes from Standard Library
+// TODO : Eliminate what is not necessary or can be optimized
+// The incldues are all here because they interfere with mmgr -> included after so we don't mess with the stl
+#include <stdint.h> // i like detailed integer types
+#include <cstring> // most modules
+#include <string> // filesystem makes use of it for practicality
+#include <fstream> // filesystem
+#include <list> // char_buffer at input -> make my own
+#include <cstdarg> // Logger from declaration																						
+#include <cstddef>	// Logger from declaration
+#include <mutex> // someday this will be threadsafe...
+#include <ctime> // Logger
+#include <chrono> // Logger and Timer
+#include <algorithm> // Logger
+#include <unordered_map> // Logger
+
+// Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
+#include<glm.hpp>
+
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <sque_remap_macros.h>																											
 #include <sque_simple_types.h>
 #include <sque_vector.h>	
 #include <sque_sort.h>
 
-#include <stdint.h>
-#include <cstring>
-// Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
-#include<glm.hpp>
+
+
+
 // Initialization / State Control //////////////////////////////////////////////////////////////////////////////////////////////////////
 #define SQUE_VERSION_MAJOR 2021																											
 #define SQUE_VERSION_MINOR 1																												
@@ -83,7 +101,7 @@ SQ_API int SQUE_VarGetSize(int type_macro);
 SQ_API void SQUE_ConsolePrint(int lt, const char* log);
 SQ_API void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...);
 #define SQUE_PRINT(LogType, format,...) SQ_MACRO SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)				
-SQ_API uint32_t SQUE_RNG(uint32_t max = UINT32_MAX-1); // -1 To allow use of MACRO UINT32_MAX for invalid ids and such
+SQ_API uint32_t SQUE_RNG(uint32_t max = (UINT32_MAX-1)); // -1 To allow use of MACRO UINT32_MAX for invalid ids and such
 
 
 // Permissions /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,10 +114,7 @@ SQ_API void SQUE_Sleep(uint32_t ms);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <cstdarg>																														
-#include <cstddef>																														
-																																		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																
 // Types / Strucs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define LOGSIZE 1024																													
 																														
@@ -653,9 +668,9 @@ struct SQUE_Framebuffer
 	sque_vec<SQUE_Texture> textures;
 };
 
-SQ_API void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id);
+SQ_API void SQUE_RENDER_GenFramebuffer(uint32_t* framebuffer_id);
 SQ_API void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id);
-SQ_API void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id);
+SQ_API void SQUE_RENDER_GenRenderbuffer(uint32_t* renderbuffer_id);
 SQ_API void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id);
 SQ_API void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
 SQ_API void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
@@ -667,9 +682,6 @@ SQ_API void SQUE_RENDER_FramebufferCheckStatus();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FILESYSTEM //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//  i don't like having to inlcude std::stirng..........
-#include <string>
 
 typedef struct SQUE_Dir
 {

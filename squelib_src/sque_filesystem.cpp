@@ -5,9 +5,9 @@
 #endif
 
 // for now I will be using std::string, because its practical
-#include <cstring>
-#include <string>
-#include <fstream>
+
+//#include <fstream>
+
 
 // filesystem access is purely OS based i believe, so I will use the _WIN32, __linux__ and ANDROID defines
 // If more platforms were to be added, i will do so
