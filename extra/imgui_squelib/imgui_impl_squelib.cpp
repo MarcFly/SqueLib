@@ -151,28 +151,13 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	//SQUE_RENDER_GenerateMeshBuffer(&sque_dataHandle.vert_id, &sque_dataHandle.index_id, &sque_dataHandle.attribute_object);
 	SQUE_MESH_SetDrawConfig(sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
-	SQUE_MESH_DeclareAttributes(sque_dataHandle.vert_id, 3, sque_dataHandle.attrib_ref);
-	SQUE_VertAttrib pos("Position", SQUE_FLOAT, false, 2);
-	SQUE_VertAttrib uv("UV", SQUE_FLOAT, false, 2);
-	SQUE_VertAttrib col("Color", SQUE_UBYTE, true, 4);
-	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, pos);
-	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, uv);
-	SQUE_MESH_AddAttribute(sque_dataHandle.attrib_ref, col);
+	sque_dataHandle.attributes.push(SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
+	sque_dataHandle.attributes.push(SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
+	sque_dataHandle.attributes.push(SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
 	SQUE_MESH_BindBuffer(sque_dataHandle);
-	SQUE_MESH_SetLocations(sque_dataHandle.attrib_ref);
+	SQUE_MESH_SetLocations(sque_dataHandle);
 
 	sque_backupState.SetUp();
-}
-
-static char* easy_concat(const char* s1, const char* s2)
-{
-	const size_t len1 = strlen(s1);
-	const size_t len2 = strlen(s2);
-	char* result = new char[len1 + len2 + 1]; // +1 for the null-terminator
-	// in real code you would check for errors in malloc here
-	memcpy(result, s1, len1);
-	memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
-	return result;
 }
 
 void ImGui_ImplSqueLib_CreateShaderProgram()
@@ -211,12 +196,10 @@ void ImGui_ImplSqueLib_CreateFontsTexture()
 	SQUE_TEXTURE_SetFormat(&sque_fontTexture, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
 	io.Fonts->GetTexDataAsRGBA32((uchar**)&sque_fontPixels, &sque_fontTexture.w, &sque_fontTexture.h);
 
-	int32_t filter = SQUE_LINEAR;
-	SQUE_TEXTURE_DeclareAttributes(sque_fontTexture.id, 2, 0, &sque_fontTexture.attrib_ref);
-	SQUE_TEXTURE_AddInt(sque_fontTexture.attrib_ref, SQUE_MIN_FILTER, SQUE_LINEAR);
-	SQUE_TEXTURE_AddInt(sque_fontTexture.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
+	sque_fontTexture.attributes.push(SQUE_TexAttrib("MinFilter", SQUE_MIN_FILTER, SQUE_LINEAR));
+	sque_fontTexture.attributes.push(SQUE_TexAttrib("MagFilter", SQUE_MAG_FILTER, SQUE_LINEAR));
 	SQUE_TEXTURE_Bind(sque_fontTexture.id, sque_fontTexture.dim_format);
-	SQUE_RENDER_SetTextureAttributes(sque_fontTexture.id);
+	SQUE_RENDER_SetTextureAttributes(sque_fontTexture.attributes, sque_fontTexture.dim_format);
 	SQUE_TEXTURE_SendAs2DToGPU(sque_fontTexture, sque_fontPixels);
 
 	io.Fonts->TexID = (ImTextureID)(intptr_t)sque_fontTexture.id;

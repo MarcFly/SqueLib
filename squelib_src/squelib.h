@@ -80,7 +80,7 @@
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <sque_remap_macros.h>																											
 #include <sque_simple_types.h>
-#include <sque_vector.h>	
+#include <sque_data_structures.h>	
 #include <sque_sort.h>
 
 
@@ -449,8 +449,9 @@ SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t n
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MESH //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct SQUE_VertAttrib
+class SQUE_VertAttrib
 {
+public:
 	// Constructors / Destructors
 	SQ_API SQUE_VertAttrib();
 	SQ_API SQUE_VertAttrib(const char* name_, int32_t var_type, bool normalize, uint16_t num_components);
@@ -465,18 +466,7 @@ typedef struct SQUE_VertAttrib
 
 	char name[111] = "";
 
-} SQUE_VertAttrib;
-
-SQ_API uint16_t SQUE_VERTEX_ATTRIBUTE_GetSize(uint16_t vertex_size, uint16_t num_components);
-
-typedef struct SQUE_VertAttribIndex
-{
-	uint32_t id = -1;
-	uint32_t start_attrib = -1;
-	uint32_t end_attrib = -1;
-	uint16_t last = 0;
-	uint16_t vert_size;
-} SQUE_VertAttribIndex;
+};
 
 // Maybe Swap to a custom array handler for specific sizes																				
 // I want to have afast search on less than 100 objects, probably a full array is good enough	
@@ -490,7 +480,6 @@ typedef struct SQUE_Mesh
 	int32_t draw_config;
 	int32_t draw_mode = SQUE_STATIC_DRAW;
 	uint32_t attribute_object = 0;
-	int32_t attrib_ref = -1;
 
 	// Vertex Data																														
 	uint32_t vert_id = 0;
@@ -504,43 +493,36 @@ typedef struct SQUE_Mesh
 	uint16_t num_index = 0;
 	uint32_t index_var = SQUE_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
 	uint16_t index_var_size = 0;
+
+	sq_free_vec<SQUE_VertAttrib> attributes;
+	uint16_t vertex_size = 0;
 } SQUE_Mesh;
 // Usage Functions
 SQ_API void SQUE_MESH_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
 SQ_API void SQUE_MESH_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
 SQ_API void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
 
+SQ_API uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh& mesh);
+SQ_API uint16_t SQUE_MESH_GetAttribSize(SQUE_Mesh& mesh, const char* name);
 
-SQ_API uint16_t SQUE_MESH_CalcVertSize(const uint32_t attrib_ref);
-SQ_API uint16_t SQUE_MESH_GetVertSize(const uint32_t attrib_ref);
-SQ_API uint16_t SQUE_MESH_GetAttribSize(const uint32_t attrib_ref, const char* name);
-
-SQ_API void SQUE_MESH_DeclareAttributes(const int32_t vert_id, const uint16_t num_attributes, int32_t& attrib_ref);
-SQ_API SQUE_VertAttrib* SQUE_MESH_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attrib);
-SQ_API void SQUE_MESH_SetLocations(const int32_t attrib_ref);
+SQ_API void SQUE_MESH_SetLocations(SQUE_Mesh& mesh);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																		
-typedef struct SQUE_TexAttrib
+class SQUE_TexAttrib
 {
-	int32_t id;
-	void* data;	
-} SQUE_TexAttrib;
+public:
+	SQ_API SQUE_TexAttrib();
+	SQ_API SQUE_TexAttrib(const char* name, int32_t attrib_id, int32_t value);
+	SQ_API SQUE_TexAttrib(const char* name, int32_t attrib_id, float value);
 
-typedef struct SQUE_TexAttribIndex
-{
-	uint32_t id = -1;
+	char name[32] = "";
+	uint32_t type = UINT32_MAX;
+	int32_t id = UINT32_MAX;
+	void* data = NULL;	
+};
 
-	uint32_t int_start = 0;
-	uint32_t int_end = 0;
-	uint16_t int_last = 0;
-
-	uint32_t float_start = 0;
-	uint32_t float_end = 0;
-	uint16_t float_last = 0;
-
-} SQUE_TexAttribIndex;
 typedef struct SQUE_Texture
 {
 	uint32_t id;
@@ -551,18 +533,12 @@ typedef struct SQUE_Texture
 	uint16_t var_size;
 	int32_t w, h;
 	int32_t channel_num;
-	uint32_t attrib_ref;
+	sq_free_vec<SQUE_TexAttrib> attributes;
 } SQUE_Texture;
 
 SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
-SQ_API void SQUE_TEXTURE_DeclareAttributes(const uint32_t tex_id, const uint16_t num_ints, const uint16_t num_floats, uint32_t* attrib_ref);
+// C Style Gen FloatAttrib/s, Gen IntAttrib/s instead of constructor...
 
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddInt(const uint32_t attrib_ref, const int32_t attribute_id, const int32_t value);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddIntVs(const uint32_t attrib_ref, const int32_t attribute_id, void* data_, const uint16_t num_ints);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddFloat(const uint32_t attrib_ref, const int32_t attribute_id, const float value);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddFloatVs(const uint32_t attrib_ref, const int32_t attribute_id, void* data_, const uint16_t num_floats);
-
-SQ_API void SQUE_TEXTURE_FreeAttributes();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -621,7 +597,7 @@ SQ_API void SQUE_PROGRAM_EnableAttribute(const SQUE_Program& prog, const uint16_
 SQ_API void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref);
+SQ_API void SQUE_RENDER_SetTextureAttributes(const sq_free_vec<SQUE_TexAttrib>& tex, const int32_t dim_format);
 // Overload for Texture3D or at some point try to go back to C?
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

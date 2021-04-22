@@ -265,7 +265,7 @@ void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object)
 
 void SQUE_MESH_SendVertsToGPU(const SQUE_Mesh& mesh, void* vertices)
 {
-    int buffer_size = SQUE_MESH_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
+    int buffer_size = mesh.vertex_size * mesh.num_verts;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, mesh.draw_mode);
 #endif
@@ -317,21 +317,18 @@ void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-extern sque_vec<SQUE_TexAttrib> int_attributes;
-extern sque_vec<SQUE_TexAttrib> float_attributes;
-extern sque_vec<SQUE_TexAttribIndex> tex_attributes_index;
 
-void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref)
+void SQUE_RENDER_SetTextureAttributes(const sq_free_vec<SQUE_TexAttrib>& attributes, const int32_t dim_format)
 {
-    // Have to bind previously the texture
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    SQUE_TexAttribIndex& ind = tex_attributes_index[tex_attrib_ref-1];
-    uint32_t int_s = ind.int_start + ind.int_last;
-    uint32_t float_s = ind.float_start + ind.float_last;
-    for (uint32_t i = ind.int_start; i < int_s; ++i)
-        glTexParameteriv(SQUE_TEXTURE_2D, int_attributes[i].id, (const int32_t*)int_attributes[i].data);
-    for (uint32_t i = ind.float_start; i < float_s; ++i)
-        glTexParameterfv(SQUE_TEXTURE_2D, float_attributes[i].id, (const float*)float_attributes[i].data);
+    for (uint32_t i = 0; i < attributes.size(); ++i)
+    {
+        void* data = attributes[i].data;
+        if (attributes[i].type == SQUE_INT)
+            glTexParameteriv(dim_format, attributes[i].id, (const int32_t*)data);
+        else if (attributes[i].type == SQUE_FLOAT)
+            glTexParameterfv(dim_format, attributes[i].id, (const float*)data);
+    }
 #endif
 }
 
