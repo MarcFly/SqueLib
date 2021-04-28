@@ -89,7 +89,7 @@ public:
 
 
 template<class T>
-class sq_free_vec
+class sque_free_vec
 {
     vec_node<T>* _nodes = NULL;
     uint32_t _size = 0;

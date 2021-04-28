@@ -6,7 +6,7 @@ var titlePage = {
     , institutionExtra: `Centre de la Imatge i Tecnologia Multimèdia`
     , thesisKind: "Bachelor's Thesis in Game Development"
     , thesisTitle: "C++ for multiplatform development"
-    , thesisSubtitle: "SqueLib, SqueMaker and writing cross-platform C++ "
+    , thesisSubtitle: "SqueLib and SqueMaker, introduction to cross-platform C++"
     , thesisAuthor: "Marc Torres Jimenez"
     , thesisDate: "March 2021"
     , reviewers: [
@@ -17,6 +17,8 @@ var titlePage = {
       ]
   }
 </script>
+
+<!-- RUBRICA 1 -->
 
 (##) Abstract
 
@@ -36,11 +38,11 @@ The SqueMaker game engine will be provided both as a source code package and an 
 
 The source code for the resulting projects will be open sourced under the BSD-3-Clause<sub>[#W4]</sub>, permitting redistribution of the source code providing the copyright notice, redistribution of the binary that reproduces the copyright notice for the project, without using such notice as an endorsement for the derived products.
 
+<span class="pagebreak"></span>
+
 (##) Keywords
 
 C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engine
-
-<span class="pagebreak"></span>
 
 (##) Project Links
 
@@ -49,6 +51,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 **W2 -** SqueMaker Github Repository<sub>[#W2]</sub>
 
 <!-- add links to resulting apps, games,... -->
+<span class="pagebreak"></span>
 
 (##) Glossary
 
@@ -60,7 +63,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | KDE | K Desktop Environment, Linux desktop environment |
 | CMake | Open-source cross-platform tols for building, testing and packaging software |
 | OpenGL | Open Graphics Library, cross-language and cross-platform graphics programming interface |
-| GLFW | Open-source API used in this project for creating windows and main contexts for OpenGL, with capabilities for context for OpenGL ES and Vulkan; as well as receiving inputs and events. Usable on main desktop platforms such as Linux and Windows, as well as MacOS which is not targetted in this thesis. Android specifically requires EGL to interface with OpenGLES. |
+| GLFW | Open-source API used in this project for creating windows and main contexts for OpenGL, with capabilities for context for OpenGL ES and Vulkan; as well as receiving inputs and events. Usable on main desktop platforms such as Linux and Windows, as well as MacOS which is not targeted in this thesis. Android specifically requires EGL to interface with OpenGLES. |
 | EGL | Native window management API for interfacing with OpenGL, OpenGLES and Vulkan |
 | Android NDK | Toolset for implementing native android apps in pure C/C++, also allowing for calls to Java Native code. Previous to it is was strictly necessary to explicitly create a Java based application and load C/C++ code from it, as well as interact with a Java Native Interface, which is still required for some functionality |
 | Web Stack | Commonly referred to a package for tacking care of a website which require a base Operative Syste, a Web Serve, a database manager and the programming languages for interfacing with them |
@@ -75,7 +78,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | Metal | Apple's low level graphics API for usage in iOS, iPadOS, macOS and tvOS (Apple's proprietaty Operative Systems) |
 
 
----
+<span class="pagebreak"></span>
 
 # Introduction
 
@@ -107,6 +110,8 @@ On the other hand SqueMaker<sub>[#W2]</sub> primary mission is to provide a simp
 
 To summarize, SqueLib and SqueMaker are projects to introduce C++ desktop developers to multiplatform development. Alongside the results, documention and tools for testing the progression from building to getting an application running will be provided, focusing on game development.
 
+<span class="pagebreak"></span>
+
 ## General Objectives
 
 ### SqueLib General Objectives
@@ -133,6 +138,8 @@ Main objectives for the engine are:
 1. Develop a toy engine to play with the provided subsystems and make simple games
 2. Make a flexible engine that can accomodate new features and technologies
 3. Be able to quickly iterate over the implemented technologies 
+
+<span class="pagebreak"></span>
 
 ## Specific Objectives
 
@@ -190,9 +197,7 @@ Most custom engine target specific platforms with a specific set of tools and li
 
 As the basis for this project thesis and the actual time available is limited and a single person will be working on it, instead of hundreds of talented individuals, clear cuts have to be made to have them on time.
 
-The amount of features will be closely examined and mostly non-expanded or even cut over time. Making a playground includes room for creativity and innovation alongside the project instead of within the project.
-
-Visual polish and accessibility might be cut down too, although it is an area of interest for making it more available as a learning environment.
+The amount of features will be closely examined and mostly non-expanded or even cut over time. Making a playground includes room for creativity and innovation alongside the project instead of within the project. Visual polish and accessibility might be cut down too, although it is an area of interest for making it more available as a learning environment.
 
 All in all, this project is aimed at providing C++ developers with an introduction and a multiplatform library for game development in C++, without distinction between professionals or students, individuals or companies.
 
@@ -265,6 +270,8 @@ Unity<sub>[#W6]</sub> is a cross-platform game engine, unveiled at the Wordwide 
 | Tier based licensing with royalties | |
 | Vast knowledge base in tutorials, examples and documentation| |
 
+<span class="pagebreak"></span>
+
 !!! Tip: Game Examples
     Used in multiple indie games and solo production as well as big studios: Hearthstone (Blizzard-Activision, 2014), Fall Guys (Mediatonic, 2020), Ori and the Will of the Wisps (Moon Studios, 2020), Cuphead(Studio MDHR, 2017), Flappy Bird(Don Nguyen, 2013),...
 
@@ -313,6 +320,8 @@ Created by Mark Overmars originally in 1999, later acquired by YoYo Games in 200
 | Extensive Marketplace | Slower performance |
 | Support for major platforms | |
 | Strong tools for 2D game creation | |
+
+<span class="pagebreak"></span>
 
 !!! Tip: Game Examples
     Rivals of Aether (Dan Fornace LLC, 2015), Hyper Light Drifter (Heart Machine, 2016), Katana Zero (Askiisoft, 2019), Risk of Rain (Hopoo Games, 2013), VA-11 Hall-A (Sukeban Games, 2016), The Red Strings Club (Deconstructeam, 2018),...
@@ -367,6 +376,8 @@ Developed by Ragnar Scensson and Christian Murray in 2007 as a lightweight 2D ga
 !!! Tip: Game Examples
     Travel Blast (MP Games, 2020), Zoom-Be (Flazm, TBA), Interrogation (Critique Gaming, 2019), Fates of Ort (8bitskull, 2020), Family Island (Melsoft, 2019),...
 
+<span class="pagebreak"></span>
+
 ### Lumberyard
 
 In 2015, Amazon licensed CryEngine from Crytek in order to create an engine with native support for the Amazon Web Services (AWS), allowing developers to build and host their games on Amazon's servers. With the acquisition of Twitch, Lumberyard<sub>[#W14]</sub> also has integration with the Twitch Livestreaming API, allowing interaction with the viewers natively. It was publicly launched in 2016 and later made source-available<sub>[#W9]</sub>.
@@ -389,13 +400,10 @@ In 2015, Amazon licensed CryEngine from Crytek in order to create an engine with
 There is a vast amount of both open and proprietary game engines out 
 there, from fully featured to starting in the development process such as this thesis. As the reach for this project is limited it is not possible to delve into them, a list of engines and articles gathering and providing information about more engines is provided:
 
-#### Articles
-
  * CUSTOM GAME ENGINES: A Small Study. Ramon Santamaria. <https://gist.github.com/raysan5/909dc6cf33ed40223eb0dfe625c0de74>
-
-#### More Open Source Engines
-
  * Diligent Engine. Diligent Graphics. <https://github.com/DiligentGraphics/DiligentEngine>
+
+<span class="pagebreak"></span>
 
 ## SqueLib and SqueMaker as Resources
 
@@ -403,7 +411,7 @@ Both SqueLib and SqueMaker as tools fall in an already big and deep market as lo
 
 The described examples in competing markets provide vast amounts of features for both building applications, 2D or 3D, any platforms available and aimed at every level of experience. What is mostly lacking is a per subsystem approach to understanding the creation of said tools.
 
-Neither SDL nor Rawdraw are introduction level friendly by themselves when targetting multiplatform projects, they require a very finicky initial setup or less accessible tools for getting it running. RayLib has a great deal of supporting examples and documentation for getting things to work almost everywhere, but it is still quite cumbersome to get it going for cross-platform projects.
+Neither SDL nor Rawdraw are introduction level friendly by themselves when targeting multiplatform projects, they require a very finicky initial setup or less accessible tools for getting it running. RayLib has a great deal of supporting examples and documentation for getting things to work almost everywhere, but the Android integration it is still nitpickingly a bit cumbersome to setup as well as being just slightly outdated.
 
 Game engines provide mostly all the tools required to get things running, what I find missing is quick access to iterating over the tools available and creation of new tools. Each project has its own demands, having the flexibility of fleshing out the desired tool and having access to it as soon as possible is a missing piece of every game engine compared to custom engines.
 
@@ -433,6 +441,8 @@ A Gantt chart feels ideal to decide on timestamps for these tasks and their depe
 ![Figure [figures]: Library Development Plan](images/Gantt1.png)
 ![Figure [figures]: Engine Development Plan](images/Gantt2.png)
 
+<span class="pagebreak"></span>
+
 ### HacknPlan
 
 After checking out multiple tools around task management including Trello, Github Boards, Gitkraken Boards or even custom formats of Google Sheets, the tool I have personally found most useful and flexible has been HacknPlan<sub>[#W25]</sub> 
@@ -452,7 +462,11 @@ Software projects are a sum of multiple blocks and constant iteration, during th
 
 Even more important is the fact that the project will be tested and developed on multiple platforms, as such the Gitkraken<sub>[#W22]</sub> git GUI client will be used as it has Linux compatibility and some great features for managing repository branchs.
 
-![Figure [figures]: Gitkraken Commit Form](images/GitKraken.png) Gitkraken is very simple and provides great functionality for understanding changes and avoiding pushing changes before reviewed. By default, changes are not staged for commiting, shown in **Figure 6**, but you can select manually which changes to set up for the next commit and review them before commiting them.
+<span class="pagebreak"></span>
+
+![Figure [figures]: Gitkraken Commit Form](images/GitKraken.png) 
+
+Gitkraken is very simple and provides great functionality for understanding changes and avoiding pushing changes before reviewed. By default, changes are not staged for commiting, shown in **Figure 6**, but you can select manually which changes to set up for the next commit and review them before commiting them.
 
 
 
@@ -493,6 +507,8 @@ As well as the iterative process of development, debug mode checks have been pla
 |---|---|
 | Entry to multiplatform C++ development is not straight forward, accomplishing a good entry for developers | There are lots of fully feature frameworks and engines one can go to and get faster and better results, as there's more support and documentation available |
 | There's no financial risk as a student project | Time is extremely limited, the project will fall short on refinement for larger scale production |
+
+<span class="pagebreak"></span> 
 
 ## Risks and Contingencies
 
@@ -561,6 +577,8 @@ The development process takes part in OSs that have not been previously explored
 
 Given the amount of uncertainty in the project, the final steps of the project are aimed at providing a feedback loop on it rather than expand on it. As most tasks involve a high level of uncertainty given unfamiliarity with the systems, this time serves as a buffer for most other tasks. These close to 2 months of finishing development can be reallocated to finishing features and making sure it is as user-accessible as possible.
 
+<span class="pagebreak"></span>
+
 ## Cost Analysis
 
 Although the project is aimed at producing open-source content, thus not having a financial reach in mind, the development time and resources have to be taken into account and make an approximated calculation of the costs:
@@ -594,6 +612,8 @@ There are multiple methodologies that have been developed from the Agile princip
 ***************************************************************************
 [Figure [figures]: Simplification of the Agile Process]
 
+<span class="pagebreak"></span>
+
 ## Variable Sprint Agile
 
 In Agile methodology, it is expected to have clear cut sprints through which things are performed and then they are passed down to the following sprints when failure to achieve occurs. Given the variability of the project and even the building blocks of it, an approach to a simplified Agile process without a specific task backlog is required.
@@ -614,6 +634,8 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 **HnP.2. Task Types:** In order to facilitate navigation of task types, you can select which ones to have visible. In this project, 99% of the tasks are programming based so in my case organizing them becomes more cumbersome than useful. In other projects that involve bigger teams and disciplines, it is a must tool.
 
+<span class="pagebreak"></span>
+
 **HnP.3. Current Board Options:** First the Board Name, then the task creation and finally a button to the information pertaining the board.
 
 **HnP.4. Board Task Management:** Where the tasks are created and can be seen, moved and edited according to the users doing them.
@@ -621,6 +643,8 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 ![Figure [figures]: HacknPlan Task Example](images/HacknPlan_Task_Edited.png)
 
 **HnP.5. Task Stats:** In order, displays the information added to the tasks, be it attachments, subtasks, comments, work logs,...
+
+<span class="pagebreak"></span>
 
 ![Figure [figures]: Add Menu](images/HacknPlan_AddMenu.png) **HnP.6. Addition Panel**: Under this panel appears the available options for adding information to each task.
 
@@ -638,74 +662,107 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 **HnP.10. Comment Window:** After logging work, a comment is created with that session information. Imperative for both teams and individuals participating in each task.
 
-## Conclusion
+<!-- RUBRICA 2 - WIP -->
 
+# Cross-Platform C++
 
+Being set up with the initial research on the project statement and values, the first step is to be able to get code working on all target platforms, as well as generating a comfortable framework from to which develop the subsequent projects.
 
-# SqueLib Development
-## Introduction to Development
+It is very evident that having multiple code bases per platform and having to use wildly different environments for getting code to run on the target platforms is a big issue to tackle. The most sensible approach would be to have a way to just execute what is needed on a bunch of source files and get the resulting application ready to run, the less it is required to change to get it working the better.
 
-### SDL, RayLib and Rawdraw
+## CMake: Building for multiplatform 
 
-Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials when supporting major platforms. The approach of this thesis is directly inspired by these libraries but with a research approach to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support, with RayLib getting constant updates and support for more platforms and programming language bindings. 
+CMake is a generator of build files, meaning that when you build a project with CMake you are first creating the files that the target building environment will use to create the final application. In that way you can create a environment agnostic step that will then be converted to the one needed for each platform you target.
+
+<!-- Reference Image of Jeff Preshing Posts on the files and such -->
+
+CMake is invoked in a directory where a CMakeLists.txt script is, which will configure the targets such as executables and libraries according to specified rules. This configuration steps generates the build files required by the generators or the build systems such as XCode, GCC, MSVS,... the ones that will compile and link the code into their executable form.
+
+## C++ on Linux and Windows
+
+## C++ on Android
+
+### Android NDK
+
+#### Native App Glue
+
+### Compiling
+
+### Packaging
+
+## Debugging
+
+### Linux: GDB
+
+### Android: APK Profiler
+
+## Minimal Example
+
+# Project Development
+
+ it is important to make clear cut decisions on how to approach the specific areas and which elements will be the building blocks for the subsequent projects. The following sections will give an insight to the initial decisions as well as the ongoing development process of ***SqueLib*** and ***SqueMaker***.
+
+## SDL, RayLib and Rawdraw
+
+Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials for most imaginable platforms. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support, with RayLib getting constant updates and support for more platforms and programming language bindings. 
 
 Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for android seem outdated as of the latest releases available for both and more straightforward approaches would help in the development for that platform.
 
-Rawdraw on the other hand is a more you do you approach, just source code and a single example is available and its intended use (besides as a library) is that of learning. Being a C library and the compiler toolchain less entry level friendly, I decided to take it as a base for learning the steps to introducing myself but making it easier for a future self to do this introduction.
+Rawdraw on the other hand has a more "you do you" approach, just source code and a single example is available and its intended use (besides as a library) is that of learning. Being a C library and the compiler toolchain being way less entry level friendly, I decided to take it as a base for learning the steps to introducing myself but making it easier for a future self to do this introduction.
 
-### Libraries Used
+## Libraries Used
 
 An introduction to the library or framework will be provided, as well as the reasons provided for its usage, or lack of it:
 
-#### Rendering Graphics: OpenGL and OpenGLES
+### Rendering Graphics: OpenGL and OpenGLES
 
-OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D raster graphics, targetting the GPU in order to havehardware-accelerated rendering. Initially released in 1992 by Silicon Graphics Inc., it has been receiving first party support until 2017 with the 4.6 release, being developed by the Khronos Group since 2006.
+OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D raster graphics, targeting the GPU in order to have hardware-accelerated rendering. Initially released in 1992 by Silicon Graphics Inc., it has been receiving first party support until 2017 with the 4.6 release, being developed by the Khronos Group since 2006.
 
-During the coursing of the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most project alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such library that is cross-platform capable for the targetted platforms.
+While taking part in the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most projects alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such a library that is cross-platform capable for the targeted platforms.
 
-OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targetting other graphics API for Android.
+OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
 
-The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL systax the best, allowing for further simplicty in writing a portable OpenGL backend. As it is a cut down version, as well as an older one, there are still some compatibility issues with newest core versions. For that reason, core version 3.3 will be used because the GSLS syntax is the msot similar as well as being the step closest contemporary core OpenGL which I am more familiar with.
+The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the best, allowing for further simplicity in writing a portable OpenGL backend. As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
 
 The remaining differences between versions will be circumvented as how cross-platform issues should be dealt with, by writing backend specific code.
 
-#### Context Management: EGL and GLFW
+### Context Management: EGL and GLFW
 
-In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platfom interface between the Khronos Group rendering APIs and the operating systems windowing systems in order to allow the display of graphics.
+In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platform interface between the Khronos Group rendering APIs and the operating systems windowing systems in order to allow the display of graphics.
 
-The use case in context management for both libraries is to take care of binding of surfaces and buffers to write to, synchronization of the rending with the displays and enibling the accelerating of such operations with the underlying hardware.
+The use case in context management for both libraries is to take care of binding of surfaces and buffers to write to, synchronization of the rendering with the displays and enabling the acceleration of such operations with the underlying hardware.
 
-GLFW<sub>[#W18]</sub> has more functionalinity in creation of windows and taking care of input, the catch is that it is only available in desktop platforms. EGL is a native library to Android, which creates the first platform divide for taking care of different subsystems.
+GLFW<sub>[#W18]</sub> has more functionality in creation of windows and taking care of input, the catch is that it is only available in desktop platforms. EGL is a native library to Android, which creates the first platform divide for taking care of different subsystems.
 
-#### User Input: Android NDK and GLFW
+### User Input: Android NDK and GLFW
 
-The big issue when handling user input between the proposed platforms is that they are completely different. Android input is touch based and in desktop platforms the keyboard and mosue combo are the msot widely used. They are by no means incompatible but by default there are not many options that take care of them in a similar fashion. It was a clear area where a new approach for cross-platform apprach was needed.
+The big issue when handling user input between the proposed platforms is that they are completely different. Android input is touch based and in desktop platforms the keyboard and mouse combo are the most widely used. They are by no means incompatible but by default there are not many options that take care of them in a similar fashion. It was a clear area where a new cross-platform approach was needed.
 
-The Android NDK<sub>[#W21]</sub> is the provided API by Google in order to interact with Android devices in native C and C++ code. Most interaction to Android requires calling from Java environments, the NDK provides JNI, a Java Native Interface through which access the native systems. Theses native systems includes the main input system.
+The Android NDK<sub>[#W21]</sub> is the provided API by Google in order to interact with Android devices in native C and C++ code. Most interaction to Android requires calling from Java environments, the NDK provides JNI, a Java Native Interface through which accesses the native systems. These native systems include the main input system.
 
-GLFW takes care of user input in desktop environments in a per window basis, meaning that you can setup direct access to what the user performs and receive that information when needed in each window created.
+GLFW takes care of user input in desktop environments on a per window basis, meaning that you can set up direct access to what the user performs and receive that information when needed in each window created.
 
-#### File Access: Native through C++ STL and Android NDK
+### File Access: Native through C++ STL and Android NDK
 
-When developing games, getting hold of files is pretty straightforward, you have load them into memory and then perform any complicated operations with other methods, the same way to write files to the system. 
+When developing games, getting hold of files is pretty straightforward, you have to load them into memory and then perform any complicated operations with other methods, the same way to write files to the system. 
 
-On Android subsystems the user does not have direct write access, special permissions are required and as such specific functions are required from the NDK in order to access and write files. In desktop environments, using plain C++ is the most straightforward way alongsides some OS specific provided standard libraries.
+On Android subsystems the user does not have direct write access, special permissions are required and as such specific functions are required from the NDK in order to access and write files. In desktop environments, using plain C++ is the most straightforward way alongside some OS provided standard libraries.
 
 The meat of this system is to make it truly platform agnostic to the end user.
 
 
-### Libraries Not Used
+## Libraries Not Used
 
 It is important to remark that there are many other open-source alternatives to most of the libraries that have been used or will be used for the main subsystems of this project. While the great majority are not covered here, most either could be interchangeable or require a lower level understanding of the required subsystem.
 
-The information on the unused libraries should serve as a brief introduction and simple reasons on why they were not used.
+The information on the unused libraries are simple reasons on why they were not used, with unfamiliarity being one of the main reasons not to delve too deep into them due to strict timelines.
 
 | Graphics APIs | Reason |
 |---|---|
 | Magnum Engine | Unfamiliarity and few entry level documentation |
 | Vulkan | Unfamiliarity and oriented to much lower level programming |
 | Ogre | Unfamiliarity and provides much more features for animation, scene, effects,etc, which are not required, bloating the project initially with higher entry cost |
-| Direct3D/DirectX | Support only for Windows / UWP |
+| Direct3D/DirectX | Support limited to Windows / UWP |
 
 | Context Management | Reason |
 |---|---|
@@ -713,18 +770,78 @@ The information on the unused libraries should serve as a brief introduction and
 | GLEW | Could have been an interchangeable option, but extensions are supported different in Android, incompatible with OpenGLES |
 
 !!! note
-    Most context management libraries take only part in generating the OpenGL context, as they should, leaving mroe work into taking care of managing windows through the native systems on Windows and Linux. Although in Windows that would have been more straightforward, due the high variance between distros, that would have been a great time cost.
+    Most context management libraries take only part in generating the OpenGL context, as they should, leaving more work into taking care of managing windows through the native systems on Windows and Linux. Although in Windows that would have been more straightforward, due the high variance between distros in Linux, that would have been a great time cost.
 
 | Input Libraries | Reason |
 |---|---|
 | Gainput | Outdated Android toolchain, would have had a lot of costs for building on current versions |
 
 !!! note
-    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen in use in recent years although it would be much better and has an Android port but with an outdated toolchain.
+    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen in use in recent years. Given the approach of the project it did not seem fitting to use it as it would tie more dependencies to structuring data, which is already complicated enough for Android.
+
+# SqueLib Development
+
+<!-- Explanation of waht should the core workflow should be and what are the expected capailities -->
+
+When working with SqueLib, it is intended for the library to take control of managing the core of the applicatio
+
+## Core Library
+
+### Initialization
+
+### Logging
+
+### SQUE_Timer
+
+### Android Specific
+
+#### Permissions
+
+#### Resume and Go to Background
+
+### Data Structures
+
+#### sque_vec
+
+#### sque_free_vec
+
+#### sque_list
+
+### Sorting Algorithms
+
+## Window Creation
+
+## Input Management
+
+## Render Pipeline
+
+## File Management
+
+## Extending SqueLib
 
 # SqueLib Sample Projects
 
+## Performance Tests
+
+## SquePong
+
+## Dear ImGui with SqueLib
+
+## LearnOpenGL introduction with SqueLib
+
 # SqueMaker Development
+
+<!-- Talk about testing what SqueLib can do in practice as well as taking steps into designing a competent tool for making games -->
+
+## Entity Component System
+
+## Engine UI
+
+## Render Pipeline
+
+## Serialization
+
+## Scripting System
 
 # SqueMaker Sample Projects
 

@@ -54,7 +54,7 @@ hr.ignore {
 
 /* various kinds of links */
 .md a, a {
-    color: black !important; /* change this when presenting digitally, I suppose? */
+    color: rgb(25, 57, 116) !important; /* change this when presenting digitally, I suppose? */
     text-decoration: none;
     font-family: inherit;
 }
@@ -82,7 +82,7 @@ a.url {
     padding-left: 2rem;
 }
 .md li {
-    text-align: justify !important;
+    /*text-align: justify !important;*/
 }
 
 /* various */
