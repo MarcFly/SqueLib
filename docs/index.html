@@ -62,11 +62,12 @@ Have never read or got into it, please forward me any good introduction on those
 
 Setup
 ===
-## Download
+
 You can download the repo at [](https://github.com/MarcFly/SqueLib).
+
 ## Dependencies
-First of all you will need [CMake](https://cmake.org/download/) and your usual compiler/linker pair, G++ and GCC 9.3.0 is what I've been using on Linux, MSVS 2017/2019 on Windows (Android Build is provided through the NDK).
-Although most dependencies are pulled by the building process (GLFW, GLMath,...) there are some platform specific dependencies that require specific setup, besides OpenGL which it is assume most vendors bring a version at least compatible with core 3.3 which is the minimum supported on desktop by SqueLib.
+First of all you will need [CMake](https://cmake.org/download/) and your trusted compiler/linker pair, G++ and GCC 9.3.0 is what I've been using on Linux, MSVS 2017/2019 on Windows (Android Build is provided through the NDK).
+Although most dependencies are under external folder in the repo, there are some platform specific dependencies that require specific setup, besides OpenGL which it is assume most vendors bring a version at least compatible with core 3.3 which is the minimum supported on desktop by SqueLib.
 
 ### Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash
@@ -74,7 +75,7 @@ Although most dependencies are pulled by the building process (GLFW, GLMath,...)
    Pull them from the distro package manager.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Android (from Linux)
+### Android from Linux
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    1. Download Android Studio
    2. Extract it into a folder, go to AndroidStudio -> bin
@@ -90,6 +91,14 @@ Although most dependencies are pulled by the building process (GLFW, GLMath,...)
    Download from the Google Developer site
    ...
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Android from Windows - WSL2
+
+**TODO...**
+
+### Android From Windows
+
+**TODO...**
 
 Creating first app and a basic loop
 ===
@@ -149,7 +158,7 @@ You can basically copy the style of any example found, but the main parts will b
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     cmake <dir> ( -DToWindows=1 OR -DToLinux=1 OR -DToAndroid=1 ) -DCMAKE_BUILD_TYPE=(Release OR Debug)
     cmake --build <dir>
-    # Optional for Android, install into android device from Linux only... 
+    # Optional for Android, install into android device from Linux / WSL2 only... 
     make uninstall push # This will remove the app if exists, create the packaged app and install on device
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  - You can also check/use the examples/all command-line executables (FromLinux_BuildAll.sh / FromWin_BuildAll.batch) to have an even easier build experience 
@@ -160,9 +169,25 @@ Resources
 ===
 When packaging apps and building, you'd want to have your data properly packaged together. Until ***SqueLib*** supports proper packaging , currently the only option is to have assets and files under separate folders for _Assets_ and _Resources_, when building it will be packaged directly as long as the folders are provided on the SqueLib_Package() call.
 
-For android it is required to have a folder _AppResources/icon/mipmap.png_ which will be used as the app icon when installing. On desktop platofmrs, the options for using a window icon is also provided through Display part of the library, but not yet part of the main init.
+The _Assets_ folder contain your app required packages, images, data, scripts and such type of files.
 
-In any case, you can go through the code and change it however you want to, have as much fun as I am having!
+The _Resources_ folder is specific to interface with some parts of SqueLib, derived from the Android app packaging system. The main necessary files and templates are provided under the _defaults_ folder in the repo, but you can modify by passing your own resource folder with minimums set in the following diagram.
+
+*************************************
+* ./SourceFolder                    *
+*       |                           *
+*       |---/Assets                 *
+*       |                           *
+*       '---/Resources              * 
+*              |                    *
+*              '---/mipmap          *
+*                    |              *
+*                    '---/icon.png  *
+************************************* For android it is required to have a folder _AppResources/mipmap/icon.png_ which will be used as the app icon when installing. On desktop platforms, the options for using a window icon is also provided through Display part of the library, but not yet part of the main init.
+
+For further simplicity and making it easier to expand, SqueLib's basic features revolving these type of files will be using android structure and used in parallel for desktop. SqueLib provides functions to load both assets and resources differently, both in raw format to be parsed internally through your preferred means.
+
+You can check the [Android Resource Structure](https://developer.android.com/guide/topics/resources/providing-resources) and in any case, you can go through the code and change it however you want to, have as much fun as I am having!
 
 Debugging
 ===

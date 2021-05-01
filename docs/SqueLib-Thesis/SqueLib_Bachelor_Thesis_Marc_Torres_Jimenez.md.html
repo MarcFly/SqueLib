@@ -524,6 +524,8 @@ Given the scope of the project, the most sensible approach is to identify where 
 | Time Missplanning | Given the section below, tasks from the back will be cut in order, there is a planned month and 3/4 left for polish loop |
 | Library / Software issues | Issues on platform and library are planned in time as well as expected deviation, buffer time for planning is available for learning time but at most it will fall to modules already developed in other libraries |
 
+<span class="pagebreak"></span> 
+
 ### Planned Task Risks
 
 The development process takes part in OSs that have not been previously explored with C++, as well as a plethora of tools that will be new to use and even find out about. Given the initial uncertainty of the project, a strong buffer of the main expected tasks has to be prepared.
@@ -674,13 +676,95 @@ It is very evident that having multiple code bases per platform and having to us
 
 CMake is a generator of build files, meaning that when you build a project with CMake you are first creating the files that the target building environment will use to create the final application. In that way you can create a environment agnostic step that will then be converted to the one needed for each platform you target.
 
-<!-- Reference Image of Jeff Preshing Posts on the files and such -->
+![Figure [figures]: CMake Simple Flowchart, from [How to Build a CMake based Project](https://preshing.com/20170511/how-to-build-a-cmake-based-project/) by Jeff Preshing.](images/cmake-simple-flowchart.png width="50%") Following **Figure 12**, CMake is invoked in a directory where a CMakeLists.txt script is, which will prepare a configuration for the desired outputs which will be cached for later runs.
 
-CMake is invoked in a directory where a CMakeLists.txt script is, which will configure the targets such as executables and libraries according to specified rules. This configuration steps generates the build files required by the generators or the build systems such as XCode, GCC, MSVS,... the ones that will compile and link the code into their executable form.
+In each CMakeLists.txt there are a series of outputs defined, which are called targets, that hold the specific information required to be built into their executable form. Such information might be source files, instructions, compiler/linker, etc.
 
-## C++ on Linux and Windows
+The configuration step ends up with the build files required by the specific build system used (XCode, GCC, MSVS,...), who will actually build the executables. 
+
+
+### Simplest Expandable Example
+
+Under **Figure 13**, the base layout of the folder which will be expanded upon, is set: 
+
+***********************************************
+* ./SourceFolder                              *
+*       |                                     *
+*       '---/CMakeLists.txt                   *
+*       |
+*       '---/main.cpp                         *
+***********************************************
+[Figure [diagram]: Base Folder Structure]
+
+
+From unique previous knowledge of building C++ aplication through Microsoft Visual Studio, the best way to get into new forms is to learn from the simplest possible example required. With that virtue, the starting file to work on would be the following main which would only print out _Hello World!_ to a console to make sure everything is working as intended.
+
+**_main.cpp_**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C++ linenumbers
+#include <cstdio>
+int main(char** argv, int argc)
+{
+    printf("Hello World!");
+    return 0;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Following the main source code, the simplest way to build with CMake is specifying a version, seting up a project, defining a target, declaring where the header files are and which source files to add.
+
+**_CMakeLists.txt_**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+cmake_minimum_required(VERSION 3.1)
+project(CMakeExample LANGUAGES CXX)
+add_executable(CMakeExample)
+target_include_directories(CMakeExample PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_sources(CMakeExample PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp) 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finally on command line, tested initially from Windows:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+cmake . 
+cmake --build .
+./Debug/CMakeExample.exe # Default configuration for MSVS is Debug
+_Hello World!_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Cleaning Up Simplest Example
+
+![Figure [figures]: Source folder after building the project](images/cmake_folder_bad.png width="30%") In **Figure 14**, we can see that the folder structure after building a CMake Project becomes a mess, it will create the necessary build files for the target generator, in this case MSVS. 
+The build as well will be created the CMakeLists.txt defines to. After understanding how to clean that, the simplest way would be creating a directory from where CMake executes and generates files inside the source folder and setup the target to build in a specific directory.
+
+
+**_CMakeLists.txt_** - Change where the build files go to
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+set(OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+set_target_properties(CMakeExample
+    PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
+        LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
+        RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Then on Command Line, we create a folder to execute from and call cmake to build the parent directory:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+mkdir -p ./CMakeFiles # Create a directory for cmake
+cd CMakeFiles # Navigate there
+cmake ../ # Call CMake on the previous directory
+cmake --build .
+../builds/Debug/CMakeExample.exe # executable is now on builds for
+_Hello World!_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finally on **Figure 15** we can see that now the source folder becomes visibly cleaner and manageable once again.
+
+![Figure [figures]: Cleaner folder structure.](images/cmake_folder_good.png)
 
 ## C++ on Android
+
+The previous part introduced to CMake in a way that work very easily with a console based application and nothing more to execute. On such desktop platforms, usually you don't have to worry too much about how you package your data, assets or libraries as long as are reachable from working directory or provided by the vendor. There is not actually a required way to package or build your application besides making sure it works.
+
+In order to build Android application, the usual way would be to build them using the designed tool for the task and native programming language. In that case we would be writing a Java/Kotlin application from Android Studio.
 
 ### Android NDK
 
@@ -959,6 +1043,8 @@ When working with SqueLib, it is intended for the library to take control of man
         markdeepDiagramScale: 0.8
     }
 </script>
+<!--
 <script src="markdeep-thesis/markdeep-thesis.js"></script>
+-->
 <script src="markdeep-thesis/lib/markdeep/1.11/markdeep.min.js" charset="utf-8"></script>
 <script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
