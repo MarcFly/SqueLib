@@ -216,25 +216,25 @@ public:
         _nodes[index].free = true;
         if (_empty_size != _empty_capacity)
         {
-            _empty_nodes[_empty_size-1] = index;
+            _empty[_empty_size-1] = index;
             ++_empty_size;
             return;
         }
         _empty_capacity = _empty_capacity * 2 + 8;
         uint32_t* new_nodes = allocate<uint32_t>(_empty_capacity);
-        copyRange<uint32_t>(_empty_nodes, _empty_nodes + _empty_size, new_nodes);
+        copyRange<uint32_t>(_empty, _empty + _empty_size, new_nodes);
         new_nodes[_empty_size] = index;
-        deleteRange<uint32_t>(_empty_nodes, _empty_nodes + _empty_size);
-        _empty_nodes = nullptr;
-        free(_empty_nodes);
-        _empty_nodes = new_nodes;
+        deleteRange<uint32_t>(_empty, _empty + _empty_size);
+        _empty = nullptr;
+        free(_empty);
+        _empty = new_nodes;
         ++_empty_size;
     }
 
     void clear()
     {
         deleteRange(_nodes, _nodes + _size);
-        deleteRange<uint32_t>(_empty_nodes, _empty_nodes + _empty_size);
+        deleteRange<uint32_t>(_empty, _empty + _empty_size);
         _size = 0;
         _empty_size = 0;
     }
@@ -252,8 +252,8 @@ public:
             deleteRange(_nodes + new_size, _nodes + _size);
             _size = new_size;
             uint32_t* iter = _empty;
-            uint32_t* new_empty_nodes = allocate<uint32_t>(_empty_capacity);
-            uint32_t* dest_iter = new_empty_nodes;
+            uint32_t* new_empty = allocate<uint32_t>(_empty_capacity);
+            uint32_t* dest_iter = new_empty;
             uint32_t new_empty_size;
             while (iter != (_empty + _empty_size))
             {
@@ -268,7 +268,7 @@ public:
             deleteRange<uint32_t>(_empty, _empty + _empty_size);
             free(_empty);
             _empty_size = new_empty_size;
-            _empty = new_empty_nodes;
+            _empty = new_empty;
         }
 
         if (new_size <= _capacity)
