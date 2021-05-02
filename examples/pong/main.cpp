@@ -24,7 +24,8 @@ SQUE_FS_CreateDirRelative("../../TestPermissions");
     SQUE_AskPermissions("DELETE_PACKAGES");
     SQUE_AskPermissions("INTERACT_ACROSS_USERS_FULL");
 */
-#define WITH_MINIAUDIO
+//#define WITH_MINIAUDIO
+#define WITH_NULL
 #include <soloud.h>
 #include <soloud_wav.h>
 
