@@ -318,7 +318,7 @@ void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& 
 // TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_SetTextureAttributes(const sq_free_vec<SQUE_TexAttrib>& attributes, const int32_t dim_format)
+void SQUE_RENDER_SetTextureAttributes(const sque_free_vec<SQUE_TexAttrib>& attributes, const int32_t dim_format)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     for (uint32_t i = 0; i < attributes.size(); ++i)

@@ -494,7 +494,7 @@ typedef struct SQUE_Mesh
 	uint32_t index_var = SQUE_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
 	uint16_t index_var_size = 0;
 
-	sq_free_vec<SQUE_VertAttrib> attributes;
+	sque_free_vec<SQUE_VertAttrib> attributes;
 	uint16_t vertex_size = 0;
 } SQUE_Mesh;
 // Usage Functions
@@ -533,7 +533,7 @@ typedef struct SQUE_Texture
 	uint16_t var_size;
 	int32_t w, h;
 	int32_t channel_num;
-	sq_free_vec<SQUE_TexAttrib> attributes;
+	sque_free_vec<SQUE_TexAttrib> attributes;
 } SQUE_Texture;
 
 SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
@@ -597,7 +597,7 @@ SQ_API void SQUE_PROGRAM_EnableAttribute(const SQUE_Program& prog, const uint16_
 SQ_API void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
 // Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_SetTextureAttributes(const sq_free_vec<SQUE_TexAttrib>& tex, const int32_t dim_format);
+SQ_API void SQUE_RENDER_SetTextureAttributes(const sque_free_vec<SQUE_TexAttrib>& tex, const int32_t dim_format);
 // Overload for Texture3D or at some point try to go back to C?
 
 // Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

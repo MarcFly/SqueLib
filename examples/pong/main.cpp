@@ -139,12 +139,9 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     
     SQUE_MESH_GenBuffer(&b.rect);
     SQUE_MESH_BindBuffer(b.rect);
-    SQUE_MESH_DeclareAttributes(b.rect.vert_id, 1, b.rect.attrib_ref);
-    SQUE_VertAttrib vertPos("vertPos", SQUE_FLOAT, false, 2);
-    SQUE_MESH_AddAttribute(b.rect.attrib_ref, vertPos);
-    SQUE_MESH_CalcVertSize(b.rect.attrib_ref);
+    b.rect.attributes.push(SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESH_SetLocations(b.rect);
     SQUE_MESH_SendToGPU(b.rect, quad, quad_indices);
-    SQUE_MESH_SetLocations(b.rect.attrib_ref);
 
 // PLAYER 1
     p1.sizex = b.y / 20;
@@ -158,12 +155,10 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     
     SQUE_MESH_GenBuffer(&p1.rect);
     SQUE_MESH_BindBuffer(p1.rect);
-    SQUE_MESH_DeclareAttributes(p1.rect.vert_id, 1, p1.rect.attrib_ref);
-
-    SQUE_MESH_AddAttribute(p1.rect.attrib_ref, vertPos);
-    SQUE_MESH_CalcVertSize(p1.rect.attrib_ref);
+    p1.rect.attributes.push(SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESH_SetLocations(p1.rect);
     SQUE_MESH_SendToGPU(p1.rect, quad, quad_indices);
-    SQUE_MESH_SetLocations(p1.rect.attrib_ref);
+    
 
 // PLAYER 2
     p2.sizex = p1.sizex;
@@ -177,11 +172,10 @@ void InitParams(Ball& b, Paddle& p1, Paddle& p2)
     
     SQUE_MESH_GenBuffer(&p2.rect);
     SQUE_MESH_BindBuffer(p2.rect);
-    SQUE_MESH_DeclareAttributes(p2.rect.vert_id, 1, p2.rect.attrib_ref);
-    SQUE_MESH_AddAttribute(p2.rect.attrib_ref, vertPos);
-    SQUE_MESH_CalcVertSize(p2.rect.attrib_ref);
+    p2.rect.attributes.push(SQUE_VertAttrib("vertPos", SQUE_FLOAT, false, 2));
+    SQUE_MESH_SetLocations(p2.rect);
     SQUE_MESH_SendToGPU(p2.rect, quad, quad_indices);
-    SQUE_MESH_SetLocations(p2.rect.attrib_ref);
+    
 }
 
 

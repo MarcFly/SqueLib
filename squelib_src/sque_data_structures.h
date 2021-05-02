@@ -118,8 +118,8 @@ public:
     typedef T* iterator;
     typedef T value_type;
 
-    sq_free_vec() {};
-    sq_free_vec(const sq_free_vec<T>& cpy)
+    sque_free_vec() {};
+    sque_free_vec(const sque_free_vec<T>& cpy)
     {
         _size = cpy._size;
         _capacity = cpy._capacity;
@@ -132,7 +132,7 @@ public:
         _empty = allocate<uint32_t>(_empty_capacity);
         copyRange<uint32_t>(cpy._empty, cpy._empty + _empty_size, _empty);
     }
-    ~sq_free_vec()
+    ~sque_free_vec()
     {
         if (_capacity > 0)
         {
@@ -153,11 +153,11 @@ public:
         _empty = NULL;
     }
 
-    sq_free_vec<T>& operator=(const sq_free_vec<T>& cpy)
+    sque_free_vec<T>& operator=(const sque_free_vec<T>& cpy)
     {
         if (this == &cpy)
             return *this;
-        this->~sq_free_vec();
+        this->~sque_free_vec();
 
         _size = cpy._size;
         _capacity = cpy._capacity;

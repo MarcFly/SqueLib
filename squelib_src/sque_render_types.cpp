@@ -61,7 +61,7 @@ void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index
 
 void SQUE_MESH_SetLocations(SQUE_Mesh& mesh)
 {
-    sq_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
+    sque_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
 
     for (uint32_t i = 0; i < v_attribs.size(); ++i)
     {
@@ -79,7 +79,7 @@ void SQUE_MESH_SetLocations(SQUE_Mesh& mesh)
 // Getters ///////////////////////////////////////////////////////////////////////////////////////////////
 uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh& mesh)
 {
-    sq_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
+    sque_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
 
     for (uint32_t i = 0; i < v_attribs.size(); ++i)
         mesh.vertex_size += v_attribs[i].var_size * v_attribs[i].num_comp;
@@ -89,7 +89,7 @@ uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh& mesh)
 
 uint16_t SQUE_MESH_GetAttribSize(SQUE_Mesh& mesh, const char* name)
 {
-    sq_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
+    sque_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
 
     for (uint32_t i = 0; i < v_attribs.size(); ++i)
         if(strcmp(v_attribs[i].name, name) == 0)  
