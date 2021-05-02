@@ -383,7 +383,7 @@ public:
     void reserve(uint32_t new_capacity)
     {
         if (new_capacity < _capacity)
-            reallocate(new_capacity);        
+            reallocate(_data, _size, _capacity, new_capacity);        
     }
 
     void resize(uint32_t new_size)
@@ -435,7 +435,7 @@ public:
     list_node(const list_node<T>& node) 
     {
         prev = node.prev;
-        last = node.last;
+        next = node.next;
         _data = new T(*node._data); 
     }
     list_node(const T& value)
@@ -574,7 +574,7 @@ public:
 
     void push_back(const T& value)
     {
-        list_node<T>* new_node = new list_node<T>(value);
+        list_node<T>* new_node = new list_node<T>(value);   
         if (last != NULL) last->next = new_node;
         new_node->prev = last;
         last = new_node;
