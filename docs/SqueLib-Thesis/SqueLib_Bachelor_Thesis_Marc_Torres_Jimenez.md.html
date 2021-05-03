@@ -76,6 +76,9 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | Direct3D | Graphics API for interfacing on Microsoft Platforms such as Windows desktop PCs and XBox consoles, tagetting realtime 3D graphics. There are multiple versions, with the latest, DirectX12, focusing on a lower level approach to interfacing with hardware |
 | Vulkan | Low level graphics and computing API, oriented at high performance with 3D graphics applications, across multiple platforms |
 | Metal | Apple's low level graphics API for usage in iOS, iPadOS, macOS and tvOS (Apple's proprietaty Operative Systems) |
+| SDK | Software Development Kit, suite of tools for developing project under a certain specification (Example: Android SDK, for building Android Projects) |
+| Toolchain | Specific set of tools used for building a projects |
+
 
 
 <span class="pagebreak"></span>
@@ -666,7 +669,94 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 <!-- RUBRICA 2 - WIP -->
 
-# Cross-Platform C++
+# Development Plan
+
+Before delving deep into development, it is important to make clear cut decisions on how to approach the specific areas and which elements will be the building blocks for the subsequent projects. The following sections will give an insight to the initial decisions as well as the ongoing development process of ***SqueLib*** and ***SqueMaker***.
+
+## CMake
+
+In teh context of multiplatform development, there is a ton of options of IDEs and building pipelines to choose from. The experiecne gained previously from only working with Visual Studio for C++ can seem approachable in a cross-platform point of view, as there are a lot of base projects and extensions available for targetting popular platforms such as Android and Linux. The main problem in going back into Visual Studio is getting locked from the most popular build pipeline for C++ nowadays, used in most OSS projects.
+
+For the sake of progressing as well learning new tools for the trade, CMake seems the option for building the project on. Further explanation on the usage of CMake is provided in the following chapter.
+
+## SDL, RayLib and Rawdraw
+
+Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials for most imaginable platforms. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support, with RayLib getting constant updates and support for more platforms and programming language bindings. 
+
+Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for android seem outdated as of the latest releases available for both and more straightforward approaches would help in the development for that platform.
+
+Rawdraw on the other hand has a more "you do you" approach, just source code and a single example is available and its intended use (besides as a library) is that of learning. Being a C library and the compiler toolchain being way less entry level friendly, I decided to take it as a base for learning the steps to introducing myself but making it easier for a future self to do this introduction.
+
+## Libraries Used
+
+An introduction to the library or framework will be provided, as well as the reasons provided for its usage, or lack of it:
+
+### Rendering Graphics: OpenGL and OpenGLES
+
+OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D raster graphics, targeting the GPU in order to have hardware-accelerated rendering. Initially released in 1992 by Silicon Graphics Inc., it has been receiving first party support until 2017 with the 4.6 release, being developed by the Khronos Group since 2006.
+
+While taking part in the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most projects alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such a library that is cross-platform capable for the targeted platforms.
+
+OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
+
+The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the best, allowing for further simplicity in writing a portable OpenGL backend. As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
+
+The remaining differences between versions will be circumvented as how cross-platform issues should be dealt with, by writing backend specific code.
+
+### Context Management: EGL and GLFW
+
+In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platform interface between the Khronos Group rendering APIs and the operating systems windowing systems in order to allow the display of graphics.
+
+The use case in context management for both libraries is to take care of binding of surfaces and buffers to write to, synchronization of the rendering with the displays and enabling the acceleration of such operations with the underlying hardware.
+
+GLFW<sub>[#W18]</sub> has more functionality in creation of windows and taking care of input, the catch is that it is only available in desktop platforms. EGL is a native library to Android, which creates the first platform divide for taking care of different subsystems.
+
+### User Input: Android NDK and GLFW
+
+The big issue when handling user input between the proposed platforms is that they are completely different. Android input is touch based and in desktop platforms the keyboard and mouse combo are the most widely used. They are by no means incompatible but by default there are not many options that take care of them in a similar fashion. It was a clear area where a new cross-platform approach was needed.
+
+The Android NDK<sub>[#W21]</sub> is the provided API by Google in order to interact with Android devices in native C and C++ code. Most interaction to Android requires calling from Java environments, the NDK provides JNI, a Java Native Interface through which accesses the native systems. These native systems include the main input system.
+
+GLFW takes care of user input in desktop environments on a per window basis, meaning that you can set up direct access to what the user performs and receive that information when needed in each window created.
+
+### File Access: Native through C++ STL and Android NDK
+
+When developing games, getting hold of files is pretty straightforward, you have to load them into memory and then perform any complicated operations with other methods, the same way to write files to the system. 
+
+On Android subsystems the user does not have direct write access, special permissions are required and as such specific functions are required from the NDK in order to access and write files. In desktop environments, using plain C++ is the most straightforward way alongside some OS provided standard libraries.
+
+The meat of this system is to make it truly platform agnostic to the end user.
+
+
+## Libraries Not Used
+
+It is important to remark that there are many other open-source alternatives to most of the libraries that have been used or will be used for the main subsystems of this project. While the great majority are not covered here, most either could be interchangeable or require a lower level understanding of the required subsystem.
+
+The information on the unused libraries are simple reasons on why they were not used, with unfamiliarity being one of the main reasons not to delve too deep into them due to strict timelines.
+
+| Graphics APIs | Reason |
+|---|---|
+| Magnum Engine | Unfamiliarity and few entry level documentation |
+| Vulkan | Unfamiliarity and oriented to much lower level programming |
+| Ogre | Unfamiliarity and provides much more features for animation, scene, effects,etc, which are not required, bloating the project initially with higher entry cost |
+| Direct3D/DirectX | Support limited to Windows / UWP |
+
+| Context Management | Reason |
+|---|---|
+| WGL | Windows only support |
+| GLEW | Could have been an interchangeable option, but extensions are supported different in Android, incompatible with OpenGLES |
+
+!!! note
+    Most context management libraries take only part in generating the OpenGL context, as they should, leaving more work into taking care of managing windows through the native systems on Windows and Linux. Although in Windows that would have been more straightforward, due the high variance between distros in Linux, that would have been a great time cost.
+
+| Input Libraries | Reason |
+|---|---|
+| Gainput | Outdated Android toolchain, would have had a lot of costs for building on current versions |
+
+!!! note
+    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen in use in recent years. Given the approach of the project it did not seem fitting to use it as it would tie more dependencies to structuring data, which is already complicated enough for Android.
+
+# Introduction to Cross-Platform C++
 
 Being set up with the initial research on the project statement and values, the first step is to be able to get code working on all target platforms, as well as generating a comfortable framework from to which develop the subsequent projects.
 
@@ -764,11 +854,40 @@ Finally on **Figure 15** we can see that now the source folder becomes visibly c
 
 The previous part introduced to CMake in a way that work very easily with a console based application and nothing more to execute. On such desktop platforms, usually you don't have to worry too much about how you package your data, assets or libraries as long as are reachable from working directory or provided by the vendor. There is not actually a required way to package or build your application besides making sure it works.
 
-In order to build Android application, the usual way would be to build them using the designed tool for the task and native programming language. In that case we would be writing a Java/Kotlin application from Android Studio, but my requirement was to just code in C++ as to minimize the entry requirements form someone with a similar background, while giving an approach that opens up other development paths.
+In order to build Android application, the usual way would be to build them using the designed tool for the task and native programming language. In that case we would be writing a Java/Kotlin application from Android Studio, but my requirement was to just code in C++ as to minimize the entry requirements form someone with a similar background, while giving an approach that opens up new development paths.
 
-### Android NDK
+Parallel to the mainline platform, Google provides the Android SDK which has a suite of tools for compiling, packaging, debugging and many more things for Android projects with external toolchains such as CMake. With that one can provide their own way of compiling the source code as well as generating the necessary files required for a complete packaged app, then use the tools to finalize the process, install and run the application on the target Android device.
 
-#### Native App Glue
+A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of use the tools I am used to or foudn in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics and build framework for developing extremely portable applications written in C, the video<sub>[#W30]</sub> mentioning the portability to Android mentioned the unique requirement of writing C and modifying the build file.
+
+Given those premises and the fact the Android SDK comes with a C/C++ library to interface with the Android OS as well as C/C++ libraries called the Android NDK, it became the starting point for development.
+
+On the following steps, it will be explained the adaptations from Rawdraw Make build system to CMake, as well as making the minimal example run on Android OS.
+
+### Adapting Rawdraw Make build to CMake 
+
+For the sake of simplicity, Make is similar to grouping a bunch of scripts under functions and being able to call them as needed. Instead of having to build from command line doing every step, you write a script that has the required steps given some inputs, like a function, and then executes these steps when calling the referenced function.
+
+***Makefile Example: Creating the base folders for a project***
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+create_base_folders:
+    mkdir -p ./source
+    mkdir -p ./include
+    mkdir -p ./assets
+    mkdir -p ./builds
+    touch README.md
+    touch LICENSE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+make create_base_folders # Will create the folders and files on the directory where the Makefile is located
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CMake will be used in this case to generate Makefiles through which build the final application, Rawdraw's targets can be translate into CMake code. The generation and build steps are strictly separated as some parts are required by the CMake generation step and also required at build time. The variables or steps required at generation step will be converted into macros, that define global variables and paths accessible from the build step, which is translated into custom CMake targets.
+
+The required steps for building a C/C++ application are defined and adapted from Rawdraw Make to CMake functions, macros and custom targets in other to get a properly built application.
+
+### Adapting the Minimal Example for Android
 
 ### Compiling
 
@@ -782,86 +901,7 @@ In order to build Android application, the usual way would be to build them usin
 
 ## Minimal Example
 
-# Project Development
 
- it is important to make clear cut decisions on how to approach the specific areas and which elements will be the building blocks for the subsequent projects. The following sections will give an insight to the initial decisions as well as the ongoing development process of ***SqueLib*** and ***SqueMaker***.
-
-## SDL, RayLib and Rawdraw
-
-Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials for most imaginable platforms. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support, with RayLib getting constant updates and support for more platforms and programming language bindings. 
-
-Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for android seem outdated as of the latest releases available for both and more straightforward approaches would help in the development for that platform.
-
-Rawdraw on the other hand has a more "you do you" approach, just source code and a single example is available and its intended use (besides as a library) is that of learning. Being a C library and the compiler toolchain being way less entry level friendly, I decided to take it as a base for learning the steps to introducing myself but making it easier for a future self to do this introduction.
-
-## Libraries Used
-
-An introduction to the library or framework will be provided, as well as the reasons provided for its usage, or lack of it:
-
-### Rendering Graphics: OpenGL and OpenGLES
-
-OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D raster graphics, targeting the GPU in order to have hardware-accelerated rendering. Initially released in 1992 by Silicon Graphics Inc., it has been receiving first party support until 2017 with the 4.6 release, being developed by the Khronos Group since 2006.
-
-While taking part in the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most projects alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such a library that is cross-platform capable for the targeted platforms.
-
-OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
-
-The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the best, allowing for further simplicity in writing a portable OpenGL backend. As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
-
-The remaining differences between versions will be circumvented as how cross-platform issues should be dealt with, by writing backend specific code.
-
-### Context Management: EGL and GLFW
-
-In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platform interface between the Khronos Group rendering APIs and the operating systems windowing systems in order to allow the display of graphics.
-
-The use case in context management for both libraries is to take care of binding of surfaces and buffers to write to, synchronization of the rendering with the displays and enabling the acceleration of such operations with the underlying hardware.
-
-GLFW<sub>[#W18]</sub> has more functionality in creation of windows and taking care of input, the catch is that it is only available in desktop platforms. EGL is a native library to Android, which creates the first platform divide for taking care of different subsystems.
-
-### User Input: Android NDK and GLFW
-
-The big issue when handling user input between the proposed platforms is that they are completely different. Android input is touch based and in desktop platforms the keyboard and mouse combo are the most widely used. They are by no means incompatible but by default there are not many options that take care of them in a similar fashion. It was a clear area where a new cross-platform approach was needed.
-
-The Android NDK<sub>[#W21]</sub> is the provided API by Google in order to interact with Android devices in native C and C++ code. Most interaction to Android requires calling from Java environments, the NDK provides JNI, a Java Native Interface through which accesses the native systems. These native systems include the main input system.
-
-GLFW takes care of user input in desktop environments on a per window basis, meaning that you can set up direct access to what the user performs and receive that information when needed in each window created.
-
-### File Access: Native through C++ STL and Android NDK
-
-When developing games, getting hold of files is pretty straightforward, you have to load them into memory and then perform any complicated operations with other methods, the same way to write files to the system. 
-
-On Android subsystems the user does not have direct write access, special permissions are required and as such specific functions are required from the NDK in order to access and write files. In desktop environments, using plain C++ is the most straightforward way alongside some OS provided standard libraries.
-
-The meat of this system is to make it truly platform agnostic to the end user.
-
-
-## Libraries Not Used
-
-It is important to remark that there are many other open-source alternatives to most of the libraries that have been used or will be used for the main subsystems of this project. While the great majority are not covered here, most either could be interchangeable or require a lower level understanding of the required subsystem.
-
-The information on the unused libraries are simple reasons on why they were not used, with unfamiliarity being one of the main reasons not to delve too deep into them due to strict timelines.
-
-| Graphics APIs | Reason |
-|---|---|
-| Magnum Engine | Unfamiliarity and few entry level documentation |
-| Vulkan | Unfamiliarity and oriented to much lower level programming |
-| Ogre | Unfamiliarity and provides much more features for animation, scene, effects,etc, which are not required, bloating the project initially with higher entry cost |
-| Direct3D/DirectX | Support limited to Windows / UWP |
-
-| Context Management | Reason |
-|---|---|
-| WGL | Windows only support |
-| GLEW | Could have been an interchangeable option, but extensions are supported different in Android, incompatible with OpenGLES |
-
-!!! note
-    Most context management libraries take only part in generating the OpenGL context, as they should, leaving more work into taking care of managing windows through the native systems on Windows and Linux. Although in Windows that would have been more straightforward, due the high variance between distros in Linux, that would have been a great time cost.
-
-| Input Libraries | Reason |
-|---|---|
-| Gainput | Outdated Android toolchain, would have had a lot of costs for building on current versions |
-
-!!! note
-    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen in use in recent years. Given the approach of the project it did not seem fitting to use it as it would tie more dependencies to structuring data, which is already complicated enough for Android.
 
 # SqueLib Development
 
@@ -1022,6 +1062,9 @@ When working with SqueLib, it is intended for the library to take control of man
 
 [#W29]: Salary of non-public office worker. Instituto Nacional de Estadistica, 2017.
 <https://www.ine.es/jaxiT3/Datos.htm?t=10916>
+
+[#W30]: Rawdraw Android. CNLohr, 2020.
+<https://www.youtube.com/watch?v=Cz_LvaN36Ag>
 
 
 
