@@ -2,21 +2,27 @@
 #------------------------------------------------------------------------------------------------
 # MAKING KEYSTORE FILE -> CONVERT INTO A TARGET
 #------------------------------------------------------------------------------------------------
-if(NOT ALIASNAME)
-    message(STATUS "Setting up aliasname")
-    set(ALIASNAME standkey)
-endif()
-if(STOREPASS)
-    message(FATAL_ERROR "Password/Storepass for key not passed")
-endif()
-set(DNAME "CN=marcfly.github.io, OU=ID, O=Example?, L=Torres, S=Marc, C=ES")
-if(NOT STOREPASS)
-    set(STOREPASS ${ALIASNAME})
-endif()
-set(KEYSTOREFILE "./my-release-key.keystore")
+macro(make_keystore_file ALIAS_NAME)
+    if(ALIAS_NAME STREQUAL "")
+        if(NOT ALIASNAME)
+            message(STATUS "Setting up alias name")
+            set(ALIASNAME standkey)
+        endif()
+    else()
+        set(ALIASNAME ${ALIAS_NAME})
+    endif()
+    if(STOREPASS)
+        message(FATAL_ERROR "Password/Storepass for key not passed")
+    endif()
+    set(DNAME "CN=marcfly.github.io, OU=ID, O=Example?, L=Torres, S=Marc, C=ES")
+    if(NOT STOREPASS)
+        set(STOREPASS ${ALIASNAME})
+    endif()
+    set(KEYSTOREFILE "./my-release-key.keystore")
 
-# This is currently set to generate a new keyfile everytime
-execute_process(COMMAND keytool -genkey -v -keystore ${KEYSTOREFILE} -alias ${ALIASNAME} -keyalg RSA -keysize 2048 -validity 10000 -storepass ${STOREPASS} -keypass ${STOREPASS} -dname ${DNAME})
+    # This is currently set to generate a new keyfile everytime
+    execute_process(COMMAND keytool -genkey -v -keystore ${KEYSTOREFILE} -alias ${ALIASNAME} -keyalg RSA -keysize 2048 -validity 10000 -storepass ${STOREPASS} -keypass ${STOREPASS} -dname ${DNAME})
+endmacro()
 #------------------------------------------------------------------------------------------------
 # ANDROID INSTALL / PUSH / UNINSTALL / MAKEAPK / ...
 #------------------------------------------------------------------------------------------------

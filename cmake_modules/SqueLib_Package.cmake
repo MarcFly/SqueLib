@@ -1,18 +1,23 @@
+# Proper Includes, now with macros so they don't auto execute!
+
+include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
+include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
+include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
+
 macro(SqueLib_PrepareBuild target orgName srcFiles)
     #add_compile_definitions(${CMAKE_BUILD_TYPE}) #Release is a common word, should be names something else... MiniAudio has issue!
     if(ToAndroid)
         add_compile_definitions(ANDROID)
         add_library(${target} SHARED "${srcFiles}")
 
-        include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
-        include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
+        setup_android_sdk_vars()
+        make_keystore_file("") # Generating the keystore file takes TOO MUCH TIME
         set_app_properties(${target} ${orgName} 29)
         set_android_link_flags()
         set_android_compile_flags()    
         set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})    
         link_android_libc(${target} ${NDK} ${OS_NAME} ${ANDROIDVERSION})
         message(STATUS "Slow 3")
-        include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
         squelib_add_targets(${target})
         message(STATUS "Slow 4")        
     elseif(ToWindows OR ToLinux)
