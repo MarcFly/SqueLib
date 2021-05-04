@@ -78,6 +78,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | Metal | Apple's low level graphics API for usage in iOS, iPadOS, macOS and tvOS (Apple's proprietaty Operative Systems) |
 | SDK | Software Development Kit, suite of tools for developing project under a certain specification (Example: Android SDK, for building Android Projects) |
 | Toolchain | Specific set of tools used for building a projects |
+| APK | Android Package Kit, uncrompressed packet type used for denominating android application |
 
 
 
@@ -699,7 +700,10 @@ While taking part in the Degree in Design and Development of Videogame, OpenGL h
 
 OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
 
-The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the best, allowing for further simplicity in writing a portable OpenGL backend. As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
+The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the best, allowing for further simplicity in writing a portable OpenGL backend. A counterargument to deciding on said version of OpenGLES would be that it does not cover enough devices, which as of checking would be at around 68%<sub>[#W34]</sub> which I personally think is plenty and will only be increasing with time. Having said that, my focus is not on targetting content consumers but developers that after being introduced could very well adapt a different rendering pipeline with earlier versions of OpenGLES.
+
+As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
+
 
 The remaining differences between versions will be circumvented as how cross-platform issues should be dealt with, by writing backend specific code.
 
@@ -868,24 +872,28 @@ On the following steps, it will be explained the adaptations from Rawdraw Make b
 
 For the sake of simplicity, Make is similar to grouping a bunch of scripts under functions and being able to call them as needed. Instead of having to build from command line doing every step, you write a script that has the required steps given some inputs, like a function, and then executes these steps when calling the referenced function.
 
-***Makefile Example: Creating the base folders for a project***
+***Makefile Example: Creating the minimum items required for a template project***
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
 create_base_folders:
     mkdir -p ./source
     mkdir -p ./include
     mkdir -p ./assets
     mkdir -p ./builds
+
+create_base_files:
     touch README.md
     touch LICENSE
+
+init_project: create_base_folders create_base_files # Functions can call other ones as arguments/dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-make create_base_folders # Will create the folders and files on the directory where the Makefile is located
+make init_project # Creates the base folders and files for a project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CMake will be used in this case to generate Makefiles through which build the final application, Rawdraw's targets can be translate into CMake code. The generation and build steps are strictly separated as some parts are required by the CMake generation step and also required at build time. The variables or steps required at generation step will be converted into macros, that define global variables and paths accessible from the build step, which is translated into custom CMake targets.
 
-The required steps for building a C/C++ application are defined and adapted from Rawdraw Make to CMake functions, macros and custom targets in other to get a properly built application.
+The required steps for building a C/C++ application are defined and adapted from Rawdraw Make to CMake functions, macros and custom targets in other to get a properly built application. 
 
 ### Adapting the Minimal Example for Android
 
@@ -895,13 +903,46 @@ The required steps for building a C/C++ application are defined and adapted from
 
 ## Debugging
 
-### Linux: GDB
+Although I am a pretty heavy  on log based debugging, I believe it's not the best solution but only the simplest available. After all, cryptic crash messages as well as fishing for errors with carefully places logs, become a mess and almost close to divination when debugging unknown elements. For that reason a fast entry to available debugging capabilities is needed.
+
+On Windows the decision was obvious as CMake can directly generate the required project files for a Visual Studio solution, then it is just needed to keep developing as usual. The issue is with the newly adopted platforms: Linux and Android.
+
+### Linux: GDB and KDevelop
+
+The first mention of debuggers in Linux found ended to be GDB, a command line yet visual debugger utility. With the only requirements being a debug compiled C/C++ application, not printing to console every from code (avoid anything that goes into a _printf_) and getting used to a couple commands, seemed a good fit for getting started fast with a new platform. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+gdb "path/to/executable"
+layout next # Open the file debugger view
+run # start execution
+b / breakpoint <number> # setup a breakpoint at line
+d / delete # delete all breakpoints
+c / continue # continue execution
+n / next # execute next line
+s / step # step into functions
+u / until # continue execution until a loop is exited if you are in a loop
+p / print <variable_name> # print the value contained in a variable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As can be seen in **Figure 16**, the experience is pretty barebones but much better than having to debug by just getting default crash messages, GDB will point out where and when these crashes ocurr.
+
+![Figure [figures]: Example GDB view of main file while executing a sample application from SqueLib.](images/gdb_example_pong.png)
+
+At the same time, getting into a command line debugging tool is still quite a jump from Visual Studio. Luckily the chosen Linux distro, KUbuntu, comes with an extensive marketplace and applications which include a lightweight C/C++ IDE with direct support for CMake based projects, lowering the entry requirement to Linux development.
+
+The process of importing and debugging a CMake based project just requires the user to know the desired initial commands from which one needs to call CMake with and to create an executable profile for the application, process which is explained under the *KDevelop Documentation Manual*<sub>[#W31]</sub> under the [*Sessions and Projects/Seteting up a Session and Importing an existing project/Option 2*](https://userbase.kde.org/KDevelop4/Sessions_and_projects#Setting_up_a_session_and_importing_an_existing_project). The main development environment in KDevelop is shown under **Figure 17**:
+
+![Figure [figures]: Sample application being debugged from KDevelop.](images/kde_example_pong.png)
 
 ### Android: APK Profiler
 
-## Minimal Example
+The simples way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which is pretty handy in the way that you do not require a fully fledged Android Studio project to debug it. Android Studio has a built in profiler/debugger for APKs that have been built with the debug symbols, only requiring access to the original debugging files which are either inside the apk itself and can be extracted from or are already available on the system after building the project through external means.
 
+Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer as the last developed x86 based android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, on of the reasons why the final build process will only target 64bit ARM systems (less built time and less worries).
 
+The solution is passthrough debugging. As long as you have a physical device in which you can install your built application and a USB cable (or WIFI on Android 11 or higher), it is possible to link the process execution from the device to Android Studio and debug in realtime.
+
+<!-- Image of my phone and Android Debugging at the same time... -->
 
 # SqueLib Development
 
@@ -1066,7 +1107,17 @@ When working with SqueLib, it is intended for the library to take control of man
 [#W30]: Rawdraw Android. CNLohr, 2020.
 <https://www.youtube.com/watch?v=Cz_LvaN36Ag>
 
+[#W31]: KDevelop. KDE, 1999.
+<https://userbase.kde.org/KDevelop4/Manual>
 
+[#W32]: Asus Zenfone 2 Specs. Asus, 2015.
+<https://www.gsmarena.com/asus_zenfone_2_ze551ml-6917.php>
+
+[#W33]: Intel Atom discontinuation for Android. Article by Daniel Moran, 2016.
+<https://www.xda-developers.com/intel-myths-debunked-atom-is-not-dead-and-not-leaving-mobile/>
+
+[#W34]: Android Platform Distribution. Google, 2021.
+<https://developer.android.com/about/dashboards/index.html#OpenGL>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>
