@@ -1,11 +1,13 @@
 # Proper Includes, now with macros so they don't auto execute!
 
-include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
-include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
-include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
+
 
 macro(SqueLib_PrepareBuild target orgName srcFiles)
     #add_compile_definitions(${CMAKE_BUILD_TYPE}) #Release is a common word, should be names something else... MiniAudio has issue!
+    include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
+    include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
+    include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
+
     if(ToAndroid)
         add_compile_definitions(ANDROID)
         add_library(${target} SHARED "${srcFiles}")
