@@ -12,8 +12,9 @@ endmacro()
 # SETUP ANDROID SPECIFIC COMPILE OPTIONS + PROCESSES
 #------------------------------------------------------------------------------------------------
 macro(set_android_link_flags)
-    set(ANDROID_LINK_FLAGS " -shared -uANativeActivity_onCreate -Wl --gc-sections -s ") # REQUIRED FLAGS
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LINK_FLAGS} ${ARGN} ")
+    set(ANDROID_LINK_FLAGS " -shared -uANativeActivity_onCreate ") # REQUIRED FLAGS
+    set(RECOMMENDED_LINK_FLAGS " -Wl -s --gc-sections ")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LINK_FLAGS} ${RECOMMENDED_LINK_FLAGS} ${ARGN} ")
     message(STATUS "Setting Link Flags for ANDROID: ${CMAKE_EXE_LINKER_FLAGS}")
     message(STATUS)
 endmacro()

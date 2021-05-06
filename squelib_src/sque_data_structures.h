@@ -174,7 +174,7 @@ public:
     T& operator[] (const uint32_t index) { return (GetFromIndex(index)->_data); }
     const T& operator[] (const uint32_t index) const { return (GetFromIndex(index)->_data); }
     T* begin() const { return &GetFromIndex(0)->_data; }
-    T* end() const { return &(_nodes[size]._data); }
+    T* end() const { return &(_nodes[_size]._data); }
     uint32_t size() const { return _size; }
     
     uint32_t push(const T& value)

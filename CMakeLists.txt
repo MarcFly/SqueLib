@@ -138,7 +138,7 @@ set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 if(ToAndroid)
     add_compile_definitions(ANDROID)
     include(${SQUE_cmake}/FindAndroidSDKVars.cmake)
-
+    setup_android_sdk_vars()
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     target_sources(SqueLib PUBLIC ${app_glue}) # Add Android Files required 
 
