@@ -79,7 +79,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | SDK | Software Development Kit, suite of tools for developing project under a certain specification (Example: Android SDK, for building Android Projects) |
 | Toolchain | Specific set of tools used for building a projects |
 | APK | Android Package Kit, uncrompressed packet type used for denominating android application |
-
+| ADB<sub>[#W46]</sub> | Android Debug Bridge, tool for interfacing with Android physical devices |
 
 
 <span class="pagebreak"></span>
@@ -785,7 +785,7 @@ Under **Figure 13**, the base layout of the folder which will be expanded upon, 
 * ./SourceFolder                              *
 *       |                                     *
 *       '---/CMakeLists.txt                   *
-*       |
+*       |                                     *
 *       '---/main.cpp                         *
 ***********************************************
 [Figure [diagram]: Base Folder Structure]
@@ -870,7 +870,7 @@ On the following steps, it will be explained the adaptations from Rawdraw Make b
 
 ### Adapting Rawdraw Make build to CMake 
 
-For the sake of simplicity, Make is similar to grouping a bunch of scripts under functions and being able to call them as needed. Instead of having to build from command line doing every step, you write a script that has the required steps given some inputs, like a function, and then executes these steps when calling the referenced function.
+For the sake of simplicity, Make is similar to grouping a bunch of scripts under functions and being able to call them as needed. Instead of having to build from command line doing every step you write a script that has the required steps given some inputs, like a function, and then executes these steps when calling the said function.
 
 ***Makefile Example: Creating the minimum items required for a template project***
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
@@ -884,22 +884,334 @@ create_base_files:
     touch README.md
     touch LICENSE
 
-init_project: create_base_folders create_base_files # Functions can call other ones as arguments/dependencies
+# Functions can call other ones as arguments/dependencies
+init_project: create_base_folders create_base_files 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-make init_project # Creates the base folders and files for a project
+# Creates the base folders and files for a project
+make init_project 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CMake will be used in this case to generate Makefiles through which build the final application, Rawdraw's targets can be translate into CMake code. The generation and build steps are strictly separated as some parts are required by the CMake generation step and also required at build time. The variables or steps required at generation step will be converted into macros, that define global variables and paths accessible from the build step, which is translated into custom CMake targets.
 
-The required steps for building a C/C++ application are defined and adapted from Rawdraw Make to CMake functions, macros and custom targets in other to get a properly built application. 
+The required steps for building a C/C++ application are defined and adapted from Rawdraw Make to CMake functions, macros and custom targets in other to get a properly built application. The original make files can be found at <!-- Link to Rawdraw Android Makefile --> and the following steps will provide insight on the modules in which the steps are divided to perform the build step for Android.
 
-### Adapting the Minimal Example for Android
+Although usually it is not recommended to use macros over functions, for the sake of simplicity earlier on and not having to worry about not being able to find specific variables, most 
 
-### Compiling
+#### _FindAndroidSDKVars.cmake_
 
-### Packaging
+The first step is to get the directories and variables required to interface, as it is englobed in a single macro because it makes sense to get these variable out in one go, the epxlanation will be divided step by step in the macro ***setup_android_sdk_vars***:
+
+The OS string required to where the files are specified at the [Overview](https://developer.android.com/ndk/guides/other_build_systems#overview)<sub>[#W35]</sub> page for external build systems.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+# Assume from Linux, else change OS Android naming to Windows.
+set(OS_NAME linux-x86_64)
+
+if(WIN32)
+    set(OS_NAME windows-x86_64)
+endif()
+
+message(STATUS "Building from " ${OS_NAME})
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Then it is required to find the directory in which the SDK, NDK and Build Tools are placed. For doing so there are two helper functions called:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~bash
+first_exists("${list_of_directories}")
+ - Given a list of directories, return the first that exists.
+
+subdirlist(var_to_define ${directory_to_search_subdirectories})
+ - Creates a list with all the subdirectories existing in a directory.
+~~~~~~~~~~~~~~~~~~~~~~~~~
+These two are used in conjunction to find if no Android environment variables are set or passed as arguments, and the default Android tools are installed in frequently used paths. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+# Check that Environment Variables for the SDK exist or try to find them under standard directiores
+# All Environment variable checks can be overriden by passing them as arguments when invoking cmake
+if(NOT ANDROIDSDK)
+    set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK)
+    first_exists(ANDROIDSDK "${SDK_DIRS}")
+endif()
+
+# Search for NDK inside SDK
+if(NOT NDK)
+    if($ENV{NDK})
+        message(STATUS "NDK already defined at ${NDK}")
+        set(NDK $ENV{NDK})
+    elseif($ENV{ANDROID_NDK})
+        message(STATUS "NDK already defined at $ENV{ANDROID_NDK}")
+        set(NDK $ENV{ANDROID_NDK})
+    elseif($ENV{ANDROID_NDK_HOME})
+        message(STATUS "NDK already defined at $ENV{ANDROID_NDK_HOME}")
+        set(NDK $ENV{ANDROID_NDK_HOME})
+    else()
+        set(NDK_DIRS ${ANDROIDSDK}/ndk ${ANDROIDSDK}/ndk-bundle)
+        first_exists(NDK_G "${NDK_DIRS}")
+        subdirlist(NDK_L ${NDK_G})
+        first_exists(NDK "${NDK_L}")
+    endif()
+endif()
+
+# Search for Build Tools inside SDK
+if(NOT BUILD_TOOLS)
+    first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
+    if(NOT EXISTS ${BT_EXISTS})
+        message(FATAL_ERROR "Build tools folder not found")
+    endif()
+    subdirlist(BT_Vrs ${BT_EXISTS})
+    first_exists(BUILD_TOOLS "${BT_Vrs}")
+endif()
+if(NOT AAPT)
+    set(AAPT ${BUILD_TOOLS}/aapt)
+endif()
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A specific case in the build tools is ADB, because when working through the WSL you can invoke the windows version of ADB to get access to the host Windows machine USB ports to interface with your physical device but not from the Linux ADB inside the WSL distro.
+
+As the previous tools, should it be defined then it will not search else it will be set to the default installation paths.
+
+~~~~~~~~~~~~~~~~~~~~~~~bash
+if(NOT ADB)
+    if(WSL)
+        set(ADB ${ANDROIDSDK}/windows/platform-tools/adb.exe)
+    else()
+        set(ADB ${ANDROIDSDK}/platform-tools/adb)
+    endif()
+endif()
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Finally a couple debug messages to make sure everything is working as intended, and then print the found locations. Should any directory be missing, the build process must stop.
+
+~~~~~~~~~~~~~~~~~~~~~~~bash
+# Check that everything was found
+if(NOT EXISTS ${ANDROIDSDK})
+    message(FATAL_ERROR "ANDROID SDK NOT FOUND")
+endif()
+if(NOT EXISTS ${NDK})
+    message(FATAL_ERROR "ANDROID NDK NOT FOUND")
+endif()
+if(NOT EXISTS ${BUILD_TOOLS})
+    message(FATAL_ERROR "ANDROID BUILD_TOOLS NOT FOUND")
+endif()
+
+message(STATUS ${ANDROIDSDK})
+message(STATUS ${NDK})
+message(STATUS ${BUILD_TOOLS})
+message(STATUS)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### _SetupAndroidEnv.cmake_
+
+For building an Andorid application with an external tooclhain, the NDK provides calls to the compiler used by Android Studio depending on the version and OS using. Besides which compiler/linker pair to use, there are some specific compile options that are either required or recommended. Finally, for ease of use with the library later on, there are some utilities for linking with the default libraries.
+
+Such steps are separated into different macros to understand more clearly which part of the build process does what, instead of having it mangled up in a full macro in such a complicated step:
+
+##### (macro) set_app_properties(appName orgName androidVer)
+
+There are some variables that are of general use in other steps as well used in later custom targets for the packaging step, for this reaseon they are set during the build process as they depend on the target application.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+set(APPNAME '"${appName}"')
+set(ORG_NAME "${orgName}")
+set(LABEL ${appName})
+set(APKFILE "${appName}.apk")
+set(PACKAGENAME "org.${orgName}.${appName}")
+set(ANDROIDVERSION ${androidVer})
+set(ANDROIDTARGET ${androidVer})
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### (macro) set_android_link_flags() & set_android_compile_flags()
+
+This pair of functions define the required and recommended options for building an application. As these options can be set in multiple ways within CMake, it is better to explain them directly and why are they needed or recommended:
+
+***Compiler Flags [#W37]:***
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+NEEDED
+ * -m64: Target a 64bit architechture.
+
+RECOMMENDED
+ * -fPIC: force Position Independent Code, meaning that there are no issues if the code is loaded in addresses different than set (if they are specified or required for some reason).
+ * -Ofast/O0: Optimization level, my defaults are fast for Release and 0 for Debug (force keep all debug symbols).
+ * -ffunction-sections: Set each function to have a specific section when compiled into binary form.
+ * -fdata-sections: Set each variable and structure to have a specific section when compiled into binary form.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These two last options are required for enabling garbage collection of unused data and functions which may reduce the binary size considerably, as well as possibly minimally increasing performance at the cost of minimally increasing binary size and compile times. For a better explanation of said optiosn I refer to the posts [#W38] and [#W39] about these and other options.
+
+***Linker Flags [#W36]:***
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+NEEDED
+ * -shared: Make sure the target is compiled into a shared library, which is needed for Native App linking.
+ * -uANativeActivityOnCreate:  Undefine default ANativeActivityOnCreate definition to be replaced with the one coming from the Android NDK, making the application entry towards your own "android_main"
+
+RECOMMENDED
+ * -Wl: Activates linker warnings
+ * --gc-sections: Enables garbage collection for unsudes functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### (macro) set_android_compiler(NDK_PATH OS_USED, ANDR_V)
+
+Set the variables to where the C and C++ compiler commands are in the Android NDK.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+set(CMAKE_C_COMPILER "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/bin/aarch64-linux-android${ANDR_V}-clang")
+set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}++")
+if(WIN32)
+    set(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}.cmd")
+    set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}.cmd")
+endif()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### (macro) link_android_all_libs(target NDK_PATH OS_USED ANDR_V)
+
+Given a targeto to build, link to the libraries required for development of a default application, needing: Display, Rendering, Sound, Standard Library, ADB Logging and the Android Library.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+set(ARM_LIBS "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/lib")
+execute_process(COMMAND cp "${ARM_LIBS}/aarch64-linux-android/libc++_shared.so ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a")
+set(LIBLINK "${ARM_LIBS}/aarch64-linux-android/${ANDR_V}")
+target_link_libraries(${target} PUBLIC 
+    "${LIBLINK}/../libc++_shared.so"
+    "${LIBLINK}/libm.so"
+    "${LIBLINK}/libnativewindow.so"
+    "${LIBLINK}/libandroid.so"    
+    "${LIBLINK}/libEGL.so"
+    "${LIBLINK}/libGLESv3.so"
+    "${LIBLINK}/liblog.so"
+    "${LIBLINK}/libOpenSLES.so"
+    atomic
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### (macro) include_android(target NDK_PATH OS_USED)
+
+Given a target to build, include the directories where the android library include files are as well as the native app library.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+set(NDKINCLUDE "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/include")
+target_include_directories(${target} PUBLIC 
+    ${NDKINCLUDE}
+    "${NDKINCLUDE}/aarch64-linux-android"
+    "${NDK_PATH}/sources/android/native_app_glue"
+    "${NDK_PATH}/sources/android/cpufeatures"
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### _AndroidInstallTargets.cmake_
+
+Finally, in order to get the application packaged and installed into a physical Android device is divided in different steps that should not be invoked from the CMake generation step. Instead, it is after the build step is performed that the user should call them after the intended application target.
+
+This can be done by specifying the intended target to build first and then the required steps, or call make after calling a default build from cmake which will target directly the last target defined.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+cmake --build <dir> -target Application -target uninstall -target install
+
+OR
+
+cmake --build <dir>
+make uninstall push
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The documentation for generating custom commands in CMake can be found at [#W40] but here is the gist of my usage:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+add_custom_target(<name_of_target>
+    DEPENDS 
+        Other_Targets
+        ...
+    COMMAND List_of_commands_to_execute
+    ...
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Each target will have a short explanation, a list of dependencies if there are and a list of commands to execute to complete the target:
+
+##### AndroidManifest.xml
+
+Remove a previous instance of the manifest document, creates a copy of a template manifest provided and substitutes the environment variables setup<sub>[#W41]</sub>.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+COMMANDS
+    rm -rf ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml
+    cp ${SqueLib_defaults}/AndroidSpecific/AndroidManifest.xml.template ${CMAKE_BINARY_DIR}/makecapk
+    PACKAGENAME=${PACKAGENAME} 
+    ANDROIDVERSION=${ANDROIDVERSION} 
+    ANDROIDTARGET=${ANDROIDTARGET} 
+    APPNAME=${target}
+    LABEL=${LABEL}
+    DEBUGGABLE=${debuggable}
+    envsubst '$$ANDROIDTARGET $$ANDROIDVERSION $$APPNAME $$PACKAGENAME $$LABEL $$DEBUGGABLE' 
+            < ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml.template 
+            > ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml
+
+    rm -rf ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml.template
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### makecapk.apk
+
+Packs<sub>[#W42], [#W44]</sub> and signs<sub>[#W43], [#W45]</sub> the application into an Android recognized format (APK). During the process, some intermediate files are created and removed (_rm -rf_ command).
+
+One specific thing that is note done in this step but part of the CMake build is packaging the resources. Because in desktop platofrms, usually the relative path sits directly on the working directory but in Android there is a specific folder structure, a separate function that the user is set so that the assets used are copied onto the final build directory.
+
+On Android, such directiories are _/assets_ and _/res_ (resources). Resources are required by the package whereas Assets are custom data used by the application, which can be loaded but not modified on written to.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+DEPENDENCIES
+    AndroidManifest.xml
+
+COMMANDS
+    rm -rf ${CMAKE_BINARY_DIR}/temp.apk
+    @echo "Packaging application..."
+    ${AAPT} package -f -F ${CMAKE_BINARY_DIR}/temp.apk -I ${ANDROIDSDK}/platforms/android-${ANDROIDVERSION}/android.jar -M ${CMAKE_BINARY_DIR}/makecapk/AndroidManifest.xml -S ${CMAKE_BINARY_DIR}/makecapk/res -A ${CMAKE_BINARY_DIR}/makecapk/assets -v --target-sdk-version ${ANDROIDTARGET}
+    unzip -o ${CMAKE_BINARY_DIR}/temp.apk -d ${CMAKE_BINARY_DIR}/makecapk
+    rm -rf ${CMAKE_BINARY_DIR}/makecapk.apk
+    @echo "Compressing into apk..."
+    cd ${CMAKE_BINARY_DIR}/makecapk && zip -D9r ${CMAKE_BINARY_DIR}/makecapk.apk .
+    @echo "Signing apk..."
+    jarsigner -sigalg SHA1withRSA -digestalg SHA1 -verbose -keystore ${KEYSTOREFILE} -storepass ${STOREPASS} ${CMAKE_BINARY_DIR}/makecapk.apk ${ALIASNAME}
+    rm -rf ${CMAKE_BINARY_DIR}/${APKFILE}
+    @echo "Aligning apk..."
+    ${BUILD_TOOLS}/zipalign -v 4 ${CMAKE_BINARY_DIR}/makecapk.apk ${CMAKE_BINARY_DIR}/${APKFILE}
+    rm -rf ${CMAKE_BINARY_DIR}/temp.apk
+    rm -rf ${CMAKE_BINARY_DIR}/makecapk.apk
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### uninstall
+
+Remove the application from the physical device. Nothing happens if the application is not already installed.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+COMMANDS
+    COMMAND @echo "Uninstalling " ${PACKAGENAME}
+    -${ADB} uninstall ${PACKAGENAME}
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### push
+
+Install the application on the target device.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+DEPENDENCIES
+    makecapk.apk
+COMMANDS
+    @echo "Installing " ${PACKAGENAME}
+    ${ADB} install -r ${CMAKE_BINARY_DIR}/${APKFILE}
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### cleanup
+
+Explicitly remove all temporary files.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+COMMANDS
+    @echo "Cleaning temporary files..."
+    -rm -rf temp.apk makecapk.apk makecapk ${APKFILE}
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Adapting the Minimal Example source code for Android
 
 ## Debugging
 
@@ -932,7 +1244,7 @@ At the same time, getting into a command line debugging tool is still quite a ju
 
 The process of importing and debugging a CMake based project just requires the user to know the desired initial commands from which one needs to call CMake with and to create an executable profile for the application, process which is explained under the *KDevelop Documentation Manual*<sub>[#W31]</sub> under the [*Sessions and Projects/Seteting up a Session and Importing an existing project/Option 2*](https://userbase.kde.org/KDevelop4/Sessions_and_projects#Setting_up_a_session_and_importing_an_existing_project). The main development environment in KDevelop is shown under **Figure 17**:
 
-![Figure [figures]: Sample application being debugged from KDevelop.](images/kde_example_pong.png)
+![Figure [figures]: Sample application being debugged from KDevelop.](images/kdevelop_example_pong.png)
 
 ### Android: APK Profiler
 
@@ -948,21 +1260,57 @@ The solution is passthrough debugging. As long as you have a physical device in 
 
 <!-- Explanation of waht should the core workflow should be and what are the expected capailities -->
 
-When working with SqueLib, it is intended for the library to take control of managing the core of the applicatio
+When working with SqueLib, it is intended for the library to take control of the initialization process of the application, meaning the main window, render and input. At the same time facilities for interfacing with said module are to be provided in a simple and easy to implement manner. Under **Figure 18** the expected architecture of the library is shown:
+
+***************************************************************************
+* .----------------------------------------------------------------------.*
+* | .----------------------.  .----------------------------------------. |*
+* | | .-------.   .------. |  | .-------. .-------------. .----------. | |*
+* | | |Display|   |Render| |  | |Logging| |Asset Loading| |Structures| | |*
+* | | '-------'   '------' |  | '-------' '-------------' '----------' | |*
+* | |                      |  |                                        | |*
+* | | .----------. .-----. |  | .-------------. .-----. .------------. | |*
+* | | |Filesystem| |Input| |  | |Serialization| |Timer| | Algorithms | | |*
+* | | '----------' '-----' |  | '-------------' '-----' '------------' | |*
+* | |         . . .        |  |                  . . .                 | |*
+* | '----------------------'  '----------------------------------------' |*
+* |            Core                             Utilities                |*
+* '----------------------------------------------------------------------'*
+***************************************************************************
+[Figure [diagram]: Expected material provided by SqueLib.]
+
+
+Some modules' requirements can change as they are developed, there may be required extra modules or integration of other libraries for other tasks. The objective of SqueLib is to provide the base required to get yourself up and running easily in the target platforms and understand how to deal with cross-platform pitfalls. For that latter reason there is some initial room for further integrations that are found to be required.
 
 ## Core Library
 
-### Initialization
+### Window Creation
+
+### Input Management
+
+#### Callback System
+
+#### Keyboard and Mouse
+
+#### Touch Input and Gestures
+
+### Render Pipeline
+
+#### Mesh Buffers
+
+#### Textures
+
+#### Shaders
+
+#### Framebuffers
+
+### File Management
+
+## Utilities
 
 ### Logging
 
-### SQUE_Timer
-
-### Android Specific
-
-#### Permissions
-
-#### Resume and Go to Background
+### Timer
 
 ### Data Structures
 
@@ -974,13 +1322,26 @@ When working with SqueLib, it is intended for the library to take control of man
 
 ### Sorting Algorithms
 
-## Window Creation
+### Asset Loading
 
-## Input Management
+### Serialization
 
-## Render Pipeline
+## Additional Implementations
 
-## File Management
+### ImGui Backend for SqueLib
+
+### PCG
+
+## Extra libraries
+
+The following libraries can be built with SqueLib by defining their required options, provided in the _/extra_ directory and will help with frequent uses for application development:
+
+| Library | CMake Option | Short Description |
+|---|---|---|
+| SoLoud<sub>[#W47]</sub> | *WITH_SOLOUD* | Very simple yet powerful audio engine with a plethora of backends. Recommended use with the MiniAudio backend which is included and works in multiple platforms including Android, Windows and most major Linux Distros. |
+| GLMath<sub>[#W48]</sub> | *WITH_GLM* | Math library geared towards OpenGL use, with classes and operation for vectors, quaternions, matrices and mostly every use case found in computer graphics. |
+| MMGR<sub>[#W49]</sub> | *Debug* AND *WITH_MMGR* | Single threaded memory manager, which outputs the allocations and deallocation pairs to make sure memory is properly kept in check. |
+| Dear ImGui<sub>[#W50]</sub> | *WITH_IMGUI* | High performance Immediate Mode User Interface library written in platform agnostic C++ |
 
 ## Extending SqueLib
 
@@ -1118,6 +1479,54 @@ When working with SqueLib, it is intended for the library to take control of man
 
 [#W34]: Android Platform Distribution. Google, 2021.
 <https://developer.android.com/about/dashboards/index.html#OpenGL>
+
+[#W35]: Using the NDK with other build Systems. Google, 2021 (last update).
+<https://developer.android.com/ndk/guides/other_build_systems#overview>
+
+[#W36]: GNU Linker Documentation. GNU, 2009.
+<https://linux.die.net/man/1/ld>
+
+[#W37]: GNU Compiler Option Index. GNU, 2001.
+<https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html> 
+
+[#W38]: Best and Worst Compiler Flags for Embedded Systems. Chris Coleman, 2019.
+<https://interrupt.memfault.com/blog/best-and-worst-gcc-clang-compiler-flags#-ffunction-sections--fdata-sections----gc-sections>
+
+[#W39]: So what exactly is -ffunction-sections and how does it reduce binary size?. Vidar Holen, 2018.
+<https://www.vidarholen.net/contents/blog/?p=729>
+
+[#W40]: CMake Documentation: add_custom_target. Kitware, 2021.
+<https://cmake.org/cmake/help/latest/command/add_custom_target.html>
+
+[#W41]: Envsubst Documentation. GNU, 2020.
+<https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html>
+
+[#42]: AAPT2 Documentation. Google, 2020.
+<https://developer.android.com/studio/command-line/aapt2#link_options>
+
+[#43]: Jarsigner Documentation. Oracle, 2020.
+<https://docs.oracle.com/javase/7/docs/technotes/tools/windows/jarsigner.html>
+
+[#44]: Zip Linux Documenation. Info-ZIP, 2008.
+<https://linux.die.net/man/1/zip>
+
+[#45]: Zipalign. Google, 2021/
+<https://developer.android.com/studio/command-line/zipalign>
+
+[#46]: Android Debug Bridge Documentation. Google, 2021.
+<https://developer.android.com/studio/command-line/adb>
+
+[#47]: SoLoud. Jari Komppa, 2020.
+<https://sol.gfxile.net/soloud/>
+
+[#48]: MMGR and other Utilities. Paul Nettle, 2000.
+<https://www.flipcode.com/archives/Presenting_A_Memory_Manager.shtml>
+
+[#49]: GLMath. G-Truc, 2020.
+<https://github.com/g-truc/glm>
+
+[#50]: Dear ImGui. Omar Cornut, 2021.
+<https://github.com/ocornut/imgui>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>
