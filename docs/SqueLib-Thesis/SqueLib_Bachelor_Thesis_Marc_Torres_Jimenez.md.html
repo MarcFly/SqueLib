@@ -672,23 +672,25 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 # Development Plan
 
-Before delving deep into development, it is important to make clear cut decisions on how to approach the specific areas and which elements will be the building blocks for the subsequent projects. The following sections will give an insight to the initial decisions as well as the ongoing development process of ***SqueLib*** and ***SqueMaker***.
+Before delving deep into development, it is important to make clear cut decisions on how to approach each area and define the building blocks for the subsequent projects. The following sections will give an insight to the initial decisions as well as the ongoing development process of ***SqueLib*** and ***SqueMaker***.
 
 ## CMake
 
-In teh context of multiplatform development, there is a ton of options of IDEs and building pipelines to choose from. The experiecne gained previously from only working with Visual Studio for C++ can seem approachable in a cross-platform point of view, as there are a lot of base projects and extensions available for targetting popular platforms such as Android and Linux. The main problem in going back into Visual Studio is getting locked from the most popular build pipeline for C++ nowadays, used in most OSS projects.
+In the context of multiplatform development, there is a ton of options of IDEs and building pipelines to choose from. The experience gained previously from only working with Visual Studio for C++ can seem approachable in a cross-platform point of view, as there are a lot of base projects and extensions available for targetting popular platforms such as Android and Linux. The main problem in going back into Visual Studio is not branching into other editors and build pipelines.
 
-For the sake of progressing as well learning new tools for the trade, CMake seems the option for building the project on. Further explanation on the usage of CMake is provided in the following chapter.
+Visual Studio supports CMake based projects, but for the sake of progressing as well learning new tools for the trade, starting first from CMake and then using Visual Studio on Windows seems the best fit. Further explanation on the usage of CMake is provided in the following chapter.
+
+<span class="pagebreak"></span>
 
 ## SDL, RayLib and Rawdraw
 
-Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials for most imaginable platforms. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support, with RayLib getting constant updates and support for more platforms and programming language bindings. 
+Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials for most imaginable platforms. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support specially RayLib by getting constant updates and support for more platforms and programming language bindings. 
 
-Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for android seem outdated as of the latest releases available for both and more straightforward approaches would help in the development for that platform.
+Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for Android seem a bit outdated as of the latest releases available for both, where more straightforward approaches would help in the development for that platform.
 
 Rawdraw on the other hand has a more "you do you" approach, just source code and a single example is available and its intended use (besides as a library) is that of learning. Being a C library and the compiler toolchain being way less entry level friendly, I decided to take it as a base for learning the steps to introducing myself but making it easier for a future self to do this introduction.
 
-## Libraries Used
+## Base Modules' Libraries
 
 An introduction to the library or framework will be provided, as well as the reasons provided for its usage, or lack of it:
 
@@ -698,9 +700,9 @@ OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D ras
 
 While taking part in the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most projects alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such a library that is cross-platform capable for the targeted platforms.
 
-OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones,having almost the same syntax for most operations besides what is or not available and smaller changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
+OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones, having almost the same syntax for most operations besides what is or not available and minimal changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
 
-The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the best, allowing for further simplicity in writing a portable OpenGL backend. A counterargument to deciding on said version of OpenGLES would be that it does not cover enough devices, which as of checking would be at around 68%<sub>[#W34]</sub> which I personally think is plenty and will only be increasing with time. Having said that, my focus is not on targetting content consumers but developers that after being introduced could very well adapt a different rendering pipeline with earlier versions of OpenGLES.
+The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the most, allowing for further simplicity in writing a portable OpenGL backend. A counterargument to deciding on said version of OpenGLES would be that it does not cover enough devices, which as of checking would be at around 68%<sub>[#W34]</sub> which I personally think is plenty and will only be increasing with time. Having said that, my focus is not on targeting content consumers but developers that after being introduced could very well adapt a different rendering pipeline with earlier versions of OpenGLES.
 
 As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
 
@@ -709,13 +711,13 @@ The remaining differences between versions will be circumvented as how cross-pla
 
 ### Context Management: EGL and GLFW
 
-In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platform interface between the Khronos Group rendering APIs and the operating systems windowing systems in order to allow the display of graphics.
+In order to display graphics on screen, it is required to have a canvas in which to draw, called Context for some graphics APIs. EGL<sub>[#W15]</sub> is a cross-platform interface between the Khronos Group rendering APIs and the OSs' windowing systems in order to allow the display of graphics.
 
 The use case in context management for both libraries is to take care of binding of surfaces and buffers to write to, synchronization of the rendering with the displays and enabling the acceleration of such operations with the underlying hardware.
 
 GLFW<sub>[#W18]</sub> has more functionality in creation of windows and taking care of input, the catch is that it is only available in desktop platforms. EGL is a native library to Android, which creates the first platform divide for taking care of different subsystems.
 
-### User Input: Android NDK and GLFW
+### User Input: GLFW and Android NDK
 
 The big issue when handling user input between the proposed platforms is that they are completely different. Android input is touch based and in desktop platforms the keyboard and mouse combo are the most widely used. They are by no means incompatible but by default there are not many options that take care of them in a similar fashion. It was a clear area where a new cross-platform approach was needed.
 
@@ -730,7 +732,6 @@ When developing games, getting hold of files is pretty straightforward, you have
 On Android subsystems the user does not have direct write access, special permissions are required and as such specific functions are required from the NDK in order to access and write files. In desktop environments, using plain C++ is the most straightforward way alongside some OS provided standard libraries.
 
 The meat of this system is to make it truly platform agnostic to the end user.
-
 
 ## Libraries Not Used
 
@@ -748,7 +749,7 @@ The information on the unused libraries are simple reasons on why they were not 
 | Context Management | Reason |
 |---|---|
 | WGL | Windows only support |
-| GLEW | Could have been an interchangeable option, but extensions are supported different in Android, incompatible with OpenGLES |
+| GLEW | Could have been an interchangeable option, but extensions are supported differently in Android, incompatible with OpenGLES |
 
 !!! note
     Most context management libraries take only part in generating the OpenGL context, as they should, leaving more work into taking care of managing windows through the native systems on Windows and Linux. Although in Windows that would have been more straightforward, due the high variance between distros in Linux, that would have been a great time cost.
@@ -758,7 +759,7 @@ The information on the unused libraries are simple reasons on why they were not 
 | Gainput | Outdated Android toolchain, would have had a lot of costs for building on current versions |
 
 !!! note
-    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen in use in recent years. Given the approach of the project it did not seem fitting to use it as it would tie more dependencies to structuring data, which is already complicated enough for Android.
+    For taking care of accessing files, the only one that I have had previous experience is PhysFS which has fallen out of use in recent years. Given the approach of the project it did not seem fitting to use it as it would tie more dependencies to structuring data, which is already complicated enough for Android.
 
 # Introduction to Cross-Platform C++
 
@@ -766,16 +767,17 @@ Being set up with the initial research on the project statement and values, the 
 
 It is very evident that having multiple code bases per platform and having to use wildly different environments for getting code to run on the target platforms is a big issue to tackle. The most sensible approach would be to have a way to just execute what is needed on a bunch of source files and get the resulting application ready to run, the less it is required to change to get it working the better.
 
+<span class="pagebreak"></span>
+
 ## CMake: Building for multiplatform 
 
-CMake is a generator of build files, meaning that when you build a project with CMake you are first creating the files that the target building environment will use to create the final application. In that way you can create a environment agnostic step that will then be converted to the one needed for each platform you target.
+CMake is a generator of build files, when you build a project with CMake you are first creating the files that the target building environment will use to create the final application. In that way you can create a environment agnostic step that will then be converted to the one needed for each platform you target.
 
 ![Figure [figures]: CMake Simple Flowchart, from [How to Build a CMake based Project](https://preshing.com/20170511/how-to-build-a-cmake-based-project/) by Jeff Preshing.](images/cmake-simple-flowchart.png width="50%") Following **Figure 12**, CMake is invoked in a directory where a CMakeLists.txt script is, which will prepare a configuration for the desired outputs which will be cached for later runs.
 
 In each CMakeLists.txt there are a series of outputs defined, which are called targets, that hold the specific information required to be built into their executable form. Such information might be source files, instructions, compiler/linker, etc.
 
 The configuration step ends up with the build files required by the specific build system used (XCode, GCC, MSVS,...), who will actually build the executables. 
-
 
 ### Simplest Expandable Example
 
@@ -791,7 +793,9 @@ Under **Figure 13**, the base layout of the folder which will be expanded upon, 
 [Figure [diagram]: Base Folder Structure]
 
 
-From unique previous knowledge of building C++ aplication through Microsoft Visual Studio, the best way to get into new forms is to learn from the simplest possible example required. With that virtue, the starting file to work on would be the following main which would only print out _Hello World!_ to a console to make sure everything is working as intended.
+From unique previous knowledge of building C++ aplication through Microsoft Visual Studio, the best way to get into new ways is to learn from the simplest possible example required. With that virtue, the starting file to work on would be the following main which would only print out _Hello World!_ to a console to make sure everything is working as intended.
+
+<span class="pagebreak"></span>
 
 **_main.cpp_**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C++ linenumbers
@@ -803,7 +807,7 @@ int main(char** argv, int argc)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Following the main source code, the simplest way to build with CMake is specifying a version, seting up a project, defining a target, declaring where the header files are and which source files to add.
+Following the main source code, the simplest way to build with CMake is specifying a version, setting up a project, defining a target, declaring where the header files are, and then which source files to add.
 
 **_CMakeLists.txt_**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
@@ -828,7 +832,6 @@ _Hello World!_
 ![Figure [figures]: Source folder after building the project](images/cmake_folder_bad.png width="30%") In **Figure 14**, we can see that the folder structure after building a CMake Project becomes a mess, it will create the necessary build files for the target generator, in this case MSVS. 
 The build as well will be created the CMakeLists.txt defines to. After understanding how to clean that, the simplest way would be creating a directory from where CMake executes and generates files inside the source folder and setup the target to build in a specific directory.
 
-
 **_CMakeLists.txt_** - Change where the build files go to
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/builds)
@@ -838,6 +841,8 @@ set_target_properties(CMakeExample
         LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
         RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
 
 Then on Command Line, we create a folder to execute from and call cmake to build the parent directory:
 
@@ -850,7 +855,7 @@ cmake --build .
 _Hello World!_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Finally on **Figure 15** we can see that now the source folder becomes visibly cleaner and manageable once again.
+Finally on **Figure 15** we can see that now the source folder becomes visibly cleaner and manageable once again:
 
 ![Figure [figures]: Cleaner folder structure.](images/cmake_folder_good.png)
 
@@ -858,19 +863,19 @@ Finally on **Figure 15** we can see that now the source folder becomes visibly c
 
 The previous part introduced to CMake in a way that work very easily with a console based application and nothing more to execute. On such desktop platforms, usually you don't have to worry too much about how you package your data, assets or libraries as long as are reachable from working directory or provided by the vendor. There is not actually a required way to package or build your application besides making sure it works.
 
-In order to build Android application, the usual way would be to build them using the designed tool for the task and native programming language. In that case we would be writing a Java/Kotlin application from Android Studio, but my requirement was to just code in C++ as to minimize the entry requirements form someone with a similar background, while giving an approach that opens up new development paths.
+In order to build Android application, the usual way would be to build them using the designed tool for the task and native programming language. In that case we would be writing a Java/Kotlin application from Android Studio, but my requirement was to just code in C++ as to minimize the entry requirements for someone with a similar background to me, while giving an approach that opens up new development paths.
 
-Parallel to the mainline platform, Google provides the Android SDK which has a suite of tools for compiling, packaging, debugging and many more things for Android projects with external toolchains such as CMake. With that one can provide their own way of compiling the source code as well as generating the necessary files required for a complete packaged app, then use the tools to finalize the process, install and run the application on the target Android device.
+Parallel to the main tool, Google provides the Android SDK which has a suite of tools for compiling, packaging, debugging and many more things for Android projects with external toolchains such as CMake. With that in hand, one can provide their own way of compiling the source code as well as generating the necessary files required for a complete packaged app, then use the tools to finalize the process, install and run the application on the target Android device.
 
-A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of use the tools I am used to or foudn in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics and build framework for developing extremely portable applications written in C, the video<sub>[#W30]</sub> mentioning the portability to Android mentioned the unique requirement of writing C and modifying the build file.
+A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of using the tools I am used to or found in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics rendering and building framework for developing extremely portable applications written in C, the video<sub>[#W30]</sub> showing the portability to Android mentioned the unique requirement of writing C and modifying the build file.
 
-Given those premises and the fact the Android SDK comes with a C/C++ library to interface with the Android OS as well as C/C++ libraries called the Android NDK, it became the starting point for development.
+Given those premises and the fact the Android SDK comes with a C/C++ library to interface with the Android OS called the Android NDK, it became the starting point for development.
 
 On the following steps, it will be explained the adaptations from Rawdraw Make build system to CMake, as well as making the minimal example run on Android OS.
 
 ### Adapting Rawdraw Make build to CMake 
 
-For the sake of simplicity, Make is similar to grouping a bunch of scripts under functions and being able to call them as needed. Instead of having to build from command line doing every step you write a script that has the required steps given some inputs, like a function, and then executes these steps when calling the said function.
+In short words, Make is similar to grouping a bunch of scripts under functions and being able to call them as needed. Instead of having to build from command line doing every step you write a script that has the required steps given some inputs, like a function, and then executes these steps when calling the said function.
 
 ***Makefile Example: Creating the minimum items required for a template project***
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
@@ -893,17 +898,15 @@ init_project: create_base_folders create_base_files
 make init_project 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CMake will be used in this case to generate Makefiles through which build the final application, Rawdraw's targets can be translate into CMake code. The generation and build steps are strictly separated as some parts are required by the CMake generation step and also required at build time. The variables or steps required at generation step will be converted into macros, that define global variables and paths accessible from the build step, which is translated into custom CMake targets.
+CMake will be used in this case to generate Makefiles through which to build the final application, benefitting from Rawdraw's targets<sub>[#W51]</sub> by translating into CMake code. The generation and build steps are strictly separated as some parts are required by the CMake generation step and also required at build time. The variables or steps required at generation step will be converted into macros, that define global variables and paths accessible from the build step, which is translated into custom CMake targets.
 
-The required steps for building a C/C++ application are defined and adapted from Rawdraw Make to CMake functions, macros and custom targets in other to get a properly built application. The original make files can be found at <!-- Link to Rawdraw Android Makefile --> and the following steps will provide insight on the modules in which the steps are divided to perform the build step for Android.
-
-Although usually it is not recommended to use macros over functions, for the sake of simplicity earlier on and not having to worry about not being able to find specific variables, most 
+The following steps will provide insight on the modules in which the steps are divided to perform the build step for Android.
 
 #### _FindAndroidSDKVars.cmake_
 
-The first step is to get the directories and variables required to interface, as it is englobed in a single macro because it makes sense to get these variable out in one go, the epxlanation will be divided step by step in the macro ***setup_android_sdk_vars***:
+The first step is to get the directories and variables required to interface, as it is englobed in a single macro because it makes sense to get these variable out in one go, the explanation will be divided step by step in the macro ***setup_android_sdk_vars***:
 
-The OS string required to where the files are specified at the [Overview](https://developer.android.com/ndk/guides/other_build_systems#overview)<sub>[#W35]</sub> page for external build systems.
+The OS string required to where the files are specified at the Overview<sub>[#W35]</sub> page for external build systems.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Assume from Linux, else change OS Android naming to Windows.
@@ -925,11 +928,10 @@ first_exists("${list_of_directories}")
 subdirlist(var_to_define ${directory_to_search_subdirectories})
  - Creates a list with all the subdirectories existing in a directory.
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-These two are used in conjunction to find if no Android environment variables are set or passed as arguments, and the default Android tools are installed in frequently used paths. 
+
+These functions are used when no Android arguments or Environment variables are set:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-# Check that Environment Variables for the SDK exist or try to find them under standard directiores
-# All Environment variable checks can be overriden by passing them as arguments when invoking cmake
 if(NOT ANDROIDSDK)
     set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK)
     first_exists(ANDROIDSDK "${SDK_DIRS}")
@@ -953,7 +955,9 @@ if(NOT NDK)
         first_exists(NDK "${NDK_L}")
     endif()
 endif()
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Search for Build Tools inside SDK
 if(NOT BUILD_TOOLS)
     first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
@@ -1003,13 +1007,15 @@ message(STATUS)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
 #### _SetupAndroidEnv.cmake_
 
-For building an Andorid application with an external tooclhain, the NDK provides calls to the compiler used by Android Studio depending on the version and OS using. Besides which compiler/linker pair to use, there are some specific compile options that are either required or recommended. Finally, for ease of use with the library later on, there are some utilities for linking with the default libraries.
+For building an Android application with an external tooclhain, the NDK provides calls to the compiler used by Android Studio depending on the version and OS using. Besides which compiler/linker pair to use, there are some specific compile options that are either required or recommended. Finally, for ease of use with the library later on, there are some utilities for linking with the default libraries.
 
 Such steps are separated into different macros to understand more clearly which part of the build process does what, instead of having it mangled up in a full macro in such a complicated step:
 
-##### (macro) set_app_properties(appName orgName androidVer)
+##### set_app_properties(appName orgName androidVer)
 
 There are some variables that are of general use in other steps as well used in later custom targets for the packaging step, for this reaseon they are set during the build process as they depend on the target application.
 
@@ -1023,7 +1029,7 @@ set(ANDROIDVERSION ${androidVer})
 set(ANDROIDTARGET ${androidVer})
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##### (macro) set_android_link_flags() & set_android_compile_flags()
+##### set_android_link_flags() & set_android_compile_flags()
 
 This pair of functions define the required and recommended options for building an application. As these options can be set in multiple ways within CMake, it is better to explain them directly and why are they needed or recommended:
 
@@ -1039,20 +1045,22 @@ RECOMMENDED
  * -fdata-sections: Set each variable and structure to have a specific section when compiled into binary form.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These two last options are required for enabling garbage collection of unused data and functions which may reduce the binary size considerably, as well as possibly minimally increasing performance at the cost of minimally increasing binary size and compile times. For a better explanation of said optiosn I refer to the posts [#W38] and [#W39] about these and other options.
+<span class="pagebreak"></span>
+
+These two last options are required for enabling garbage collection of unused data and functions which may reduce the binary size considerably, as well as possibly minimally increasing performance at the cost of minimally increasing binary size and compile times. For a better explanation of said options I refer to the posts [#W38] and [#W39] about these and other options.
 
 ***Linker Flags [#W36]:***
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 NEEDED
  * -shared: Make sure the target is compiled into a shared library, which is needed for Native App linking.
- * -uANativeActivityOnCreate:  Undefine default ANativeActivityOnCreate definition to be replaced with the one coming from the Android NDK, making the application entry towards your own "android_main"
+ * -uANativeActivityOnCreate:  Undefine default ANativeActivityOnCreate definition to be replaced with the one coming from the Android NDK, making the application entry towards your own defined "android_main"
 
 RECOMMENDED
  * -Wl: Activates linker warnings
  * --gc-sections: Enables garbage collection for unsudes functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##### (macro) set_android_compiler(NDK_PATH OS_USED, ANDR_V)
+##### set_android_compiler(NDK_PATH OS_USED, ANDR_V)
 
 Set the variables to where the C and C++ compiler commands are in the Android NDK.
 
@@ -1065,9 +1073,11 @@ if(WIN32)
 endif()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##### (macro) link_android_all_libs(target NDK_PATH OS_USED ANDR_V)
+##### link_android_all_libs(target NDK_PATH OS_USED ANDR_V)
 
 Given a targeto to build, link to the libraries required for development of a default application, needing: Display, Rendering, Sound, Standard Library, ADB Logging and the Android Library.
+
+A specific step is to copy the shared object file of the llvm's standard C++ library, allowing support for C++11/14/17.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(ARM_LIBS "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/lib")
@@ -1086,7 +1096,7 @@ target_link_libraries(${target} PUBLIC
 )
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##### (macro) include_android(target NDK_PATH OS_USED)
+##### include_android(target NDK_PATH OS_USED)
 
 Given a target to build, include the directories where the android library include files are as well as the native app library.
 
@@ -1107,18 +1117,18 @@ Finally, in order to get the application packaged and installed into a physical 
 This can be done by specifying the intended target to build first and then the required steps, or call make after calling a default build from cmake which will target directly the last target defined.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-cmake --build <dir> -target Application -target uninstall -target install
+cmake --build <dir> -target "AppName" -target uninstall -target install
 
 OR
 
 cmake --build <dir>
-make uninstall push
+make uninstall install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The documentation for generating custom commands in CMake can be found at [#W40] but here is the gist of my usage:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-add_custom_target(<name_of_target>
+add_custom_target("name_of_target"
     DEPENDS 
         Other_Targets
         ...
@@ -1131,7 +1141,49 @@ Each target will have a short explanation, a list of dependencies if there are a
 
 ##### AndroidManifest.xml
 
-Remove a previous instance of the manifest document, creates a copy of a template manifest provided and substitutes the environment variables setup<sub>[#W41]</sub>.
+In order to describe the essential information of an Android application, each app requires an _AndroidManifest.xml_ file. Although the NDK provides samples for creating one, Rawdraw provides an already templated one to which close no changes were made.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~xml
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest 
+    xmlns:tools="http://schemas.android.com/tools" 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+    package="${PACKAGENAME}">
+	
+    <uses-sdk 
+        android:minSdkVersion="${ANDROIDVERSION}"
+        android:targetSdkVersion="${ANDROIDTARGET}"/>
+    
+    <uses-permission android:name="android.permission.SET_RELEASE_APP"/>
+    <!-- permissions should be asked for in runtime -->
+
+    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar"></style>
+    <!-- make the application not show a titlebar when loading  -->
+    <application 
+        android:debuggable="${DEBUGGABLE}" 
+        android:hasCode="false" 
+        android:label="${LABEL}" 
+        tools:replace="android:icon,android:theme,android:allowBackup,label" 
+        android:icon="@mipmap/icon">
+        
+        <activity 
+            android:configChanges="keyboardHidden|orientation" 
+            android:label="${LABEL}" 
+            android:name="android.app.NativeActivity">
+            
+            <meta-data 
+                android:name="android.app.lib_name" 
+                    android:value="${APPNAME}"/>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>        
+    </application>
+</manifest>
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The target removes a previous instance of the manifest document, creates a copy of a template manifest provided and substitutes the environment variables setup<sub>[#W41]</sub>.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 COMMANDS
@@ -1242,9 +1294,11 @@ As can be seen in **Figure 16**, the experience is pretty barebones but much bet
 
 At the same time, getting into a command line debugging tool is still quite a jump from Visual Studio. Luckily the chosen Linux distro, KUbuntu, comes with an extensive marketplace and applications which include a lightweight C/C++ IDE with direct support for CMake based projects, lowering the entry requirement to Linux development.
 
-The process of importing and debugging a CMake based project just requires the user to know the desired initial commands from which one needs to call CMake with and to create an executable profile for the application, process which is explained under the *KDevelop Documentation Manual*<sub>[#W31]</sub> under the [*Sessions and Projects/Seteting up a Session and Importing an existing project/Option 2*](https://userbase.kde.org/KDevelop4/Sessions_and_projects#Setting_up_a_session_and_importing_an_existing_project). The main development environment in KDevelop is shown under **Figure 17**:
+The process of importing and debugging a CMake based project just requires the user to know the desired initial commands from which one needs to call CMake with and to create an executable profile for the application, process which is explained under the *KDevelop Documentation Manual*<sub>[#W31]</sub> under the *Sessions and Projects/Seteting up a Session and Importing an existing project/Option 2*. The main development environment in KDevelop is shown under **Figure 17**:
 
-![Figure [figures]: Sample application being debugged from KDevelop.](images/kdevelop_example_pong.png)
+![Figure [figures]: Sample application being debugged from KDevelop.](images/kdevelop_example_pong.png width=90%)
+
+<span class="pagebreak"></span>
 
 ### Android: APK Profiler
 
@@ -1280,7 +1334,7 @@ When working with SqueLib, it is intended for the library to take control of the
 [Figure [diagram]: Expected material provided by SqueLib.]
 
 
-Some modules' requirements can change as they are developed, there may be required extra modules or integration of other libraries for other tasks. The objective of SqueLib is to provide the base required to get yourself up and running easily in the target platforms and understand how to deal with cross-platform pitfalls. For that latter reason there is some initial room for further integrations that are found to be required.
+Some modules' requirements can change as they are developed, there may be required extra modules or integration of other libraries for other tasks. For this reason it is expected for features or needs to grow the project requirements.
 
 ## Core Library
 
@@ -1378,6 +1432,7 @@ The following libraries can be built with SqueLib by defining their required opt
 [#WX]: Title: Description. Author, Year.
 <url> 
 -->
+
 [#W1]: SqueLib: A C++ multiplatform library and framework. Marc Torres Jimenez, 2021.
 <https://github.com/MarcFly/SqueLib>
 
@@ -1528,6 +1583,9 @@ The following libraries can be built with SqueLib by defining their required opt
 [#50]: Dear ImGui. Omar Cornut, 2021.
 <https://github.com/ocornut/imgui>
 
+[#51]: Rawdraw Android Makefile. CNLohr, 2020.
+<https://github.com/cnlohr/rawdrawandroid/blob/master/Makefile>
+
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>
     markdeepThesisOptions = {
@@ -1546,8 +1604,8 @@ The following libraries can be built with SqueLib by defining their required opt
         markdeepDiagramScale: 0.8
     }
 </script>
-<!--
+
 <script src="markdeep-thesis/markdeep-thesis.js"></script>
--->
+
 <script src="markdeep-thesis/lib/markdeep/1.11/markdeep.min.js" charset="utf-8"></script>
 <script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
