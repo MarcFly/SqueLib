@@ -74,9 +74,6 @@
 #include <algorithm> // Logger
 #include <unordered_map> // Logger
 
-// Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
-#include<glm.hpp>
-
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <sque_remap_macros.h>																											
 #include <sque_simple_types.h>
@@ -439,9 +436,9 @@ SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t uniform_ref, const
 SQ_API void SetBool		(const int32_t uniform_id, bool value);
 SQ_API void SetInt		(const int32_t uniform_id, int32_t value);
 SQ_API void SetFloat	(const int32_t uniform_id, float value);
-SQ_API void SetFloat2	(const int32_t uniform_id, glm::vec2 value);
-SQ_API void SetFloat3	(const int32_t uniform_id, glm::vec3 value);
-SQ_API void SetFloat4	(const int32_t uniform_id, glm::vec4 value);
+SQ_API void SetFloat2(const int32_t uniform_id, float value[2]);
+SQ_API void SetFloat3	(const int32_t uniform_id, float value[3]);
+SQ_API void SetFloat4	(const int32_t uniform_id, float value[4]);
 // ... add a matrix/array passer...																									
 SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
 	

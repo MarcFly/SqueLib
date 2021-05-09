@@ -159,24 +159,24 @@ void SetFloat(const int32_t uniform_id, float value)
 #endif
 }
 
-void SetFloat2(const int32_t uniform_id, glm::vec2 value)
+void SetFloat2(const int32_t uniform_id, float value[2])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform2f(uniform_id, value.x, value.y);
+    glUniform2f(uniform_id, value[0], value[1]);
 #endif
 }
 
-void SetFloat3(const int32_t uniform_id, glm::vec3 value)
+void SetFloat3(const int32_t uniform_id, float value[3])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform3f(uniform_id, value.x, value.y, value.z);
+    glUniform3f(uniform_id, value[0], value[1], value[2]);
 #endif
 }
 
-void SetFloat4(const int32_t uniform_id, glm::vec4 value)
+void SetFloat4(const int32_t uniform_id, float value[4])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glUniform4f(uniform_id, value.x, value.y, value.z, value.w);
+    glUniform4f(uniform_id, value[0], value[1], value[2], value[3]);
 #endif
 }
 

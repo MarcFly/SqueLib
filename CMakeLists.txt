@@ -72,24 +72,13 @@ set_target_properties(glad
         LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
 )
-# GL Math ------------------------------------------------------------------------------------
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
-set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
-# GLM is interface library by default, does not have output, its added to project
+
 # STB ----------------------------------------------------------------------------------------
 set(stb_include "${CMAKE_CURRENT_SOURCE_DIR}/external/stb")
 # PCG ----------------------------------------------------------------------------------------
 set(pcg_include "${CMAKE_CURRENT_SOURCE_DIR}/external/pcg")
 set(pcg_src ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.c ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.h)
 # SOLOUD - MINIAUDIO BACKEND ONLY -------------------------------------------------------------------------------------
-
-
-# DEBUG ONLY
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    # MMGR ----------------------------------------------------------------------------------------
-    set(mmgr_include "${CMAKE_CURRENT_SOURCE_DIR}/external/mmgr")
-    set(mmgr_src ${mmgr_include}/mmgr.cpp ${mmgr_include}/mmgr.h ${mmgr_include}/nommgr.h)
-endif()
 
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
@@ -187,28 +176,15 @@ endif()
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 target_include_directories(SqueLib PUBLIC
-    ${glm_include}
     ${stb_include}
     ${pcg_include}
 )
 target_link_libraries(SqueLib PUBLIC
     glad
-    glm
 )
 target_sources(SqueLib PRIVATE
     "${pcg_src}"
 )
-
-# DEBUG ONLY
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_compile_options(SqueLib BEFORE PUBLIC -g)
-    #target_sources(SqueLib PRIVATE
-    #    "${mmgr_src}"
-    #)
-    #target_include_directories(SqueLib PUBLIC
-    #    ${mmgr_include}
-    #)
-endif()
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
@@ -236,8 +212,6 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/squelib_src"
     PREFIX "SqueLib"
     FILES ${SQUELIB_SRC})
 source_group(/pcg FILES ${pcg_src})
-source_group(/mmgr FILES ${mmgr_src})
-#source_group(/soloud FILES ${soloud_src})
 
 set(SqueLib_include ${CMAKE_CURRENT_SOURCE_DIR}/squelib_src PARENT_SCOPE)
 set(SqueLib_Output ${SQUE_OutputFolder} PARENT_SCOPE) 

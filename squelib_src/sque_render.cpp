@@ -170,16 +170,16 @@ void SQUE_RENDER_Scissor(int x, int y, int w, int h)
 #endif
 }
 
-void SQUE_RENDER_GetViewport(glm::vec4* vec)
+void SQUE_RENDER_GetViewport(float* vec)
 {
     int vint[4];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGetIntegerv(GL_VIEWPORT, vint);
 #endif
-    vec->x = vint[0];
-    vec->y = vint[1];
-    vec->z = vint[2];
-    vec->w = vint[3];
+    vec[0] = vint[0];
+    vec[1] = vint[1];
+    vec[2] = vint[2];
+    vec[3] = vint[3];
 }
 void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value)
 {
