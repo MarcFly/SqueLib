@@ -214,7 +214,8 @@ SQ_API void SQUE_DISPLAY_SwapAllBuffers();
 SQ_API void SQUE_DISPLAY_MakeContextMain(uint16_t window = 0);
 SQ_API ResizeCallback SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb);
 SQ_API ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb);
-																																		
+SQ_API HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INPUT ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -668,7 +669,7 @@ typedef struct SQUE_Dir
 
 typedef struct SQUE_Asset
 {
-	int64_t size;
+	uint64_t size;
 	char* raw_data;
 }	SQUE_Asset;
 
@@ -683,6 +684,7 @@ SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data);
 // Permission safe functions
 SQ_API SQUE_Dir* SQUE_FS_CreateBaseDirTree();
 SQ_API SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file);
+SQ_API const char* SQUE_FS_GetFileName(const char* file);
 
 // OpenDDL style Serialization
 enum class OPENDDL_IDS : uint8_t

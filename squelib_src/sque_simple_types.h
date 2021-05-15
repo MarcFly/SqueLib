@@ -82,4 +82,6 @@ typedef void(*ViewportSizeCallback)(int32_t* width, int32_t* height);
 typedef void(*KeyCallback)(int32_t code, int32_t state);
 typedef void(*MouseFloatCallback)(float x, float y);
 
+typedef void(HandleDropFileFun)(const char* location);
+
 #endif

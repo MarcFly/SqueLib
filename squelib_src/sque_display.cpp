@@ -32,6 +32,9 @@ ResizeCallback viewport_resize_callback = DebugResizeCallback;
 void DebugViewportSizeCallback(int32_t* width, int32_t* height) { SQUE_PRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
 ViewportSizeCallback viewport_size_callback = DebugViewportSizeCallback;
 
+void DebugHandleDropFileFun(const char* location) { SQUE_PRINT(LT_INFO, "Dropped file from: %s", location); }
+HandleDropFileFun* drop_file_callback = DebugHandleDropFileFun;
+
 static int32_t def_window_options[] =
 {
     SQUE_DISPLAY_END
@@ -127,6 +130,19 @@ static int32_t const def_buffer_options[] =
                 (entered > 0) ? SET_FLAG(sque_windows[i].working_flags, SQUE_WINDOW_MOUSE_IN) : CLR_FLAG(sque_windows[i].working_flags, SQUE_WINDOW_MOUSE_IN);
                 break;
             }
+    }
+
+    static void GLFW_DropFileCallback(GLFWwindow* window, int count, const char** paths)
+    {
+        for (uint16_t j = 0; j < glfw_windows.size(); ++j)
+        {
+            if (glfw_windows[j] = window)
+            {
+                for (uint16_t i = 0; i < count; ++i)
+                    drop_file_callback(paths[i]);
+                break;
+            }
+        }
     }
 
 #endif
@@ -386,6 +402,7 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t heigh
     glfwSetWindowCloseCallback(glfw_window, GLFW_CloseCallback);
     glfwSetFramebufferSizeCallback(glfw_window, GLFW_FramebufferResizeCallback);
     glfwSetCursorEnterCallback(glfw_window, GLFW_MouseEnterLeaveCallback);
+    glfwSetDropCallback(glfw_window, GLFW_DropFileCallback);
     SQUE_PRINT(SQUE_LogType::LT_INFO, "GLFW Window Created!");
 #endif
 
@@ -664,5 +681,12 @@ ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback v
 {
     ViewportSizeCallback ret = viewport_size_callback;
     viewport_size_callback = viewport_size_cb;
+    return ret;
+}
+
+HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb)
+{
+    HandleDropFileFun* ret = drop_file_callback;
+    drop_file_callback = drop_file_cb;
     return ret;
 }

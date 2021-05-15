@@ -201,3 +201,14 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 
 	return ret;
 }
+
+const char* SQUE_FS_GetFileName(const char* file)
+{
+	const char* ret1 = strrchr(file, '/');
+	if (ret1 != NULL)
+		return ret1;
+	const char* ret2 = strrchr(file, '\\');
+	if (ret2 != NULL)
+		return ret2;
+	return file;
+}
