@@ -659,12 +659,12 @@ SQ_API void SQUE_RENDER_FramebufferCheckStatus();
 
 typedef struct SQUE_Dir
 {
-	SQUE_Dir* parent;
+	uint32_t id = UINT32_MAX;
+	char name[64];
+	char location[512];
+
+	SQUE_Dir* parent = NULL;
 	sque_vec<SQUE_Dir*> children;
-
-	char name[256];
-	char* native_dir_data;
-
 } SQUE_Dir;
 
 typedef struct SQUE_Asset
