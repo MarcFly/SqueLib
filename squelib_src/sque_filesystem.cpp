@@ -314,7 +314,8 @@ sque_vec<char*> SQUE_FS_CheckDirectoryChanges(const char* path, sque_vec<SQUE_Ct
 		else
 		{
 			char* loc = new char[512];
-			memcpy(loc, file.path().c_str(), 512);
+			//char* t = file.path().string().c_str();
+			memcpy(loc, file.path().string().c_str(), 512);
 			new_items.push_back(loc);
 		}
 	}

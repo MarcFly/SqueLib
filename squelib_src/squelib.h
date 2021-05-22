@@ -692,7 +692,7 @@ typedef struct SQUE_CtrlAsset
 	SQUE_Timer unused_timer;
 	uint32_t current_users = 0;
 	uint8_t status = 0; // 0 = not_changed, 1 = Changed, 2 = Deleted
-	double last_update;
+	double last_update = 0;
 
 
 	// Type Based functions  
