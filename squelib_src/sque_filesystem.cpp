@@ -212,3 +212,111 @@ const char* SQUE_FS_GetFileName(const char* file)
 		return ret2;
 	return file;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// FILEWATCHER //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <filesystem>
+
+enum SQUE_FS_Status
+{
+	SQFS_UNKNOW = 0,
+	SQFS_NEW,
+	SQFS_CHANGED,
+	SQFS_DELETED,
+};
+
+SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id)
+{
+	SQUE_Dir d;
+	d.id = SQUE_RNG();
+	const char* tmp = strrchr(location, '.');
+	if (tmp != NULL)
+	{
+		uint32_t l = SQUE_FS_GetParentDir(location);
+		l = (l < sizeof(d.location)) ? l : sizeof(d.location);
+		memcpy(d.location, location, l);
+	}
+	else
+		memcpy(d.location, location, sizeof(d.location));
+
+	memcpy(d.name, SQUE_FS_GetFileName(d.location), sizeof(d.name));
+
+	return d;
+}
+
+uint32_t SQUE_FS_GetParentDir(const char* path)
+{
+	uint32_t ret = strlen(path);
+	const char* fw_slash = strrchr(path, '/');
+	if(fw_slash != NULL)
+		return ret -= strlen(fw_slash);
+
+	const char* d_slash = strrchr(path, '\\');
+	return ret -= (strlen(d_slash));
+}
+
+uint32_t AddToParent(const uint32_t id, const char* location, sque_vec<SQUE_Dir>& dirs)
+{
+	uint32_t len_dir = SQUE_FS_GetParentDir(location);
+	char* tmp = new char[len_dir+1];
+	memcpy(tmp, location, len_dir);
+	tmp[len_dir] = '\0';
+	for (uint16_t i = 0; i < dirs.size(); ++i)
+	{
+		if (strcmp(dirs[i].location, tmp) == 0)
+		{
+			dirs[i].children_ids.push_back(id);
+			delete tmp;
+			return dirs[i].id;
+		}
+	}
+	delete tmp;
+	return -1;
+}
+
+void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>& dirs)
+{
+	dirs.push_back(SQUE_FS_GenDir(location));
+
+	for (auto& file : std::filesystem::recursive_directory_iterator(dirs[0].location))
+	{
+		if (file.is_directory())
+		{
+			dirs.push_back(SQUE_FS_GenDir(file.path().string().c_str()));
+			dirs.last()->parent_id = AddToParent(dirs.last()->id, dirs.last()->location, dirs);
+		}
+	}
+}
+
+sque_vec<char*> SQUE_FS_CheckDirectoryChanges(const char* path, sque_vec<SQUE_CtrlAsset*> assets_in_dir, HandleNewAssetLocation* handle_fun)
+{
+	for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
+	{
+		assets_in_dir[i]->status = 0;
+		if (!std::filesystem::exists(assets_in_dir[i]->location))
+			assets_in_dir[i]->status = 2;
+	}
+	sque_vec<char*> new_items;
+	for (auto& file : std::filesystem::recursive_directory_iterator(path))
+	{
+		// string hashing for ids... the MD5 old one might be great for that, it was decently fast
+		uint32_t i;
+		for (i = 0; i < assets_in_dir.size(); ++i)
+		{
+			if (assets_in_dir[i]->status == 2) continue;
+			if (strcmp(assets_in_dir[i]->location, file.path().string().c_str()) == 0)
+				break;
+		}
+		if (i < assets_in_dir.size())
+			assets_in_dir[i]->status = 1;
+		else
+		{
+			char* loc = new char[512];
+			memcpy(loc, file.path().c_str(), 512);
+			new_items.push_back(loc);
+		}
+	}
+	return new_items;
+}

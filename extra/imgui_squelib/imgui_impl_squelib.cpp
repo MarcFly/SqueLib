@@ -88,8 +88,8 @@ void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_wi
 	};
 
 	SQUE_PROGRAM_Use(sque_shaderProgram.id);
-	SetInt(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.uniform_ref, "Texture"), 0);
-	SetMatrix4(SQUE_PROGRAM_GetUniformLocation(sque_shaderProgram.uniform_ref, "ProjMtx"), &ortho_projection[0][0]);
+	SetInt(SQUE_PROGRAM_GetUniformID(sque_shaderProgram, "Texture"), 0);
+	SetMatrix4(SQUE_PROGRAM_GetUniformID(sque_shaderProgram, "ProjMtx"), &ortho_projection[0][0]);
 }
 
 void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
@@ -178,9 +178,11 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 
 	SQUE_PROGRAM_Link(sque_shaderProgram.id);
 	
-	SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2, sque_shaderProgram.uniform_ref);
-	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "Texture");
-	SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "ProjMtx");
+	SQUE_PROGRAM_CacheUniforms(sque_shaderProgram);
+
+	//SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2, sque_shaderProgram.uniform_ref);
+	//SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "Texture");
+	//SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "ProjMtx");
 
 	ImGui_ImplSqueLib_PrepareBuffers();
 

@@ -384,10 +384,20 @@ SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback key
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct SQUE_Uniform
+{
+	int32_t id = -1;
+	uint32_t type = -1;
+	int32_t var_size = 0;
+	char name[56] = "";
+} SQUE_Uniform;
+
 typedef struct SQUE_Shader
 {
 	int32_t id = 0;
 	int32_t type = NULL;
+	
 } SQUE_Shader;
 
 SQ_API void SQUE_SHADERS_Generate(SQUE_Shader& shader, const int32_t shader_type);
@@ -395,44 +405,25 @@ SQ_API void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_);
 SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
 SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
 
-typedef struct SQUE_Uniform
-{
-	int32_t id = INT32_MAX;
-	char name[124] = "";
-} SQUE_Uniform;
-
-typedef struct SQUE_ProgramUniforms
-{
-	SQUE_ProgramUniforms() {};
-	SQUE_ProgramUniforms(int32_t id_) :id(id_) {};
-
-	uint32_t id = -1;
-	uint32_t start_uniform = -1;
-	uint32_t end_uniform = -1;
-	uint16_t last = 0;
-} SQUE_ProgramUniforms;
-
-SQ_API void SQUE_SHADERS_DeclareProgram(const int32_t program_id, const uint16_t num_uniforms, uint32_t& uniform_ref);
-SQ_API int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* uniform_name);
-SQ_API int32_t SQUE_SHADERS_GetUniformID(const uint32_t uniform_ref, const char* name);
-
 typedef struct SQUE_Program
 {
 // Variables
 	uint32_t id = 0;
-	uint32_t shaders[3]; // IDs of the shaders // Order by execution stage
-	// 0 Vertex -> 1 Geometry -> 2 Fragment 
-	// Tesselation and Compute will be added later if I want to and have time to
+	uint32_t shaders[2]; 
+	sque_vec<SQUE_Uniform> uniforms;
+	// IDs of the shaders // Order by execution stage
+	// 0 Vertex -> 1 Fragment 
+	// Geometry, Tesselation and Compute will be added later if I want to and have time to
 	// They require more setup and steps
-	uint32_t uniform_ref;
 } SQUE_Program;
 
 SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader);
 SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
-//SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
+SQ_API void SQUE_PROGRAM_CacheUniforms(SQUE_Program& program);
+									//SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
 
 // Usage Functions
-SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t uniform_ref, const char* name);
+SQ_API int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
 
 SQ_API void SetBool		(const int32_t uniform_id, bool value);
 SQ_API void SetInt		(const int32_t uniform_id, int32_t value);
@@ -663,15 +654,55 @@ typedef struct SQUE_Dir
 	char name[64];
 	char location[512];
 
-	SQUE_Dir* parent = NULL;
-	sque_vec<SQUE_Dir*> children;
+	uint32_t parent_id = -1;
+	sque_vec<uint32_t> children_ids;
 } SQUE_Dir;
+
+SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id = -1);
 
 typedef struct SQUE_Asset
 {
 	uint64_t size;
 	char* raw_data;
 }	SQUE_Asset;
+
+typedef struct SQUE_DataPack
+{
+	void* data;
+	uint64_t data_size;
+	void* metadata;
+	uint64_t metadata_size;
+};
+
+typedef uint32_t(HandleNewAssetLocation)(const char* location);
+typedef void(ReadWriteAssetFun)(const char* location, SQUE_DataPack* datapack);
+typedef void(UnloadAssetFun)(SQUE_DataPack* datapack);
+
+
+typedef struct SQUE_CtrlAsset
+{
+	// Static Data - Generated or Loaded
+	uint32_t id = -1;
+	char name[64] = "";
+	char location[512] = "";
+	uint32_t dir_id = UINT32_MAX;
+	uint32_t type = -1; //?
+	
+	// Runtime Updates
+	SQUE_Timer unused_timer;
+	uint32_t current_users = 0;
+	uint8_t status = 0; // 0 = not_changed, 1 = Changed, 2 = Deleted
+	double last_update;
+
+
+	// Type Based functions  
+	ReadWriteAssetFun* Save;
+	ReadWriteAssetFun* Load;
+	UnloadAssetFun* Unload;
+
+	// Actual Data
+	SQUE_DataPack datapack;
+};
 
 SQ_API void SQUE_FS_Init();
 SQ_API const char* SQUE_FS_GetExecPath();
@@ -685,6 +716,10 @@ SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data);
 SQ_API SQUE_Dir* SQUE_FS_CreateBaseDirTree();
 SQ_API SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file);
 SQ_API const char* SQUE_FS_GetFileName(const char* file);
+SQ_API uint32_t SQUE_FS_GetParentDir(const char* path);
+// Filewatcher - std::filesystem based, requires c++17
+SQ_API void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>& dirs);
+SQ_API sque_vec<char*> SQUE_FS_CheckDirectoryChanges(const char* path, sque_vec<SQUE_CtrlAsset*> assets_in_dir, HandleNewAssetLocation* handle_fun);
 
 // OpenDDL style Serialization
 enum class OPENDDL_IDS : uint8_t
