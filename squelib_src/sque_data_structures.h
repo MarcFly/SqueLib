@@ -708,8 +708,8 @@ public:
 
     list_node<T>* find(const T& value)
     {
-        list_node<T>* it = list.first();
-        while (it != NULL && it != list.end())
+        list_node<T>* it = this->first();
+        while (it != NULL && it != this->end())
         {
             if (it->_data == value)
                 break;
