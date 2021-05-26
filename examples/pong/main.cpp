@@ -235,19 +235,10 @@ void InitShaders(SQUE_Program* b_p, SQUE_Program* p_p)
     // Fault 1 -> Uniform Declaration should be per shader
     // Then the Program should have a method to set ids for the declared uniforms
     SQUE_PROGRAM_Use(b_p->id);
-    SQUE_SHADERS_DeclareProgram(b_p->id, 5, b_p->uniform_ref);
-    SQUE_SHADERS_DeclareUniform(b_p->id, "vp");
-    SQUE_SHADERS_DeclareUniform(b_p->id, "center");
-    SQUE_SHADERS_DeclareUniform(b_p->id, "size");
-    SQUE_SHADERS_DeclareUniform(b_p->id, "radius");
-    SQUE_SHADERS_DeclareUniform(b_p->id, "col_in");
+    SQUE_PROGRAM_CacheUniforms(*b_p);
 
     SQUE_PROGRAM_Use(p_p->id);
-    SQUE_SHADERS_DeclareProgram(p_p->id, 4, p_p->uniform_ref);
-    SQUE_SHADERS_DeclareUniform(p_p->id, "vp");
-    SQUE_SHADERS_DeclareUniform(p_p->id, "center");
-    SQUE_SHADERS_DeclareUniform(p_p->id, "size");
-    SQUE_SHADERS_DeclareUniform(p_p->id, "col");
+    SQUE_PROGRAM_CacheUniforms(*p_p);
 }
 
 void CleanUpShaders(SQUE_Program& b, SQUE_Program& p)
@@ -402,14 +393,14 @@ int main(int argc, char** argv)
         float red[3] = { 1,0,0 };
         float cyan[3] = { 0,1,1 };
         float green[3] = { 0,1,0 };
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "vp"), &v.x);
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "center"), &ball.x); // VERT SHADER IS IN CLIP SPACE (-1,1), change and it will be working
+        SetFloat2(SQUE_PROGRAM_GetUniformID(ball_program, "vp"), &v.x);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(ball_program, "center"), &ball.x); // VERT SHADER IS IN CLIP SPACE (-1,1), change and it will be working
         glm::vec2 bsize(ball.radius * 2, ball.radius * 2);
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "size"), &bsize.x);// glm::vec2(ball.radius * 2, ball.radius * 2));
-        SetFloat(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "radius"), ball.radius);
-        SetFloat3(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "col_in"), red);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(ball_program, "size"), &bsize.x);// glm::vec2(ball.radius * 2, ball.radius * 2));
+        SetFloat(SQUE_PROGRAM_GetUniformID(ball_program, "radius"), ball.radius);
+        SetFloat3(SQUE_PROGRAM_GetUniformID(ball_program, "col_in"), red);
 
-        SetFloat3(SQUE_PROGRAM_GetUniformLocation(ball_program.id, "col_in"),cyan);
+        SetFloat3(SQUE_PROGRAM_GetUniformID(ball_program, "col_in"),cyan);
         state.blend = true;
         state.SetUp();
         SQUE_RENDER_DrawIndices(ball.rect);
@@ -417,22 +408,22 @@ int main(int argc, char** argv)
         
         // Player 1 Render
         SQUE_PROGRAM_Use(paddle_program.id);
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "vp"), &v.x);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(paddle_program, "vp"), &v.x);
         
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "center"), &player1.x);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(paddle_program, "center"), &player1.x);
         glm::vec2 p1size(player1.sizex * 2, player1.sizey * 2);
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "size"), &p1size.x);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(paddle_program, "size"), &p1size.x);
         //
-        SetFloat3(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "col"), red);
+        SetFloat3(SQUE_PROGRAM_GetUniformID(paddle_program, "col"), red);
         SQUE_RENDER_DrawIndices(player1.rect);
 
         SQUE_PROGRAM_Use(paddle_program.id);
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "vp"), &v.x);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(paddle_program, "vp"), &v.x);
 
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "center"), &player2.x);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(paddle_program, "center"), &player2.x);
         glm::vec2 p2size(player2.sizex * 2, player2.sizey * 2);
-        SetFloat2(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "size"), &p2size.x);
-        SetFloat3(SQUE_PROGRAM_GetUniformLocation(paddle_program.id, "col"), green);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(paddle_program, "size"), &p2size.x);
+        SetFloat3(SQUE_PROGRAM_GetUniformID(paddle_program, "col"), green);
         SQUE_RENDER_DrawIndices(player2.rect);   
 
         SQUE_CHECK_RENDER_ERRORS();

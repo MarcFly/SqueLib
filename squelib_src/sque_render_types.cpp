@@ -21,6 +21,8 @@ SQUE_VertAttrib::SQUE_VertAttrib(const char* name_, int32_t var_type_, bool norm
     memcpy(name, name_, strlen(name_));
 }
 
+SQUE_VertAttrib::~SQUE_VertAttrib() {}
+
 uint16_t SQUE_VERTEX_ATTRIBUTE_GetSize(uint16_t vertex_size, uint16_t num_components) { return num_components * vertex_size; }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +36,7 @@ SQUE_Mesh::SQUE_Mesh() : draw_config(SQUE_POINTS), draw_mode(SQUE_STATIC_DRAW),
     num_index(0), index_var(SQUE_UINT), index_var_size(4)
 {}
 
+SQUE_Mesh::~SQUE_Mesh() {};
 //SQUE_Mesh::~SQUE_Mesh() { if(vert_id > 0) CleanUp(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

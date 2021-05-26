@@ -1340,7 +1340,44 @@ Some modules' requirements can change as they are developed, there may be requir
 
 ## Core Library
 
-### Window Creation
+The core implementation of the library should allow a low C++ experience level user create an application with a window, control the display inside the window, have access to the main inputs performed and finally, be able to load and write raw binary files.
+
+These will be the main points that the library should accomplish, as well as being able to perform these actions seamlessly across the target platforms. This process of making the required functionality work properly for the platforms as well as have them easy for the user to access, causes limitations to arise and circumvent.
+
+### Library Base
+
+Implementation details from external libraries should remain private towards the user, meaning that the user will not be able to call directly GLFW, EGL or OpenGL, they will have to go through the library in order to interact with the systems.
+
+#### Android Initialization
+
+Given the requirements for initializing an Android Application.
+
+#### Macro Remapping
+
+Given that the library will work over multiple libraries, as well as have its own types, macros and functions, it is important to define a way to circumvent the usage of library specific things without alienating it too much so that it becomes not recognizable.
+
+GLFW, OpenGL and EGL are heavy users of enum and macros for configuration and runtime things and the user should not have to know which one to specifically use as depending on the environment they might have to use from a library or another.
+
+Althought the solution is not pretty for the one that has to deal with the implementation, it translates into a seamless experience for the user when using the required types.
+
+
+### Window Control
+
+The management of a window is basically the same as an application loop, given a configuration a type of window will be initialized in which you will update what is displayed on until it is time to close the whole application, shown in **Figure 19**. What differs from a simple desktop application is that this process has to be adapted and limited to work seamlessly with a base Android device as well as the chosen libraries.
+
+************************************************************************************************
+*.------------.   .------------.   .----------------.     CloseApp  .---------------.
+*| Set Config +-->| Initialize +-->| Update Display +----*--------->| Close Display |
+*'------------'   '------------'   '----------------'    |          '---------------'
+*                                           ^            |
+*                                           | Next Frame |
+*                                           '------------'
+************************************************************************************************
+[Figure [diagram]: Usual display management loop.]
+
+Both GLFW and EGL take care of generating the context in which the rendereing API will work on, in this case OpenGL. The initialization step will have to take care of launching a main window to which the rendering context is tied, then if it is necessary, other displays would be opened separately but only on desktop devices. Currently there is no support for multiple windows in a single application from the Android NDK, instead it is required to initialize a new activity for it. Given the complexity, multiple windows will not be supported.
+
+
 
 ### Input Management
 

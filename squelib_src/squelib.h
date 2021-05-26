@@ -444,6 +444,7 @@ public:
 	// Constructors / Destructors
 	SQ_API SQUE_VertAttrib();
 	SQ_API SQUE_VertAttrib(const char* name_, int32_t var_type, bool normalize, uint16_t num_components);
+	SQ_API ~SQUE_VertAttrib();
 
 	// Variables
 	int32_t id;
@@ -463,7 +464,7 @@ typedef struct SQUE_Mesh
 {
 // Constructors / Destructors
 	SQ_API SQUE_Mesh();
-	//SQ_API ~SQUE_Mesh();
+	SQ_API ~SQUE_Mesh();
 
 // Variables
 	int32_t draw_config;
