@@ -131,6 +131,7 @@ SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 {
 	SQUE_Dir* ret = new SQUE_Dir();
 #if defined(ANDROID)
+	/*
 	memcpy(ret->name, "raw", 4);
 	//ret->name = "raw";
 	ret->native_dir_data = (char*)AAssetManager_openDir(my_app->activity->assetManager, ret->name);
@@ -157,6 +158,7 @@ SQUE_Dir* SQUE_FS_CreateBaseDirTree()
 				continue;
 		}
 	}
+	*/
 #else
 	std::string main_path = SQUE_FS_GetExecPath();
 	memcpy(ret->name, main_path.c_str(), main_path.length() + 1);

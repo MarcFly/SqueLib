@@ -1,0 +1,146 @@
+# Functions
+
+# Get a list of Subdirectories from a Current Directory
+function(subdirlist result currdir)
+    message(STATUS)
+    message(STATUS "subdirlist()")
+    file(GLOB children RELATIVE ${currdir} ${currdir}/*)
+    set(list "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${currdir}/${child})
+            message(STATUS "Added ${child} to list")
+            LIST(APPEND list ${currdir}/${child})
+        endif()
+    endforeach()
+    set(${result} ${list} PARENT_SCOPE)
+    message(STATUS)
+endfunction()
+
+# Get the first directory that exists in a list of items
+function(first_exists result list)
+    message(STATUS)
+    message(STATUS "first_exists()")
+    message(STATUS "Checking: " "${list}")
+    set(found "")
+    foreach(item ${list})
+        message(STATUS ${item})
+        if(IS_DIRECTORY "${item}/")
+            message(STATUS "${item} Exists!")
+            set(found ${item})
+            break()
+        endif()
+    endforeach()
+    message(STATUS "Check ${found}")
+    set(${result} ${found} PARENT_SCOPE)
+    message(STATUS)
+endfunction()
+
+# Macros
+
+macro(setup_android_sdk_vars)
+
+    # Set Route to find SDKs
+    set(OS_NAME linux-x86_64)
+
+    if(WIN32)
+        set(OS_NAME windows-x86_64)
+    endif()
+
+    message(STATUS "Building from " ${OS_NAME})
+
+    # Check that Environment Variable for SDK Exists, else define it
+    if(NOT ANDROIDSDK)
+        set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK)
+        first_exists(ANDROIDSDK "${SDK_DIRS}")
+    endif()
+
+    # Search for NDK inside SDK
+    if(NOT NDK)
+        if($ENV{NDK})
+            message(STATUS "NDK already defined at ${NDK}")
+            set(NDK $ENV{NDK})
+        elseif($ENV{ANDROID_NDK})
+            message(STATUS "NDK already defined at $ENV{ANDROID_NDK}")
+            set(NDK $ENV{ANDROID_NDK})
+        elseif($ENV{ANDROID_NDK_HOME})
+            message(STATUS "NDK already defined at $ENV{ANDROID_NDK_HOME}")
+            set(NDK $ENV{ANDROID_NDK_HOME})
+        else()
+            set(NDK_DIRS ${ANDROIDSDK}/ndk ${ANDROIDSDK}/ndk-bundle)
+            first_exists(NDK_G "${NDK_DIRS}")
+            subdirlist(NDK_L ${NDK_G})
+            first_exists(NDK "${NDK_L}")
+        endif()
+    endif()
+
+    # Search for Build Tools inside SDK
+    if(NOT BUILD_TOOLS)
+        first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
+        if(NOT EXISTS ${BT_EXISTS})
+            message(FATAL_ERROR "Build tools folder not found")
+        endif()
+        subdirlist(BT_Vrs ${BT_EXISTS})
+        first_exists(BUILD_TOOLS "${BT_Vrs}")
+    endif()
+    if(NOT AAPT)
+        set(AAPT ${BUILD_TOOLS}/aapt)
+    endif()
+
+    if(NOT ADB)
+        if(WSL)
+            set(ADB ${ANDROIDSDK}/windows/platform-tools/adb.exe)
+        else()
+            set(ADB ${ANDROIDSDK}/platform-tools/adb)
+        endif()
+    endif()
+    # Check that everything was found
+    if(NOT EXISTS ${ANDROIDSDK})
+        message(FATAL_ERROR "ANDROID SDK NOT FOUND")
+    endif()
+    if(NOT EXISTS ${NDK})
+        message(FATAL_ERROR "ANDROID NDK NOT FOUND")
+    endif()
+    if(NOT EXISTS ${BUILD_TOOLS})
+        message(FATAL_ERROR "ANDROID BUILD_TOOLS NOT FOUND")
+    endif()
+
+    message(STATUS ${ANDROIDSDK})
+    message(STATUS ${NDK})
+    message(STATUS ${BUILD_TOOLS})
+    message(STATUS)
+
+endmacro()
+
+if(ToAndroid)
+    # Compiler Flags    
+    if(DEBUG OR NDK_DEBUG)
+        set(ANDROID_OPT "-O0")
+    else()
+        set(ANDROID_OPT "-Ofast")
+    endif()
+    set(ANDROID_COMPILE_FLAGS "-ffunction-sections ${ANDROID_OPT} -fdata-sections -v")
+    set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
+    set(CFLAGS_ARM64 "-m64 ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ANDROID_COMPILE_FLAGS} -fPIC ${CFLAGS_ARM64} ${ARGN} ")
+    set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS}")
+    message(STATUS "Setting Compile Flags for ANDROID: ${CMAKE_CXX_FLAGS}")
+    message(STATUS)
+    
+    # Linker Flags
+    set(ANDROID_LINK_FLAGS " -shared -uANativeActivity_onCreate ") # REQUIRED FLAGS
+    if(NOT DEBUG OR NOT NDK_DEBUG)
+        #set(RECOMMENDED_LINK_FLAGS " -Wl -s --gc-sections ")
+    endif()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LINK_FLAGS} ${RECOMMENDED_LINK_FLAGS} ${ARGN} ")
+    message(STATUS "Setting Link Flags for ANDROID: ${CMAKE_EXE_LINKER_FLAGS}")
+    message(STATUS)
+
+    # Setting the compilers
+    setup_android_sdk_vars()
+    set(CMAKE_C_COMPILER "${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/aarch64-linux-android${ANDROID_VERSION}-clang")
+    set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}++")
+    if(WIN32)
+        set(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}.cmd")
+        set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}.cmd")
+    endif()
+endif()
