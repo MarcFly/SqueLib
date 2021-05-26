@@ -4,7 +4,9 @@
 
 macro(SqueLib_PrepareBuild target orgName srcFiles)
     #add_compile_definitions(${CMAKE_BUILD_TYPE}) #Release is a common word, should be names something else... MiniAudio has issue!
-    include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
+    execute_process(COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+    set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+
     include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
     include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
 
@@ -12,14 +14,10 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         add_compile_definitions(ANDROID)
         add_library(${target} SHARED "${srcFiles}")
 
-        setup_android_sdk_vars()
+        #setup_android_sdk_vars()
         make_keystore_file("") # Generating the keystore file takes TOO MUCH TIME
-        set_app_properties(${target} ${orgName} 29)
-        set_android_link_flags()
-        set_android_compile_flags()
-        message(STATUS " CHECKING IF SetAndroid Compiler works ${NDK} ${OS_NAME} ${ANDROIDVERSION}")    
-        #set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})    
-        link_android_libc(${target} ${NDK} ${OS_NAME} ${ANDROIDVERSION})
+        set_app_properties(${target} ${orgName})
+        link_android_libc(${target})
         squelib_add_targets(${target})        
     elseif(ToWindows OR ToLinux)
         message(STATUS "${srcFiles}")
@@ -32,6 +30,7 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
 
     # SOLOUD ----- Has to be included directly to final project... I don't know how from lib and use soloud directly
     if(WITH_SOLOUD)
+        target_compile_definitions(${target} PUBLIC WITH_MINIAUDIO)
         set(soloud_base "${SqueLib_extra}/soloud")
         file(GLOB_RECURSE soloud_src "${soloud_base}/src/*.cpp" "${soloud_base}/src/*.c" "${soloud_base}/*.h")
         set(soloud_include "${soloud_base}/include")
@@ -55,7 +54,16 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         target_include_directories(${target} PUBLIC ${mmgr_include})
         source_group(/mmgr FILES ${mmgr_src})
     endif()
-    message(STATUS "Still unchanged")
+    
+    set_target_properties(${target}
+        PROPERTIES 
+            ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
+            LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
+            RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
+    )
+    target_link_libraries(${target} PUBLIC SqueLib)
+    target_include_directories(${target} PUBLIC ${SqueLib_include})
+
 endmacro()
 
 macro(SqueLib_Package asset_folder resource_folder)

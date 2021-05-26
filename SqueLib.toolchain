@@ -113,10 +113,10 @@ endmacro()
 
 if(ToAndroid)
     # Compiler Flags    
-    if(DEBUG OR NDK_DEBUG)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         set(ANDROID_OPT "-O0")
     else()
-        set(ANDROID_OPT "-Ofast")
+        set(ANDROID_OPT "-O3")
     endif()
     set(ANDROID_COMPILE_FLAGS "-ffunction-sections ${ANDROID_OPT} -fdata-sections -v")
     set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
@@ -128,10 +128,9 @@ if(ToAndroid)
     
     # Linker Flags
     set(ANDROID_LINK_FLAGS " -shared -uANativeActivity_onCreate ") # REQUIRED FLAGS
-    if(NOT DEBUG OR NOT NDK_DEBUG)
-        #set(RECOMMENDED_LINK_FLAGS " -Wl -s --gc-sections ")
-    endif()
+    set(RECOMMENDED_LINK_FLAGS " -Wl -s -dead-strip ")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LINK_FLAGS} ${RECOMMENDED_LINK_FLAGS} ${ARGN} ")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
     message(STATUS "Setting Link Flags for ANDROID: ${CMAKE_EXE_LINKER_FLAGS}")
     message(STATUS)
 
@@ -143,4 +142,5 @@ if(ToAndroid)
         set(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}.cmd")
         set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}.cmd")
     endif()
+    
 endif()
