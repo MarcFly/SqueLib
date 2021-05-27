@@ -27,10 +27,10 @@ endmacro()
 # ANDROID INSTALL / PUSH / UNINSTALL / MAKEAPK / ...
 #------------------------------------------------------------------------------------------------
 macro(squelib_add_targets target)
-    if(${CMAKE_BUILD_TYPE} EQUAL "Release")
-        set(debuggable "false")
-    else()
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         set(debuggable "true")
+    else()
+        set(debuggable "false")
     endif()
 
     add_custom_target( AndroidManifest.xml

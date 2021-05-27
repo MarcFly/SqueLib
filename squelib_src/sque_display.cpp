@@ -18,6 +18,9 @@ struct SQUE_Window
 
     // Flags for working with squelib
     uint16_t working_flags;
+    sque_vec<int32_t> context_hints;
+    sque_vec<int32_t> buffer_hints;
+    sque_vec<int32_t> window_hints;
 };
 
 static std::mutex display_mtx;
@@ -35,18 +38,18 @@ ViewportSizeCallback viewport_size_callback = DebugViewportSizeCallback;
 void DebugHandleDropFileFun(const char* location) { SQUE_PRINT(LT_INFO, "Dropped file from: %s", location); }
 HandleDropFileFun* drop_file_callback = DebugHandleDropFileFun;
 
-static int32_t def_window_options[] =
+static int32_t def_window_hints[] =
 {
     SQUE_DISPLAY_END
 };
 
-static int32_t const def_context_options[] =
+static int32_t def_context_hints[] =
 {
     SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN,
     SQUE_DISPLAY_END
 };
 
-static int32_t const def_buffer_options[] =
+static int32_t def_buffer_hints[] =
 {
     SQUE_RED_BITS, 8,
     SQUE_GREEN_BITS, 8,
@@ -85,7 +88,7 @@ static int32_t const def_buffer_options[] =
 #   include <GLFW/glfw3.h>
 #   include <GLFW/glfw3native.h>
     GLFWmonitor** glfw_monitors;
-    sque_vec<GLFWwindow*> glfw_windows; //  TOD: Check GLFW documentation if I have to free them or GLFW takes care Valgrind 125/235
+    sque_vec<GLFWwindow*> glfw_windows; //  TODO: Check GLFW documentation if I have to free them or GLFW takes care Valgrind 125/235
     
     void GLFW_ErrorCallback(int error_code, const char* description)
     {
@@ -136,13 +139,7 @@ static int32_t const def_buffer_options[] =
     {
         for (uint16_t j = 0; j < glfw_windows.size(); ++j)
         {
-            if (glfw_windows[j] = window)
-            {
-                for (uint16_t i = 0; i < count; ++i)
-                    drop_file_callback(paths[i]);
-                break;
-            }
-        }
+            if (glfw_windows[j] = window)if (!next_window)
     }
 
 #endif
@@ -161,10 +158,23 @@ void SQUE_DISPLAY_Init()
     // But some things and modules require to be reinitialized after coming back...
     // Should I have a bool?
     // think about it.
-    if (!next_window)
+    if(next_window)
+    {
+        //next_window->window_hints.push_back(SQUE_DISPLAY_END);
+        //next_window->window_hints.push_back(SQUE_DISPLAY_END);
+        //next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
+        //next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
+        //next_window->context_hints.push_back(SQUE_DISPLAY_END);
+        //next_window->context_hints.push_back(SQUE_DISPLAY_END);
+    }
+    else
     {
         SQUE_PRINT(SQUE_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new SQUE_Window();
+        SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
+        SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
+        SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
+
     }
 
     SQUE_PRINT(LT_INFO, "Declaring Backed Specific Variables...");
@@ -217,12 +227,12 @@ void SQUE_DISPLAY_Init()
     EGLint num_config;
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Preparing Config...");
-    eglChooseConfig(egl_display, def_buffer_options, &config, 1, &num_config);
+    eglChooseConfig(egl_display, next_window->buffer_hints.begin(), &config, 1, &num_config);
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Using EGL Config %d", num_config);
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Creating EGL Context...");
 
-    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, def_context_options);
+    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, def_context_hints);
     if (egl_context == EGL_NO_CONTEXT)
     {
         SQUE_PRINT(SQUE_LogType::LT_ERROR, "Could not create EGL Context!");
@@ -255,7 +265,7 @@ void SQUE_DISPLAY_Init()
     int32_t height = ANativeWindow_getHeight(egl_window);
     next_window->width = width;
     next_window->height = height;
-    EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, def_window_options);
+    EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, next_window->window_hints.begin());
     SQUE_PRINT(SQUE_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
 #else // Other EGL based backends?
 #endif
@@ -313,12 +323,18 @@ void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
+    for(uint16_t pairs; pairs < size; pairs+2)
+    {
+        next_window->window_hints.push_back(options[pairs]);
+        next_window->window_hints.push_back(options[pairs+1]);
+    }
+/*    
 #ifdef USE_GLFW
     for (uint16_t i = 0; i < size; i + 2)
         glfwWindowHint(options[i], options[i + 1]);
 #elif defined(USE_EGL)
 
-#endif
+#endif*/
 }
 
 void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
@@ -329,12 +345,19 @@ void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
+    for(uint16_t pairs; pairs < size; pairs+2)
+    {
+        next_window->context_hints.push_back(options[pairs]);
+        next_window->context_hints.push_back(options[pairs+1]);
+    }
+
+/*
 #ifdef USE_GLFW
     for (uint16_t i = 0; i < size; i += 2)
         glfwWindowHint(options[i], options[i + 1]);
 #elif defined(USE_EGL)
 
-#endif
+#endif*/
 }
 
 void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
@@ -345,12 +368,19 @@ void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
+    for(uint16_t pairs; pairs < size; pairs+2)
+    {
+        next_window->buffer_hints.push_back(options[pairs]);
+        next_window->buffer_hints.push_back(options[pairs+1]);
+    }
+
+/*
 #ifdef USE_GLFW
     for (uint16_t i = 0; i < size; i + 2)
         glfwWindowHint(options[i], options[i + 1]);
 #elif defined(USE_EGL)
 
-#endif
+#endif*/
 }
 
 uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uint16_t monitor)

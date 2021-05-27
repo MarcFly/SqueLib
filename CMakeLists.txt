@@ -131,7 +131,7 @@ if(ToAndroid)
     target_sources(SqueLib PUBLIC ${app_glue}) # Add Android Files required 
 
     include(${SQUE_cmake}/SetupAndroidEnv.cmake)
-    link_android_libc(SqueLib)
+    link_android_libc(SqueLib ${SQUE_OutputFolder})
     link_android_all_libs(SqueLib)
     include_android(SqueLib)
 

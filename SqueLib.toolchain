@@ -119,7 +119,7 @@ if(ToAndroid)
         set(ANDROID_OPT "-O3")
     endif()
     set(ANDROID_COMPILE_FLAGS "-ffunction-sections ${ANDROID_OPT} -fdata-sections -v")
-    set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROIDVERSION} ")
+    set(ANDROID_COMPILE_FLAGS "${ANDROID_COMPILE_FLAGS} -DANDROID -DAPPNAME=${APPNAME} -DANDROID_FULLSCREEN=y -DANDROIDVERSION=${ANDROID_VERSION} ")
     set(CFLAGS_ARM64 "-m64 ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ANDROID_COMPILE_FLAGS} -fPIC ${CFLAGS_ARM64} ${ARGN} ")
     set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -127,9 +127,10 @@ if(ToAndroid)
     message(STATUS)
     
     # Linker Flags
-    set(ANDROID_LINK_FLAGS " -shared -uANativeActivity_onCreate ") # REQUIRED FLAGS
-    set(RECOMMENDED_LINK_FLAGS " -Wl -s -dead-strip ")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LINK_FLAGS} ${RECOMMENDED_LINK_FLAGS} ${ARGN} ")
+    set(ANDROID_LD "lld")
+    set(ANDROID_LINK_FLAGS "-g -shared -uANativeActivity_onCreate ") # REQUIRED FLAGS
+    set(RECOMMENDED_LINK_FLAGS " -Wl -s -dead_strip ") #-dead_strip is not being used and --gc-sections is invalid...????
+    set(CMAKE_EXE_LINKER_FLAGS "${ANDROID_LINK_FLAGS} ${RECOMMENDED_LINK_FLAGS} ${ARGN} ")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
     message(STATUS "Setting Link Flags for ANDROID: ${CMAKE_EXE_LINKER_FLAGS}")
     message(STATUS)
