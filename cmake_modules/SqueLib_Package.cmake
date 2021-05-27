@@ -28,12 +28,6 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         endif(ToWindows)
     endif()
 
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        target_compile_options(${target} PUBLIC "-O0")
-    else()
-        target_compile_options(${target} PUBLIC "-O3")
-    endif()
-
     # SOLOUD ----- Has to be included directly to final project... I don't know how from lib and use soloud directly
     if(WITH_SOLOUD)
         target_compile_definitions(${target} PUBLIC WITH_MINIAUDIO)

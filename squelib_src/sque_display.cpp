@@ -40,13 +40,11 @@ HandleDropFileFun* drop_file_callback = DebugHandleDropFileFun;
 
 static int32_t def_window_hints[] =
 {
-    SQUE_DISPLAY_END
 };
 
 static int32_t def_context_hints[] =
 {
     SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN,
-    SQUE_DISPLAY_END
 };
 
 static int32_t def_buffer_hints[] =
@@ -59,7 +57,6 @@ static int32_t def_buffer_hints[] =
     SQUE_STENCIL_BITS, 0,
     SQUE_DEPTH_BITS, 24,
     SQUE_RENDERABLE_TYPE, SQUE_MIN_RENDERABLE,
-    SQUE_DISPLAY_END
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,24 +155,21 @@ void SQUE_DISPLAY_Init()
     // But some things and modules require to be reinitialized after coming back...
     // Should I have a bool?
     // think about it.
-    if(next_window)
-    {
-        //next_window->window_hints.push_back(SQUE_DISPLAY_END);
-        //next_window->window_hints.push_back(SQUE_DISPLAY_END);
-        //next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
-        //next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
-        //next_window->context_hints.push_back(SQUE_DISPLAY_END);
-        //next_window->context_hints.push_back(SQUE_DISPLAY_END);
-    }
-    else
+    if(!next_window)
     {
         SQUE_PRINT(SQUE_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new SQUE_Window();
         SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
         SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
         SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
-
     }
+    next_window->window_hints.push_back(SQUE_DISPLAY_END);
+    next_window->window_hints.push_back(SQUE_DISPLAY_END);
+    next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
+    next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
+    next_window->context_hints.push_back(SQUE_DISPLAY_END);
+    next_window->context_hints.push_back(SQUE_DISPLAY_END);
+
 
     SQUE_PRINT(LT_INFO, "Declaring Backed Specific Variables...");
 
@@ -232,7 +226,10 @@ void SQUE_DISPLAY_Init()
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Creating EGL Context...");
 
-    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, def_context_hints);
+    for(uint16_t i = 0;i < next_window->context_hints.size(); ++i)
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "%d == %d", next_window->context_hints[i], def_context_hints[i]);
+
+    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, next_window->context_hints.begin());
     if (egl_context == EGL_NO_CONTEXT)
     {
         SQUE_PRINT(SQUE_LogType::LT_ERROR, "Could not create EGL Context!");
@@ -323,7 +320,7 @@ void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-    for(uint16_t pairs; pairs < size; pairs+2)
+    for(uint16_t pairs = 0; pairs < size; pairs+=2)
     {
         next_window->window_hints.push_back(options[pairs]);
         next_window->window_hints.push_back(options[pairs+1]);
@@ -345,7 +342,7 @@ void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-    for(uint16_t pairs; pairs < size; pairs+2)
+    for(uint16_t pairs = 0; pairs < size; pairs+=2)
     {
         next_window->context_hints.push_back(options[pairs]);
         next_window->context_hints.push_back(options[pairs+1]);
@@ -368,7 +365,7 @@ void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-    for(uint16_t pairs; pairs < size; pairs+2)
+    for(uint16_t pairs=0; pairs < size; pairs+=2)
     {
         next_window->buffer_hints.push_back(options[pairs]);
         next_window->buffer_hints.push_back(options[pairs+1]);
