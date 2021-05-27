@@ -189,34 +189,36 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
     // Display Lib
     SQUE_DISPLAY_SetViewportResizeCallback(SQUE_RENDER_ChangeFramebufferSize);
     SQUE_DISPLAY_SetViewportSizeCallback(SQUE_RENDER_GetFramebufferSize);
-    SQUE_DISPLAY_Init();
-
+    
     if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_OPENWINDOW))
     {
-        sque_vec<int32_t> options;
-        
+        sque_vec<int32_t> window_options;
+        sque_vec<int32_t> context_options;
+        sque_vec<int32_t> buffer_options;
+
         if (CHK_FLAG(flags, SQ_INIT_MAX_RENDER_VER))
         {
-            options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
-            options.push_back(SQUE_CONTEXT_MAJOR_MAX);
-            options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
-            options.push_back(SQUE_CONTEXT_MINOR_MAX);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
+            context_options.push_back(SQUE_CONTEXT_MAJOR_MAX);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
+            context_options.push_back(SQUE_CONTEXT_MINOR_MAX);
         }
         else if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_MIN_RENDER_VER))
         {
-            options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
-            options.push_back(SQUE_CONTEXT_MAJOR_MIN);
-            options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
-            options.push_back(SQUE_CONTEXT_MINOR_MIN);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
+            context_options.push_back(SQUE_CONTEXT_MAJOR_MIN);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
+            context_options.push_back(SQUE_CONTEXT_MINOR_MIN);
         }
-        if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER) )
+        if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER))
         {
-            options.push_back(SQUE_DEBUG_CONTEXT);
-            options.push_back(1);
+            context_options.push_back(SQUE_DEBUG_CONTEXT);
+            context_options.push_back(1);
         }
 
-        SQUE_DISPLAY_NextWindow_ContextHints(options.begin(), options.size());
-        SQUE_DISPLAY_OpenWindow(app_name);
+        SQUE_DISPLAY_NextWindow_ContextHints(context_options.begin(), context_options.size());
+        
+        SQUE_DISPLAY_Init(app_name);
     }
 
     // For testing

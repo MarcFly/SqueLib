@@ -9,12 +9,11 @@
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 struct SQUE_Window
 {
     // Main attributes
     char title[256] = "";
-    int32_t width = 0, height = 0;
+    uint32_t width = 0, height = 0;
 
     // Flags for working with squelib
     uint16_t working_flags;
@@ -40,6 +39,7 @@ HandleDropFileFun* drop_file_callback = DebugHandleDropFileFun;
 
 static int32_t def_window_hints[] =
 {
+    SQUE_DISPLAY_END, SQUE_DISPLAY_END
 };
 
 static int32_t def_context_hints[] =
@@ -136,7 +136,10 @@ static int32_t def_buffer_hints[] =
     {
         for (uint16_t j = 0; j < glfw_windows.size(); ++j)
         {
-            if (glfw_windows[j] = window)if (!next_window)
+            if (glfw_windows[j] == window)
+                for (uint16_t i = 0; i < count; ++i)
+                    drop_file_callback(paths[i]);
+        }
     }
 
 #endif
@@ -147,7 +150,7 @@ static int32_t def_buffer_hints[] =
 // INITIALIZING & STATE MANAGEMENT ///////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_DISPLAY_Init()
+void SQUE_DISPLAY_Init(const char* title, const uint32_t width, const uint32_t height)
 {
     // What if some dipshit calls an Init 2 times?
     // SHould I have a callback that is dereferenced?
@@ -163,6 +166,8 @@ void SQUE_DISPLAY_Init()
         SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
         SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
     }
+    SQUE_DISPLAY_NextWindow_Size(width, height);
+    SQUE_DISPLAY_NextWindow_Title(title);
     next_window->window_hints.push_back(SQUE_DISPLAY_END);
     next_window->window_hints.push_back(SQUE_DISPLAY_END);
     next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
@@ -293,6 +298,8 @@ void SQUE_DISPLAY_Init()
 
     glfw_monitors = glfwGetMonitors(&monitor_count); // Main Monitor is always 0
     //glfwSetMonitorCallback( _send_monitor_change_event_ );
+
+    SQUE_DISPLAY_OpenWindow();
 #endif
 
 }
@@ -347,14 +354,6 @@ void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
         next_window->context_hints.push_back(options[pairs]);
         next_window->context_hints.push_back(options[pairs+1]);
     }
-
-/*
-#ifdef USE_GLFW
-    for (uint16_t i = 0; i < size; i += 2)
-        glfwWindowHint(options[i], options[i + 1]);
-#elif defined(USE_EGL)
-
-#endif*/
 }
 
 void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
@@ -370,17 +369,30 @@ void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
         next_window->buffer_hints.push_back(options[pairs]);
         next_window->buffer_hints.push_back(options[pairs+1]);
     }
-
-/*
-#ifdef USE_GLFW
-    for (uint16_t i = 0; i < size; i + 2)
-        glfwWindowHint(options[i], options[i + 1]);
-#elif defined(USE_EGL)
-
-#endif*/
 }
 
-uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uint16_t monitor)
+void SQUE_DISPLAY_NextWindow_Title(const char* title)
+{
+    if (next_window == NULL)
+    {
+        next_window = new SQUE_Window();
+    }
+
+    memcpy(next_window->title, title, strlen(title));
+}
+
+void SQUE_DISPLAY_NextWindow_Size(const uint32_t width, const uint32_t height)
+{
+    if (next_window == NULL)
+    {
+        next_window = new SQUE_Window();
+    }
+
+    next_window->width = width;
+    next_window->height = height;
+}
+
+uint16_t SQUE_DISPLAY_OpenWindow(const char* title, uint32_t width, uint32_t height, uint16_t monitor)
 {
     if (sque_windows.size() > 0)
     {
@@ -395,17 +407,20 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t heigh
         next_window = new SQUE_Window();
     }
 
-    memcpy(next_window->title, title, strlen(title));
+    if (title != NULL)
+        SQUE_DISPLAY_NextWindow_Title(title);
+    if (width != 0)
+        SQUE_DISPLAY_NextWindow_Size(width, height);
     next_window->working_flags = NULL;
 
     int x = 0, y = 0, w = 0, h = 0;
 
 #if defined(USE_GLFW)
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
-    width = (width != 0) ? width : w * .7;
-    height = (height != 0) ? height : h * .7;
+    next_window->width = (next_window->width != 0) ? next_window->width : w * .7;
+    next_window->height = (next_window->height != 0) ? next_window->height : h * .7;
 
-    GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
+    GLFWwindow* glfw_window = glfwCreateWindow(next_window->width, next_window->height, next_window->title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
     if (!glfw_window)
     {
         SQUE_PRINT(LT_WARNING, "Unable to create GLFW window...");
@@ -434,10 +449,10 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t heigh
 #endif
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Window \"%s\" opened correctly", title);
-#ifndef ANDROID // Quick and dirty, will look into initing properly
-    next_window->width = width;
-    next_window->height = height;
-#endif
+//#ifndef ANDROID // Quick and dirty, will look into initing properly
+//    next_window->width = width;
+//    next_window->height = height;
+//#endif
     sque_windows.push_back(*next_window);
     SQUE_DISPLAY_MakeContextMain(sque_windows.size() - 1);
     delete next_window;

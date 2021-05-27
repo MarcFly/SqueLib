@@ -181,12 +181,14 @@ enum SQUE_WindowFlags
 	SQUE_WINDOW_DEBUG = BITSET6,
 };																																	
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_DISPLAY_Init();
+SQ_API void SQUE_DISPLAY_Init(const char* title = NULL, const uint32_t width = 0, const uint32_t height = 0);
 SQ_API void SQUE_DISPLAY_Close();		
 SQ_API void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size);
 SQ_API void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size);
 SQ_API void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size);
-SQ_API uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width = 0, int32_t height = 0, uint16_t monitor = 0);
+SQ_API void SQUE_DISPLAY_NextWindow_Title(const char* title);
+SQ_API void SQUE_DISPLAY_NextWindow_Size(const uint32_t width, const uint32_t height);
+SQ_API uint16_t SQUE_DISPLAY_OpenWindow(const char* title = NULL, uint32_t width = 0, uint32_t height = 0, uint16_t monitor = 0);
 																														
 // Setters
 SQ_API void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val);
