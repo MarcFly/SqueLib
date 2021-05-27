@@ -869,6 +869,8 @@ In order to build Android application, the usual way would be to build them usin
 
 Parallel to the main tool, Google provides the Android SDK which has a suite of tools for compiling, packaging, debugging and many more things for Android projects with external toolchains such as CMake. With that in hand, one can provide their own way of compiling the source code as well as generating the necessary files required for a complete packaged app, then use the tools to finalize the process, install and run the application on the target Android device.
 
+<span class="pagebreak"></span>
+
 A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of using the tools I am used to or found in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics rendering and building framework for developing extremely portable applications written in C, the video<sub>[#W30]</sub> showing the portability to Android mentioned the unique requirement of writing C and modifying the build file.
 
 Given those premises and the fact the Android SDK comes with a C/C++ library to interface with the Android OS called the Android NDK, it became the starting point for development.
@@ -904,11 +906,66 @@ CMake will be used in this case to generate Makefiles through which to build the
 
 The following steps will provide insight on the modules in which the steps are divided to perform the build step for Android.
 
-#### _FindAndroidSDKVars.cmake_
+#### _SqueLib_Android.toolchain_
 
-The first step is to get the directories and variables required to interface, as it is englobed in a single macro because it makes sense to get these variable out in one go, the explanation will be divided step by step in the macro ***setup_android_sdk_vars***:
+The first step to getting a build working specifically for android is setting the environment variables properly. CMake makes uses of toolchain files in order to setup such variables that are invariably linke with every project set previously.
 
-The OS string required to where the files are specified at the Overview<sub>[#W35]</sub> page for external build systems.
+When making a call to CMake from command line, said file must be passed to the `CMAKE_TOOLCHAIN_FILE` variable. As the Android NDK provides a modified script depending on the targeted Android version<sub>[#52]</sub> 
+
+Because on Windows and Linux it is intended by the library for CMake to find the default compiler options given the generator options, the toolchain will be limited to Android. In any case, a toochain could be written and passed instead with user specific options as well as changing compile and linker flags on each target.
+
+As the toolchain is comprised of a single file, it will be explain in the following parts: Helpers, Environment Variables and Setting up Compiler.
+
+##### Helpers
+
+In order to have less requirements for the user in terms of what to do in order to get going, a couple helpers are thrown to find directories and files easier. Both are used in the next stage for setting up the Environment Variables.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+# Get a list of Subdirectories from a Current Directory
+function(subdirlist result currdir)
+    message(STATUS)
+    message(STATUS "subdirlist()")
+    file(GLOB children RELATIVE ${currdir} ${currdir}/*)
+    set(list "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${currdir}/${child})
+            message(STATUS "Added ${child} to list")
+            LIST(APPEND list ${currdir}/${child})
+        endif()
+    endforeach()
+    set(${result} ${list} PARENT_SCOPE)
+    message(STATUS)
+endfunction()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+# Get the first directory that exists in a list of items
+function(first_exists result list)
+    message(STATUS)
+    message(STATUS "first_exists()")
+    message(STATUS "Checking: " "${list}")
+    set(found "")
+    foreach(item ${list})
+        message(STATUS ${item})
+        if(IS_DIRECTORY "${item}/")
+            message(STATUS "${item} Exists!")
+            set(found ${item})
+            break()
+        endif()
+    endforeach()
+    message(STATUS "Check ${found}")
+    set(${result} ${found} PARENT_SCOPE)
+    message(STATUS)
+endfunction()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##### Environment Variables
+
+The next step is to find the directories and variables required to interface, as it is englobed in a single macro because it makes sense to get these variable out in one go as well as having them available for the whole CMake project afterwards, the explanation will be divided step by step in the macro ***setup_android_sdk_vars***:
+
+The OS string required to where the build, header and library files are specified at the Overview<sub>[#W35]</sub> page for external build systems.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Assume from Linux, else change OS Android naming to Windows.
@@ -921,24 +978,18 @@ endif()
 message(STATUS "Building from " ${OS_NAME})
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Then it is required to find the directory in which the SDK, NDK and Build Tools are placed. For doing so there are two helper functions called:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~bash
-first_exists("${list_of_directories}")
- - Given a list of directories, return the first that exists.
-
-subdirlist(var_to_define ${directory_to_search_subdirectories})
- - Creates a list with all the subdirectories existing in a directory.
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-These functions are used when no Android arguments or Environment variables are set:
+Then it is required to find the directory in which the SDK, NDK and Build Tools are placed. The helper functions are used when no Android arguments or Environment variables are set:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 if(NOT ANDROIDSDK)
     set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK)
     first_exists(ANDROIDSDK "${SDK_DIRS}")
 endif()
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Search for NDK inside SDK
 if(NOT NDK)
     if($ENV{NDK})
@@ -957,9 +1008,7 @@ if(NOT NDK)
         first_exists(NDK "${NDK_L}")
     endif()
 endif()
-~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Search for Build Tools inside SDK
 if(NOT BUILD_TOOLS)
     first_exists(BT_EXISTS ${ANDROIDSDK}/build-tools)
@@ -990,6 +1039,8 @@ endif()
 
 Finally a couple debug messages to make sure everything is working as intended, and then print the found locations. Should any directory be missing, the build process must stop.
 
+<span class="pagebreak"></span>
+
 ~~~~~~~~~~~~~~~~~~~~~~~bash
 # Check that everything was found
 if(NOT EXISTS ${ANDROIDSDK})
@@ -1009,7 +1060,49 @@ message(STATUS)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
+##### Setting up the Compiler
+
+When working with any compiler, there are a couple options that might be ideal to setup, as well as the need to specify which compiler tool to use.
+
+In the Android NDK, there are already commands provided for calling the compiler properly depending on the minimum target version of Android but not really about the compiler and linker options.
+
+There are various ways to setup global linker and compiler options, and they depend mostly on what one think is correct or not, but specifically for Android there are a couple that are needed as well as recommended. These will be listed down here with a short explanation, as well as teh variables needed to set:
+
+***Compiler Flags [#W37]: CMAKE_C_FLAGS / CMAKE_CXX_FLAGS***
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+NEEDED
+ * -m64: Target a 64bit architechture.
+
+RECOMMENDED
+ * -fPIC: force Position Independent Code, meaning that there are no issues if the code is loaded in a memory addresses different than set from file (if they are specified).
+ * -O3/O0: Optimization level, my defaults are 3 (max optimization) for Release and 0 for Debug (force keep all debug symbols). There are other levels, some times it is recommended Osize, which is similar to O2 with specific to make the binary smaller.
+ * -ffunction-sections: Set each function to have a specific section when compiled into binary form.
+ * -fdata-sections: Set each variable and structure to have a specific section when compiled into binary form.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These two last options are required for enabling garbage collection of unused data and functions, as well as possibly minimally increasing performance at the cost of minimally increasing binary size and compile times. For a better explanation of said options I refer to the posts [#W38] and [#W39] about these and other options.
+
+***Linker Flags [#W36]: CMAKE_EXE_LINKER_FLAGS / CMAKE_SHARED_LINKER_FLAGS***
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+NEEDED
+ * -shared: Make sure the target is compiled into a shared library, which is needed for Android Native App linking.
+ * -uANativeActivityOnCreate:  Undefine default ANativeActivityOnCreate definition to be replaced with the one coming from the Android NDK, making the application entry towards your own defined "android_main"
+
+RECOMMENDED
+ * -Wl: Activates linker warnings
+ * -dead_strip / --gc-sections: Enables garbage collection for unused functions/data which may reduce binary size significantly. --gc-sections is older and not supported everywhere, -dead_strip is but I could not find 1 to 1 documentation for clang
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finally one has to set the target compiler for the languages. In CMake these variables have the form of `CMAKE_LANG_COMPILER` and they refer to the path towards the script to initiate the build process. That can be directly the executable or a script that gathers the data passed by CMake and performs the steps to properly call the compiler. In this case, we call the script provided by the Android NDK:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
+set(CMAKE_C_COMPILER "${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/bin/aarch64-linux-android${ANDROID_VERSION}-clang")
+set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}++")
+if(WIN32)
+    set(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}.cmd")
+    set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}.cmd")
+endif()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### _SetupAndroidEnv.cmake_
 
@@ -1021,6 +1114,8 @@ Such steps are separated into different macros to understand more clearly which 
 
 There are some variables that are of general use in other steps as well used in later custom targets for the packaging step, for this reaseon they are set during the build process as they depend on the target application.
 
+<span class="pagebreak"></span>
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(APPNAME '"${appName}"')
 set(ORG_NAME "${orgName}")
@@ -1031,62 +1126,27 @@ set(ANDROIDVERSION ${androidVer})
 set(ANDROIDTARGET ${androidVer})
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##### set_android_link_flags() & set_android_compile_flags()
+##### link_android_libc(target)
 
-This pair of functions define the required and recommended options for building an application. As these options can be set in multiple ways within CMake, it is better to explain them directly and why are they needed or recommended:
+Android does not provide a native C++ standard library for C++11 up, but the NDK does so with LLVM's LibC, which can target up to a subset of C++17.
 
-***Compiler Flags [#W37]:***
+For that, this step has to copy into the library folder where the other shared libraries will be built into, then link it to the user application.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-NEEDED
- * -m64: Target a 64bit architechture.
-
-RECOMMENDED
- * -fPIC: force Position Independent Code, meaning that there are no issues if the code is loaded in addresses different than set (if they are specified or required for some reason).
- * -Ofast/O0: Optimization level, my defaults are fast for Release and 0 for Debug (force keep all debug symbols).
- * -ffunction-sections: Set each function to have a specific section when compiled into binary form.
- * -fdata-sections: Set each variable and structure to have a specific section when compiled into binary form.
+set(ARM_LIBS ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib)
+execute_process(COMMAND cp ${ARM_LIBS}/aarch64-linux-android/libc++_shared.so ${LIB_DIR})
+set(LIBLINK ${ARM_LIBS}/aarch64-linux-android/${ANDROID_VERSION})
+target_link_libraries(${target} PUBLIC ${LIBLINK}/../libc++_shared.so)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
+##### link_android_all_libs(target)
 
-These two last options are required for enabling garbage collection of unused data and functions which may reduce the binary size considerably, as well as possibly minimally increasing performance at the cost of minimally increasing binary size and compile times. For a better explanation of said options I refer to the posts [#W38] and [#W39] about these and other options.
-
-***Linker Flags [#W36]:***
-~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-NEEDED
- * -shared: Make sure the target is compiled into a shared library, which is needed for Native App linking.
- * -uANativeActivityOnCreate:  Undefine default ANativeActivityOnCreate definition to be replaced with the one coming from the Android NDK, making the application entry towards your own defined "android_main"
-
-RECOMMENDED
- * -Wl: Activates linker warnings
- * --gc-sections: Enables garbage collection for unsudes functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-##### set_android_compiler(NDK_PATH OS_USED, ANDR_V)
-
-Set the variables to where the C and C++ compiler commands are in the Android NDK.
+Given a target to to build, link to the libraries required for development of a default application, needing: Display, Rendering, Sound, Standard Library, ADB Logging and the Android Library.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-set(CMAKE_C_COMPILER "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/bin/aarch64-linux-android${ANDR_V}-clang")
-set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}++")
-if(WIN32)
-    set(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}.cmd")
-    set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}.cmd")
-endif()
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-##### link_android_all_libs(target NDK_PATH OS_USED ANDR_V)
-
-Given a targeto to build, link to the libraries required for development of a default application, needing: Display, Rendering, Sound, Standard Library, ADB Logging and the Android Library.
-
-A specific step is to copy the shared object file of the llvm's standard C++ library, allowing support for C++11/14/17.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
-set(ARM_LIBS "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/lib")
-execute_process(COMMAND cp "${ARM_LIBS}/aarch64-linux-android/libc++_shared.so ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a")
-set(LIBLINK "${ARM_LIBS}/aarch64-linux-android/${ANDR_V}")
+set(ARM_LIBS "${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib")
+set(LIBLINK "${ARM_LIBS}/aarch64-linux-android/${ANDROID_VERSION}")
 target_link_libraries(${target} PUBLIC 
-    "${LIBLINK}/../libc++_shared.so"
     "${LIBLINK}/libm.so"
     "${LIBLINK}/libnativewindow.so"
     "${LIBLINK}/libandroid.so"    
@@ -1101,6 +1161,8 @@ target_link_libraries(${target} PUBLIC
 ##### include_android(target NDK_PATH OS_USED)
 
 Given a target to build, include the directories where the android library include files are as well as the native app library.
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(NDKINCLUDE "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/include")
@@ -1144,6 +1206,8 @@ Each target will have a short explanation, a list of dependencies if there are a
 ##### AndroidManifest.xml
 
 In order to describe the essential information of an Android application, each app requires an _AndroidManifest.xml_ file. Although the NDK provides samples for creating one, Rawdraw provides an already templated one to which close no changes were made.
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~xml
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
@@ -1208,6 +1272,8 @@ COMMANDS
 
 Packs<sub>[#W42], [#W44]</sub> and signs<sub>[#W43], [#W45]</sub> the application into an Android recognized format (APK). During the process, some intermediate files are created and removed (_rm -rf_ command).
 
+<span class="pagebreak"></span>
+
 One specific thing that is note done in this step but part of the CMake build is packaging the resources. Because in desktop platofrms, usually the relative path sits directly on the working directory but in Android there is a specific folder structure, a separate function that the user is set so that the assets used are copied onto the final build directory.
 
 On Android, such directiories are _/assets_ and _/res_ (resources). Resources are required by the package whereas Assets are custom data used by the application, which can be loaded but not modified on written to.
@@ -1267,6 +1333,41 @@ COMMANDS
 
 ### Adapting the Minimal Example source code for Android
 
+Following the Android NDK Examples<sub>[#53]</sub> as well as Rawdraw Android<sub>[#W30]</sub>, the minimum requirements for dealing with an Android application are a handle for the provided application and an `android_main` which the NDK will call. From there you can reroute to your own application and do there what you need.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+#include <android_native_app_glue.h>
+#include <android/native_activity.h>
+#include <android/log.h>
+#include <stdio.h>
+
+struct android_app* my_app;
+
+int main(int argc, char** argv)
+{
+    __android_log_print(3, "CMakeExample_Android", "Hey from main!");
+    return 0;
+}
+
+void android_main(struct android_app* app)
+{
+    __android_log_print(3, "CMakeExample_Android", "CMakeExample Init");
+    my_app = app;
+    
+    __android_log_print(3, "CMakeExample_Android", "CMakeExample Calling Main");
+    char *argv[] = {"CMakeExample_Android", 0};
+    main(2, argv);
+
+    __android_log_print(3, "CMakeExample_Android", "CMakeExample Closing...");
+    ANativeActivity_finish(my_app->activity);
+    exit(0);
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Besides the required steps for an Android application, the main contents remain the same. Instead of using `printf` we use `__android_log_print` and the actual main is `android_main` which will call our actual `main` function.
+
+At the end, we make the necessary calls to finish the application from the Native Activity and then a forced exit, because there is no clean way of exiting an application from inside.
+
 ## Debugging
 
 Although I am a pretty heavy  on log based debugging, I believe it's not the best solution but only the simplest available. After all, cryptic crash messages as well as fishing for errors with carefully places logs, become a mess and almost close to divination when debugging unknown elements. For that reason a fast entry to available debugging capabilities is needed.
@@ -1292,7 +1393,7 @@ p / print <variable_name> # print the value contained in a variable
 
 As can be seen in **Figure 16**, the experience is pretty barebones but much better than having to debug by just getting default crash messages, GDB will point out where and when these crashes ocurr.
 
-![Figure [figures]: Example GDB view of main file while executing a sample application from SqueLib.](images/gdb_example_pong.png)
+![Figure [figures]: Example GDB view of main file while executing a sample application from SqueLib.](images/gdb_example_pong.png width=80%)
 
 At the same time, getting into a command line debugging tool is still quite a jump from Visual Studio. Luckily the chosen Linux distro, KUbuntu, comes with an extensive marketplace and applications which include a lightweight C/C++ IDE with direct support for CMake based projects, lowering the entry requirement to Linux development.
 
@@ -1300,11 +1401,11 @@ The process of importing and debugging a CMake based project just requires the u
 
 ![Figure [figures]: Sample application being debugged from KDevelop.](images/kdevelop_example_pong.png width=90%)
 
-<span class="pagebreak"></span>
-
 ### Android: APK Profiler
 
 The simples way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which is pretty handy in the way that you do not require a fully fledged Android Studio project to debug it. Android Studio has a built in profiler/debugger for APKs that have been built with the debug symbols, only requiring access to the original debugging files which are either inside the apk itself and can be extracted from or are already available on the system after building the project through external means.
+
+<span class="pagebreak"></span>
 
 Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer as the last developed x86 based android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, on of the reasons why the final build process will only target 64bit ARM systems (less built time and less worries).
 
@@ -1348,9 +1449,142 @@ These will be the main points that the library should accomplish, as well as bei
 
 Implementation details from external libraries should remain private towards the user, meaning that the user will not be able to call directly GLFW, EGL or OpenGL, they will have to go through the library in order to interact with the systems.
 
+#### Exporting Symbols
+
+A requirement in Windows is to set the visibility or how functions are exported and imported depending on the context of the library build. Maybe a user will import it and use it directly in their project, anohter will have it as a static library and a third one as a dynamic library.
+
+In all cases, there are some requirements on how to export the symbols<sub>[#W55]</sub>, which are not necessarily needed on other platforms but it would be good practice to do so:
+
+~~~~~~~~~~~~~~~~~~~~~~c++
+#ifndef SQ_API		
+#   ifdef _WIN32
+#       if defined(SQ_BUILD_SHARED) /* build dll */
+#           define SQ_API __declspec(dllexport)
+#       elif !defined(SQ_BUILD_STATIC) /* use dll */
+#           define SQ_API __declspec(dllimport)
+#       else /* static library */	
+#           define SQ_API				
+#       endif					
+#   else
+        // Will not delve into visibility on other platforms as it isn't required to work
+        // #if (Compiler Versions accepts attributes)
+        // #define SQ_API __attribute__((visibility("default")))
+        // #else
+#       define SQ_API
+        // #endif
+#   endif					
+#endif
+~~~~~~~~~~~~~~~~~~~~~~
+
 #### Android Initialization
 
-Given the requirements for initializing an Android Application.
+As seen previously with the **Android Minimal Example**, there needs a rerouting to enter user main. In order to take care of Android Initialization, the library provides already the `android_main` in which a standard user `main(int argc, char** argv)` will be called in order to start execution of user code.
+
+In this same `android_main` the basic steps for initializing other subsystems for Android should be taken care of. A specific case is the `HandleAndroidInput` which will be defiend under the Input source file, we set it up as an extern to setup the callback:
+
+~~~~~~~~~~~~~~~~~c++
+#ifdef ANDROID
+
+#include <android_native_app_glue.h>
+#include <android/log.h>
+
+void HandleAndroidCMD(struct android_app* app, int32_t cmd)
+{
+    switch (cmd)
+    {
+        // Take care of Android Commands
+    }
+}
+extern int HandleAndroidInput(struct android_app* app, AInpuitEvent* ev);
+
+extern int main(int argc, char** argv);
+
+struct android_app* my_app;
+
+void android_main(struct android_app* app)
+{
+    LOG(LOGTYPE, "SQUE_LIB - Android Squelib Start...");
+    my_app = app;
+    app->onAppCmd = HandleAndroidCMD;
+    app->onInputEvent = HandleAndroidInput;
+
+    LOG(LOGTYPE, "SQUE_LIB - Calling App Main...");
+    char *argv[] = {"AppMain", 0};
+    main(2, argv);
+
+    LOG(LOGTYPE, "SQUE_LIB - Finished executing App...");
+}
+
+#endif // ANDROID
+~~~~~~~~~~~~~~~~~
+
+#### Printing to Console
+
+An abstraction that will allow the users to print to console regardless of the environment they are at, using a simple approach ith a variadic list and a macro.
+
+The macro uses the `__FILE__` and `__LINE__` macros to pass to the print format function where it originates and accepts a string for formating as well as the variadic list of values. Said function will extract the filename, add the string with the specified format and then print it to console using the abstraction.
+
+For using warning levels, a simple logtype enum that matches Android's log values<sub>[#54]</sub> is setup.
+
+~~~~~~~~~~~~~~~~~c++
+#ifdef _WIN32
+    #define FOLDER_ENDING '\\'
+    #define FE '\\'
+#else
+    #define FOLDER_ENDING '/'
+    #define FE '/'
+#endif
+
+enum SQUE_LogType
+{
+	LT_INFO = 4,
+	LT_WARNING,
+	LT_ERROR,
+	LT_CRITICAL
+};
+
+void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...)
+{
+    const char* sttr = strrchr(file, FOLDER_ENDING);
+    uint32_t sttr_len = strlen(sttr);
+
+    static va_list ap;
+    char* tmp = new char[1];
+    va_start(ap, format);
+    int len = vsnprintf(tmp, 1, format, ap) + 1;
+    va_end(ap);
+    delete[] tmp;
+
+    tmp = new char[len];
+    va_start(ap, format);
+    vsnprintf(tmp, len, format, ap);
+    va_end(ap);
+
+    int print_len = len + (sttr_len + 4 + 4);
+    char* print = new char[print_len];
+    sprintf(print, "%s(%d): %s", sttr, line, tmp);
+
+    SQUE_ConsolePrint((int)lt, print);
+
+    delete[] tmp;
+    delete[] print;
+}
+
+void SQUE_ConsolePrint(int lt, const char* log)
+{
+#if defined(_WIN32) //&& defined(_DEBUG)
+    OutputDebugString(log);
+    OutputDebugString("\n");
+#elif defined ANDROID
+    __android_log_print(lt, "SqueLib", log);
+#elif defined LINUX && defined NOT_GDB
+    printf("LOGTYPE %d: %s", lt, log);
+#endif
+
+}
+
+#define SQUE_PRINT(LogType, format, ...) SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)
+~~~~~~~~~~~~~~~~~
 
 #### Macro Remapping
 
@@ -1360,6 +1594,51 @@ GLFW, OpenGL and EGL are heavy users of enum and macros for configuration and ru
 
 Althought the solution is not pretty for the one that has to deal with the implementation, it translates into a seamless experience for the user when using the required types.
 
+~~~~~~~~~~~~~~~~~~~~c++
+// Example: There are macros that don't map, so an invalid value is set that should throw silent errors
+#if defined(GLFW)
+    #define SQUE_INVALID GFLW_MACRO_INVALID_VALUE
+    #define SQUE_MACRO_1 GLFW_MACRO_X
+    #define SQUE_MACRO_2 GLFW_MACRO_X2
+#elif defined(EGL)
+    #define SQUE_INVALID EGL_MACRO_INVALID_VALUE
+    #define SQUE_MACRO_1 EGL_MACRO_Y
+    #define SQUE_MACRO_2 SQUE_INVALID
+#endif
+~~~~~~~~~~~~~~~~~~~~
+
+#### While Library Init and Close
+
+In order to make the library more usable, a single init and close point will be provided for those who prefer it. The details change depending on the implementation of each module but the template implementation of such a function should do something like this:
+
+~~~~~~~~~~~~~~~~~~~c++ linenumbers
+SQUE_LIB_INIT(const char* app_name, int32_t flags)
+{
+    //...
+    if(CHK_FLAG(flags, DEFAULT_FLAGS))
+    {
+        // Inits in default config
+    }
+    else if(CHK_FLAG(flags, CUSTOM_FLAGS))
+    {
+        // Init modules in a specific way
+    }
+    //...
+}
+
+SQUE_LIB_Close()
+{
+    //...
+    SQUE_RENDER_Close();
+    SQUE_INPUT_Close();
+    SQUE_DISPLAY_Close();
+    SQUE_FS_Close();
+#ifdef ANDROID
+    ANativeActivity_finish(my_app->activity);
+#endif
+    //...
+}
+~~~~~~~~~~~~~~~~~~~
 
 ### Window Control
 
@@ -1375,7 +1654,10 @@ The management of a window is basically the same as an application loop, given a
 ************************************************************************************************
 [Figure [diagram]: Usual display management loop.]
 
-Both GLFW and EGL take care of generating the context in which the rendereing API will work on, in this case OpenGL. The initialization step will have to take care of launching a main window to which the rendering context is tied, then if it is necessary, other displays would be opened separately but only on desktop devices. Currently there is no support for multiple windows in a single application from the Android NDK, instead it is required to initialize a new activity for it. Given the complexity, multiple windows will not be supported.
+Both GLFW and EGL take care of generating the context in which the rendering API will work on, in this case OpenGL. The initialization step will have to take care of launching a main window to which the rendering context is tied, then if it is necessary, other displays would be opened separately but only on desktop devices. Currently there is no support for multiple windows in a single application from the Android NDK, instead it is required to initialize a new activity for it. Given the complexity, multiple windows will not be supported.
+
+#### Set Config
+
 
 
 
@@ -1624,6 +1906,18 @@ The following libraries can be built with SqueLib by defining their required opt
 
 [#51]: Rawdraw Android Makefile. CNLohr, 2020.
 <https://github.com/cnlohr/rawdrawandroid/blob/master/Makefile>
+
+[#52]: Android Build Numbers. Google, 2021.
+<https://source.android.com/setup/start/build-numbers>
+
+[#53]: Android NDK Samples. Google 2020.
+<https://developer.android.com/ndk/samples/sample_na>
+
+[#54]: Android NDK Log. Google 2020.
+<https://developer.android.com/ndk/reference/group/logging>
+
+[#55]: beautiful Native Libraries. Armin Ronacher, 2013.
+<https://lucumr.pocoo.org/2013/8/18/beautiful-native-libraries/>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>

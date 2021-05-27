@@ -11,14 +11,11 @@ endmacro()
 #------------------------------------------------------------------------------------------------
 # SETUP ANDROID SPECIFIC COMPILE OPTIONS + PROCESSES
 #------------------------------------------------------------------------------------------------
-macro(link_android_libc target)
+macro(link_android_libc target LIB_DIR)
     set(ARM_LIBS ${NDK}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib)
-    execute_process(COMMAND cp ${ARM_LIBS}/aarch64-linux-android/libc++_shared.so ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
+    execute_process(COMMAND cp ${ARM_LIBS}/aarch64-linux-android/libc++_shared.so ${LIB_DIR})
     set(LIBLINK ${ARM_LIBS}/aarch64-linux-android/${ANDROID_VERSION})
-    target_link_libraries(${target} PUBLIC 
-        ${LIBLINK}/../libc++_shared.so
-        atomic
-    )
+    target_link_libraries(${target} PUBLIC ${LIBLINK}/../libc++_shared.so)
 endmacro()
 
 macro(link_android_all_libs target)

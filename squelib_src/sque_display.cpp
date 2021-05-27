@@ -16,7 +16,7 @@ struct SQUE_Window
     char title[256] = "";
     int32_t width = 0, height = 0;
 
-    // Flags for workign with squelib
+    // Flags for working with squelib
     uint16_t working_flags;
 };
 
@@ -24,7 +24,7 @@ static std::mutex display_mtx;
 sque_vec<SQUE_Window> sque_windows;
 SQUE_Window* next_window = NULL;
 static uint16_t main_window_context = UINT16_MAX;
-int monitor_count;
+static int monitor_count;
 
 void DebugResizeCallback(int32_t width, int32_t height) { SQUE_PRINT(LT_INFO, "ViewportResize Callback Not Set, tried: %d,%d!", width, height); }
 ResizeCallback viewport_resize_callback = DebugResizeCallback;

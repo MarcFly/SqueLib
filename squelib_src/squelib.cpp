@@ -155,7 +155,7 @@ void AndroidSendToBack(int param)
     jnii->DetachCurrentThread();
 }
 
-#endif
+#endif // ANDROID
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE CONTROL ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -299,8 +299,8 @@ void SQUE_ConsolePrint(int lt, const char* log)
     OutputDebugString("\n");
 #elif defined ANDROID
     __android_log_print(lt, "SqueLib", log);
-#elif defined LINUX
-
+#elif defined LINUX && defined NOT_GDB
+    printf(log);
 #endif
 
 }

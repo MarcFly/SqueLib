@@ -17,7 +17,7 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         #setup_android_sdk_vars()
         make_keystore_file("") # Generating the keystore file takes TOO MUCH TIME
         set_app_properties(${target} ${orgName})
-        link_android_libc(${target})
+        link_android_libc(${target} ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
         squelib_add_targets(${target})        
     elseif(ToWindows OR ToLinux)
         message(STATUS "${srcFiles}")
