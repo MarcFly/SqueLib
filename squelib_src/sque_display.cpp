@@ -162,19 +162,33 @@ void SQUE_DISPLAY_Init(const char* title, const uint32_t width, const uint32_t h
     {
         SQUE_PRINT(SQUE_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new SQUE_Window();
-        SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
-        SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
-        SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
     }
+    
+    if(next_window->window_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
+    if(next_window->buffer_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
+    if(next_window->context_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
+
+#ifdef USE_EGL
+    next_window->window_hints.clear();
+    next_window->buffer_hints.clear();
+    next_window->context_hints.clear();
+    if(next_window->window_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
+    if(next_window->buffer_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
+    if(next_window->context_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
+
+    next_window->window_hints.push_back(SQUE_DISPLAY_END);
+    next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
+    next_window->context_hints.push_back(SQUE_DISPLAY_END);
+#endif
+
     SQUE_DISPLAY_NextWindow_Size(width, height);
     SQUE_DISPLAY_NextWindow_Title(title);
-    next_window->window_hints.push_back(SQUE_DISPLAY_END);
-    next_window->window_hints.push_back(SQUE_DISPLAY_END);
-    next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
-    next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
-    next_window->context_hints.push_back(SQUE_DISPLAY_END);
-    next_window->context_hints.push_back(SQUE_DISPLAY_END);
-
 
     SQUE_PRINT(LT_INFO, "Declaring Backed Specific Variables...");
 
@@ -263,12 +277,12 @@ void SQUE_DISPLAY_Init(const char* title, const uint32_t width, const uint32_t h
     }
 
 #if defined(ANDROID)
-    int32_t width = ANativeWindow_getWidth(egl_window);
-    int32_t height = ANativeWindow_getHeight(egl_window);
-    next_window->width = width;
-    next_window->height = height;
+    int32_t width_t = ANativeWindow_getWidth(egl_window);
+    int32_t height_t = ANativeWindow_getHeight(egl_window);
+    next_window->width = width_t;
+    next_window->height = height_t;
     EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, next_window->window_hints.begin());
-    SQUE_PRINT(SQUE_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
+    SQUE_PRINT(SQUE_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width_t, height_t);
 #else // Other EGL based backends?
 #endif
     
@@ -298,9 +312,9 @@ void SQUE_DISPLAY_Init(const char* title, const uint32_t width, const uint32_t h
 
     glfw_monitors = glfwGetMonitors(&monitor_count); // Main Monitor is always 0
     //glfwSetMonitorCallback( _send_monitor_change_event_ );
+#endif
 
     SQUE_DISPLAY_OpenWindow();
-#endif
 
 }
 

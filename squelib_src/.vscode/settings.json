@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.md.html": "markdown",
+        "markdown": "",
+        "*.toolchain": "cmake",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp"
+    }
+}
