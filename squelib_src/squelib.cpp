@@ -188,7 +188,7 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
     
     // Display Lib
     SQUE_DISPLAY_SetViewportResizeCallback(SQUE_RENDER_ChangeFramebufferSize);
-    SQUE_DISPLAY_SetViewportSizeCallback(SQUE_RENDER_GetFramebufferSize);
+    SQUE_DISPLAY_SetViewportGetSizeCallback(SQUE_RENDER_GetFramebufferSize);
     
     if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_OPENWINDOW))
     {

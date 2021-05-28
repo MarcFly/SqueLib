@@ -66,11 +66,7 @@ void SQUE_MESH_SetLocations(SQUE_Mesh& mesh)
 {
     sque_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
 
-    for (uint32_t i = 0; i < v_attribs.size(); ++i)
-    {
-        v_attribs[i].offset = mesh.vertex_size;
-        mesh.vertex_size += v_attribs[i].var_size * v_attribs[i].num_comp;
-    }
+    SQUE_MESH_CalcVertSize(mesh);
 
     for (uint32_t i = 0; i < v_attribs.size(); ++i)
     {
@@ -84,8 +80,13 @@ uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh& mesh)
 {
     sque_free_vec<SQUE_VertAttrib>& v_attribs = mesh.attributes;
 
+    mesh.vertex_size = 0;
+
     for (uint32_t i = 0; i < v_attribs.size(); ++i)
+    {
+        mesh.attributes[i].offset = mesh.vertex_size;
         mesh.vertex_size += v_attribs[i].var_size * v_attribs[i].num_comp;
+    }
 
     return mesh.vertex_size;
 }

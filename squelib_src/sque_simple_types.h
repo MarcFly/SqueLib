@@ -76,12 +76,14 @@ typedef void VoidFun2();
 #define VoidFun_Empty [](){}
 
 // Display
-typedef void(*ResizeCallback)(int32_t width, int height);
-typedef void(*ViewportSizeCallback)(int32_t* width, int32_t* height);
-// Input
-typedef void(*KeyCallback)(int32_t code, int32_t state);
-typedef void(*MouseFloatCallback)(float x, float y);
-
+typedef void(ResizeCallback)(int32_t width, int height);
+typedef void(ViewportGetSizeCallback)(int32_t* width, int32_t* height);
 typedef void(HandleDropFileFun)(const char* location);
+
+// Input
+typedef void(KeyCallback)(int32_t code, int32_t state);
+typedef void(MouseFloatCallback)(float x, float y);
+
+
 
 #endif

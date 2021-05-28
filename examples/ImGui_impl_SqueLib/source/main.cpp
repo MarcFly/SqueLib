@@ -84,7 +84,7 @@ void ImGuiImplSqueLibTest()
             ImGui::Render();
 
             int32_t x, y;
-            SQUE_DISPLAY_GetViewportSize(0, &x, &y);
+            SQUE_DISPLAY_GetViewportSize(&x, &y, 0);
 
             // Remember to make the expected framebuffer (aka window) to main
             SQUE_DISPLAY_MakeContextMain(0);

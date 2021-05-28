@@ -8,7 +8,7 @@
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 void DebugKey(int32_t code, int32_t state) { /*SQUE_PRINT(LT_INFO, "Key %c: %d", code, state);*/ }
-KeyCallback key_fun = DebugKey;
+KeyCallback* key_fun = DebugKey;
 
 SQUE_Key keyboard[MAX_KEYS];
 void DebugMouseFloatCallback(float x, float y) { /*SQUE_PRINT(LT_INFO, "Pointer %.2f,%.2f", x, y);*/ }
@@ -16,7 +16,7 @@ void DebugMouseFloatCallback(float x, float y) { /*SQUE_PRINT(LT_INFO, "Pointer 
 std::list<int> char_buffer;
 
 float scrollx = INT32_MAX, scrolly = INT32_MAX;
-MouseFloatCallback scroll_callback = DebugMouseFloatCallback;
+MouseFloatCallback* scroll_callback = DebugMouseFloatCallback;
 
 SQUE_Key mouse_buttons[MAX_MOUSE_BUTTONS];
 SQUE_Pointer pointers[MAX_POINTERS];
@@ -31,7 +31,6 @@ SQUE_Gesture gestures[MAX_POINTERS];
 #include <android_native_app_glue.h>
 #include <jni.h>
 #include <android/native_activity.h>
-extern int graphics_backend_started;
 extern struct android_app* my_app;
 
 // From https://github.com/cntools/rawdraw/blob/master/CNFGEGLDriver.c l(616)
@@ -394,7 +393,7 @@ int SQUE_INPUT_GetCharFromBuffer()
     return ret;
 }
 
-SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button)
+SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(uint32_t button)
 {
     if (button >= MAX_MOUSE_BUTTONS) return SQUE_ACTION_UNKNOWN;
     return (SQUE_INPUT_Actions)mouse_buttons[button].state;
@@ -443,30 +442,30 @@ void SQUE_INPUT_GetScroll(float* v, float* h)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn) 
+KeyCallback* SQUE_INPUT_SetKeyCallback(KeyCallback* sque_key_fn) 
 { 
-    KeyCallback ret = key_fun;
+    KeyCallback* ret = key_fun;
     key_fun = sque_key_fn; 
     return ret;
 }
 
 
-MouseFloatCallback SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback position, uint16_t pointer)
+MouseFloatCallback* SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback* position, uint16_t pointer)
 {
-    MouseFloatCallback ret = pointers[pointer].pos_callback;
+    MouseFloatCallback* ret = pointers[pointer].pos_callback;
     pointers[pointer].pos_callback = position;
     return ret;
 }
-MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll)
+MouseFloatCallback* SQUE_INPUT_SetScrollCallback(MouseFloatCallback* scroll)
 {
-    MouseFloatCallback ret = scroll_callback;
+    MouseFloatCallback* ret = scroll_callback;
     scroll_callback = scroll;
     return ret;
 }
 
-KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback cb)
+KeyCallback* SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback* cb)
 {
-    KeyCallback ret = mouse_buttons[button].callback;
+    KeyCallback* ret = mouse_buttons[button].callback;
     mouse_buttons[button].callback = cb;
     return ret;
 }
@@ -511,48 +510,6 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
                 break;
             }
         }
-    }
-    for (int i = 0; i < num_pointers; ++i)
-    {
-        SQUE_PRINT(LT_INFO, "Get Pointer %d Status...", i);
-        int x, y;
-        int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
-        x = AMotionEvent_getX(ev, i);
-        y = AMotionEvent_getY(ev, i);
-        SQUE_Pointer& p = pointers[pointer];
-        SQUE_Gesture& g = gestures[pointer];
-        if(whichsource != p.id) continue;
-        switch (action)
-        {
-        case AMOTION_EVENT_ACTION_DOWN:
-            p.active = true;
-            p.x = x;
-            p.y = y;
-            g.start_x = x;
-            g.start_y = y;
-            p.pos_callback(x,y);
-            ANativeActivity_showSoftInput( app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
-            SQUE_PRINT(LT_INFO, "Pointer %d: Action Down - %d %d...", i, x, y);
-            break;
-        case AMOTION_EVENT_ACTION_MOVE:
-        // Redo MidPoints of a Gesture properly
-            SQUE_PRINT(LT_INFO, "Pointer %d: Action Move - %d %d...", i, x, y);
-            p.x = x;
-            p.y = y;
-            p.pos_callback(x,y);
-            break;
-        case AMOTION_EVENT_ACTION_UP:
-            p.active = false;
-            p.x = x;
-            p.y = y;
-            g.end_x = x;
-            g.end_y = y;
-            g.timer.Stop();
-            p.pos_callback(x,y);    
-            SQUE_PRINT(LT_INFO, "Pointer %d: Action Up - %d %d...", i, x, y);
-            break;
-        }
-        if(motion_ended == true) motion_ended = !p.active;
     }
     for (int i = 0; i < num_pointers; ++i)
     {

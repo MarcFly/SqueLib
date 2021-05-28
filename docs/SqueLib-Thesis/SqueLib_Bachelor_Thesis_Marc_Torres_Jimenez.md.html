@@ -1436,8 +1436,49 @@ When working with SqueLib, it is intended for the library to take control of the
 ***************************************************************************
 [Figure [diagram]: Expected material provided by SqueLib.]
 
-
 Some modules' requirements can change as they are developed, there may be required extra modules or integration of other libraries for other tasks. For this reason it is expected for features or needs to grow the project requirements.
+
+Before delving into each part of the library provided, code will be provided in the document for elements that are specifically relevant to the subject at question such as multiplatform approaches or specific things for Android and Linux, given that during the coursing of the degree the apporach has focused on Windows.
+
+<!--
+## Structuring Library
+
+
+
+### C++ Coding Conventions
+
+| Type | Description |
+|---|---|
+| Introductors | ID1_..._element : these introductors to avoid name collisions are caps | 
+| Functions | FunctinsAreCamelCase |
+| Macros | CAPS_SEPARATED_BY_UNDERSCORES |
+| Variables | lower_case_separate_by_underscore |
+| Typedef Variables | lower_case_separate_by_underscore |
+| Typedef Callbacks | FunctionsAreCamelCase |
+| Brackets | {} are always positioned below the definition, unless they fit in a single line comfortably at 100~ characters |
+| IfDef Chains | # Always at the same level, either space with empty lines or tab in the text, both feel correct and designate what an if encapsulates |
+
+### Folder Structure
+
+There is not a specific order to how files will be kept inside each one of the folders shown in **Figure 19**, th epurpose is to separate cleanly what does SqueLib provide as well as to have a first fast guess at where those might be.
+
+Specifically *external* contains other libraries that SqueLib makes explicit use of and *extra* proivdes other implementations and libraries that can work alongside SqueLib easily on the target platforms on modules not provided. 
+*************************************
+*/Root -+-- cl_script_templates/    *
+*       +-- cmake_modules/          *
+*       +-- defaults/               *
+*       +-- docs/                   *
+*       +-- examples/               *
+*       +-- external/               *
+*       +-- extra/                  *
+*       +-- squelib__src/           *
+*       +-- toolchains/             *
+*       +--CMakeLists.txt           *
+*       +--Readme.md                *
+*************************************
+[Figure [diagram]: Base Folder Structure for the library] 
+
+-->
 
 ## Core Library
 
@@ -1465,22 +1506,19 @@ In all cases, there are some requirements on how to export the symbols<sub>[#W55
 #       else /* static library */	
 #           define SQ_API				
 #       endif					
-#   else
-        // Will not delve into visibility on other platforms as it isn't required to work
-        // #if (Compiler Versions accepts attributes)
-        // #define SQ_API __attribute__((visibility("default")))
-        // #else
+#   else /* Linux, Android,...*/
 #       define SQ_API
-        // #endif
 #   endif					
 #endif
+// Visibility implementation on GCC would be SQ_API __attribute((visibility("default"))
+// Might change for other compilers and versions
 ~~~~~~~~~~~~~~~~~~~~~~
 
 #### Android Initialization
 
-As seen previously with the **Android Minimal Example**, there needs a rerouting to enter user main. In order to take care of Android Initialization, the library provides already the `android_main` in which a standard user `main(int argc, char** argv)` will be called in order to start execution of user code.
+As seen previously with the **Android Minimal Example**, there needs a rerouting to enter user main. In order to take care of Android Initialization, the library provides already the `android_main` in which a standard user provided `main(int argc, char** argv)` will be called in order to start execution of user code.
 
-In this same `android_main` the basic steps for initializing other subsystems for Android should be taken care of. A specific case is the `HandleAndroidInput` which will be defiend under the Input source file, we set it up as an extern to setup the callback:
+In this same `android_main` the basic steps for initializing other subsystems for Android should be taken care of. A specific case is the `HandleAndroidInput` which will be defined under the Input source file, we set it up as an extern to setup the callback:
 
 ~~~~~~~~~~~~~~~~~c++
 #ifdef ANDROID
@@ -1522,19 +1560,11 @@ void android_main(struct android_app* app)
 
 An abstraction that will allow the users to print to console regardless of the environment they are at, using a simple approach ith a variadic list and a macro.
 
-The macro uses the `__FILE__` and `__LINE__` macros to pass to the print format function where it originates and accepts a string for formating as well as the variadic list of values. Said function will extract the filename, add the string with the specified format and then print it to console using the abstraction.
+The macro uses the `__FILE__` and `__LINE__` macros to pass to `SQUE_PrintVargs` where the call originates and accepts a string for formating as well as the variadic list of values. Said function will extract the filename, add the string with the specified format and then print it to console using the abstraction.
 
 For using warning levels, a simple logtype enum that matches Android's log values<sub>[#54]</sub> is setup.
 
 ~~~~~~~~~~~~~~~~~c++
-#ifdef _WIN32
-    #define FOLDER_ENDING '\\'
-    #define FE '\\'
-#else
-    #define FOLDER_ENDING '/'
-    #define FE '/'
-#endif
-
 enum SQUE_LogType
 {
 	LT_INFO = 4,
@@ -1543,33 +1573,6 @@ enum SQUE_LogType
 	LT_CRITICAL
 };
 
-void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...)
-{
-    const char* sttr = strrchr(file, FOLDER_ENDING);
-    uint32_t sttr_len = strlen(sttr);
-
-    static va_list ap;
-    char* tmp = new char[1];
-    va_start(ap, format);
-    int len = vsnprintf(tmp, 1, format, ap) + 1;
-    va_end(ap);
-    delete[] tmp;
-
-    tmp = new char[len];
-    va_start(ap, format);
-    vsnprintf(tmp, len, format, ap);
-    va_end(ap);
-
-    int print_len = len + (sttr_len + 4 + 4);
-    char* print = new char[print_len];
-    sprintf(print, "%s(%d): %s", sttr, line, tmp);
-
-    SQUE_ConsolePrint((int)lt, print);
-
-    delete[] tmp;
-    delete[] print;
-}
-
 void SQUE_ConsolePrint(int lt, const char* log)
 {
 #if defined(_WIN32) //&& defined(_DEBUG)
@@ -1577,8 +1580,8 @@ void SQUE_ConsolePrint(int lt, const char* log)
     OutputDebugString("\n");
 #elif defined ANDROID
     __android_log_print(lt, "SqueLib", log);
-#elif defined LINUX && defined NOT_GDB
-    printf("LOGTYPE %d: %s", lt, log);
+#elif defined LINUX
+    printf("LOGTYPE %d: %s\n", lt, log);
 #endif
 
 }
@@ -1656,18 +1659,505 @@ The management of a window is basically the same as an application loop, given a
 
 Both GLFW and EGL take care of generating the context in which the rendering API will work on, in this case OpenGL. The initialization step will have to take care of launching a main window to which the rendering context is tied, then if it is necessary, other displays would be opened separately but only on desktop devices. Currently there is no support for multiple windows in a single application from the Android NDK, instead it is required to initialize a new activity for it. Given the complexity, multiple windows will not be supported.
 
-#### Set Config
+#### Configuration and Initialization
 
+Configuring both APIs is straightforward, a couple of functions for setting the next window hints are provided which will be used for the creation of the main window the application runs in. These hints are stored and later setup when performing either the initialization or, should it be supported, when opening another window.
 
+The `Hints` are passed down as an array of integer values, as both GLFW and EGL work through their own enum values that have been remapped by SqueLib to make it seamless. Both libraries ignore invalid hints and continue with their respective initialization steps.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+SQ_API void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size);
+SQ_API void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size);
+SQ_API void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size);
+SQ_API void SQUE_DISPLAY_NextWindow_Title(const char* title);
+SQ_API void SQUE_DISPLAY_NextWindow_Size(const uint32_t width, const uint32_t height);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Then initialization steps comes and performs the initialization depending on the backend. The actual code changes a bit but the following pseudo-c++ code should show the requirements for getting it to work on both platforms:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+#ifdef EGL
+    extern struct android_app* my_app;
+    extern int graphics_backend_started;
+    EGLNativeWindowType egl_window;
+    EGLDisplay egl_display;
+    EGLSurface egl_surface = EGL_NO_SURFACE;
+    EGLContext egl_context;
+#elif defined(GLFW)
+    GLFWmonitor** glfw_monitors;
+    int monitor_count;
+    GLFWwindow** glfw_windows;
+#endif
+
+void SQUE_DISPLAY_Init()
+{
+
+#ifdef EGL
+    EGLint egl_major, egl_minor;
+    int events;
+    // Android will crash if you don't wait for the backends to be initialized asynchronously
+    while(!graphics_backend_started)
+    {
+		struct android_poll_source* source;
+		if (ALooper_pollAll( 0, 0, &events, (void**)&source) >= 0)
+		{
+			if (source != NULL) source->process(my_app, source);
+		}
+	}
+    // Initialize for the main display
+    egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglInitialize(egl_display, &egl_major, &egl_minor);
+    EGLConfig config;
+    EGLint num_config;
+    // Return a single base full configuration that works with the display
+    eglChooseConfig(egl_display, buffer_hints, &config, 1, &num_config);
+    // Create a rendering context given a series of hints and the full config
+    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, context_hints);
+    // Set the egl_window to the Android NativeWindow
+    egl_window = my_app->window;
+    base_window->width = ANativeWindow_getWidth(egl_window);
+    base_window->height = ANativeWindow_getHeight(egl_window);
+    // Create a surface to draw on from the obtained window and a series of hints
+    egl_surface = eglCreateWindowSurface(egl_display, config, egl_window, window_hints);
+
+#elif defined(GLFW)
+    int glfw_major, glfw_minor, glfw_revision;
+    glfwGetVersion(&glfw_major, &glfw_minor, &glfw_revision);
+    // Pass init hints glfwInitHint()...
+    glfwInit();
+    glfw_monitors = glfwGetMonitors(&monitor_count);
+    glfwGetMonitorWorkArea(glfw_monitors[0], base_window->x, base_window->y, base_window->width, base_window->height);
+
+    // GLFW has a same function for all the hints, but EGL separates them in the Window/Buffer/Context types
+    // as it initializes separately the surface, context and window
+    for(uint16_t i = 0; i < window_hints.size(); i+=2)
+        glfwWindowHint(window_hints[i], window_hints[i+1]);
+    for(uint16_t i = 0; i < buffer_hints.size(); i+=2)
+        glfwWindowHint(buffer_hints[i], buffer_hints[i+1]);
+    for(uint16_t i = 0; i < context_hints.size(); i+=2)
+        glfwWindowHint(context_hints[i], context_hints[i+1]);
+
+    // Perform the initialization of a full window, with its rendering context
+    glfw_windows[0] = glfCreateWindow(base_window->width, base_window->height, "Title", 0, NULL);
+    // Set window callbacks...
+#endif
+    // Set the context of the generated window to be the main
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### Updating Display
+
+The main functions to take care of the main display are really swapping back with frontbuffer to show the next drawn frame and making such buffer the one to write to. When interfacing with OpenGL, the user might be writting to different buffers which they will bind and unbind as they seem fit. 
+
+In case that the user does not want to worry about handling the buffer swap state, this pair of functions can be called successively to perform that buffer swap properly:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+void SQUE_DISPLAY_MakeContextMain(uint16_t window)
+{
+    SQ_ASSERT(window < sque_windows.size())
+#if EGL
+    if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
+    {
+        SQUE_PRINT(SQUE_LogType::LT_ERROR, "Failed to attach Context to Surface (eglMakeCurrent())!");
+        exit(0);
+    };
+#elif define(GLFW)
+    glfwMakeContextCurrent(glfw_windows[window]);
+#endif
+}
+
+void SQUE_DISPLAY_SwapBuffer(uint16_t window)
+{
+    SQ_ASSERT(window < sque_windows.size())
+#if EGL
+    eglSwapBuffers(egl_display, egl_surface);
+#elif defined(GLFW)
+    glfwSwapBuffers(glfw_windows[window]);
+#endif
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As seen above, the functions receive a handle to the window, rather than the window itself. SqueLib will take care of such states and memory allocations unless specified. Also during the process of developing the library, the plan was to support multiple windows but the complexity of managing them was too much. Still a variable to pass which window to interact on is passed which makes sense in the long-run.
+
+Other functions that take care of managing the state of a window as well as callbacks are provided to get teh user to manage it their own way, although the library will have a default functions set.
+
+~~~~~~~~~~~~~~~~~~~~~~~~c++
+// Setters
+void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val);
+void SQUE_DISPLAY_SetWindowClose(uint16_t window = 0);		
+uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window = 0);
+void SQUE_DISPLAY_ResizeWindow(const uint16_t w, const uint16_t h, uint16_t window = 0);
+void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, uint16_t window = 0);
+void SQUE_DISPLAY_SetMouseMode(const int32_t value, uint16_t window = 0);
+
+// Getters
+bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window = 0);
+uint16_t SQUE_DISPLAY_GetAmountWindows();
+void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, uint16_t window = 0);
+void SQUE_DISPLAY_GetWindowSize(int32_t* w, int32_t* h, uint16_t window = 0);
+void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, uint16_t window = 0);
+void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window = 0);
+int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window = 0);
+void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
+																								
+// Callbacks
+typedef void(ResizeCallback)(int32_t width, int height);
+typedef void(ViewportGetSizeCallback)(int32_t* width, int32_t* height);
+typedef void(HandleDropFileFun)(const char* location);
+
+ResizeCallback* SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback* viewport_cb);
+ViewportSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb);
+HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb);
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Following GLFW's structure for callbacks, each callback setter function will return as well teh previously set callback in order for the user to prevent breaking other implementations that might have already setup a callback to such action.
+
+#### Closing Display
+
+Part of the previous update function set, were two setters for a window to close and a checker for a window to close.  `SQUE_DISPLAY_SetWindowClose` sets the intent to close the window, for `SQUE_DISPLAY_ShouldWindowClose` to poll, `SQUE_DSIPLAY_CloseWindow` actually closes the window.
+
+Using these one should be able to decide where they want to decide to perform such actions. To actually cleanup the module teh function `void SQUE_DISPLAY_Close()` is provided, which actually performs the cleanup for GFLW and the proprietary window handles.
+EGL does not have such a closure, it is dealt by the Android NDK the moment the whole application shut downs or is thrown into background.
 
 ### Input Management
 
+The process of taking care of inputs strays a bit from the latter module. In **Figure XX** can be appreaciated that most abstractions to input systems work in two differents ways at the same time, all of the rooting in a poll function:
+
+***********************************************************************************************************
+* .------------.
+* | Init Input |
+* '------+-----'                         App Continue Running
+*        |               .-------------------------------------------------.
+*        v               |                                                 |       .-------------.
+* .------+-------------. v  .--------------------.   .-----------------.   | App   | Close Input |
+* | Register Receivers +-+->| Poll System Inputs +-->| App Update Loop +---*------>|   System    |
+* '--------------------'    '----------+---------'   '------+-----+----'     Close '-------------'
+*                                      |                    ^     ^
+*                                      v                    |     |
+*                               .-------------.   <Polling> |     |
+*                               | Save States |<------------'     |
+*                               '------+------'                   |
+*                                      |                          |
+*                                      v                          |
+*                            .------------------.                 |
+*                            | Send Callback to |   >interrupts>  |
+*                            |   the receivers  |-----------------'
+*                            '------------------'
+***********************************************************************************************************
+
+Usually the user will register some receivers, which will as appropiately named receive the inputs that are polled by the input system. Another step is that the user might want to specifically poll for an input state to which it has not designated a receiver, setting up a second polling operation or a spontaneus check.
+
+The Android NDK does not really have a good support for the first kind, making the user setup its own loop for taking care of such things. GLFW on the other hands provides receivers for mostly every input imaginable for a Desktop platform, be it keyboard, mouse or joysticks.
+
+#### Initialization
+
+For the Android NDK, the input was setup previously at the initialization step for the library, by setting the callback `HandleAndroidInput` to the `android_app`. For GLFW there is not much more complications but GLFW ties input to each separate window, as such the initialization step for the library input will target he main window created. Here setup the first order dependency for initialization **Display -> Input -> ...**.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+void SQUE_INPUT_Init()
+{
+    SQUE_INPUT_InitForWindow(0);
+}
+
+#if defined GLFW
+extern GLFWwindow** glfw_windows;
+#endif
+
+void SQUE_INPUT_InitForWindow(uint16_t window)
+{
+#if USE_GLFW
+    assert(window > glfw_windows.size());
+
+    glfwSetInputMode(glfw_windows[window], GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    glfwSetKeyCallback(glfw_windows[window], GLFW_KeyCallback);
+    
+    glfwSetCursorPosCallback(glfw_windows[window], GLFW_MousePosCallback);
+    glfwSetMouseButtonCallback(glfw_windows[window], GLFW_MouseButtonCallback);
+    glfwSetScrollCallback(glfw_windows[window], GLFW_MouseScrollCallback);
+    glfwSetCharCallback(glfw_windows[window], GLFW_CharCallback);
+#endif
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SqueLib provides the base GLFW callbacks that update the key_state internally and then call the setup callback by the user on each key options.
+
 #### Callback System
+
+In order to make the translation as seamless as possible between touch based and keyboard-mouse platforms, setting up a basic callback system seemed fit as it is very comfortable to use and quite an integral part of GLFW.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+typedef void(*KeyCallback)(int32_t code, int32_t state);
+
+enum SQUE_INPUT_Actions							
+{
+	SQUE_ACTION_UNKNOWN = -1,			
+	// Button States		
+	SQUE_ACTION_RELEASE,				
+	SQUE_ACTION_PRESS,		
+	SQUE_ACTION_REPEAT,		
+	// Single Touch Controls			
+	SQUE_ACTION_TAP,						
+	SQUE_ACTION_SWIPE_UP,	
+	SQUE_ACTION_SWIPE_DOWN,	
+	SQUE_ACTION_SWIPE_LEFT,	
+	SQUE_ACTION_SWIPE_RIGHT,	
+	
+    // 
+	SQUE_ACTION_MAX						
+};
+
+struct SQUE_Key
+{		
+	int prev_state = -1;			
+	int state = -1;					
+	KeyCallback* callback;																		
+};	
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In conjunction, every basic touch action as well as keyboard, mouse and joystick pressed can be summed in the following key states. A key holds previous state and the current polled state, as well as having a direct callback to setup should it be necessary for the user to have an interrupt on a key action with the identifier as well as the state.
+
+After the states, a couple default touch actions are set in the same enum to take care of the basic single touch gestures. Touch and Gestures will be explained in the **Touch Input and Gestures** chapter. 
+
+##### Registering Receivers
+
+The process is pretty straightforwards, call the required functions and such action will be setup to the passed function. A specific takeaway, also present and mention in the **Display** chapter, these function return the previously setup character making it possible to chain these callbacks and not break previous implementations if the user is unsure.
+
+~~~~~~~~~~~~~~~~~~~~~~~~c++
+typedef void(MouseFloatCallback)(float x, float y);
+
+KeyCallback* SQUE_INPUT_SetKeyCallback(KeyCallback* sque_key_fn);			
+MouseFloatCallback* SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback* position, uint16_t pointer);
+MouseFloatCallback* SQUE_INPUT_SetScrollCallback(MouseFloatCallback* scroll);
+KeyCallback* SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback* key_callback);		
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### Polling Inputs
+
+During the GLFW initialization we did already setup how our library will provide the inputs, what is left for GLFW is to call `glfwPollEvents()` somewhere and all inputs generated since the last poll will be setup. On the Android NDK there are a couple more steps.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+void SQUE_INPUT_Process(uint16_t window)
+{
+#ifdef ANDROID
+    int events;
+    struct android_poll_source* source;
+    while (ALooper_pollAll(0, 0, &events, (void**)&source) >= 0)
+    {
+        if (source != NULL)
+        {
+            source->process(my_app, source);
+        }
+    }
+#elif defined USE_GLFW
+    glfwPollEvents();
+#endif
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This loop will perform the polling of all inputs available as long as there are any and call the set callback previously during initialization:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// During initialization
+extern int HandleAndroidInput(struct android_app* app, AInputEvent* ev);
+
+app->onInputEvent = HandleAndroidInput;
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+And the definition of what it does:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
+{
+    int32_t evtype = AInputEvent_getType(ev);
+    int32_t ret = 1;
+    switch(evtype)
+    {
+        case AINPUT_EVENT_TYPE_KEY:
+            ret = HandleAndroidKey(app, ev);
+            break;
+        case AINPUT_EVENT_TYPE_MOTION:
+            ret = HandleAndroidMotion(app, ev);
+            break;
+    }
+    return 1;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+But this function redirects to different types of events. In short, `AINPUT_EVENT_TYPE_KEYS` are the software keyboard keys and will update the same as what GLFW would update althought the keys will not match one to one, but serve for an external keyboard to be used as input in an Android game.
+
+The point of interest is in `HandleAndroidMotion` which will be explained later on. For now, the polling loop is already setup and working as close as possible to GLFW.
+
+Finally, for the user to poll the inputs, there are the following functions provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key);
+SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(uint32_t button);
+void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points = 1);
+bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer = 0);
+void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### Keyboard and Mouse
 
+The process of getting the inputs for both keyboard and mouse is setup through the provided callbacks for GLFW and `HandleAndroidKey` for keyboard on the Android NKD:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+#if defined GLFW
+static void GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    keyboard[key].prev_state = keyboard[key].state;
+    keyboard[key].state = action;
+    keyboard[key].callback(key, keyboard[key].state);
+    key_fun(key, keyboard[key].state);
+}
+
+static void GLFW_MousePosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    pointers[0].x = (float)xpos;
+    pointers[0].y = (float)ypos;
+    pointers[0].pos_callback(pointers[0].x, pointers[0].y);
+}
+static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    mouse_buttons[button].prev_state = mouse_buttons[button].state;
+    mouse_buttons[button].state = action;
+    mouse_buttons[button].callback(button, mouse_buttons[button].state);
+    pointers[0].active = mouse_buttons[button].state > SQUE_ACTION_RELEASE;
+}
+
+static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    scrollx = xoffset;
+    scrolly = yoffset;
+    scroll_callback(scrollx, scrolly);
+}
+
+#elif defined ANDROID
+
+int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
+{
+    int code = AKeyEvent_getKeyCode(ev);
+
+    int unicode = AndroidGetUnicodeChar(code, AMotionEvent_getMetaState(ev));
+    if (AKeyEvent_getAction(ev) == 1) char_buffer.push_back(unicode);
+
+    if (unicode && unicode < MAX_KEYS)
+    {
+        keyboard[code].prev_state = keyboard[code].state;
+        keyboard[code].state = AKeyEvent_getAction(ev);
+        keyboard[code].callback(unicode, keyboard[code].state);
+        key_fun(code, keyboard[code].state);
+    }
+
+    return 1;
+}
+
+#endif
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For the Android NDK implementation, mouse input is setup with a passthrough from the first touch input available.
+
 #### Touch Input and Gestures
+
+The Android NDK provides touch inputs through touch motions, meaning that it actually resembles more a multi mouse setup which are called pointers. The process is very similar to polling the state of a key, iterate through the available ones and retrieve the state but at the same time obtain the position they are at that point. It is important to remark that a pointer will remain static until it is active again.
+
+The following is the barebones implementation of the `HandleAndroidMotion` function:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+#ifdef ANDROID
+int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
+{
+    int32_t action = AMotionEvent_getAction(ev);
+    if (action == AMOTION_EVENT_ACTION_CANCEL)
+        return -1;
+
+    int num_pointers = AMotionEvent_getPointerCount(ev);
+    if (num_pointers >= MAX_POINTERS) return -1; // Ignore pointer you don't support
+
+    // Retrieve source ID for the pointer
+    int whichsource = action >> 8;
+    // Actions are provided in non matching values to the intended enums
+    APPLY_MASK(action, AMOTION_EVENT_ACTION_MASK);
+    bool motion_ended = true;
+    // Mouse Passthrough -> Pointer[0] will become the mouse
+    if(num_pointers > 0)
+    {   
+        if(/*whichsource matches pointer[0] id*/)
+            switch (action)
+            {
+                // Update MouseButton[0] state based on the action
+                // Position will be updated with the rest of the pointers
+            }
+    }
+    for (int i = 0; i < num_pointers; ++i)
+    {
+        SQUE_PRINT(LT_INFO, "Get Pointer %d Status...", i);
+        int x, y;
+        int pointer = GetPointer(AMotionEvent_getPointerId(ev, i));
+        x = AMotionEvent_getX(ev, i);
+        y = AMotionEvent_getY(ev, i);
+        
+        // Get Pointer that corresponds to whichsource == id
+        Pointer p;
+        switch (action)
+        {
+            // Setup the pointer state and position according to the action
+            // Here are the equivalences to keys
+            // AMOTION_EVENT_ACTION_DOWN == Press
+            // AMOTION_EVENT_ACTION_MOVE == Repeat
+            // AMOTION_EVENT_ACTION_UP == Release
+        }
+        if(motion_ended == true) motion_ended = !p.active;
+    }
+    
+    if(motion_ended) 
+    {
+        SQUE_PRINT(LT_INFO, "Evaluate Motion event...");
+        for(uint16_t i = 0; i < pointer_num; ++i)
+            SQUE_INPUT_DetectGesture(gestures[i]);
+    }
+
+    return 1;
+}
+#endif
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the function there are some referencies to check if a motion has ended. A motion is active depending on the sum of activities of the pointers, if non are active, motion will be inactive and a gesture will be evaluated on a per pointer basis.
+
+The current implementation only detects a `TAP` and a `SWIPE`. The best approach would be for the user to setup their own dection functions and be run through each of the gestures, but that is out of the scope of the project.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
+{
+    // Evaluate what the pointer has done during the time it was tracked
+    int16_t delta_x = g.end_x - g.start_x;
+    int16_t delta_y = g.end_y - g.start_y;
+    int32_t screen_w, screen_h;
+    SQUE_DISPLAY_GetWindowSize(&screen_w, &screen_h);
+
+    uint16_t abs_delta_x = delta_x;
+    uint16_t abs_delta_y = delta_y;
+    float dist_perc_x = 100 * abs_delta_x / (float)screen_w;
+    float dist_perc_y = 100 * abs_delta_y / (float)screen_h;
+
+    uint16_t time = g.timer.ReadMilliSec();
+    // Tap Gesture
+    if (time <= GESTURE_REFRESH || (abs_delta_x < 5 && abs_delta_y < 5))
+    {
+        return SQUE_INPUT_Actions::SQUE_ACTION_TAP;
+    }
+    // Swipe Gesture
+    else if (time > GESTURE_REFRESH && time <= 3 * GESTURE_REFRESH)
+    {
+        if (abs_delta_x > abs_delta_y)
+            return (SQUE_INPUT_Actions)(SQUE_ACTION_SWIPE_LEFT + (int)(delta_x > 0)); // Swipe Horizontal
+        else
+            return (SQUE_INPUT_Actions)(SQUE_ACTION_SWIPE_UP + (int)(delta_y < 0));  // Swipe Vertical
+    }
+
+    return SQUE_INPUT_Actions::SQUE_ACTION_UNKNOWN;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ### Render Pipeline
 

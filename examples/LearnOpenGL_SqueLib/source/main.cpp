@@ -63,12 +63,9 @@ void LearnOpenGL_1_Vertices()
         SQUE_MESH_SetVertData(triangle1, 3);
         SQUE_MESH_GenBuffer(&triangle1);
         SQUE_MESH_BindBuffer(triangle1);
-        SQUE_MESH_DeclareAttributes(triangle1.vert_id, 1, triangle1.attrib_ref);
-        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
-        SQUE_MESH_AddAttribute(triangle1.attrib_ref, aPos);        
-
-        SQUE_MESH_CalcVertSize(triangle1.attrib_ref);
-        SQUE_MESH_SetLocations(triangle1.attrib_ref);
+        triangle1.attributes.push(SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
+        SQUE_MESH_CalcVertSize(triangle1);
+        SQUE_MESH_SetLocations(triangle1);
         SQUE_MESH_SendToGPU(triangle1, vertices1);
 
         vert_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s1.vert");
@@ -132,12 +129,10 @@ void LearnOpenGL_1_1_Indices()
         SQUE_MESH_GenBuffer(&quad1);
         //SQUE_MESH_GenBuffer(&quad1.vert_id, &quad1.index_id, &quad1.attribute_object);
         SQUE_MESH_BindBuffer(quad1);
-        SQUE_MESH_DeclareAttributes(quad1.vert_id, 1, quad1.attrib_ref);
-        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
-        SQUE_MESH_AddAttribute(quad1.attrib_ref, aPos);
+        quad1.attributes.push(SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
 
-        SQUE_MESH_CalcVertSize(quad1.attrib_ref);
-        SQUE_MESH_SetLocations(quad1.attrib_ref);
+        SQUE_MESH_CalcVertSize(quad1);
+        SQUE_MESH_SetLocations(quad1);
         SQUE_MESH_SendToGPU(quad1, vertices1_1, indices1);
 
         SQUE_CHECK_RENDER_ERRORS();
@@ -170,12 +165,10 @@ void LearnOpenGL_2_Shaders()
         SQUE_MESH_SetVertData(triangle2, 3);
         SQUE_MESH_GenBuffer(&triangle2);
         SQUE_MESH_BindBuffer(triangle2);
-        SQUE_MESH_DeclareAttributes(triangle2.vert_id, 1, triangle2.attrib_ref);
-        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
-        SQUE_MESH_AddAttribute(triangle2.attrib_ref, aPos);
+        triangle2.attributes.push(SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
 
-        SQUE_MESH_CalcVertSize(triangle2.attrib_ref);
-        SQUE_MESH_SetLocations(triangle2.attrib_ref);
+        SQUE_MESH_CalcVertSize(triangle2);
+        SQUE_MESH_SetLocations(triangle2);
         SQUE_MESH_SendToGPU(triangle2, vertices1);
 
         vert_s2_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2.vert");
@@ -235,9 +228,8 @@ void LearnOpenGL_2_1_Uniforms()
         SQUE_PROGRAM_AttachShader(uniform_program1, frag_uniform_s1);
         SQUE_PROGRAM_Link(uniform_program1.id);
 
-        SQUE_SHADERS_DeclareProgram(uniform_program1.id, 1, uniform_program1.uniform_ref);
-        ourColor_id = SQUE_SHADERS_DeclareUniform(uniform_program1.uniform_ref, "ourColor");
-
+        SQUE_PROGRAM_CacheUniforms(uniform_program1);
+        ourColor_id = SQUE_PROGRAM_GetUniformID(uniform_program1, "ourColor");
 
         SQUE_SHADERS_FreeFromGPU(vert_s2.id);
         delete vert_s2_file->raw_data;
@@ -283,14 +275,11 @@ void LearnOpenGL_2_2_Attributes()
         SQUE_MESH_GenBuffer(&triangle2_2);
         //SQUE_RENDER_GenerateMeshBuffer(&triangle2_2.vert_id, &triangle2_2.index_id, &triangle2_2.attribute_object);
         SQUE_MESH_BindBuffer(triangle2_2);
-        SQUE_MESH_DeclareAttributes(triangle2_2.vert_id, 2, triangle2_2.attrib_ref); // We setup 2 attributes, Position and Color
-        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
-        SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 3);
-        SQUE_MESH_AddAttribute(triangle2_2.attrib_ref, aPos);
-        SQUE_MESH_AddAttribute(triangle2_2.attrib_ref, aCol);
+        triangle2_2.attributes.push(SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
+        triangle2_2.attributes.push(SQUE_VertAttrib("aColor", SQUE_FLOAT, false, 3));
 
-        SQUE_MESH_CalcVertSize(triangle2_2.attrib_ref);
-        SQUE_MESH_SetLocations(triangle2_2.attrib_ref);
+        SQUE_MESH_CalcVertSize(triangle2_2);
+        SQUE_MESH_SetLocations(triangle2_2);
         SQUE_MESH_SendToGPU(triangle2_2, vertices2_2);
 
         vert_attributes_s1_file = SQUE_FS_LoadAssetRaw("shaders/vert_s2_1.vert");
@@ -362,10 +351,9 @@ void LearnOpenGL_3_Textures()
         SQUE_TEXTURE_SetFormat(&texture_ch3, SQUE_TEXTURE_2D, SQUE_RGB, SQUE_RGB, SQUE_UBYTE);
         SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
 
-        SQUE_TEXTURE_DeclareAttributes(texture_ch3.id, 2, 0, &texture_ch3.attrib_ref);
-        SQUE_TEXTURE_AddInt(texture_ch3.attrib_ref, SQUE_MIN_FILTER, SQUE_NEAREST);
-        SQUE_TEXTURE_AddInt(texture_ch3.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
-        SQUE_RENDER_SetTextureAttributes(texture_ch3.id);
+        texture_ch3.attributes.push(SQUE_TexAttrib("min_filter", SQUE_MIN_FILTER, SQUE_NEAREST));
+        texture_ch3.attributes.push(SQUE_TexAttrib("mag_filter", SQUE_MAG_FILTER, SQUE_LINEAR));
+        SQUE_RENDER_SetTextureAttributes(texture_ch3.attributes, texture_ch3.dim_format);
 
         texture_ch3_file = SQUE_FS_LoadAssetRaw("container.jpeg");
         SQUE_LOAD_Texture(texture_ch3_file, &texture_ch3);
@@ -379,16 +367,12 @@ void LearnOpenGL_3_Textures()
         SQUE_MESH_GenBuffer(&quad_textured_ch3);
         //SQUE_RENDER_GenerateMeshBuffer(&quad_textured_ch3.vert_id, &quad_textured_ch3.index_id, &quad_textured_ch3.attribute_object);
         SQUE_MESH_BindBuffer(quad_textured_ch3);
-        SQUE_MESH_DeclareAttributes(quad_textured_ch3.vert_id, 3, quad_textured_ch3.attrib_ref);
-        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
-        SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 3);
-        SQUE_VertAttrib aUV("aTexCoord", SQUE_FLOAT, true, 2);
-        SQUE_MESH_AddAttribute(quad_textured_ch3.attrib_ref, aPos);
-        SQUE_MESH_AddAttribute(quad_textured_ch3.attrib_ref, aCol);
-        SQUE_MESH_AddAttribute(quad_textured_ch3.attrib_ref, aUV);
+        quad_textured_ch3.attributes.push(SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
+        quad_textured_ch3.attributes.push(SQUE_VertAttrib("aColor", SQUE_FLOAT, false, 3));
+        quad_textured_ch3.attributes.push(SQUE_VertAttrib("aTexCoord", SQUE_FLOAT, true, 2));
 
-        SQUE_MESH_CalcVertSize(quad_textured_ch3.attrib_ref);
-        SQUE_MESH_SetLocations(quad_textured_ch3.attrib_ref);
+        SQUE_MESH_CalcVertSize(quad_textured_ch3);
+        SQUE_MESH_SetLocations(quad_textured_ch3);
         SQUE_MESH_SendToGPU(quad_textured_ch3, vertices_ch3, indices1);
 
         vert_texture_s_ch3_file = SQUE_FS_LoadAssetRaw("shaders/vert_s3.vert");
@@ -442,10 +426,9 @@ void LearnOpenGL_3_1_MixTextures()
         SQUE_TEXTURE_GenIDs(1,&texture_ch3_1.id);
         SQUE_TEXTURE_SetFormat(&texture_ch3_1, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
         SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
-        SQUE_TEXTURE_DeclareAttributes(texture_ch3_1.id, 2, 0, &texture_ch3_1.attrib_ref);
-        SQUE_TEXTURE_AddInt(texture_ch3_1.attrib_ref, SQUE_MIN_FILTER, SQUE_NEAREST);
-        SQUE_TEXTURE_AddInt(texture_ch3_1.attrib_ref, SQUE_MAG_FILTER, SQUE_LINEAR);
-        SQUE_RENDER_SetTextureAttributes(texture_ch3_1.id);
+        texture_ch3_1.attributes.push(SQUE_TexAttrib("min_filter", SQUE_MIN_FILTER, SQUE_NEAREST));
+        texture_ch3_1.attributes.push(SQUE_TexAttrib("mag_filter", SQUE_MAG_FILTER, SQUE_LINEAR));
+        SQUE_RENDER_SetTextureAttributes(texture_ch3_1.attributes, texture_ch3_1.dim_format);
         
         texture_ch3_1_file = SQUE_FS_LoadAssetRaw("awesomeface.png");
         SQUE_LOAD_Texture(texture_ch3_1_file, &texture_ch3_1);
@@ -464,9 +447,9 @@ void LearnOpenGL_3_1_MixTextures()
         SQUE_PROGRAM_AttachShader(textured_program_ch3_1, frag_texture_s_ch3_1);
         SQUE_PROGRAM_Link(textured_program_ch3_1.id);
 
-        SQUE_SHADERS_DeclareProgram(textured_program_ch3_1.id, 2, textured_program_ch3_1.uniform_ref);
-        texture1_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_1.uniform_ref, "texture1");
-        texture2_uniform = SQUE_SHADERS_DeclareUniform(textured_program_ch3_1.uniform_ref, "texture2");
+        SQUE_PROGRAM_CacheUniforms(textured_program_ch3_1);
+        texture1_uniform = SQUE_PROGRAM_GetUniformID(textured_program_ch3_1, "texture1");
+        texture2_uniform = SQUE_PROGRAM_GetUniformID(textured_program_ch3_1, "texture2");
 
         delete frag_texture_s_ch3_1_file;
         loaded_ch3_1 = true;
@@ -528,11 +511,10 @@ void LearnOpenGL_4_Transformations()
         SQUE_PROGRAM_AttachShader(transform_program_ch4, frag_texture_s_ch3_1);
         SQUE_PROGRAM_Link(transform_program_ch4.id);
 
-
-        SQUE_SHADERS_DeclareProgram(transform_program_ch4.id, 3, transform_program_ch4.uniform_ref);
-        transf_text1_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "texture1");
-        transf_text2_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "texture2");
-        transf_mat1_uni = SQUE_SHADERS_DeclareUniform(transform_program_ch4.uniform_ref, "transform");
+        SQUE_PROGRAM_CacheUniforms(transform_program_ch4);
+        transf_text1_uni = SQUE_PROGRAM_GetUniformID(transform_program_ch4, "texture1");
+        transf_text2_uni = SQUE_PROGRAM_GetUniformID(transform_program_ch4, "texture2");
+        transf_mat1_uni = SQUE_PROGRAM_GetUniformID(transform_program_ch4, "transform");
 
         SQUE_SHADERS_FreeFromGPU(frag_texture_s_ch3_1.id);
 
@@ -602,12 +584,12 @@ void LearnOpenGL_5_CoordinateSystems()
         SQUE_PROGRAM_AttachShader(coordinate_program_ch5, frag_texture_s_ch3_1);
         SQUE_PROGRAM_Link(coordinate_program_ch5.id);
 
-        SQUE_SHADERS_DeclareProgram(coordinate_program_ch5.id, 5, coordinate_program_ch5.uniform_ref);
-        view_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "view");
-        proj_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "projection");
-        model_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "model");
-        texture1_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "texture1");
-        texture2_uniform_ch5 = SQUE_SHADERS_DeclareUniform(coordinate_program_ch5.uniform_ref, "texture2");
+        SQUE_PROGRAM_CacheUniforms(coordinate_program_ch5);
+        view_uniform_ch5 = SQUE_PROGRAM_GetUniformID(coordinate_program_ch5, "view");
+        proj_uniform_ch5 = SQUE_PROGRAM_GetUniformID(coordinate_program_ch5, "projection");
+        model_uniform_ch5 = SQUE_PROGRAM_GetUniformID(coordinate_program_ch5, "model");
+        texture1_uniform_ch5 = SQUE_PROGRAM_GetUniformID(coordinate_program_ch5, "texture1");
+        texture2_uniform_ch5 = SQUE_PROGRAM_GetUniformID(coordinate_program_ch5, "texture2");
         
         loaded_ch5 = true;
 
@@ -698,19 +680,15 @@ void LearnOpenGL_5_1_3DCubeRotating()
         SQUE_MESH_SetVertData(cube_ch5_1, 36);
         SQUE_MESH_GenBuffer(&cube_ch5_1);
         SQUE_MESH_BindBuffer(cube_ch5_1);
-        SQUE_MESH_DeclareAttributes(cube_ch5_1.vert_id, 3, cube_ch5_1.attrib_ref);
-        SQUE_VertAttrib aPos("aPos", SQUE_FLOAT, false, 3);
-        SQUE_VertAttrib aCol("aColor", SQUE_FLOAT, false, 0);
-        SQUE_VertAttrib aUV("aTexCoord", SQUE_FLOAT, true, 2);
-        SQUE_MESH_AddAttribute(cube_ch5_1.attrib_ref, aPos);
-        SQUE_MESH_AddAttribute(cube_ch5_1.attrib_ref, aCol);
-        SQUE_MESH_AddAttribute(cube_ch5_1.attrib_ref, aUV);
+        cube_ch5_1.attributes.push(SQUE_VertAttrib("aPos", SQUE_FLOAT, false, 3));
+        cube_ch5_1.attributes.push(SQUE_VertAttrib("aColor", SQUE_FLOAT, false, 0));
+        cube_ch5_1.attributes.push(SQUE_VertAttrib("aTexCoord", SQUE_FLOAT, true, 2));
         // For the attributes I wanted to reuse some code, because it was unnecessary at first, but current vertex shaders
         // had MESH with a color attribute. So in this one that is mostly the same but without color attribute
         // I declare it anyways without components, so vertex calculations stay the same but now in shader it will not have data for color
         // so it can't be USED on that mesh!!!
 
-        SQUE_MESH_SetLocations(cube_ch5_1.attrib_ref);
+        SQUE_MESH_SetLocations(cube_ch5_1);
         SQUE_MESH_SendToGPU(cube_ch5_1, vertices_ch5_1);
 
         render_state_ch5_1.BackUp();

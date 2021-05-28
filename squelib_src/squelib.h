@@ -214,8 +214,8 @@ SQ_API void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
 SQ_API void SQUE_DISPLAY_SwapBuffer(uint16_t window = 0);
 SQ_API void SQUE_DISPLAY_SwapAllBuffers();																								
 SQ_API void SQUE_DISPLAY_MakeContextMain(uint16_t window = 0);
-SQ_API ResizeCallback SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb);
-SQ_API ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb);
+SQ_API ResizeCallback* SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback* viewport_cb);
+SQ_API ViewportGetSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb);
 SQ_API HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,10 +283,10 @@ enum SQUE_KeyboardKeys
 #define MAX_MOUSE_BUTTONS 16																											
 enum SQUE_MOUSE_BUTTONS
 {
-	SQUE_MOUSE_LEFT = 0,	SQUE_MOUSE_RIGHT,	SQUE_MOUSE_CENTER,	SQUE_MOUSE_THUMB_1,
-	SQUE_MOUSE_THUMB_2,		SQUE_MOUSE_THUMB_3, SQUE_MOUSE_THUMB_4, SQUE_MOUSE_THUMB_5,
-	SQUE_MOUSE_THUMB_6,		SQUE_MOUSE_THUMB_7, SQUE_MOUSE_THUMB_8, SQUE_MOUSE_THUMB_9,
-	SQUE_MOUSE_THUMB_10,	SQUE_MOUSE_THUMB_11, SQUE_MOUSE_THUMB_12, SQUE_MOUSE_THUMB_13,
+	SQUE_MOUSE_LEFT = 0,	SQUE_MOUSE_RIGHT,	SQUE_MOUSE_CENTER,	SQUE_MOUSE_1,
+	SQUE_MOUSE_2,	SQUE_MOUSE_3, SQUE_MOUSE_4, SQUE_MOUSE_5,
+	SQUE_MOUSE_6,	SQUE_MOUSE_7, SQUE_MOUSE_8, SQUE_MOUSE_9,
+	SQUE_MOUSE_10,	SQUE_MOUSE_11, SQUE_MOUSE_12, SQUE_MOUSE_13,
 };
 #define MAX_POINTERS 10																													
 #define GESTURE_REFRESH 10 // in ms																										
@@ -304,10 +304,8 @@ enum SQUE_INPUT_Actions
 	SQUE_ACTION_PRESS,																													
 	SQUE_ACTION_REPEAT,																													
 																																		
-	// Touch Controls																													
-	SQUE_ACTION_TAP,																														
-	SQUE_ACTION_CLICK,																													
-	SQUE_ACTION_DOUBLE_CLICK,																											
+	// Single Touch Controls
+	SQUE_ACTION_TAP,																																																									
 	SQUE_ACTION_SWIPE_UP,																												
 	SQUE_ACTION_SWIPE_DOWN,																												
 	SQUE_ACTION_SWIPE_LEFT,																												
@@ -324,7 +322,7 @@ typedef struct SQUE_Key
 	//int key;																															
 	int prev_state = -1;																												
 	int state = -1;																														
-	KeyCallback callback = DebugKey;																									
+	KeyCallback* callback = DebugKey;																									
 } SQUE_Key;																																
 																																		
 																																		
@@ -348,7 +346,7 @@ typedef struct SQUE_Pointer
 	int32_t id;	
 																							
 	float x = -1, y = -1;																									
-	MouseFloatCallback pos_callback = DebugMouseFloatCallback;
+	MouseFloatCallback* pos_callback = DebugMouseFloatCallback;
 } SQUE_Pointer;																															
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -369,17 +367,17 @@ SQ_API void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active);
 
 // Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key);
-SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button);
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(uint32_t button);
 SQ_API void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points = 1);
 SQ_API bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer = 0);
 SQ_API void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 SQ_API int SQUE_INPUT_GetCharFromBuffer();
 
 // Callback Setters ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn);																		
-SQ_API MouseFloatCallback SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback position, uint16_t pointer);
-SQ_API MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll);
-SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback key_callback);												
+SQ_API KeyCallback* SQUE_INPUT_SetKeyCallback(KeyCallback* sque_key_fn);																		
+SQ_API MouseFloatCallback* SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback* position, uint16_t pointer);
+SQ_API MouseFloatCallback* SQUE_INPUT_SetScrollCallback(MouseFloatCallback* scroll);
+SQ_API KeyCallback* SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback* key_callback);												
 	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

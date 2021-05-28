@@ -21,6 +21,7 @@
 #if defined(USE_OPENGLES)
 #include<GLES3/gl32.h>
 #endif
+
 // Render State
 #define SQUE_BLEND				GL_BLEND
 #define SQUE_FUNC_ADD			GL_FUNC_ADD

@@ -22,11 +22,12 @@ static bool         sque_MousePressed[5] = { false, false, false, false, false }
 static float        sque_MouseWheel = 0.0f;
 static float		sque_MouseWheelH = 0.0f;
 
-static KeyCallback			sque_PrevKeyboardCallback;
-static MouseFloatCallback	sque_PrevMousePosCallback;
-static MouseFloatCallback	sque_PrevMouseScrollCallback;
+static KeyCallback*			sque_PrevKeyboardCallback;
+static MouseFloatCallback*	sque_PrevMousePosCallback;
+static MouseFloatCallback*	sque_PrevMouseScrollCallback;
 static VoidFun				sque_PrevOnResumeCallback;
 static VoidFun				sque_PrevOnGoBackgroundCallback;
+
 // Shaders
 const char* vertex_shader =
 	"layout (location = 0) in vec2 Position;\n"

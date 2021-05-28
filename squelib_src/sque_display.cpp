@@ -29,10 +29,10 @@ static uint16_t main_window_context = UINT16_MAX;
 static int monitor_count;
 
 void DebugResizeCallback(int32_t width, int32_t height) { SQUE_PRINT(LT_INFO, "ViewportResize Callback Not Set, tried: %d,%d!", width, height); }
-ResizeCallback viewport_resize_callback = DebugResizeCallback;
+ResizeCallback* viewport_resize_callback = DebugResizeCallback;
 
-void DebugViewportSizeCallback(int32_t* width, int32_t* height) { SQUE_PRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
-ViewportSizeCallback viewport_size_callback = DebugViewportSizeCallback;
+void DebugViewportGetSizeCallback(int32_t* width, int32_t* height) { SQUE_PRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
+ViewportGetSizeCallback* viewport_size_callback = DebugViewportGetSizeCallback;
 
 void DebugHandleDropFileFun(const char* location) { SQUE_PRINT(LT_INFO, "Dropped file from: %s", location); }
 HandleDropFileFun* drop_file_callback = DebugHandleDropFileFun;
@@ -712,16 +712,16 @@ void SQUE_DISPLAY_MakeContextMain(uint16_t window)
     main_window_context = window;
 }
 
-ResizeCallback SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb)
+ResizeCallback* SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback* viewport_cb)
 {
-    ResizeCallback ret = viewport_resize_callback;
+    ResizeCallback* ret = viewport_resize_callback;
     viewport_resize_callback = viewport_cb;
     return ret;
 }
 
-ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb)
+ViewportGetSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb)
 {
-    ViewportSizeCallback ret = viewport_size_callback;
+    ViewportGetSizeCallback* ret = viewport_size_callback;
     viewport_size_callback = viewport_size_cb;
     return ret;
 }
