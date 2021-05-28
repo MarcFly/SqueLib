@@ -46,6 +46,22 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         target_link_libraries(${target} PUBLIC glm)
     endif()
 
+    if(WITH_IMGUI)
+        set(imgui_base "${SqueLib_extra}/imgui")
+        target_sources(${target} PUBLIC 
+            ${imgui_base}/imgui_demo.cpp
+            ${imgui_base}/imgui_draw.cpp
+            ${imgui_base}/imgui_widgets.cpp
+            ${imgui_base}/imgui_tables.cpp
+            ${imgui_base}/imgui.cpp
+            ${SqueLib_extra}/imgui_squelib/imgui_impl_squelib.cpp
+            # keep adding and includes too...
+        )
+        target_include_directories(${target} PUBLIC ${imgui_base} ${SqueLib_extra}/imgui_squelib)
+        source_group(/imgui FILES ${imgui_src})
+    endif()
+
+
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND WITH_MMGR)
         target_compile_options(${target} BEFORE PUBLIC -g)
         set(mmgr_include "${SqueLib_extra}/mmgr")
