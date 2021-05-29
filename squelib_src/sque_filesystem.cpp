@@ -20,20 +20,37 @@
 //
 
 #if defined(_WIN32)
-	#include <Windows.h>
-	#include <libloaderapi.h>
+#	include <Windows.h>
+#	include <libloaderapi.h>
 #elif defined(ANDROID)
-	#include <android/asset_manager.h>
-	#include <android/asset_manager_jni.h>
-	#include <android_native_app_glue.h>
+#	include <android/asset_manager.h>
+#	include <android/asset_manager_jni.h>
+#	include <android_native_app_glue.h>
+#	include <jni.h>
 	extern struct android_app* my_app;
 #elif defined(__linux__)
-	#include <unistd.h>
-	#include <sys/stat.h>
-	#include <libgen.h>
+#	include <unistd.h>
+#	include <sys/stat.h>
+#	include <libgen.h>
 #endif
 
 static char exec_path[512];
+
+#ifdef ANDROID
+
+bool JNICALL AndroidSetupExecPath()
+{
+	JNIEnv* env = 0;
+	JNIEnv** env_ptr = &env;
+	JavaVM** jnii_ptr = &my_app->activity->vm;
+	JavaVM* = my_app->activity->vm;
+
+	jnii->AttachCurrentThread(env_ptr, NULL);
+	env = (*env_ptr);
+	jclass class_context = env->FindClass("android/content/context");
+	jmethodID method_get_files_dir = env->GetMethodID(class_context, "getFilesDir", "()Ljava/lang/File");
+}
+#endif
 
 void SQUE_FS_Init()
 {
@@ -43,6 +60,7 @@ void SQUE_FS_Init()
 	char* exe = strrchr(exec_path, FE);
 	exec_path[len-strlen(exe)] = '\0';
 #elif defined(ANDROID)
+
 #elif defined(__linux__)
 	char link_temp[512] = "\0";
 	len = readlink("/proc/self/exe", link_temp, 512);

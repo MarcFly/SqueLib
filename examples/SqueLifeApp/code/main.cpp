@@ -30,8 +30,6 @@ static inline void PreprocessFrame()
 
 static inline void PostprocessFrame()
 {
-
-
     ImGui::Render();
 
     int32_t x, y;
@@ -50,6 +48,8 @@ static inline void PostprocessFrame()
 int main (int argc, char** argv)
 {
     SQUE_LIB_Init("SqueLifeApp");
+    SQUE_AddOnGoBackgroundCallback(OnGoBackground);
+    SQUE_AddOnResumeCallback(OnResume);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
