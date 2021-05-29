@@ -4,10 +4,7 @@
 #	include "squelib.h"
 #endif
 
-// for now I will be using std::string, because its practical
-
-//#include <fstream>
-
+#define ANDROID
 
 // filesystem access is purely OS based i believe, so I will use the _WIN32, __linux__ and ANDROID defines
 // If more platforms were to be added, i will do so
@@ -23,10 +20,14 @@
 #	include <Windows.h>
 #	include <libloaderapi.h>
 #elif defined(ANDROID)
+
 #	include <android/asset_manager.h>
 #	include <android/asset_manager_jni.h>
 #	include <android_native_app_glue.h>
 #	include <jni.h>
+#	include <unistd.h>
+#	include <sys/stat.h>
+#	include <libgen.h>
 	extern struct android_app* my_app;
 #elif defined(__linux__)
 #	include <unistd.h>
@@ -36,22 +37,6 @@
 
 static char exec_path[512];
 
-#ifdef ANDROID
-
-bool JNICALL AndroidSetupExecPath()
-{
-	JNIEnv* env = 0;
-	JNIEnv** env_ptr = &env;
-	JavaVM** jnii_ptr = &my_app->activity->vm;
-	JavaVM* = my_app->activity->vm;
-
-	jnii->AttachCurrentThread(env_ptr, NULL);
-	env = (*env_ptr);
-	jclass class_context = env->FindClass("android/content/context");
-	jmethodID method_get_files_dir = env->GetMethodID(class_context, "getFilesDir", "()Ljava/lang/File");
-}
-#endif
-
 void SQUE_FS_Init()
 {
 	int len = 0;
@@ -60,7 +45,7 @@ void SQUE_FS_Init()
 	char* exe = strrchr(exec_path, FE);
 	exec_path[len-strlen(exe)] = '\0';
 #elif defined(ANDROID)
-
+	sprintf(exec_path, "%s",my_app->activity->externalDataPath);
 #elif defined(__linux__)
 	char link_temp[512] = "\0";
 	len = readlink("/proc/self/exe", link_temp, 512);
@@ -81,6 +66,7 @@ bool SQUE_FS_CreateDirFullPath(const char* path)
 #if defined(_WIN32)
 	ret = CreateDirectoryA(path, NULL);
 #elif defined(ANDROID)
+	ret = (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #elif defined(__linux__)
 	ret = (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #endif

@@ -51,6 +51,14 @@ int main (int argc, char** argv)
     SQUE_AddOnGoBackgroundCallback(OnGoBackground);
     SQUE_AddOnResumeCallback(OnResume);
 
+    SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE");
+    SQUE_AskPermissions("READ_EXTERNAL_STORAGE");
+
+    // Asking Permissions does not really work...
+    // WHen you have declined it multiple times
+
+    SQUE_FS_CreateDirRelative("TestAndroidDirWrite");
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
