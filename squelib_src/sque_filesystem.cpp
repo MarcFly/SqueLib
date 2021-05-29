@@ -16,6 +16,12 @@
 #endif
 //
 
+#if defined(__linux__) || defined(ANDROID)
+#	include <unistd.h>
+#	include <sys/stat.h>
+#	include <libgen.h>
+#endif
+
 #if defined(_WIN32)
 #	include <Windows.h>
 #	include <libloaderapi.h>
@@ -25,14 +31,9 @@
 #	include <android/asset_manager_jni.h>
 #	include <android_native_app_glue.h>
 #	include <jni.h>
-#	include <unistd.h>
-#	include <sys/stat.h>
-#	include <libgen.h>
 	extern struct android_app* my_app;
 #elif defined(__linux__)
-#	include <unistd.h>
-#	include <sys/stat.h>
-#	include <libgen.h>
+
 #endif
 
 static char exec_path[512];
@@ -65,9 +66,7 @@ bool SQUE_FS_CreateDirFullPath(const char* path)
 	SQUE_PRINT(LT_INFO, "%d %d", SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE"), SQUE_AskPermissions("WRITE_MEDIA_STORAGE"));
 #if defined(_WIN32)
 	ret = CreateDirectoryA(path, NULL);
-#elif defined(ANDROID)
-	ret = (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
-#elif defined(__linux__)
+#elif defined(ANDROID) || defined(__linux__)
 	ret = (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #endif
 	return ret;
@@ -84,9 +83,8 @@ bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 
 #if defined(_WIN32)
 	SetFileAttributes(exec_path.c_str(), flags);
-#elif defined(ANDROID)
 
-#elif defined(__linux__)
+#elif defined (ANDROID) || defined(__linux__)
 	if(CHK_FLAG(flags, SQUE_FS_HIDDEN))
 	{
 		int32_t v = exec_path.find(strrchr(exec_path.c_str(), FOLDER_ENDING));
@@ -122,11 +120,17 @@ SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 	return ret;
 }
 
-bool SQUE_FS_WriteFileRaw(const char* path, char* data)
+bool SQUE_FS_WriteFileRaw(const char* path, char* data, const uint64_t size)
 {
-	bool ret = true;
+	if(SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE") == 0)
+		return false;
 
-	return ret;
+	std::ofstream write_file;
+	write_file.open(path, std::fstream::out | std::fstream::binary);
+	write_file.write(data, size);
+	write_file.close();
+
+	return true;
 }
 
 // RAW ASSET READING / LOADING

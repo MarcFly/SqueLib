@@ -115,12 +115,12 @@ SQ_API void SQUE_Sleep(uint32_t ms);
 // Types / Strucs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define LOGSIZE 1024																													
 																														
-typedef struct SQUE_Log																													
+struct SQUE_Log																													
 {																																		
 	int type = -1;																														
 	SQUE_LogType lt = LT_INFO;																											
 	char log[LOGSIZE] = {0};																											
-} SQUE_Log;																																
+};																																
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API bool SQUE_LOGGER_Init(bool dumpdata);																								
@@ -317,19 +317,19 @@ enum SQUE_INPUT_Actions
 };																																		
 																																		
 void DebugKey(int32_t code, int32_t state);																									
-typedef struct SQUE_Key																													
+struct SQUE_Key																													
 {																																		
 	//int key;																															
 	int prev_state = -1;																												
 	int state = -1;																														
 	KeyCallback* callback = DebugKey;																									
-} SQUE_Key;																																
+};																																
 																																		
 																																		
 void DebugMouseFloatCallback(float x, float y);																							
 																																		
 // Touch Display Oriented - But will implement mouse based gestures and callback based key gestures	////////////////////////////////////
-typedef struct SQUE_Gesture																												
+struct SQUE_Gesture																												
 {																																		
 	SQUE_Timer timer;																													
 																																		
@@ -338,16 +338,16 @@ typedef struct SQUE_Gesture
 	float end_x, end_y;																													
 																																		
 	float refresh_bucket;																												
-} SQUE_Gesture;																															
+};																															
 																																		
-typedef struct SQUE_Pointer																												
+struct SQUE_Pointer																												
 {																																		
 	bool active = false;																												
 	int32_t id;	
 																							
 	float x = -1, y = -1;																									
 	MouseFloatCallback* pos_callback = DebugMouseFloatCallback;
-} SQUE_Pointer;																															
+};																															
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_INPUT_Init();
@@ -385,27 +385,26 @@ SQ_API KeyCallback* SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback* k
 
 // Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef struct SQUE_Uniform
+struct SQUE_Uniform
 {
 	int32_t id = -1;
 	uint32_t type = -1;
 	int32_t var_size = 0;
 	char name[56] = "";
-} SQUE_Uniform;
+};
 
-typedef struct SQUE_Shader
+struct SQUE_Shader
 {
 	int32_t id = 0;
 	int32_t type = NULL;
-	
-} SQUE_Shader;
+};
 
 SQ_API void SQUE_SHADERS_Generate(SQUE_Shader& shader, const int32_t shader_type);
 SQ_API void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_);
 SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
 SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
 
-typedef struct SQUE_Program
+struct SQUE_Program
 {
 // Variables
 	uint32_t id = 0;
@@ -415,12 +414,15 @@ typedef struct SQUE_Program
 	// 0 Vertex -> 1 Fragment 
 	// Geometry, Tesselation and Compute will be added later if I want to and have time to
 	// They require more setup and steps
-} SQUE_Program;
+};
 
 SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader);
 SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
 SQ_API void SQUE_PROGRAM_CacheUniforms(SQUE_Program& program);
-									//SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
+
+SQ_API void SQUE_PROGRAM_GenerateID(uint32_t* program_id);
+SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
+SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
 
 // Usage Functions
 SQ_API int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
@@ -447,21 +449,22 @@ public:
 	SQ_API ~SQUE_VertAttrib();
 
 	// Variables
-	int32_t id;
-	int32_t var_type;
-	uint16_t num_comp;
-	bool normalize;
-	uint16_t var_size;
-	uint16_t offset;
+	int32_t id = 0;
+	int32_t var_type = SQUE_FLOAT;
+	uint16_t num_comp = 0;
+	bool normalize = false;
+	uint16_t var_size = 4;
+	uint16_t offset = 0;
 
-	char name[111] = "";
+	char name[89] = "";
 
 };
 
 // Maybe Swap to a custom array handler for specific sizes																				
 // I want to have afast search on less than 100 objects, probably a full array is good enough	
-typedef struct SQUE_Mesh
+class SQUE_Mesh
 {
+public:
 // Constructors / Destructors
 	SQ_API SQUE_Mesh();
 	SQ_API ~SQUE_Mesh();
@@ -486,16 +489,27 @@ typedef struct SQUE_Mesh
 
 	sque_free_vec<SQUE_VertAttrib> attributes;
 	uint16_t vertex_size = 0;
-} SQUE_Mesh;
+};
 // Usage Functions
 SQ_API void SQUE_MESH_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
 SQ_API void SQUE_MESH_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
 SQ_API void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
+SQ_API void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_ int32_t var_type, bool normalize, uint16_t num_components);
 
 SQ_API uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh& mesh);
 SQ_API uint16_t SQUE_MESH_GetAttribSize(SQUE_Mesh& mesh, const char* name);
 
 SQ_API void SQUE_MESH_SetLocations(SQUE_Mesh& mesh);
+
+// Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SQ_API void SQUE_MESH_GenBufferIDs(const uint32_t num, uint32_t* ids);
+SQ_API void SQUE_MESH_GenAttributeObjects(const uint32_t num, uint32_t* attribute_objects);
+SQ_API void SQUE_MESH_GenBuffer(SQUE_Mesh* mesh);
+SQ_API void SQUE_MESH_BindBuffer(const SQUE_Mesh& mesh);
+SQ_API void SQUE_MESH_BindVertices(const uint32_t vert_id);
+SQ_API void SQUE_MESH_BindIndices(const uint32_t index_id);
+SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
+SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,37 +527,54 @@ public:
 	void* data = NULL;	
 };
 
-typedef struct SQUE_Texture
+struct SQUE_Texture
 {
-	uint32_t id;
-	int32_t dim_format;
-	int32_t use_format;
-	int32_t data_format;
-	int32_t var_type;
-	uint16_t var_size;
-	int32_t w, h;
-	int32_t channel_num;
+	uint32_t id = 0;
+	int32_t dim_format = -1;
+	int32_t use_format = -1;
+	int32_t data_format = -1;
+	int32_t var_type = SQUE_UBYTE;
+	uint16_t var_size = 1;
+
+	int32_t w = 0, h = 0;
+	int32_t channel_num = 4;
+
 	sque_free_vec<SQUE_TexAttrib> attributes;
-} SQUE_Texture;
+};
 
 SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
-// C Style Gen FloatAttrib/s, Gen IntAttrib/s instead of constructor...
+SQ_API void SQUE_TEXTURE_SetDimentions(SQUE_Texture* texture, int32_t width, int32_t height, int32_t num_channels);
+SQ_API void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, int32_t value);
+SQ_API void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, float value);
 
-
+SQ_API void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
+SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
+SQ_API void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex);
+SQ_API void SQUE_TEXTURE_SetActiveUnit(int32_t unit);
+SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level = 0);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 																																		
 // Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct ColorRGBA {																												
-	ColorRGBA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}													
+class ColorRGBA 
+{																												
+public:
+	SQ_API ColorRGBA(){};
+	SQ_API ColorRGBA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}													
+	SQ_API ~ColorRGBA(){};
+
 	float r, g, b, a;																													
 } ColorRGBA;																															
 																																		
-typedef struct SQUE_RenderState																											
-{																																		
-	bool backed_up = false;	
-	// Have to change into a vector similar to attributes...																												
+class SQUE_RenderState																											
+{	
+public:
+	SQ_API SQUE_RenderState(){};
+	SQ_API ~SQUE_RenderState(){};																																	
+	
+	bool backed_up = false;																													
 	int32_t blend_equation_rgb, blend_equation_alpha;																						
 																																		
 	bool blend_func_separate = false;																									
@@ -555,7 +586,7 @@ typedef struct SQUE_RenderState
 																																		
 	SQ_API void SetUp();																												
 	SQ_API void BackUp();																												
-} SQUE_RenderState;																														
+};																														
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API bool SQUE_RENDER_Init();																											
@@ -572,39 +603,11 @@ SQ_API void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t*
 SQ_API void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value);
 SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
 SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
+SQ_API void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id);
 
-// Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_MESH_GenBufferIDs(const uint32_t num, uint32_t* ids);
-SQ_API void SQUE_MESH_GenAttributeObjects(const uint32_t num, uint32_t* attribute_objects);
-SQ_API void SQUE_MESH_GenBuffer(SQUE_Mesh* mesh);
-SQ_API void SQUE_MESH_BindBuffer(const SQUE_Mesh& mesh);
-SQ_API void SQUE_MESH_BindVertices(const uint32_t vert_id);
-SQ_API void SQUE_MESH_BindIndices(const uint32_t index_id);
-SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
-SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_PROGRAM_EnableAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
 SQ_API void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
-
-// Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_SetTextureAttributes(const sque_free_vec<SQUE_TexAttrib>& tex, const int32_t dim_format);
-// Overload for Texture3D or at some point try to go back to C?
-
-// Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids);
-SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
-SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
-SQ_API void SQUE_TEXTURE_SetActiveUnit(int32_t unit);
-SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level = 0);
-
-SQ_API void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id);
-
-// Shader Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Shader Program Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_PROGRAM_GenID(uint32_t* program_id);
-SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
-SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
 
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, const int32_t offset_indices = 0, int32_t count = -1);

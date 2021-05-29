@@ -1440,45 +1440,73 @@ Some modules' requirements can change as they are developed, there may be requir
 
 Before delving into each part of the library provided, code will be provided in the document for elements that are specifically relevant to the subject at question such as multiplatform approaches or specific things for Android and Linux, given that during the coursing of the degree the apporach has focused on Windows.
 
-<!--
-## Structuring Library
+## SqueLib C++ Coding Conventions
+
+~~~~~~~~~~~~~~~~~~~~c++
+// INTRODUCTORS_ARE_CAPS_SEPARATED_BY_UNDERSCORES
+// they are used to define which part they refer to and avoid collisions
+
+#define MACROS_ARE_UPPERCASE 0
+
+void FunctionsAreCamelCase()
+{
+    // And Brackets go in the line below
+}
+
+void variables_are_lowercase_separated_by_underscore;
+
+typedef variable_is_underscore int;
+
+typedef void(CallbackAreCamelCase)();
+// Also Callbacks should not hide a pointer
+// You can declare a CallbackType as a functor -> Callback*
+
+#ifdef CHAINS
+#   if CAN_HAVE_#_AT_SAME_LEVEL
+#   endif // Then indent the text
+#elseif OR
+
+#define CAN_BE_SEPARATED_BY_LINE_BREAK
+
+#endif // Both are clarificatory enough
+
+struct ID1_IsCamelCase
+{
+    void cant_contain;
+    bool explicit_constructor;
+    int explicit_destructor;
+
+    Class1 but_can_contain_classes_as_variables;
+};
+
+class ID2_IsCamelCaseToo
+{
+public: // Recommend Public Constructors/Destructors first
+    ID2_IsCamelCaseToo(){};
+    ~ID2_IsCamelCaseToo(){};
+
+public: // Public Variables
+    void public_var;
+public: // Public Functions
+    void PublicFunctions(){};
+private: // Private Variables
+    void* private_var;
+private: // Private Functions
+    void PrivateFunction(){};
+};
+
+void ModifyingFunctionsPassAsPointer(int* modifiable){}
+void NonModifyingPassAsConstRef(const int& non_modifiable){}
+// These might vary for Callbacks that send to or receive from other libraries
 
 
 
-### C++ Coding Conventions
-
-| Type | Description |
-|---|---|
-| Introductors | ID1_..._element : these introductors to avoid name collisions are caps | 
-| Functions | FunctinsAreCamelCase |
-| Macros | CAPS_SEPARATED_BY_UNDERSCORES |
-| Variables | lower_case_separate_by_underscore |
-| Typedef Variables | lower_case_separate_by_underscore |
-| Typedef Callbacks | FunctionsAreCamelCase |
-| Brackets | {} are always positioned below the definition, unless they fit in a single line comfortably at 100~ characters |
-| IfDef Chains | # Always at the same level, either space with empty lines or tab in the text, both feel correct and designate what an if encapsulates |
-
-### Folder Structure
-
-There is not a specific order to how files will be kept inside each one of the folders shown in **Figure 19**, th epurpose is to separate cleanly what does SqueLib provide as well as to have a first fast guess at where those might be.
-
-Specifically *external* contains other libraries that SqueLib makes explicit use of and *extra* proivdes other implementations and libraries that can work alongside SqueLib easily on the target platforms on modules not provided. 
-*************************************
-*/Root -+-- cl_script_templates/    *
-*       +-- cmake_modules/          *
-*       +-- defaults/               *
-*       +-- docs/                   *
-*       +-- examples/               *
-*       +-- external/               *
-*       +-- extra/                  *
-*       +-- squelib__src/           *
-*       +-- toolchains/             *
-*       +--CMakeLists.txt           *
-*       +--Readme.md                *
-*************************************
-[Figure [diagram]: Base Folder Structure for the library] 
-
--->
+/*
+    Indentation is a controversial topic that actually should never have to be discussed by coders.
+    There should be a consesus for a serialization value that indicate an indentation,
+    that should be serialized with the file and each IDE provide a setting for such spacing.
+*/
+~~~~~~~~~~~~~~~~~~~~
 
 ## Core Library
 
@@ -2122,11 +2150,23 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
 #endif
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the function there are some referencies to check if a motion has ended. A motion is active depending on the sum of activities of the pointers, if non are active, motion will be inactive and a gesture will be evaluated on a per pointer basis.
+In the function there are some referencies to check if a motion has ended. A motion is active depending on the sum of activities of the pointers. If non are active, motion will be inactive and a gesture will be evaluated on a per pointer basis.
 
-The current implementation only detects a `TAP` and a `SWIPE`. The best approach would be for the user to setup their own dection functions and be run through each of the gestures, but that is out of the scope of the project.
+Each gestures is simply the tracking ofa  port from start position to end position, given a time frame. The current implementation only detects a `TAP` and a `SWIPE`:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
+
+struct SQUE_Gesture							
+{						
+	SQUE_Timer timer;
+
+	float start_x, start_y;
+	float midpoints[MAX_MIDPOINTS][2];		
+	float end_x, end_y;
+
+	float refresh_bucket;							
+};	
+
 SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
 {
     // Evaluate what the pointer has done during the time it was tracked
@@ -2161,13 +2201,388 @@ SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
 
 ### Render Pipeline
 
+The approach for graphics for both OpenGL 3.3 and OpenGLES 3.2 are parctically the same, even the glsl supported version mirror almost one to one. The implementation towards the user becomes very easy, propose passthrough functions on the parts that are being supported.
+
+In order to get a base case for workign with a basic render pipeline, I decided to go through **LearnOpenGL[#W56]** and have the library perform effortlessly such part. The intent of the library is to ease the user into declaring and knowing the data they are working with first and then during realtime operations just have to worry about know which handles to use, seen below in **Figure 20**.
+
+*************************************************************
+* .-------------.    .----------------.    Close .--------.
+* | Init Handle +--->| Send To Render |--*------>| Delete |
+* '-+-----------'    '----------------'  |       '--------'
+*   +-Describe               ^           |
+*   +-Allocate               |  Static   |
+*   +-Cache IDs              +-----------*
+*   +-....                   ^           |
+*                            |  Dynamic  |
+*                    .------+--------.   |
+*                    | Update Handle |<--'
+*                    '---------------'
+*************************************************************
+[Figure [diagram]: Intended Approach for SqueLib users.]
+
+This mention of approach on the pipeline is followed in the next example:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// LearnOpenGL Example1 - VertexArray Triangle
+// https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.1.hello_triangle/hello_triangle.cpp
+const char* vert_source = "...";
+const char* frag_source = "...";
+float vertices[] = {
+        -0.5f, -0.5f, 0.0f, // left  
+         0.5f, -0.5f, 0.0f, // right 
+         0.0f,  0.5f, 0.0f  // top   
+    };  
+// SqueLib
+struct SQUE_Mesh triangle;
+struct SQUE_Shader vert_shader;
+struct SQUE_Shader frag_shader;
+struct SQUE_Program program;
+
+SQUE_MESH_SetDrawConfig(&triangle, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
+SQUE_MESH_SetVertData(&triangle, 3);
+SQUE_MESH_GenBuffer(&triangle);
+SQUE_MESH_BindBuffer(&triangle);
+SQUE_MESH_AddAttribute(&triangle, "aPos", SQUE_FLOAT, false, 3);
+SQUE_MESH_SetLocations(&triangle);
+SQUE_MESH_SendToGPU(&triangle, vertices);
+
+SQUE_SHADERS_GenerateID(vert_shader, SQUE_VERTEX_SHADER);
+SQUE_SHADERS_SetSource(vert_shader.id, vert_source);
+SQUE_SHADERS_Compile(vert_shader.id);
+
+SQUE_SHADERS_GenerateID(frag_shader, SQUE_FRAGMENT_SHADER);
+SQUE_SHADERS_SetSource(frag_shader.id, frag_source);
+SQUE_SHADERS_Compile(frag_shader.id);
+
+SQUE_PROGRAM_GenerateID(&program.id);
+SQUE_PROGRAM_AttachShader(program, vert_shader);
+SQUE_PROGRAM_AttachShader(program, frag_shader);
+SQUE_PROGRAM_Link(program.id);
+
+SQUE_SHADERS_FreeFromGPU(vert_shader.id);
+SQUE_SHADERS_FreeFromGPU(frag_shader.id);
+
+while(RenderLoop)
+{
+    SQUE_PROGRAM_Use(program.id);
+    SQUE_MESH_BindBuffer(&triangle);
+    // SQUE_MESH_SendToGPU(triangle, <dynamic_set_of_vertices> );
+    SQUE_RENDER_DrawVertices(triangle);
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SqueLib should provide helper items around a traditional OpenGL 3.3 approach to rendering, but keep very close to base OpenGL. The objective is not alienate a novice OpenGL user or a person who is comfortable with the basics, instead embrace that approach and make it more independent of either being powered by OpenGL or OpenGLES.
+
+As mentioned in the example, the syntax early on focuses on declaring how the different objects will be treated. The user should always know how the used objects should align and be configured, in case of dynamic objects that can also be configured during the `RenderLoop` as well.
+
+Finally, all the classes provided have their members public for anyone to initialize directly in their own way shoudl any function would be too simple to be worth calling. The objective of setting up everything in functions is to make any reader instantly understand what each line is doing.
+
+On the following sections, each helper item provided for SqueLib and finally a list of passthrough functions supported.
+
+#### Value Types
+
+OpenGL uses their own enum values for defining mostly anything, and as a system for remapping macros was already setup for GLFW and EGL it has been used for the enum values that SqueLib would passthrough to the user.
+
+Such values can be found under `RENDER MACROS` sections in the *`sque_remap_macros.h`* file.
+
+#### Initialization
+
+Thanks to **GLAD [#W57]** and the fact that both GLFW and EGL provide the base context for OpenGL, the process of initializign OpenGL requires a single call by the library, as ther won't be explicit use of extensions and keeping it as vanilla as possible makes it more approachable:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+#if defined OpenGL
+    gladLoadGL();
+#elif defined OpenGLES
+    gladLoadGLES2Loader(/* EGL Process Address  */);
+#endif
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+What is a bit of a pain is merging shaders between `GLSL 320 es` and `core 330`, which really only differ in the header representation. For that, shaders loaded into SqueLib will have to explicitly not provide the header. Instead, during initialization a the header is written to a static string and when setting up the source code for compilation, that string is written as a header to the body provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+static char glsl_ver[64] = {'\0'};
+// Init Header String
+    int ver = GLVersion.major * 100 + GLVersion.minor * 10;
+    const char* term = "\n";
+#if defined OpenGLES
+    term = " es\nprecision mediump float;\n";
+#else 
+    term = " core\n";
+#endif
+    sprintf(glsl_ver, "#version %d %s", ver, term);
+
+// Inserting Header into Shader provided by user
+    const char* strs[2] = { glsl_ver, shader_source };
+    glShaderSource(shader_id, 2, strs, NULL);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #### Mesh Buffers
+
+SqueLib defines a mesh as a structure that holds for the information for a set of vertices and indices, the information in each vertex can be configured through attributes and then send to GPU and used to be passed to the render operation. 
+Spefifically, a SQUE_Mesh does not take ownership of the data but only the information about said data. it is task of the user to manage that CPU memory allocation.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+class SQUE_VertAttrib
+{
+public:
+	SQUE_VertAttrib();
+	SQUE_VertAttrib(const char* name_, int32_t var_type, bool normalize, uint16_t num_components);
+	~SQUE_VertAttrib();
+
+	int32_t id = 0;
+	int32_t var_type = SQUE_FLOAT;
+	uint16_t num_comp = 0;
+	bool normalize = false;
+	uint16_t var_size = 4;
+	uint16_t offset = 0;
+
+	char name[89] = ""; // To align the class to 128 bytes
+};
+
+class SQUE_Mesh
+{
+public:
+	SQUE_Mesh();
+	~SQUE_Mesh();
+
+	int32_t draw_config;
+	int32_t draw_mode = SQUE_STATIC_DRAW;
+	uint32_t attribute_object = 0;																													
+	uint32_t vert_id = 0;
+	uint32_t num_verts = 0;
+																											
+	uint32_t index_id = 0;
+	uint16_t num_index = 0;
+	uint32_t index_var = SQUE_UINT;							
+	uint16_t index_var_size = 0;
+
+	uint16_t vertex_size = 0;
+    sque_vec<SQUE_VertAttrib> attributes;
+};
+
+void SQUE_MESH_SetDrawConfig(SQUE_Mesh* mesh, int32_t draw_config, int32_t draw_mode);
+void SQUE_MESH_SetNumVerts(SQUE_Mesh* mesh, uint32_t num_verts);
+void SQUE_MESH_SetIndexData(SQUE_Mesh* mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
+void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_ int32_t var_type, bool normalize, uint16_t num_components);
+
+uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh);
+uint16_t SQUE_MESH_GetAttribSize(SQUE_Mesh* mesh, const char* name);
+void SQUE_MESH_SetLocations(SQUE_Mesh* mesh);
+
+SQ_API void SQUE_MESH_GenBufferIDs(const uint32_t num, uint32_t* ids);
+SQ_API void SQUE_MESH_GenAttributeObjects(const uint32_t num, uint32_t* attribute_objects);
+SQ_API void SQUE_MESH_GenBuffer(SQUE_Mesh* mesh);
+SQ_API void SQUE_MESH_BindBuffer(const SQUE_Mesh& mesh);
+SQ_API void SQUE_MESH_BindVertices(const uint32_t vert_id);
+SQ_API void SQUE_MESH_BindIndices(const uint32_t index_id);
+SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
+SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<!--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-->
 
 #### Textures
 
-#### Shaders
+Textures are pretty much the same as a Mesh in terms of the objective as a class, hold the basic information regarding a texture buffer without taking control of the memory.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+class SQUE_TexAttrib
+{
+public:
+	SQUE_TexAttrib();
+	SQUE_TexAttrib(const char* name, int32_t attrib_id, int32_t value);
+	SQUE_TexAttrib(const char* name, int32_t attrib_id, float value);
+
+	char name[28] = ""; // Align to 64bytes
+	uint32_t type = UINT32_MAX;
+	int32_t id = UINT32_MAX;
+	void* data = NULL;	
+};
+
+struct SQUE_Texture
+{
+	uint32_t id = 0;
+	int32_t dim_format = -1;
+	int32_t use_format = -1;
+	int32_t data_format = -1;
+	int32_t var_type = SQUE_UBYTE;
+	uint16_t var_size = 1;
+
+	int32_t w = 0, h = 0;
+	int32_t channel_num = 4;
+
+	sque_vec<SQUE_TexAttrib> attributes;
+};
+void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
+void SQUE_TEXTURE_SetDimentions(SQUE_Texture* texture, int32_t width, int32_t height, int32_t num_channels);
+void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, int32_t value);
+void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, float value);
+
+SQ_API void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
+SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
+SQ_API void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex);
+SQ_API void SQUE_TEXTURE_SetActiveUnit(int32_t unit);
+SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level = 0);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### Shaders and Programs
+
+Shaders differ a but form the other types, they only have to hold what type they are and the identifier. The actual file or code passed to compile is user dependant and as such they should take care of it.
+It is the Program that actually holds the information for execution, and as such it has a container for the shader information is linked to as well as the uniforms.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+struct SQUE_Uniform
+{
+	int32_t id = -1;
+	uint32_t type = -1;
+	int32_t var_size = 0;
+	char name[56] = "";
+};
+
+struct SQUE_Shader
+{
+	int32_t id = 0;
+	int32_t type = NULL;
+};
+
+SQ_API void SQUE_SHADERS_Generate(SQUE_Shader* shader, const int32_t shader_type);
+SQ_API void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_);
+SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
+SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
+
+struct SQUE_Program
+{
+// Variables
+	uint32_t id = 0;
+	uint32_t shaders[2]; 
+	sque_vec<SQUE_Uniform> uniforms;
+	// IDs of the shaders // Order by execution stage
+	// 0 Vertex -> 1 Fragment 
+	// Geometry will not be implemented
+    // Tessellation and Compute require extensions of OpenGLES which will also fall out of scope
+};
+
+void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader);
+void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]);
+void SQUE_PROGRAM_CacheUniforms(SQUE_Program& program);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of having to query OpenGL during runtime, each program can choose to cache the uniforms after the linking process in order to have access directly to the id of a uniform.
+
+During the render operation, the following uniforms are provided as a base as well as the function to retrieve the uniform id from the Program cached ones. The syntax uses a string and comparation to find the value, but should the user need it it could hold onto the ids after caching them and call use them directly.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
+
+void SetBool		(const int32_t uniform_id, bool value);
+void SetInt		(const int32_t uniform_id, int32_t value);
+void SetFloat	(const int32_t uniform_id, float value);
+void SetFloat2(const int32_t uniform_id, float value[2]);
+void SetFloat3	(const int32_t uniform_id, float value[3]);
+void SetFloat4	(const int32_t uniform_id, float value[4]);
+// ... add a matrix/array passer...																									
+void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### Framebuffers
+
+One thing that I have learned through the optional subject *Advanced Graphics Programming*, is that it was extremely important to provide a way to manage also multiple framebuffers for mostly every possible approach of contemporary rendering techniques (separate from Compute oriented).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+struct SQUE_Framebuffer
+{
+	uint32_t id;
+	int32_t type; // Read, Write, Default
+
+	uint32_t width, height;
+
+	uint32_t depth_buffer_id;
+	int32_t depth_type;
+
+	uint32_t stencil_buffer_id;
+	int32_t stencil_type;
+
+	sque_vec<SQUE_Texture> textures;
+};
+
+void SQUE_RENDER_GenFramebuffer(uint32_t* framebuffer_id);
+void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id);
+void SQUE_RENDER_GenRenderbuffer(uint32_t* renderbuffer_id);
+void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id);
+void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
+void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
+void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
+void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
+void SQUE_RENDER_FramebufferCheckStatus();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By how OpenGL sets it up, a `Framebuffer` holds what draw data will be written to and used during the next render operation. A specific is that each type of render buffer has to be set up separately in a traditional way. For that, generic `Renderbuffer` functions are setup although there are only provided a `depth_buffer` and a `stencil_buffer` in the struct.
+
+Additionally, a `SQUE_Framebuffer` holds the texture data for the textures it reads and writes to. That is by the rationale that is if you are using a framebuffer to write and read to multiple textures the user should always have access to it when binding such textures to in or out values for the render operations.
+
+#### State Control
+
+In OpenGL it is very important to keep track of how each step of rendering is setup. Some passes require reading depth values, some other need to blend with the previously written layers and more. In order to make the user's life easier this class is provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+class SQUE_RenderState				
+{	
+public:
+	SQ_API SQUE_RenderState(){};
+	SQ_API ~SQUE_RenderState(){};
+
+	bool backed_up = false;								
+	
+    int32_t blend_equation_rgb, blend_equation_alpha;
+    
+	bool blend_func_separate = false;
+	int32_t blend_func_src_rgb, blend_func_dst_rgb;							
+	int32_t blend_func_src_alpha, blend_func_dst_alpha;
+
+	int32_t polygon_mode[2];									
+	bool blend, cull_faces, depth_test, scissor_test;
+
+	void SetUp();		
+	void BackUp();							
+};	
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`BackUp` copies the currently setup state according to the provided state variables. `SetUp` updates the OpenGL state with the values the user either backed it up with or they provided individually.
+
+Good practice would be to back up once with the default pipeline state and then initialize the desired values.
+
+#### OpenGL Functionality
+
+As providing all of OpenGL's functionality is decidedly out of scope given the approach to perform the initialization library side instead of user side, thus making the user interface with SqueLib instead of OpenGL directly, a minimum valuable subset of functions are passed through for the user to interact with OpenGL as they would normally in an entry level environment.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+void SQUE_RENDER_ChangeFramebufferSize(int32_t width, int32_t height);		
+void SQUE_RENDER_GetFramebufferSize(int32_t* width, int32_t* height);
+void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = SQUE_COLOR_BIT);
+void SQUE_RENDER_Scissor(int x, int y, int w, int h);
+void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h);
+void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value);
+void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
+void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
+void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id);
+
+void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, const int32_t offset_indices = 0, int32_t count = -1);
+void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, const int32_t count = 0);
+
+// Debugging
+void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id);
+void SQUE_PROGRAM_CheckLinkLog(const uint32_t program_id);
+void CheckForRenderErrors(const char* file, int line);
+void InitGLDebug();
+#define SQUE_CHECK_RENDER_ERRORS() CheckForRenderErrors(__FILE__, __LINE__)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Specifically `SQUE_RENDER_DrawIndices` and `SQUE_RENDER_DrawVertices` use the `SQUE_Mesh` class that the user set up when declaring the object to send the information to OpenGL.
 
 ### File Management
 
@@ -2367,47 +2782,53 @@ The following libraries can be built with SqueLib by defining their required opt
 [#W41]: Envsubst Documentation. GNU, 2020.
 <https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html>
 
-[#42]: AAPT2 Documentation. Google, 2020.
+[#W42]: AAPT2 Documentation. Google, 2020.
 <https://developer.android.com/studio/command-line/aapt2#link_options>
 
-[#43]: Jarsigner Documentation. Oracle, 2020.
+[#W43]: Jarsigner Documentation. Oracle, 2020.
 <https://docs.oracle.com/javase/7/docs/technotes/tools/windows/jarsigner.html>
 
-[#44]: Zip Linux Documenation. Info-ZIP, 2008.
+[#W44]: Zip Linux Documenation. Info-ZIP, 2008.
 <https://linux.die.net/man/1/zip>
 
-[#45]: Zipalign. Google, 2021/
+[#W45]: Zipalign. Google, 2021/
 <https://developer.android.com/studio/command-line/zipalign>
 
-[#46]: Android Debug Bridge Documentation. Google, 2021.
+[#W46]: Android Debug Bridge Documentation. Google, 2021.
 <https://developer.android.com/studio/command-line/adb>
 
-[#47]: SoLoud. Jari Komppa, 2020.
+[#W47]: SoLoud. Jari Komppa, 2020.
 <https://sol.gfxile.net/soloud/>
 
-[#48]: MMGR and other Utilities. Paul Nettle, 2000.
+[#W48]: MMGR and other Utilities. Paul Nettle, 2000.
 <https://www.flipcode.com/archives/Presenting_A_Memory_Manager.shtml>
 
-[#49]: GLMath. G-Truc, 2020.
+[#W49]: GLMath. G-Truc, 2020.
 <https://github.com/g-truc/glm>
 
-[#50]: Dear ImGui. Omar Cornut, 2021.
+[#W50]: Dear ImGui. Omar Cornut, 2021.
 <https://github.com/ocornut/imgui>
 
-[#51]: Rawdraw Android Makefile. CNLohr, 2020.
+[#W51]: Rawdraw Android Makefile. CNLohr, 2020.
 <https://github.com/cnlohr/rawdrawandroid/blob/master/Makefile>
 
-[#52]: Android Build Numbers. Google, 2021.
+[#W52]: Android Build Numbers. Google, 2021.
 <https://source.android.com/setup/start/build-numbers>
 
-[#53]: Android NDK Samples. Google 2020.
+[#W53]: Android NDK Samples. Google 2020.
 <https://developer.android.com/ndk/samples/sample_na>
 
-[#54]: Android NDK Log. Google 2020.
+[#W54]: Android NDK Log. Google 2020.
 <https://developer.android.com/ndk/reference/group/logging>
 
-[#55]: beautiful Native Libraries. Armin Ronacher, 2013.
+[#W55]: beautiful Native Libraries. Armin Ronacher, 2013.
 <https://lucumr.pocoo.org/2013/8/18/beautiful-native-libraries/>
+
+[#W56]: LearnOpenGL. Joey de Vries, 2014.
+<https://learnopengl.com/Introduction>
+
+[#W57]: GLAD. Dav1dde, 2013.
+<https://github.com/Dav1dde/glad>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>

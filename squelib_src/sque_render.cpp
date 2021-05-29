@@ -318,16 +318,16 @@ void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& 
 // TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_SetTextureAttributes(const sque_free_vec<SQUE_TexAttrib>& attributes, const int32_t dim_format)
+void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    for (uint32_t i = 0; i < attributes.size(); ++i)
+    for (uint32_t i = 0; i < tex.attributes.size(); ++i)
     {
-        void* data = attributes[i].data;
-        if (attributes[i].type == SQUE_INT)
-            glTexParameteriv(dim_format, attributes[i].id, (const int32_t*)data);
-        else if (attributes[i].type == SQUE_FLOAT)
-            glTexParameterfv(dim_format, attributes[i].id, (const float*)data);
+        void* data = tex.attributes[i].data;
+        if (tex.attributes[i].type == SQUE_INT)
+            glTexParameteriv(tex.dim_format, tex.attributes[i].id, (const int32_t*)data);
+        else if (tex.attributes[i].type == SQUE_FLOAT)
+            glTexParameterfv(tex.dim_format, tex.attributes[i].id, (const float*)data);
     }
 #endif
 }
