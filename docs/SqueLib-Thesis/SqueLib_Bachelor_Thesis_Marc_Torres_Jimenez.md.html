@@ -1495,11 +1495,15 @@ private: // Private Functions
     void PrivateFunction(){};
 };
 
+enum ID3_AreCamelCaseToo
+{
+    ENUM_VAL1_IS_UPPERCASE = 0, // Value 1 has to be defined always
+};
+
 void ModifyingFunctionsPassAsPointer(int* modifiable){}
-void NonModifyingPassAsConstRef(const int& non_modifiable){}
+void NonModifying_ConstClasses_AsReferences(const class_type_t& classes_structs){};
+void NonModifying_ConstFundamentalTypes_AsCopy(const int fundamental_types){}
 // These might vary for Callbacks that send to or receive from other libraries
-
-
 
 /*
     Indentation is a controversial topic that actually should never have to be discussed by coders.
@@ -1638,7 +1642,7 @@ Althought the solution is not pretty for the one that has to deal with the imple
 #endif
 ~~~~~~~~~~~~~~~~~~~~
 
-#### While Library Init and Close
+#### Library-wide Init and Close
 
 In order to make the library more usable, a single init and close point will be provided for those who prefer it. The details change depending on the implementation of each module but the template implementation of such a function should do something like this:
 
@@ -1811,31 +1815,31 @@ Other functions that take care of managing the state of a window as well as call
 
 ~~~~~~~~~~~~~~~~~~~~~~~~c++
 // Setters
-void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val);
-void SQUE_DISPLAY_SetWindowClose(uint16_t window = 0);		
-uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window = 0);
-void SQUE_DISPLAY_ResizeWindow(const uint16_t w, const uint16_t h, uint16_t window = 0);
-void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, uint16_t window = 0);
-void SQUE_DISPLAY_SetMouseMode(const int32_t value, uint16_t window = 0);
+void SQUE_DISPLAY_SetVSYNC(const int16_t vsync_val);
+void SQUE_DISPLAY_SetWindowClose(const uint16_t window = 0);
+uint16_t SQUE_DISPLAY_CloseWindow(const uint16_t window = 0);
+void SQUE_DISPLAY_ResizeWindow(const uint16_t w, const uint16_t h,const uint16_t window = 0);
+void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, const uint16_t window = 0);
+void SQUE_DISPLAY_SetMouseMode(const int32_t value, const uint16_t window = 0);
 
 // Getters
-bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window = 0);
+bool SQUE_DISPLAY_ShouldWindowClose(const uint16_t window = 0);
 uint16_t SQUE_DISPLAY_GetAmountWindows();
-void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, uint16_t window = 0);
-void SQUE_DISPLAY_GetWindowSize(int32_t* w, int32_t* h, uint16_t window = 0);
-void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, uint16_t window = 0);
-void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window = 0);
-int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window = 0);
-void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
-																								
+void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, const uint16_t window = 0);
+void SQUE_DISPLAY_GetWindowSize(int32_t* w, int32_t* h, const uint16_t window = 0);
+void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, const uint16_t window = 0);
+void* SQUE_DISPLAY_GetPlatformWindowHandle(const uint16_t window = 0);
+int32_t SQUE_DISPLAY_GetDPIDensity(const uint16_t window = 0);
+void SQUE_DISPLAY_GetMainDisplaySize(uint16_t* w, uint16_t* h);
+
 // Callbacks
 typedef void(ResizeCallback)(int32_t width, int height);
 typedef void(ViewportGetSizeCallback)(int32_t* width, int32_t* height);
 typedef void(HandleDropFileFun)(const char* location);
-
 ResizeCallback* SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback* viewport_cb);
-ViewportSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb);
+ViewportGetSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb);
 HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb);
+
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Following GLFW's structure for callbacks, each callback setter function will return as well teh previously set callback in order for the user to prevent breaking other implementations that might have already setup a callback to such action.
@@ -1914,7 +1918,7 @@ SqueLib provides the base GLFW callbacks that update the key_state internally an
 In order to make the translation as seamless as possible between touch based and keyboard-mouse platforms, setting up a basic callback system seemed fit as it is very comfortable to use and quite an integral part of GLFW.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
-typedef void(*KeyCallback)(int32_t code, int32_t state);
+typedef void(KeyCallback)(int32_t code, int32_t state);
 
 enum SQUE_INPUT_Actions							
 {
@@ -1956,7 +1960,7 @@ typedef void(MouseFloatCallback)(float x, float y);
 KeyCallback* SQUE_INPUT_SetKeyCallback(KeyCallback* sque_key_fn);			
 MouseFloatCallback* SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback* position, uint16_t pointer);
 MouseFloatCallback* SQUE_INPUT_SetScrollCallback(MouseFloatCallback* scroll);
-KeyCallback* SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback* key_callback);		
+KeyCallback* SQUE_INPUT_SetMouseButtonCallback(const int button, KeyCallback* key_callback);		
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### Polling Inputs
@@ -2018,10 +2022,10 @@ The point of interest is in `HandleAndroidMotion` which will be explained later 
 Finally, for the user to poll the inputs, there are the following functions provided:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
-SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key);
-SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(uint32_t button);
-void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points = 1);
-bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer = 0);
+SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, const SQUE_KeyboardKeys key);
+SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(const uint32_t button);
+void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, const uint16_t points = 1);
+bool SQUE_INPUT_GetPointerPos(float* x, float* y, const uint16_t pointer = 0);
 void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2239,7 +2243,7 @@ struct SQUE_Shader frag_shader;
 struct SQUE_Program program;
 
 SQUE_MESH_SetDrawConfig(&triangle, SQUE_TRIANGLES, SQUE_STATIC_DRAW);
-SQUE_MESH_SetVertData(&triangle, 3);
+SQUE_MESH_SetDataConfig(&triangle, 3)
 SQUE_MESH_GenBuffer(&triangle);
 SQUE_MESH_BindBuffer(&triangle);
 SQUE_MESH_AddAttribute(&triangle, "aPos", SQUE_FLOAT, false, 3);
@@ -2362,8 +2366,7 @@ public:
 };
 
 void SQUE_MESH_SetDrawConfig(SQUE_Mesh* mesh, int32_t draw_config, int32_t draw_mode);
-void SQUE_MESH_SetNumVerts(SQUE_Mesh* mesh, uint32_t num_verts);
-void SQUE_MESH_SetIndexData(SQUE_Mesh* mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
+void SQUE_MESH_SetDataConfig(SQUE_Mesh* mesh, uint32_t num_verts, uint32_t num_index_ = 0, uint32_t index_var_ = SQUE_UINT);
 void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_ int32_t var_type, bool normalize, uint16_t num_components);
 
 uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh);
@@ -2387,7 +2390,9 @@ SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, v
 
 #### Textures
 
-Textures are pretty much the same as a Mesh in terms of the objective as a class, hold the basic information regarding a texture buffer without taking control of the memory.
+Textures accomplish the same objective as the Mesh class, hold the basic information regarding a texture buffer without taking control of the memory.
+
+The attributes behave are a bit different. Texture parameters are descriptors on how to take care of different operations, as such some of these operations require multiple values of either integer or float values.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class SQUE_TexAttrib
@@ -2422,7 +2427,7 @@ void SQUE_TEXTURE_SetDimentions(SQUE_Texture* texture, int32_t width, int32_t he
 void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, int32_t value);
 void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, float value);
 
-SQ_API void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_GenBufferIDs(const uint32_t num, uint32_t* tex_ids);
 SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
 SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
 SQ_API void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex);
@@ -2450,7 +2455,7 @@ struct SQUE_Shader
 	int32_t type = NULL;
 };
 
-SQ_API void SQUE_SHADERS_Generate(SQUE_Shader* shader, const int32_t shader_type);
+SQ_API void SQUE_SHADERS_GenerateID(SQUE_Shader* shader, const int32_t shader_type);
 SQ_API void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_);
 SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
 SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
@@ -2467,9 +2472,9 @@ struct SQUE_Program
     // Tessellation and Compute require extensions of OpenGLES which will also fall out of scope
 };
 
-void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader);
+void SQUE_PROGRAM_AttachShader(SQUE_Program* program, const SQUE_Shader shader);
 void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]);
-void SQUE_PROGRAM_CacheUniforms(SQUE_Program& program);
+void SQUE_PROGRAM_CacheUniforms(SQUE_Program* program);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Instead of having to query OpenGL during runtime, each program can choose to cache the uniforms after the linking process in order to have access directly to the id of a uniform.
@@ -2479,14 +2484,14 @@ During the render operation, the following uniforms are provided as a base as we
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
 
-void SetBool		(const int32_t uniform_id, bool value);
-void SetInt		(const int32_t uniform_id, int32_t value);
-void SetFloat	(const int32_t uniform_id, float value);
-void SetFloat2(const int32_t uniform_id, float value[2]);
-void SetFloat3	(const int32_t uniform_id, float value[3]);
-void SetFloat4	(const int32_t uniform_id, float value[4]);
+void SetBool	(const int32_t uniform_id, const bool value);
+void SetInt		(const int32_t uniform_id, const int32_t value);
+void SetFloat	(const int32_t uniform_id, const float value);
+void SetFloat2  (const int32_t uniform_id, const float value[2]);
+void SetFloat3	(const int32_t uniform_id, const float value[3]);
+void SetFloat4	(const int32_t uniform_id, const float value[4]);
 // ... add a matrix/array passer...																									
-void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
+void SetMatrix4(const int32_t uniform_id, const float* matrix, const uint16_t number_of_matrices = 1, const bool transpose = false);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### Framebuffers
@@ -2510,15 +2515,15 @@ struct SQUE_Framebuffer
 	sque_vec<SQUE_Texture> textures;
 };
 
-void SQUE_RENDER_GenFramebuffer(uint32_t* framebuffer_id);
-void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id);
-void SQUE_RENDER_GenRenderbuffer(uint32_t* renderbuffer_id);
-void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id);
-void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
-void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
-void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
-void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
-void SQUE_RENDER_FramebufferCheckStatus();
+void SQUE_FRAMEBUFFER_GenerateID(uint32_t* framebuffer_id);
+void SQUE_FRAMEBUFFER_Bind(const int32_t type, const uint32_t id);
+void SQUE_FRAMEBUFFER_GenRenderTypeID(uint32_t* renderbuffer_id);
+void SQUE_FRAMEBUFFER_BindRenderType(const uint32_t renderbuffer_id);
+void SQUE_FRAMEBUFFER_SetRenderTypeInfo(const uint32_t type, const uint32_t width, const uint32_t height);
+void SQUE_FRAMEBUFFER_AttachRenderType(const uint32_t attachment_type, const uint32_t attachment_id);
+void SQUE_FRAMEBUFFER_AttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
+void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
+void SQUE_FRAMEBUFFER_CheckStatus();
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By how OpenGL sets it up, a `Framebuffer` holds what draw data will be written to and used during the next render operation. A specific is that each type of render buffer has to be set up separately in a traditional way. For that, generic `Renderbuffer` functions are setup although there are only provided a `depth_buffer` and a `stencil_buffer` in the struct.
@@ -2586,31 +2591,470 @@ Specifically `SQUE_RENDER_DrawIndices` and `SQUE_RENDER_DrawVertices` use the `S
 
 ### File Management
 
+As stated previously, the objective of the file management part of the library is to help the user read and write files to disk seamlessly thoughout the supported platforms. By no means should the library ever take care of the memory that user allocates, provide utility for the basic use cases.
+
+Such cases would be: read files, write files, create directories and manage the state of a file in disk (aka file-watching).
+
+#### Basic Provided Structs
+
+In order to interact with the filesystem, the following structs are provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+struct SQUE_Dir
+{
+	uint32_t id = UINT32_MAX;
+	char name[64];
+	char location[512];
+
+	uint32_t parent_id = -1;
+	sque_vec<uint32_t> children_ids;
+};
+
+SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id = -1)
+{
+	SQUE_Dir d;
+	d.id = SQUE_RNG();
+	const char* tmp = strrchr(location, '.');
+	if (tmp != NULL)
+	{
+		uint32_t l = SQUE_FS_GetParentDir(location);
+		l = (l < sizeof(d.location)) ? l : sizeof(d.location);
+		memcpy(d.location, location, l);
+	}
+	else
+		memcpy(d.location, location, sizeof(d.location));
+
+	memcpy(d.name, SQUE_FS_GetFileName(d.location), sizeof(d.name));
+
+	return d;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A directory is setup to allow building directory trees easily, with a `uint32_t` handle por a parten and children and an own id for ease of traversal and discourage holding direct pointers to data.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+struct SQUE_Asset
+{
+	uint64_t size;
+	char* raw_data;
+};
+
+struct SQUE_DataPack
+{
+    SQUE_Asset data;
+    SQUE_Asset metadata;
+};
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Just because such a type is very popular for use, a `SQUE_DataPack` englobes two generic assets that one should hold the actual data and the other one the descripting metadata of the asset.
+
+#### Initialization
+
+An easy to miss step to taking care of where to read and write files from si to setup a base directory from which to pivot. SqueLib will take the easiest available directory for reading and writing files from, which on desktop will be the working directory and on Android an external storage directory provided by the Android NDK:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+extern struct android_app* my_app;
+static char exec_path[512];
+
+void SQUE_FS_Init()
+{
+	int len = 0;
+#if defined(_WIN32)
+	len = GetModuleFileNameA(NULL, exec_path, 512);
+	char* exe = strrchr(exec_path, FE);
+	exec_path[len-strlen(exe)] = '\0';
+#elif defined(ANDROID)
+	sprintf(exec_path, "%s",my_app->activity->externalDataPath);
+#elif defined(__linux__)
+	char link_temp[512] = "\0";
+	len = readlink("/proc/self/exe", link_temp, 512);
+	const char* dir = dirname(link_temp);
+	sprintf(exec_path, "%s", dir);
+#endif
+}
+
+const char* SQUE_FS_GetExecPath()
+{
+	return exec_path;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The variable and retrieval function is named after execution path, as on desktop platforms that the easiest available directory and on Android such directory is unavailable to read and write from. On Android the storage directory is minimally hidden from the user and setup for an application to perform their external storage operation, although access to the whole system is available given the permissions.
+
+Once that is set, Android behaves almost exactly as a Linux systems for the basic types of operations.
+
+#### Android Assets
+
+When building an Android based application, the source code, manifest files, resources and `assets` are packed and then installed in a protected directory. In said directory one can't write but only read through the Android NDK.
+
+In order to not have an issue when reading and writting files a whole SqueLib is packed with the expected *Asset* folder in the working directory with the structure set inside by the user. For that a generic read function and an *Asset* specialized functions are provided.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
+{
+	SQUE_Asset* ret = NULL;
+#if defined(ANDROID)
+	ret = new SQUE_Asset();
+	AAsset* asset = AAssetManager_open(my_app->activity->assetManager, file, AASSET_MODE_BUFFER);
+	SQUE_PRINT(LT_INFO, "%d %s", asset, file);
+	if(asset != NULL)
+	{
+		ret->size = AAsset_getLength(asset);
+		char* tmp = new char[ret->size+1];
+		memcpy(tmp, AAsset_getBuffer(asset), ret->size);
+		tmp[ret->size] = '\0';
+		ret->raw_data = tmp;
+		AAsset_close(asset);
+	}
+	else
+	{
+		delete ret;
+		ret = NULL;
+	}
+#else
+	char* sprint_v = new char[256];
+	int len = sprintf(sprint_v, "%s/Assets/%s\0", SQUE_FS_GetExecPath(), file);
+	if (len > 256)
+	{
+		delete sprint_v;
+		sprint_v = new char[len];
+		sprintf(sprint_v, "%s/Assets/%s\0", SQUE_FS_GetExecPath(), file);
+	}
+	ret = SQUE_FS_LoadFileRaw(sprint_v);
+	delete sprint_v;
+#endif
+
+	return ret;
+}
+
+SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
+{
+	
+	char* data = NULL;
+	std::ifstream in;
+	in.open(file, std::ios::binary | std::ios::in);
+	if(!in) return NULL;
+	in.seekg(0, std::ios::end);
+	int len = in.tellg();
+	in.seekg(0, std::ios::beg);
+	data = new char[len+1];
+	in.read((char*)data, len);
+	in.close();
+
+	SQUE_Asset* ret = new SQUE_Asset();
+	ret->size = len+1;
+	ret->raw_data = data;
+	memcpy(&ret->raw_data[len], "\0", 1);
+	
+	return ret;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As can be seen, the `SQUE_FS_LoadFileRaw` perfoms a basic read operation and returns a basic struct with a pointer to the genric data and the size of it.
+`SQUE_FS_LoadAssetRaw` perfoms a similar operation but specializes the search of the file inside the *Asset* directory built with the application for desktop platforms, on Android it uses the Android NDK provided approach for reading a generic file from the installed package.
+
+#### Creating Directories
+
+As the user should not always know the full path to where it wants to read or write, two base functions are provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+bool SQUE_FS_CreateDirFullPath(const char* path)
+{
+    if(!(SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE") && SQUE_AskPermissions("WRITE_MEDIA_STORAGE")))
+        return false;
+	bool ret = true;
+#if defined(_WIN32)
+	ret = CreateDirectoryA(path, NULL);
+#elif defined(ANDROID) || defined(__linux__)
+	ret = ret && mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
+#endif
+	return ret;
+}
+
+// Does not support navigating backwars "../~", relative to exec_path
+bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
+{
+	std::string exec_path = std::string(SQUE_FS_GetExecPath()) + FOLDER_ENDING + path;
+	return SQUE_FS_CreateDirFullPath(exec_path.c_str());
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### File Watching
+
+Dealing with data at a large scale during runtime is very time consuming and annoying to do. Assuming that data inside the Android package will not change during runtime as write actions are not allowed and that external storage behave very close or exactly to a Linux platform, we can use the C++17 `std::filesystem` library to perform such file-watch operations.
+
+To take care of asset, the following struct is provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+typedef void(ReadWriteAssetFun)(const char* location, SQUE_DataPack* datapack);
+typedef void(UnloadAssetFun)(SQUE_DataPack* datapack);
+
+struct SQUE_CtrlAsset
+{
+	// Static Data - Generated or Loaded
+	uint32_t id = -1;
+	char name[64] = "";
+	char location[512] = "";
+	uint32_t dir_id = UINT32_MAX;
+	uint32_t type = -1; //?
+	
+	// Runtime Updates
+	SQUE_Timer unused_timer;
+	uint32_t current_users = 0;
+	uint8_t status = 0; // 0 = not_changed, 1 = Changed, 2 = Deleted
+	double last_update = 0;
+
+
+	// Type Based functions  
+	ReadWriteAssetFun* Save;
+	ReadWriteAssetFun* Load;
+	UnloadAssetFun* Unload;
+
+	// Actual Data
+	SQUE_DataPack datapack;
+};
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every base asset will requires a description of location, naming and status during runtime. As every asset might behave differently, a callback that the user can set for saving, loading and unloading from memory is provided.With this class the user can set the implementation of the asset-disk interaction and the system to handle them comfortably.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+class SQUE_FW_NewAsset
+{
+public:
+	SQ_API SQUE_FW_NewAsset() {str = new char[512];};
+	SQ_API ~SQUE_FW_NewAsset() {delete str;};
+
+	double last_update = 0;
+	uint32_t str_len = 0;
+	char* str;
+};
+
+sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
+{
+    // Check for deleted items in the passed vector of assets
+    for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
+	{
+		assets_in_dir[i]->status = 0;
+		if (!std::filesystem::exists(assets_in_dir[i]->location))
+			assets_in_dir[i]->status = 2; // Asset does not exist in disk
+	}
+    // Setup return vector of newly created items
+	sque_vec<SQUE_FW_NewAsset> new_items;
+    // Perform a search in each directory from the base directory provided
+    // Check against existing items with the files found in the recursive search
+	for (auto& file : std::filesystem::recursive_directory_iterator(path))
+	{
+        // If a file is found, an early exit is taken
+		uint32_t i;
+		for (i = 0; i < assets_in_dir.size(); ++i)
+		{
+			if (assets_in_dir[i]->status == 2) continue;
+			if (strcmp(assets_in_dir[i]->location, file.path().string().c_str()) == 0)
+				break;
+		}
+		if (i < assets_in_dir.size()) // If early exit AND update times don't match
+		{
+			double last_update = (double)std::chrono::duration_cast<std::chrono::seconds>(file.last_write_time().time_since_epoch()).count();
+			if (last_update != assets_in_dir[i]->last_update)
+			{
+				assets_in_dir[i]->last_update;
+				assets_in_dir[i]->status = 1; // Set to Update
+			}
+		}
+		else // File is not in the list of assets, add it to vector of new locations
+		{
+			new_items.push_back(SQUE_FW_NewAsset());
+			SQUE_FW_NewAsset* a = new_items.last();
+			memcpy(a->str, file.path().string().c_str(), 512);
+			a->str_len = file.path().string().length();
+		}
+	}
+	return new_items;
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Then a way to generate a directory tree very easily:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dirs)
+{
+    void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dirs)
+{
+	dirs->push_back(SQUE_FS_GenDir(location));
+
+	for (auto& file : std::filesystem::recursive_directory_iterator((*dirs)[0].location))
+	{
+		if (file.is_directory())
+		{
+			dirs->push_back(SQUE_FS_GenDir(file.path().string().c_str()));
+			dirs->last()->parent_id = AddToParent(dirs->last()->id, dirs->last()->location, *dirs);
+		}
+	}
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These two helpers should allow every c++ low level user have a file watching system very quickly up and running. One thing I dislike currently is that the return value is a structure with allocated string.
+To avoid issues with memory and not having to use heavy-weight classes, a simple wrapper for the vector return is provided.
+
+The user will access `str` and `str_len` for location and then `last_update` for the newly created asset. A copy return value on a probably heavy vector is not ideal, but not controlled memory for a memory critical task is even worse in my point of view.
+
+#### Stream Read and Write
+
+The process of readign and writing custom binary files is not very friendly to most users, at least with out of the box C++. Continuing the theme of the library, two simple classes are provided for a bit easier introduction to binary serialization.
+
+Only the important steps of serialization are shown in the following code snippet:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+class SQUE_OutStream
+{
+    //...
+template<class T>
+	void WriteBytesAt(const T* from, uint64_t at, uint32_t num_items = 1)
+	{
+		uint64_t end_write = at + sizeof(T) * num_items;
+		if (_capacity < end_write) reallocate(end_write * 2);
+		memcpy(&_data[at], from, sizeof(T) * num_items);
+		if (at + sizeof(T) * num_items > _size) _size = end_write;
+	}
+
+	template<class T>
+	void WriteBytes(const T* from, uint32_t num_items = 1)
+	{
+		uint64_t end_write = _size + sizeof(T) * num_items;
+		if (_capacity < end_write) reallocate(end_write * 2);
+		memcpy(&_data[_size], from, sizeof(T) * num_items);
+		_size = end_write;
+	}
+    //...
+};
+
+class SQUE_InStream
+{
+    //...
+    void AttachAsset(SQUE_Asset* asset) { _data = asset; _readpos = _data->raw_data; _readpos_n = 0; }
+
+	template<class T>
+	void ReadBytesAt(T* to, uint32_t num_items, uint64_t at)
+	{
+        assert(at+(num_items * sizeof(T)) < _data->size);
+		memcpy(to, &_data->raw_data[at], num_items * sizeof(T));
+	}
+
+	template<class T>
+	void ReadBytes(T* to, uint32_t num_items)
+	{
+		memcpy(to, &_data->raw_data[_readpos_n], num_items * sizeof(T));
+		_readpos_n += num_items * sizeof(T);
+	}
+    //...
+};
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A `SQUE_OutStream` is used to write a buffer that will be then written to disk using the preffered function. `WriteBytes` will write bytes specifically at the end of the buffer and keep incrementing it, while `WriteBytesAt` allow the use to write where he pleases.
+
+A `SQUE_InStream` is attached to a `SQUE_Asset` that has been already read from disk. `ReadBytes` will read sequentially given the templated arguments and such data will be copied over to an out variable.`ReadBytesAt` will read where the user decides to, while making sure the user does not read memory outside of bounds.
+
 ## Utilities
+
+The core library is provided alongside with a couple utilities or implementations that seemed interesting to strengthen again the knowledge in C++ and programming general. Not every utility is directly targetted a subset of users but more of an interest developed during the production.
 
 ### Logging
 
+Loggin with SqueLib is similar to a subsystem, you initiate it, act on it and then close it. Specifically, on closure the log subsystem will dump the logs written on disk.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+#define LOGSIZE 1024
+struct SQUE_Log				
+{		
+	int type = -1;
+	SQUE_LogType lt = LT_INFO;
+	char log[LOGSIZE] = {0};						
+};
+typedef std::pair<int, SQUE_Log> PairLOG;
+
+bool SQUE_LOGGER_Init(bool dumpdata);
+void SQUE_LOGGER_Close();
+void SQUE_LOGGER_DumpData();
+
+void SQUE_LOGGER_Log(SQUE_LogType lt, const char file[], int line, const char* format, ...);
+#define SQUE_LOG(LogType,format,...) SQ_MACRO SQUE_LOGGER_Log(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)
+
+const std::unordered_map<int, std::string>& SQUE_LOGGER_GetKeys();
+const sque_vec<PairLOG>& SQUE_LOGGER_GetLogs();
+
+// Not directly accessible to user
+static std::unordered_map<std::string, int> Push_LogKeys;
+static std::unordered_map<int, std::string*> Get_LogKeys;
+static sque_vec<PairLOG> logs;
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The implementation is based on an ID system from the file a log came from, similarly to the console printing, it makes use fo the `__FILE__` and `__LINE__` macro to know where the call originated from and extracts the filename to use as a key in a `std::unordered_map` to insert into groups of logs.
+The idea is that said map can be read on an ordered timeline and be filtered by the file it originated from to reduce the complexitiy of reading the logs either offline or during runtime.
+
 ### Timer
+
+During the coursing of the past programming subjects in the degree, it felt extremely important to have a very good in-engine tool for dealing with timings. Most tools and libraries for profiling will probably be external but for some quick usage a custom class felt a necessary.
+
+The current implementation is based on `std::chrono` for time reads and then translate to a timer style read at milliseconds, microseconds and nanoseconds, although the precision depends on the OS's implementation of reporting timings:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+class SQUE_Timer
+{
+public:
+	SQUE_Timer();
+
+	void Start();
+	void Stop();
+	void Kill();
+	bool IsStopped() const;		
+	bool IsActive() const;
+	double ReadMilliSec() const;
+	double ReadMicroSec() const;
+	double ReadNanoSec() const;	
+private:
+    // vars ...
+};	
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ### Data Structures
 
-#### sque_vec
+Spending time on the internet learning about programming will cloud the point fo view for most users when dealing with C++. The standard library is a great set of functionality for a new user but at the same time is very convoluted and has a lot landmines that professionals know to avoid.
 
-#### sque_free_vec
+I am not one of those and one of the big criticisms was the implementation of the basic structures. In order to understand a bit more as well as taking little step into understanding optimization and coding pitfalls, the followign structures have been implemented:
 
-#### sque_list
+ * **sque_vec<>** : Analogous to a std::vector<>. Not implemented to work with jagged arrays, because of lack of understanding on them.
+ * **sque_dyn_arr<>** : Intention is to make an array that can just be increased in size, such implementation could be complementary to a XMacro system with plugins that add to them as they could query the entry amount and add an item and save for the locator.
+ * **sque_free_vec<>** : A vector based on unknow location push, to allow freeing spaces of memory and filling them up. The idea is that of a vector that is a bit more memory conscious.
+ * **sque_list<>** : Analogous to a std::list<>
+
+By no means it is claimed that these structures are better that the ones available on the standard library or on other vendors' implementations, the objective aws that of understanding such implementations and be comfortable with dealing with custom implementations in the future.
 
 ### Sorting Algorithms
 
-### Asset Loading
+A thing that has faltered during these years as a programmer that around other areas seems to be common knowledge, is the understanding of complexity of an algorithm. The *O Notation* has not been properly introduced. Sorting algorithms felt like a great entry to such notation explanation and implementation seemd ideal for getting introduced to.
 
-### Serialization
+Under the `sque_sort.h` the following subset of templated sorting algorithms with a short explanation on how they work, are provided:
 
-## Additional Implementations
+ * Selection Sort
+ * Bubble Sort
+ * Insertion Sort
+ * Merge Sort
+ * Quick Sort
 
-### ImGui Backend for SqueLib
+### Dear ImGui Backend for SqueLib
 
-### PCG
+Dear ImGui does not have an official direct backend for Android, although there is one floting in the issues<sub>[#W58]</sub> which has been use to adapt the SqueLib one. A good way to make easily recognizable progress on Android was to make such a backend available as an OpenGL/GLFW user could not just simply use the existing samples given that SqueLib sets the access to those libraries as private.
+
+The following basic functions are provided and are to be used following the provided example with SqueLib:
+
+~~~~~~~~~~~~~~~~~~~~~~~c++
+IMGUI_IMPL_API void ImGui_ImplSqueLib_Init();        // After ImGui::CreateContext()
+IMGUI_IMPL_API void ImGui_ImplSqueLib_Shutdown();    // Before ImGui::Shutdown() if still using that
+IMGUI_IMPL_API void ImGui_ImplSqueLib_NewFrame();    // Before ImGui::NewFrame(), It will not process inputs, just read, you have to process them
+IMGUI_IMPL_API void ImGui_ImplSqueLib_Render(ImDrawData* draw_data); // After ImGui::Render(), and remember to clear framebuffer!
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Full keyboard, software keyboard, touch and mouse functionality is provided for ImGui. Viewports are not supported as SqueLib does not provide multiwindows. The version of ImGui it is based on is v1.82.
 
 ## Extra libraries
 
@@ -2622,8 +3066,6 @@ The following libraries can be built with SqueLib by defining their required opt
 | GLMath<sub>[#W48]</sub> | *WITH_GLM* | Math library geared towards OpenGL use, with classes and operation for vectors, quaternions, matrices and mostly every use case found in computer graphics. |
 | MMGR<sub>[#W49]</sub> | *Debug* AND *WITH_MMGR* | Single threaded memory manager, which outputs the allocations and deallocation pairs to make sure memory is properly kept in check. |
 | Dear ImGui<sub>[#W50]</sub> | *WITH_IMGUI* | High performance Immediate Mode User Interface library written in platform agnostic C++ |
-
-## Extending SqueLib
 
 # SqueLib Sample Projects
 
@@ -2829,6 +3271,9 @@ The following libraries can be built with SqueLib by defining their required opt
 
 [#W57]: GLAD. Dav1dde, 2013.
 <https://github.com/Dav1dde/glad>
+
+[#58]: ImGui Android, Issues. stawrocek, 2017.
+<https://github.com/ocornut/imgui/issues/1200>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>

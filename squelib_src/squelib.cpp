@@ -14,8 +14,8 @@
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VoidFun on_resume_callback = NULL;
-VoidFun on_go_background_callback = NULL;
+VoidFun* on_resume_callback = NULL;
+VoidFun* on_go_background_callback = NULL;
 
 int SQUE_VarGetSize(int type_macro)
 {
@@ -389,7 +389,7 @@ void AndroidRequestAppPermissions(const char* perm)
 
 #endif
 
-int SQUE_AskPermissions(const char* permission_name)
+int16_t SQUE_AskPermissions(const char* permission_name)
 {
     int ret = 1;
 #ifdef ANDROID
@@ -407,16 +407,16 @@ int SQUE_AskPermissions(const char* permission_name)
 // CALLBACKS / FLOW MANAGEMENT /////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VoidFun SQUE_AddOnResumeCallback(VoidFun fun)
+VoidFun* SQUE_AddOnResumeCallback(VoidFun* fun)
 {
-    VoidFun ret = on_resume_callback;
+    VoidFun* ret = on_resume_callback;
     on_resume_callback = fun;
     return ret;
 
 }
-VoidFun SQUE_AddOnGoBackgroundCallback(VoidFun fun)
+VoidFun* SQUE_AddOnGoBackgroundCallback(VoidFun* fun)
 {
-    VoidFun ret = on_go_background_callback;
+    VoidFun* ret = on_go_background_callback;
     on_go_background_callback = fun;
     return ret;
 }

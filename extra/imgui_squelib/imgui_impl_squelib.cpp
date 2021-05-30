@@ -25,8 +25,8 @@ static float		sque_MouseWheelH = 0.0f;
 static KeyCallback*			sque_PrevKeyboardCallback;
 static MouseFloatCallback*	sque_PrevMousePosCallback;
 static MouseFloatCallback*	sque_PrevMouseScrollCallback;
-static VoidFun				sque_PrevOnResumeCallback;
-static VoidFun				sque_PrevOnGoBackgroundCallback;
+static VoidFun*				sque_PrevOnResumeCallback;
+static VoidFun*				sque_PrevOnGoBackgroundCallback;
 
 // Shaders
 const char* vertex_shader =
@@ -111,8 +111,7 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 	for (int i = 0; i < draw_data->CmdListsCount; ++i)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[i];
-		SQUE_MESH_SetVertData(sque_dataHandle, cmd_list->VtxBuffer.Size);
-		SQUE_MESH_SetIndexData(sque_dataHandle, cmd_list->IdxBuffer.Size, SQUE_USHORT);
+		SQUE_MESH_SetDataConfig(&sque_dataHandle, cmd_list->VtxBuffer.Size, cmd_list->IdxBuffer.Size, SQUE_USHORT);
 		SQUE_MESH_SendToGPU(sque_dataHandle, cmd_list->VtxBuffer.Data, cmd_list->IdxBuffer.Data);
 
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; ++cmd_i)
@@ -150,13 +149,13 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 
 	SQUE_MESH_GenBuffer(&sque_dataHandle);
 	//SQUE_RENDER_GenerateMeshBuffer(&sque_dataHandle.vert_id, &sque_dataHandle.index_id, &sque_dataHandle.attribute_object);
-	SQUE_MESH_SetDrawConfig(sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
+	SQUE_MESH_SetDrawConfig(&sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
-	sque_dataHandle.attributes.push(SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
-	sque_dataHandle.attributes.push(SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
-	sque_dataHandle.attributes.push(SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
+	sque_dataHandle.attributes.push_back(SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
+	sque_dataHandle.attributes.push_back(SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
+	sque_dataHandle.attributes.push_back(SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
 	SQUE_MESH_BindBuffer(sque_dataHandle);
-	SQUE_MESH_SetLocations(sque_dataHandle);
+	SQUE_MESH_SetLocations(&sque_dataHandle);
 
 	sque_backupState.SetUp();
 }
@@ -165,21 +164,21 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 {
 	sque_backupState.BackUp();
 
-	SQUE_SHADERS_Generate(sque_vertShader, SQUE_VERTEX_SHADER);
+	SQUE_SHADERS_GenerateID(&sque_vertShader, SQUE_VERTEX_SHADER);
 	SQUE_SHADERS_SetSource(sque_vertShader.id, vertex_shader);
 	SQUE_SHADERS_Compile(sque_vertShader.id);
 
-	SQUE_SHADERS_Generate(sque_fragShader, SQUE_FRAGMENT_SHADER);
+	SQUE_SHADERS_GenerateID(&sque_fragShader, SQUE_FRAGMENT_SHADER);
 	SQUE_SHADERS_SetSource(sque_fragShader.id, fragment_shader);
 	SQUE_SHADERS_Compile(sque_fragShader.id);
 
-	SQUE_PROGRAM_GenID(&sque_shaderProgram.id);
-	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_vertShader);
-	SQUE_PROGRAM_AttachShader(sque_shaderProgram, sque_fragShader);
+	SQUE_PROGRAM_GenerateID(&sque_shaderProgram.id);
+	SQUE_PROGRAM_AttachShader(&sque_shaderProgram, sque_vertShader);
+	SQUE_PROGRAM_AttachShader(&sque_shaderProgram, sque_fragShader);
 
 	SQUE_PROGRAM_Link(sque_shaderProgram.id);
 	
-	SQUE_PROGRAM_CacheUniforms(sque_shaderProgram);
+	SQUE_PROGRAM_CacheUniforms(&sque_shaderProgram);
 
 	//SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2, sque_shaderProgram.uniform_ref);
 	//SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "Texture");
@@ -195,14 +194,14 @@ void ImGui_ImplSqueLib_CreateFontsTexture()
 	sque_backupState.BackUp();
 
 	ImGuiIO& io = ImGui::GetIO();
-	SQUE_TEXTURE_GenIDs(1, &sque_fontTexture.id);
+	SQUE_TEXTURE_GenBufferIDs(1, &sque_fontTexture.id);
 	SQUE_TEXTURE_SetFormat(&sque_fontTexture, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
 	io.Fonts->GetTexDataAsRGBA32((uchar**)&sque_fontPixels, &sque_fontTexture.w, &sque_fontTexture.h);
 
-	sque_fontTexture.attributes.push(SQUE_TexAttrib("MinFilter", SQUE_MIN_FILTER, SQUE_LINEAR));
-	sque_fontTexture.attributes.push(SQUE_TexAttrib("MagFilter", SQUE_MAG_FILTER, SQUE_LINEAR));
+	sque_fontTexture.attributes.push_back(SQUE_TexAttrib("MinFilter", SQUE_MIN_FILTER, SQUE_LINEAR));
+	sque_fontTexture.attributes.push_back(SQUE_TexAttrib("MagFilter", SQUE_MAG_FILTER, SQUE_LINEAR));
 	SQUE_TEXTURE_Bind(sque_fontTexture.id, sque_fontTexture.dim_format);
-	SQUE_RENDER_SetTextureAttributes(sque_fontTexture.attributes, sque_fontTexture.dim_format);
+	SQUE_TEXTURE_ApplyAttributes(sque_fontTexture);
 	SQUE_TEXTURE_SendAs2DToGPU(sque_fontTexture, sque_fontPixels);
 
 	io.Fonts->TexID = (ImTextureID)(intptr_t)sque_fontTexture.id;

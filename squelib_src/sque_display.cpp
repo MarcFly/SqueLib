@@ -525,15 +525,15 @@ int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window)
 
 }
 
-void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h)
+void SQUE_DISPLAY_GetMainDisplaySize(uint16_t* w, uint16_t* h)
 {
 #if defined(USE_GLFW)
     const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
-    w = mode->width;
-    h = mode->height;
+    *w = mode->width;
+    *h = mode->height;
 #elif defined(USE_EGL)
-    w = sque_windows[0].width;
-    h = sque_windows[0].height;
+    *w = sque_windows[0].width;
+    *h = sque_windows[0].height;
 #endif
 }
 

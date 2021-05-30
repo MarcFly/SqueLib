@@ -87,6 +87,7 @@ public:
 	template<class T>
 	void ReadBytesAt(T* to, uint32_t num_items, uint64_t at)
 	{
+		SQ_ASSERT((num_items * sizeof(T) + at) < _data->size);
 		memcpy(to, &_data->raw_data[at], num_items * sizeof(T));
 	}
 

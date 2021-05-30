@@ -4,8 +4,6 @@
 #	include "squelib.h"
 #endif
 
-#define ANDROID
-
 // filesystem access is purely OS based i believe, so I will use the _WIN32, __linux__ and ANDROID defines
 // If more platforms were to be added, i will do so
 
@@ -92,7 +90,6 @@ bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 		exec_path.insert(v+1, 1, '.');
 		rename(old.c_str(), exec_path.c_str());
 	}
-
 #endif
 
 	return ret;
@@ -286,21 +283,31 @@ uint32_t AddToParent(const uint32_t id, const char* location, sque_vec<SQUE_Dir>
 	return -1;
 }
 
-void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>& dirs)
+void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dirs)
 {
-	dirs.push_back(SQUE_FS_GenDir(location));
+	dirs->push_back(SQUE_FS_GenDir(location));
 
-	for (auto& file : std::filesystem::recursive_directory_iterator(dirs[0].location))
+	for (auto& file : std::filesystem::recursive_directory_iterator((*dirs)[0].location))
 	{
 		if (file.is_directory())
 		{
-			dirs.push_back(SQUE_FS_GenDir(file.path().string().c_str()));
-			dirs.last()->parent_id = AddToParent(dirs.last()->id, dirs.last()->location, dirs);
+			dirs->push_back(SQUE_FS_GenDir(file.path().string().c_str()));
+			dirs->last()->parent_id = AddToParent(dirs->last()->id, dirs->last()->location, *dirs);
 		}
 	}
 }
 
-sque_vec<char*> SQUE_FS_CheckDirectoryChanges(const char* path, sque_vec<SQUE_CtrlAsset*> assets_in_dir, HandleNewAssetLocation* handle_fun)
+SQUE_FW_NewAsset::SQUE_FW_NewAsset()
+{
+	str = new char[512];
+}
+
+SQUE_FW_NewAsset::~SQUE_FW_NewAsset()
+{
+	delete str;
+}
+
+sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
 {
 	for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
 	{
@@ -308,7 +315,7 @@ sque_vec<char*> SQUE_FS_CheckDirectoryChanges(const char* path, sque_vec<SQUE_Ct
 		if (!std::filesystem::exists(assets_in_dir[i]->location))
 			assets_in_dir[i]->status = 2;
 	}
-	sque_vec<char*> new_items;
+	sque_vec<SQUE_FW_NewAsset> new_items;
 	for (auto& file : std::filesystem::recursive_directory_iterator(path))
 	{
 		// string hashing for ids... the MD5 old one might be great for that, it was decently fast
@@ -320,13 +327,20 @@ sque_vec<char*> SQUE_FS_CheckDirectoryChanges(const char* path, sque_vec<SQUE_Ct
 				break;
 		}
 		if (i < assets_in_dir.size())
-			assets_in_dir[i]->status = 1;
+		{
+			double last_update = (double)std::chrono::duration_cast<std::chrono::seconds>(file.last_write_time().time_since_epoch()).count();
+			if (last_update != assets_in_dir[i]->last_update)
+			{
+				assets_in_dir[i]->last_update;
+				assets_in_dir[i]->status = 1;
+			}
+		}
 		else
 		{
-			char* loc = new char[512];
-			//char* t = file.path().string().c_str();
-			memcpy(loc, file.path().string().c_str(), 512);
-			new_items.push_back(loc);
+			new_items.push_back(SQUE_FW_NewAsset());
+			SQUE_FW_NewAsset* a = new_items.last();
+			memcpy(a->str, file.path().string().c_str(), 512);
+			a->str_len = file.path().string().length();
 		}
 	}
 	return new_items;
