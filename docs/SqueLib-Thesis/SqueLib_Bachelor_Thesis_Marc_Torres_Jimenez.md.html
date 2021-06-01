@@ -65,7 +65,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | OpenGL | Open Graphics Library, cross-language and cross-platform graphics programming interface |
 | GLFW | Open-source API used in this project for creating windows and main contexts for OpenGL, with capabilities for context for OpenGL ES and Vulkan; as well as receiving inputs and events. Usable on main desktop platforms such as Linux and Windows, as well as MacOS which is not targeted in this thesis. Android specifically requires EGL to interface with OpenGLES. |
 | EGL | Native window management API for interfacing with OpenGL, OpenGLES and Vulkan |
-| Android NDK | Toolset for implementing native android apps in pure C/C++, also allowing for calls to Java Native code. Previous to it is was strictly necessary to explicitly create a Java based application and load C/C++ code from it, as well as interact with a Java Native Interface, which is still required for some functionality |
+| Android NDK | Toolset for implementing native Android apps in pure C/C++, also allowing for calls to Java Native code. Previous to it is was strictly necessary to explicitly create a Java based application and load C/C++ code from it, as well as interact with a Java Native Interface, which is still required for some functionality |
 | Web Stack | Commonly referred to a package for tacking care of a website which require a base Operative Syste, a Web Serve, a database manager and the programming languages for interfacing with them |
 | (Programming) library | Set of portable code that focuses in tackling a set of issues. **Examples: GLM**: a library for performing geometric mathematical operations with the same syntax as OpenGL. **/ Parson**: a C++ library that facilitate the parsing of JSON files |
 | Game Engine | Software Tool that streamlines the process of making a game by including most technology required for a game developer to focus on designing and developing a game |
@@ -78,7 +78,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | Metal | Apple's low level graphics API for usage in iOS, iPadOS, macOS and tvOS (Apple's proprietaty Operative Systems) |
 | SDK | Software Development Kit, suite of tools for developing project under a certain specification (Example: Android SDK, for building Android Projects) |
 | Toolchain | Specific set of tools used for building a projects |
-| APK | Android Package Kit, uncrompressed packet type used for denominating android application |
+| APK | Android Package Kit, uncrompressed packet type used for denominating Android application |
 | ADB<sub>[#W46]</sub> | Android Debug Bridge, tool for interfacing with Android physical devices |
 
 
@@ -680,13 +680,13 @@ Before delving deep into development, it is important to make clear cut decision
 
 In the context of multiplatform development, there is a ton of options of IDEs and building pipelines to choose from. The experience gained previously from only working with Visual Studio for C++ can seem approachable in a cross-platform point of view, as there are a lot of base projects and extensions available for targetting popular platforms such as Android and Linux. The main problem in going back into Visual Studio is not branching into other editors and build pipelines.
 
-Visual Studio supports CMake based projects, but for the sake of progressing as well learning new tools for the trade, starting first from CMake and then using Visual Studio on Windows seems the best fit. Further explanation on the usage of CMake is provided in the following chapter.
+Visual Studio supports CMake based projects, but for the sake of progressing as well learning new tools for the trade, starting first from CMake and then using Visual Studio for specifically Windows development seems the best fit. Further explanation on the usage of CMake is provided in the following chapter.
 
 <span class="pagebreak"></span>
 
 ## SDL, RayLib and Rawdraw
 
-Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries. Both offer a ton of content, documentation, examples and tutorials for most imaginable platforms. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support specially RayLib by getting constant updates and support for more platforms and programming language bindings. 
+Both SDL<sub>[#W19]</sub> and RayLib<sub>[#W20]</sub> are the contemporary standards for easier C and C++ open-source game development libraries, in many people's point of view including mine. Both offer a ton of content, documentation, examples and tutorials for close to every platform possible. The approach of this thesis is directly inspired by these libraries but giving an insight to what is required to accomplish their purpose. When developing specifically for portability and facilitating iteration times, both libraries are the most versatiles out there, both with great community support specially RayLib by getting constant updates and support for more platforms and programming language bindings. 
 
 Besides eliminating the practical approach to developing a cross-platform library when using any of those as a base, the way things are handled when building for Android seem a bit outdated as of the latest releases available for both, where more straightforward approaches would help in the development for that platform.
 
@@ -702,9 +702,9 @@ OpenGL<sub>[#W16]</sub> is a cross-language API for rendering both 2D and 3D ras
 
 While taking part in the Degree in Design and Development of Videogame, OpenGL has been the staple graphics API used for most projects alongside WebGL and SDL wrappers. Given that experience it was a quick decision to use such a library that is cross-platform capable for the targeted platforms.
 
-OpenGLES<sub>[#W17]</sub> is a cut down version for Embedded Devices such as mobile phones, having almost the same syntax for most operations besides what is or not available and minimal changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
+OpenGLES<sub>[#W17]</sub> is a cut down version for embedded devices such as mobile phones, having almost the same syntax for most operations besides what is or not available and minimal changes in shader language syntax, making it a faster inclusion than targeting other graphics API for Android.
 
-The latest available version of OpenGLES, 3.2, is the one that mirrors core OpenGL syntax the most, allowing for further simplicity in writing a portable OpenGL backend. A counterargument to deciding on said version of OpenGLES would be that it does not cover enough devices, which as of checking would be at around 68%<sub>[#W34]</sub> which I personally think is plenty and will only be increasing with time. Having said that, my focus is not on targeting content consumers but developers that after being introduced could very well adapt a different rendering pipeline with earlier versions of OpenGLES.
+The latest available official release of OpenGLES, version 3.2, is the one that mirrors core OpenGL syntax the most, allowing for further simplicity in writing a portable OpenGL backend. A counterargument to deciding on said version of OpenGLES would be that it does not cover enough devices, which as of checking would be at around 68%<sub>[#W34]</sub> which I personally think is plenty and will only be increasing with time. Having said that, my focus is not on targeting content consumers but developers that after being introduced could very well adapt a different rendering pipeline with earlier versions of OpenGLES.
 
 As it is a cut down version, as well as an older one, there are still some compatibility issues with newer core versions. For that reason, core version 3.3 will be used because the GLSL syntax is the most similar as well as being the step closest to contemporary core OpenGL which I am more familiar with.
 
@@ -746,7 +746,7 @@ The information on the unused libraries are simple reasons on why they were not 
 | Magnum Engine | Unfamiliarity and few entry level documentation |
 | Vulkan | Unfamiliarity and oriented to much lower level programming |
 | Ogre | Unfamiliarity and provides much more features for animation, scene, effects,etc, which are not required, bloating the project initially with higher entry cost |
-| Direct3D/DirectX | Support limited to Windows / UWP |
+| Direct3D/DirectX | Support limited to Windows / Universal Windows Platform |
 
 | Context Management | Reason |
 |---|---|
@@ -767,7 +767,7 @@ The information on the unused libraries are simple reasons on why they were not 
 
 Being set up with the initial research on the project statement and values, the first step is to be able to get code working on all target platforms, as well as generating a comfortable framework from to which develop the subsequent projects.
 
-It is very evident that having multiple code bases per platform and having to use wildly different environments for getting code to run on the target platforms is a big issue to tackle. The most sensible approach would be to have a way to just execute what is needed on a bunch of source files and get the resulting application ready to run, the less it is required to change to get it working the better.
+It is very evident that having multiple code bases per platform and having to use wildly different environments for getting code to run on the target platforms is a big issue to tackle. The most sensible approach would be to have a way to just execute what is needed on a bunch of source files and get the resulting application ready to run, the less input from the user to get it working the better.
 
 <span class="pagebreak"></span>
 
@@ -775,9 +775,9 @@ It is very evident that having multiple code bases per platform and having to us
 
 CMake is a generator of build files, when you build a project with CMake you are first creating the files that the target building environment will use to create the final application. In that way you can create a environment agnostic step that will then be converted to the one needed for each platform you target.
 
-![Figure [figures]: CMake Simple Flowchart, from [How to Build a CMake based Project](https://preshing.com/20170511/how-to-build-a-cmake-based-project/) by Jeff Preshing.](images/cmake-simple-flowchart.png width="50%") Following **Figure 12**, CMake is invoked in a directory where a CMakeLists.txt script is, which will prepare a configuration for the desired outputs which will be cached for later runs.
+![Figure [figures]: CMake Simple Flowchart, from [How to Build a CMake based Project](https://preshing.com/20170511/how-to-build-a-cmake-based-project/) by Jeff Preshing.](images/cmake-simple-flowchart.png width="50%") Following **Figure 12**, CMake is invoked in a directory where a CMakeLists.txt script is, which will prepare a configuration for the desired outputs. Said configuration will be cached for later runs.
 
-In each CMakeLists.txt there are a series of outputs defined, which are called targets, that hold the specific information required to be built into their executable form. Such information might be source files, instructions, compiler/linker, etc.
+In each CMakeLists.txt there are a series of outputs defined, called targets, that hold the specific information required to be built into their executable form. Such information might be source files, instructions, compiler/linker, etc.
 
 The configuration step ends up with the build files required by the specific build system used (XCode, GCC, MSVS,...), who will actually build the executables. 
 
@@ -809,7 +809,12 @@ int main(char** argv, int argc)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Following the main source code, the simplest way to build with CMake is specifying a version, setting up a project, defining a target, declaring where the header files are, and then which source files to add.
+Following the main source code, the simplest way to build with CMake is:
+ 1. Specifying a version
+ 2. Setting up a project
+ 3. Defining a target
+ 4. Declaring where the header files are
+ 5. Explicitly tell what source files to add.
 
 **_CMakeLists.txt_**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
@@ -832,7 +837,7 @@ _Hello World!_
 ### Cleaning Up Simplest Example
 
 ![Figure [figures]: Source folder after building the project](images/cmake_folder_bad.png width="30%") In **Figure 14**, we can see that the folder structure after building a CMake Project becomes a mess, it will create the necessary build files for the target generator, in this case MSVS. 
-The build as well will be created the CMakeLists.txt defines to. After understanding how to clean that, the simplest way would be creating a directory from where CMake executes and generates files inside the source folder and setup the target to build in a specific directory.
+The build will be created where the CMakeLists.txt defines. After understanding how to clean that, the simplest way would be creating a directory from where CMake executes and generates files inside the source folder and setup the target to build in a specific directory.
 
 **_CMakeLists.txt_** - Change where the build files go to
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
@@ -846,7 +851,7 @@ set_target_properties(CMakeExample
 
 <span class="pagebreak"></span>
 
-Then on Command Line, we create a folder to execute from and call cmake to build the parent directory:
+Then on Command Line we create a folder to execute from, then call cmake to build the parent directory:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
 mkdir -p ./CMakeFiles # Create a directory for cmake
@@ -863,7 +868,7 @@ Finally on **Figure 15** we can see that now the source folder becomes visibly c
 
 ## C++ on Android
 
-The previous part introduced to CMake in a way that work very easily with a console based application and nothing more to execute. On such desktop platforms, usually you don't have to worry too much about how you package your data, assets or libraries as long as are reachable from working directory or provided by the vendor. There is not actually a required way to package or build your application besides making sure it works.
+The previous part introduced CMake in a way that works very easily with a console based application and nothing more to execute. On such desktop platforms, usually you don't have to worry too much about how you package your data, assets or libraries as long as are reachable from working directory or provided by the vendor. There is not actually a required way to package or build your application besides making sure it works.
 
 In order to build Android application, the usual way would be to build them using the designed tool for the task and native programming language. In that case we would be writing a Java/Kotlin application from Android Studio, but my requirement was to just code in C++ as to minimize the entry requirements for someone with a similar background to me, while giving an approach that opens up new development paths.
 
@@ -871,9 +876,9 @@ Parallel to the main tool, Google provides the Android SDK which has a suite of 
 
 <span class="pagebreak"></span>
 
-A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of using the tools I am used to or found in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics rendering and building framework for developing extremely portable applications written in C, the video<sub>[#W30]</sub> showing the portability to Android mentioned the unique requirement of writing C and modifying the build file.
+A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of using the tools I am used to or found in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics rendering and building framework for developing extremely portable applications written in C. 
 
-Given those premises and the fact the Android SDK comes with a C/C++ library to interface with the Android OS called the Android NDK, it became the starting point for development.
+The presentation video<sub>[#W30]</sub> showing the portability to Android mentioned the unique requirement of writing C and modifying the build file. Given those premises and the fact the Android SDK comes with a C++ interface together with the C interface, the Android NDK, it became the starting point for development.
 
 On the following steps, it will be explained the adaptations from Rawdraw Make build system to CMake, as well as making the minimal example run on Android OS.
 
@@ -908,13 +913,13 @@ The following steps will provide insight on the modules in which the steps are d
 
 #### _SqueLib_Android.toolchain_
 
-The first step to getting a build working specifically for android is setting the environment variables properly. CMake makes uses of toolchain files in order to setup such variables that are invariably linke with every project set previously.
+The first step to getting a build working specifically for Android is setting the environment variables properly. CMake makes uses of toolchain files in order to setup variables that are invariably linked to every target built, such as the compiler.
 
-When making a call to CMake from command line, said file must be passed to the `CMAKE_TOOLCHAIN_FILE` variable. As the Android NDK provides a modified script depending on the targeted Android version<sub>[#52]</sub> 
+When making a call to CMake from command line, said file must be passed to the `CMAKE_TOOLCHAIN_FILE` variable. As the Android NDK provides a modified script depending on the targeted Android version<sub>[#52]</sub>, the variable `ANDROID_VERSION` is added as a requirement for Android building on SqueLib.
 
-Because on Windows and Linux it is intended by the library for CMake to find the default compiler options given the generator options, the toolchain will be limited to Android. In any case, a toochain could be written and passed instead with user specific options as well as changing compile and linker flags on each target.
+Because on Windows and Linux it is intended by the library for CMake to find the default compiler options given the generator options, the toolchain will be limited to Android. In any case, a toolchain could be written and passed instead with user specific options as well as changing compiler and linker flags on each target.
 
-As the toolchain is comprised of a single file, it will be explain in the following parts: Helpers, Environment Variables and Setting up Compiler.
+As the toolchain is made of a single file, it will be explain in the following parts: Helpers, Environment Variables and Setting up Compiler.
 
 ##### Helpers
 
@@ -982,7 +987,7 @@ Then it is required to find the directory in which the SDK, NDK and Build Tools 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 if(NOT ANDROIDSDK)
-    set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK)
+    set(SDK_DIRS $ENV{SDK_LOCATIONS} $ENV{ANDROID_HOME} $ENV{ANDROID_SDK_ROOT} ~/Android/Sdk $ENV{HOME}/Android/Sdk c:/dev/AndroidSDK c:/src/AndroidSDK c:/AndroidSDK)
     first_exists(ANDROIDSDK "${SDK_DIRS}")
 endif()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1021,11 +1026,11 @@ endif()
 if(NOT AAPT)
     set(AAPT ${BUILD_TOOLS}/aapt)
 endif()
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A specific case in the build tools is ADB, because when working through the WSL you can invoke the windows version of ADB to get access to the host Windows machine USB ports to interface with your physical device but not from the Linux ADB inside the WSL distro.
+A specific case in the build tools is ADB, because when working through the WSL you can invoke the Windows version of ADB to get access to the host Windows machine USB ports to interface with your physical device but not from the Linux ADB inside the WSL distro.
 
-As the previous tools, should it be defined then it will not search else it will be set to the default installation paths.
+As the previous tools, should it be not defined then it will setup the default installation paths.
 
 ~~~~~~~~~~~~~~~~~~~~~~~bash
 if(NOT ADB)
@@ -1066,7 +1071,7 @@ When working with any compiler, there are a couple options that might be ideal t
 
 In the Android NDK, there are already commands provided for calling the compiler properly depending on the minimum target version of Android but not really about the compiler and linker options.
 
-There are various ways to setup global linker and compiler options, and they depend mostly on what one think is correct or not, but specifically for Android there are a couple that are needed as well as recommended. These will be listed down here with a short explanation, as well as teh variables needed to set:
+There are various ways to setup global linker and compiler options, and they depend mostly on what one thinks is correct or not, but specifically for Android there are a couple that are needed as well as recommended. These will be listed down here with a short explanation:
 
 ***Compiler Flags [#W37]: CMAKE_C_FLAGS / CMAKE_CXX_FLAGS***
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
@@ -1090,7 +1095,7 @@ NEEDED
 
 RECOMMENDED
  * -Wl: Activates linker warnings
- * -dead_strip / --gc-sections: Enables garbage collection for unused functions/data which may reduce binary size significantly. --gc-sections is older and not supported everywhere, -dead_strip is but I could not find 1 to 1 documentation for clang
+ * -dead_strip / --gc-sections: Enables garbage collection for unused functions/data which may reduce binary size significantly. --gc-sections is specific to GCC, -dead_strip is for clang but also -fdce and I can but I could not find 1 to 1 documentation for clang
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Finally one has to set the target compiler for the languages. In CMake these variables have the form of `CMAKE_LANG_COMPILER` and they refer to the path towards the script to initiate the build process. That can be directly the executable or a script that gathers the data passed by CMake and performs the steps to properly call the compiler. In this case, we call the script provided by the Android NDK:
@@ -1106,9 +1111,7 @@ endif()
 
 #### _SetupAndroidEnv.cmake_
 
-For building an Android application with an external tooclhain, the NDK provides calls to the compiler used by Android Studio depending on the version and OS using. Besides which compiler/linker pair to use, there are some specific compile options that are either required or recommended. Finally, for ease of use with the library later on, there are some utilities for linking with the default libraries.
-
-Such steps are separated into different macros to understand more clearly which part of the build process does what, instead of having it mangled up in a full macro in such a complicated step:
+In order to get access to the Android NDK, one has to link and include the Android libraries as well as the provided ones such as OpenGLES, Vulkan, OpenSL, etc. Finally, a couple variable names are set for the packaging step.
 
 ##### set_app_properties(appName orgName androidVer)
 
@@ -1128,7 +1131,7 @@ set(ANDROIDTARGET ${androidVer})
 
 ##### link_android_libc(target)
 
-Android does not provide a native C++ standard library for C++11 up, but the NDK does so with LLVM's LibC, which can target up to a subset of C++17.
+Android does not provide a native C++ standard library for C++11 up, but the NDK does so with LLVM's LibC++, which can target up to a subset of C++17.
 
 For that, this step has to copy into the library folder where the other shared libraries will be built into, then link it to the user application.
 
@@ -1158,9 +1161,11 @@ target_link_libraries(${target} PUBLIC
 )
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Linking directly to a specific library can be done using a similar function adapted to the libraries need, for SqueLib, linking to said items was the minimum necessary.
+
 ##### include_android(target NDK_PATH OS_USED)
 
-Given a target to build, include the directories where the android library include files are as well as the native app library.
+Given a target to build, include the directories where the Android library include files are as well as the native app library.
 
 <span class="pagebreak"></span>
 
@@ -1176,7 +1181,7 @@ target_include_directories(${target} PUBLIC
 
 #### _AndroidInstallTargets.cmake_
 
-Finally, in order to get the application packaged and installed into a physical Android device is divided in different steps that should not be invoked from the CMake generation step. Instead, it is after the build step is performed that the user should call them after the intended application target.
+Finally, packaging and installing an applicaiton into a physical Android device is divided in different steps that should not be invoked from the CMake generation step. Instead, it is after the build step is performed that the user should call them after the intended application target is built.
 
 This can be done by specifying the intended target to build first and then the required steps, or call make after calling a default build from cmake which will target directly the last target defined.
 
@@ -1274,9 +1279,9 @@ Packs<sub>[#W42], [#W44]</sub> and signs<sub>[#W43], [#W45]</sub> the applicatio
 
 <span class="pagebreak"></span>
 
-One specific thing that is note done in this step but part of the CMake build is packaging the resources. Because in desktop platofrms, usually the relative path sits directly on the working directory but in Android there is a specific folder structure, a separate function that the user is set so that the assets used are copied onto the final build directory.
+One specific thing that is not done in this step but part of the CMake build is packaging the resources. Because in desktop platforms, usually the relative path sits directly on the working directory but in Android there is a specific folder structure for the package, assets, resources and metadad.
 
-On Android, such directiories are _/assets_ and _/res_ (resources). Resources are required by the package whereas Assets are custom data used by the application, which can be loaded but not modified on written to.
+On Android, such directiories are _/assets_ and _/res_ (resources). Resources are data required by the package whereas Assets are custom data used by the application, which can be loaded but not modified or written to.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 DEPENDENCIES
@@ -1370,13 +1375,13 @@ At the end, we make the necessary calls to finish the application from the Nativ
 
 ## Debugging
 
-Although I am a pretty heavy  on log based debugging, I believe it's not the best solution but only the simplest available. After all, cryptic crash messages as well as fishing for errors with carefully places logs, become a mess and almost close to divination when debugging unknown elements. For that reason a fast entry to available debugging capabilities is needed.
+Although I am a pretty heavy  on log based debugging, I believe it's not the best solution but only the simplest available. After all, cryptic crash messages as well as fishing for errors with carefully placed logs, become a mess and almost close to divination when debugging unknown elements. For that reason a fast entry to available debugging capabilities is needed.
 
 On Windows the decision was obvious as CMake can directly generate the required project files for a Visual Studio solution, then it is just needed to keep developing as usual. The issue is with the newly adopted platforms: Linux and Android.
 
 ### Linux: GDB and KDevelop
 
-The first mention of debuggers in Linux found ended to be GDB, a command line yet visual debugger utility. With the only requirements being a debug compiled C/C++ application, not printing to console every from code (avoid anything that goes into a _printf_) and getting used to a couple commands, seemed a good fit for getting started fast with a new platform. 
+The first search for debuggers in Linux brought me to GDB, a command line yet visual debugger utility. With the only requirements being a debug compiled C/C++ application, not printing to console ever from code (avoid anything that prints to executing console, like _printf_) and getting used to a couple commands, seemed a good fit for getting started fast with a new platform. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 gdb "path/to/executable"
@@ -1403,11 +1408,11 @@ The process of importing and debugging a CMake based project just requires the u
 
 ### Android: APK Profiler
 
-The simples way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which is pretty handy in the way that you do not require a fully fledged Android Studio project to debug it. Android Studio has a built in profiler/debugger for APKs that have been built with the debug symbols, only requiring access to the original debugging files which are either inside the apk itself and can be extracted from or are already available on the system after building the project through external means.
+The simplest way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which is pretty handy in the way that you do not require a fully fledged Android Studio project to debug it. Android Studio has a built in profiler/debugger for APKs that have been built with the debug symbols, only requiring access to the original debugging files which are either inside the apk itself and can be extracted from, or are already available on the system after building the project through external means.
 
 <span class="pagebreak"></span>
 
-Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer as the last developed x86 based android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, on of the reasons why the final build process will only target 64bit ARM systems (less built time and less worries).
+Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer as the last developed x86 based Android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, on of the reasons why the final build process will only target 64bit ARM systems (less build time and less worries).
 
 The solution is passthrough debugging. As long as you have a physical device in which you can install your built application and a USB cable (or WIFI on Android 11 or higher), it is possible to link the process execution from the device to Android Studio and debug in realtime.
 
@@ -1417,7 +1422,7 @@ The solution is passthrough debugging. As long as you have a physical device in 
 
 <!-- Explanation of waht should the core workflow should be and what are the expected capailities -->
 
-When working with SqueLib, it is intended for the library to take control of the initialization process of the application, meaning the main window, render and input. At the same time facilities for interfacing with said module are to be provided in a simple and easy to implement manner. Under **Figure 18** the expected architecture of the library is shown:
+When working with SqueLib, it is intended for the library to take control of the initialization process of the application, referring to the main window, render and input. At the same time facilities for interfacing with said module are to be provided in a simple and easy to implement manner. Under **Figure 18** the expected architecture of the library is shown:
 
 ***************************************************************************
 * .----------------------------------------------------------------------.*
@@ -1548,7 +1553,7 @@ In all cases, there are some requirements on how to export the symbols<sub>[#W55
 
 #### Android Initialization
 
-As seen previously with the **Android Minimal Example**, there needs a rerouting to enter user main. In order to take care of Android Initialization, the library provides already the `android_main` in which a standard user provided `main(int argc, char** argv)` will be called in order to start execution of user code.
+As seen previously with the **Android Minimal Example**, there needs to be a rerouting to enter user main. In order to take care of Android Initialization, the library provides already the `android_main` in which a standard user provided `main(int argc, char** argv)` will be called in order to start execution of user code.
 
 In this same `android_main` the basic steps for initializing other subsystems for Android should be taken care of. A specific case is the `HandleAndroidInput` which will be defined under the Input source file, we set it up as an extern to setup the callback:
 
@@ -1565,6 +1570,8 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         // Take care of Android Commands
     }
 }
+
+// Used in the Input Module
 extern int HandleAndroidInput(struct android_app* app, AInpuitEvent* ev);
 
 extern int main(int argc, char** argv);
@@ -1590,11 +1597,11 @@ void android_main(struct android_app* app)
 
 #### Printing to Console
 
-An abstraction that will allow the users to print to console regardless of the environment they are at, using a simple approach ith a variadic list and a macro.
+An abstraction that will allow the users to print to console regardless of the environment they are at, using a simple approach with a variadic list and a macro.
 
 The macro uses the `__FILE__` and `__LINE__` macros to pass to `SQUE_PrintVargs` where the call originates and accepts a string for formating as well as the variadic list of values. Said function will extract the filename, add the string with the specified format and then print it to console using the abstraction.
 
-For using warning levels, a simple logtype enum that matches Android's log values<sub>[#54]</sub> is setup.
+For using priority levels, a simple logtype enum that matches Android's log values<sub>[#54]</sub> is setup.
 
 ~~~~~~~~~~~~~~~~~c++
 enum SQUE_LogType
@@ -1604,6 +1611,33 @@ enum SQUE_LogType
 	LT_ERROR,
 	LT_CRITICAL
 };
+
+void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...)
+{
+    const char* sttr = strrchr(file, FOLDER_ENDING);
+    uint32_t sttr_len = strlen(sttr);
+
+    static va_list ap;
+    char* tmp = new char[1];
+    va_start(ap, format);
+    int len = vsnprintf(tmp, 1, format, ap) + 1;
+    va_end(ap);
+    delete[] tmp;
+
+    tmp = new char[len];
+    va_start(ap, format);
+    vsnprintf(tmp, len, format, ap);
+    va_end(ap);
+
+    int print_len = len + (sttr_len + 4 + 4);
+    char* print = new char[print_len];
+    sprintf(print, "%s(%d): %s", sttr, line, tmp);
+
+    SQUE_ConsolePrint((int)lt, print);
+
+    delete[] tmp;
+    delete[] print;
+}
 
 void SQUE_ConsolePrint(int lt, const char* log)
 {
@@ -1623,9 +1657,9 @@ void SQUE_ConsolePrint(int lt, const char* log)
 
 #### Macro Remapping
 
-Given that the library will work over multiple libraries, as well as have its own types, macros and functions, it is important to define a way to circumvent the usage of library specific things without alienating it too much so that it becomes not recognizable.
+Given that the library will work over multiple other libraries, as well as have its own types, macros and functions, it is important to define a way to circumvent the usage of library specific things without alienating it too much so that it becomes not recognizable.
 
-GLFW, OpenGL and EGL are heavy users of enum and macros for configuration and runtime things and the user should not have to know which one to specifically use as depending on the environment they might have to use from a library or another.
+GLFW, OpenGL and EGL are heavy users of enum and macros for configuration and runtime things and the user should not have to know which one to specifically use on a per backend basis.
 
 Althought the solution is not pretty for the one that has to deal with the implementation, it translates into a seamless experience for the user when using the required types.
 
@@ -1677,7 +1711,7 @@ SQUE_LIB_Close()
 
 ### Window Control
 
-The management of a window is basically the same as an application loop, given a configuration a type of window will be initialized in which you will update what is displayed on until it is time to close the whole application, shown in **Figure 19**. What differs from a simple desktop application is that this process has to be adapted and limited to work seamlessly with a base Android device as well as the chosen libraries.
+The management of a window is basically the same as an application loop, given a configuration a window will be initialized in which you will update what is displayed until it is time to close the whole application, shown in **Figure 19**. What differs from a simple desktop application is that this process has to be adapted and limited to work seamlessly with a base Android device as well as the chosen libraries.
 
 ************************************************************************************************
 *.------------.   .------------.   .----------------.     CloseApp  .---------------.
@@ -1779,7 +1813,7 @@ void SQUE_DISPLAY_Init()
 
 #### Updating Display
 
-The main functions to take care of the main display are really swapping back with frontbuffer to show the next drawn frame and making such buffer the one to write to. When interfacing with OpenGL, the user might be writting to different buffers which they will bind and unbind as they seem fit. 
+The main functions to take care of the main display are really swapping back with front buffer to show the next drawn frame and making such buffer the one to write to. When interfacing with OpenGL, the user might be writting to different buffers which they will bind and unbind as they seem fit. 
 
 In case that the user does not want to worry about handling the buffer swap state, this pair of functions can be called successively to perform that buffer swap properly:
 
@@ -1809,9 +1843,9 @@ void SQUE_DISPLAY_SwapBuffer(uint16_t window)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As seen above, the functions receive a handle to the window, rather than the window itself. SqueLib will take care of such states and memory allocations unless specified. Also during the process of developing the library, the plan was to support multiple windows but the complexity of managing them was too much. Still a variable to pass which window to interact on is passed which makes sense in the long-run.
+As seen above, the functions receive a handle to the window, rather than the window itself. During the process of developing the library, the plan was to support multiple windows but the complexity of managing them was too much. Still a variable to pass which window to interact on is passed which makes sense in the long-run.
 
-Other functions that take care of managing the state of a window as well as callbacks are provided to get teh user to manage it their own way, although the library will have a default functions set.
+Other functions that take care of managing the state of a window as well as callbacks are provided to get the user to manage it their own way, although the library will have a default functions set.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~c++
 // Setters
@@ -1876,6 +1910,7 @@ The process of taking care of inputs strays a bit from the latter module. In **F
 *                            |   the receivers  |-----------------'
 *                            '------------------'
 ***********************************************************************************************************
+[Figure [diagram]: Input Module Loop]
 
 Usually the user will register some receivers, which will as appropiately named receive the inputs that are polled by the input system. Another step is that the user might want to specifically poll for an input state to which it has not designated a receiver, setting up a second polling operation or a spontaneus check.
 
@@ -1911,7 +1946,7 @@ void SQUE_INPUT_InitForWindow(uint16_t window)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-SqueLib provides the base GLFW callbacks that update the key_state internally and then call the setup callback by the user on each key options.
+SqueLib provides the base GLFW callbacks that update the key state internally and then call the setup callback by the user on each key options.
 
 #### Callback System
 
@@ -1952,7 +1987,7 @@ After the states, a couple default touch actions are set in the same enum to tak
 
 ##### Registering Receivers
 
-The process is pretty straightforwards, call the required functions and such action will be setup to the passed function. A specific takeaway, also present and mention in the **Display** chapter, these function return the previously setup character making it possible to chain these callbacks and not break previous implementations if the user is unsure.
+The process is pretty straightforwards, call the required functions and such action will be setup to the passed function. A specific takeaway, also present and mentioned in the **Display** chapter, these function return the previously setup character making it possible to chain these callbacks and not break previous implementations if the user is unsure.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~c++
 typedef void(MouseFloatCallback)(float x, float y);
@@ -1965,7 +2000,7 @@ KeyCallback* SQUE_INPUT_SetMouseButtonCallback(const int button, KeyCallback* ke
 
 #### Polling Inputs
 
-During the GLFW initialization we did already setup how our library will provide the inputs, what is left for GLFW is to call `glfwPollEvents()` somewhere and all inputs generated since the last poll will be setup. On the Android NDK there are a couple more steps.
+During the GLFW initialization we did already setup how our library will provide the inputs, what is left for GLFW is to call `glfwPollEvents()` somewhere and all inputs generated since the last poll will be setup. On the Android NDK we process all events in the app event queue, which will call the previously setup `HandleAndroidInput` callback on each found event.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 void SQUE_INPUT_Process(uint16_t window)
@@ -1986,16 +2021,7 @@ void SQUE_INPUT_Process(uint16_t window)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This loop will perform the polling of all inputs available as long as there are any and call the set callback previously during initialization:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~c++
-// During initialization
-extern int HandleAndroidInput(struct android_app* app, AInputEvent* ev);
-
-app->onInputEvent = HandleAndroidInput;
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-And the definition of what it does:
+And the definition of what `HandleAndroidInput` does:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
@@ -2015,7 +2041,7 @@ int32_t HandleAndroidInput(struct android_app* app, AInputEvent* ev)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-But this function redirects to different types of events. In short, `AINPUT_EVENT_TYPE_KEYS` are the software keyboard keys and will update the same as what GLFW would update althought the keys will not match one to one, but serve for an external keyboard to be used as input in an Android game.
+This function redirects to different types of events. In short, `AINPUT_EVENT_TYPE_KEYS` are the software keyboard keys and will update the same as what GLFW would update althought the keys will not match one to one, but function just well for an external keyboard to be used as input in an Android application.
 
 The point of interest is in `HandleAndroidMotion` which will be explained later on. For now, the polling loop is already setup and working as close as possible to GLFW.
 
@@ -2156,7 +2182,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
 
 In the function there are some referencies to check if a motion has ended. A motion is active depending on the sum of activities of the pointers. If non are active, motion will be inactive and a gesture will be evaluated on a per pointer basis.
 
-Each gestures is simply the tracking ofa  port from start position to end position, given a time frame. The current implementation only detects a `TAP` and a `SWIPE`:
+Each gestures is simply the tracking of a pointer from start position to end position, given a time frame. The current implementation only detects a `TAP` and a `SWIPE` motion:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 
@@ -2205,9 +2231,9 @@ SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
 
 ### Render Pipeline
 
-The approach for graphics for both OpenGL 3.3 and OpenGLES 3.2 are parctically the same, even the glsl supported version mirror almost one to one. The implementation towards the user becomes very easy, propose passthrough functions on the parts that are being supported.
+The approach for rendering graphics in both OpenGL 3.3 and OpenGLES 3.2 are parctically the same, even the GLSL supported version mirror almost one to one. The implementation towards the user becomes very easy, just write passthrough functions on the parts that are being supported.
 
-In order to get a base case for workign with a basic render pipeline, I decided to go through **LearnOpenGL[#W56]** and have the library perform effortlessly such part. The intent of the library is to ease the user into declaring and knowing the data they are working with first and then during realtime operations just have to worry about know which handles to use, seen below in **Figure 20**.
+In order to get a base case for working with a basic render pipeline, I decided to go through **LearnOpenGL[#W56]** and have the library perform effortlessly such part. The intent of the library is to ease the user into declaring and knowing the data they are working with first and then during realtime operations just have to worry about know which handles to use, seen below in **Figure 20**.
 
 *************************************************************
 * .-------------.    .----------------.    Close .--------.
@@ -2215,14 +2241,14 @@ In order to get a base case for workign with a basic render pipeline, I decided 
 * '-+-----------'    '----------------'  |       '--------'
 *   +-Describe               ^           |
 *   +-Allocate               |  Static   |
-*   +-Cache IDs              +-----------*
-*   +-....                   ^           |
+*   +-Cache IDs              ^<----------*
+*   +-....                   |           |
 *                            |  Dynamic  |
 *                    .------+--------.   |
 *                    | Update Handle |<--'
 *                    '---------------'
 *************************************************************
-[Figure [diagram]: Intended Approach for SqueLib users.]
+[Figure [diagram]: Intended Render loop approach for SqueLib users.]
 
 This mention of approach on the pipeline is followed in the next example:
 
@@ -2279,19 +2305,19 @@ SqueLib should provide helper items around a traditional OpenGL 3.3 approach to 
 
 As mentioned in the example, the syntax early on focuses on declaring how the different objects will be treated. The user should always know how the used objects should align and be configured, in case of dynamic objects that can also be configured during the `RenderLoop` as well.
 
-Finally, all the classes provided have their members public for anyone to initialize directly in their own way shoudl any function would be too simple to be worth calling. The objective of setting up everything in functions is to make any reader instantly understand what each line is doing.
+Finally, all the classes provided have their members public for anyone to initialize directly in their own way, should any function be too simple to be worth calling. The objective of setting up everything in functions is to make any reader instantly understand what each line is doing.
 
 On the following sections, each helper item provided for SqueLib and finally a list of passthrough functions supported.
 
 #### Value Types
 
-OpenGL uses their own enum values for defining mostly anything, and as a system for remapping macros was already setup for GLFW and EGL it has been used for the enum values that SqueLib would passthrough to the user.
+OpenGL uses their own enum values for defining mostly anything, and as a system for remapping macros was already setup for GLFW and EGL, it has been used for the enum values that SqueLib would passthrough to the user.
 
 Such values can be found under `RENDER MACROS` sections in the *`sque_remap_macros.h`* file.
 
 #### Initialization
 
-Thanks to **GLAD [#W57]** and the fact that both GLFW and EGL provide the base context for OpenGL, the process of initializign OpenGL requires a single call by the library, as ther won't be explicit use of extensions and keeping it as vanilla as possible makes it more approachable:
+Thanks to **GLAD [#W57]** and the fact that both GLFW and EGL provide the base context for OpenGL, the process of initializing OpenGL requires a single call by the library, as there won't be explicit use of extensions and keeping it as vanilla as possible makes it more approachable:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 #if defined OpenGL
@@ -2392,7 +2418,7 @@ SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, v
 
 Textures accomplish the same objective as the Mesh class, hold the basic information regarding a texture buffer without taking control of the memory.
 
-The attributes behave are a bit different. Texture parameters are descriptors on how to take care of different operations, as such some of these operations require multiple values of either integer or float values.
+The attributes behave a bit different. Texture parameters are descriptors on how to take care of different operations, as such some of these operations require multiple values of either integer or float values.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class SQUE_TexAttrib
@@ -2437,8 +2463,8 @@ SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, in
 
 #### Shaders and Programs
 
-Shaders differ a but form the other types, they only have to hold what type they are and the identifier. The actual file or code passed to compile is user dependant and as such they should take care of it.
-It is the Program that actually holds the information for execution, and as such it has a container for the shader information is linked to as well as the uniforms.
+Shaders differ a bit form the other types, they only have to hold what type they are and the identifier. The actual file or code passed to compile is user dependant and as such they should take care of it.
+It is the Program that actually holds the information for execution, and as such it has a container for the shader is linked to as well as the uniforms.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Uniform
@@ -2526,7 +2552,7 @@ void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t attachments[], const uint32_
 void SQUE_FRAMEBUFFER_CheckStatus();
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By how OpenGL sets it up, a `Framebuffer` holds what draw data will be written to and used during the next render operation. A specific is that each type of render buffer has to be set up separately in a traditional way. For that, generic `Renderbuffer` functions are setup although there are only provided a `depth_buffer` and a `stencil_buffer` in the struct.
+By how OpenGL sets it up, a `Framebuffer` holds what draw data will be written to, and then used during the next render operation. A specific is that each type of draw buffer has to be set up separately in a traditional way. For that, generic `Renderbuffer` functions are setup although there are only provided a `depth_buffer` and a `stencil_buffer` in the struct.
 
 Additionally, a `SQUE_Framebuffer` holds the texture data for the textures it reads and writes to. That is by the rationale that is if you are using a framebuffer to write and read to multiple textures the user should always have access to it when binding such textures to in or out values for the render operations.
 
@@ -2591,7 +2617,7 @@ Specifically `SQUE_RENDER_DrawIndices` and `SQUE_RENDER_DrawVertices` use the `S
 
 ### File Management
 
-As stated previously, the objective of the file management part of the library is to help the user read and write files to disk seamlessly thoughout the supported platforms. By no means should the library ever take care of the memory that user allocates, provide utility for the basic use cases.
+As stated previously, the objective of the file management part of the library is to help the user read and write files to disk seamlessly throughout the supported platforms. By no means should the library ever take care of the memory that user allocates, provide utility for the basic use cases.
 
 Such cases would be: read files, write files, create directories and manage the state of a file in disk (aka file-watching).
 
@@ -2630,7 +2656,7 @@ SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id = -1)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A directory is setup to allow building directory trees easily, with a `uint32_t` handle por a parten and children and an own id for ease of traversal and discourage holding direct pointers to data.
+A directory is setup to allow building directory trees easily, with a `uint32_t` handle for a parent and children and an own id for ease of traversal and discourage holding direct pointers to data.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Asset
@@ -2650,7 +2676,7 @@ Just because such a type is very popular for use, a `SQUE_DataPack` englobes two
 
 #### Initialization
 
-An easy to miss step to taking care of where to read and write files from si to setup a base directory from which to pivot. SqueLib will take the easiest available directory for reading and writing files from, which on desktop will be the working directory and on Android an external storage directory provided by the Android NDK:
+An easy to miss step to taking care of where to read and write files from is to setup a base directory from which to pivot. SqueLib will take the easiest available directory for reading and writing files from, which on desktop will be the working directory and on Android an external storage directory provided by the Android NDK:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 extern struct android_app* my_app;
@@ -2664,7 +2690,7 @@ void SQUE_FS_Init()
 	char* exe = strrchr(exec_path, FE);
 	exec_path[len-strlen(exe)] = '\0';
 #elif defined(ANDROID)
-	sprintf(exec_path, "%s",my_app->activity->externalDataPath);
+	sprintf(exec_path, "%s", my_app->activity->externalDataPath);
 #elif defined(__linux__)
 	char link_temp[512] = "\0";
 	len = readlink("/proc/self/exe", link_temp, 512);
@@ -2687,7 +2713,7 @@ Once that is set, Android behaves almost exactly as a Linux systems for the basi
 
 When building an Android based application, the source code, manifest files, resources and `assets` are packed and then installed in a protected directory. In said directory one can't write but only read through the Android NDK.
 
-In order to not have an issue when reading and writting files a whole SqueLib is packed with the expected *Asset* folder in the working directory with the structure set inside by the user. For that a generic read function and an *Asset* specialized functions are provided.
+In order to not have an issue when reading and writting files a whole SqueLib application package is built with the expected *Asset* folder in the working directory with the structure set inside by the user. For that a generic read function and an *Asset* specialized functions are provided.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
@@ -2750,7 +2776,7 @@ SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As can be seen, the `SQUE_FS_LoadFileRaw` perfoms a basic read operation and returns a basic struct with a pointer to the genric data and the size of it.
+As can be seen, the `SQUE_FS_LoadFileRaw` perfoms a basic read operation and returns a basic struct with a generic pointer to the data and the size of it.
 `SQUE_FS_LoadAssetRaw` perfoms a similar operation but specializes the search of the file inside the *Asset* directory built with the application for desktop platforms, on Android it uses the Android NDK provided approach for reading a generic file from the installed package.
 
 #### Creating Directories
@@ -2781,7 +2807,7 @@ bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 
 #### File Watching
 
-Dealing with data at a large scale during runtime is very time consuming and annoying to do. Assuming that data inside the Android package will not change during runtime as write actions are not allowed and that external storage behave very close or exactly to a Linux platform, we can use the C++17 `std::filesystem` library to perform such file-watch operations.
+Dealing with data at a large scale during runtime is very time consuming and annoying to do. Assuming that data inside the Android package will not change during runtime as write actions are not allowed and that external storage behaves very close or exactly to a Linux platform, we can use the C++17 `std::filesystem` library to perform such file-watch operations.
 
 To take care of asset, the following struct is provided:
 
@@ -2829,7 +2855,7 @@ public:
 	char* str;
 };
 
-sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
+sque_vec<SQUE_FW_NewAsset>* SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
 {
     // Check for deleted items in the passed vector of assets
     for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
@@ -2839,7 +2865,7 @@ sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const
 			assets_in_dir[i]->status = 2; // Asset does not exist in disk
 	}
     // Setup return vector of newly created items
-	sque_vec<SQUE_FW_NewAsset> new_items;
+	sque_vec<SQUE_FW_NewAsset>* new_items = new sque_vec<SQUE_FW_NewAsset>();
     // Perform a search in each directory from the base directory provided
     // Check against existing items with the files found in the recursive search
 	for (auto& file : std::filesystem::recursive_directory_iterator(path))
@@ -2863,8 +2889,8 @@ sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const
 		}
 		else // File is not in the list of assets, add it to vector of new locations
 		{
-			new_items.push_back(SQUE_FW_NewAsset());
-			SQUE_FW_NewAsset* a = new_items.last();
+			new_items->push_back(SQUE_FW_NewAsset());
+			SQUE_FW_NewAsset* a = new_items->last();
 			memcpy(a->str, file.path().string().c_str(), 512);
 			a->str_len = file.path().string().length();
 		}
@@ -2893,14 +2919,14 @@ void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dir
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These two helpers should allow every c++ low level user have a file watching system very quickly up and running. One thing I dislike currently is that the return value is a structure with allocated string.
+These two helpers should allow every c++ low level user have a file watching system very quickly up and running. One thing I dislike currently is that the return value is a structure with allocated strings.
 To avoid issues with memory and not having to use heavy-weight classes, a simple wrapper for the vector return is provided.
 
-The user will access `str` and `str_len` for location and then `last_update` for the newly created asset. A copy return value on a probably heavy vector is not ideal, but not controlled memory for a memory critical task is even worse in my point of view.
+The user will access `str` and `str_len` for location and then `last_update` for the newly created asset. A copy return value on a probably heavy vector would be horrible, as such the vector holds pointer data not the whole stack adn the wrapper struct manages the deletion on delete call of the vector.
 
 #### Stream Read and Write
 
-The process of readign and writing custom binary files is not very friendly to most users, at least with out of the box C++. Continuing the theme of the library, two simple classes are provided for a bit easier introduction to binary serialization.
+The process of reading and writing custom binary files is not very friendly to most users, at least with out-of-the box C++. Continuing the theme of the library, two simple classes are provided for a bit easier introduction to binary serialization.
 
 Only the important steps of serialization are shown in the following code snippet:
 
@@ -2956,7 +2982,7 @@ A `SQUE_InStream` is attached to a `SQUE_Asset` that has been already read from 
 
 ## Utilities
 
-The core library is provided alongside with a couple utilities or implementations that seemed interesting to strengthen again the knowledge in C++ and programming general. Not every utility is directly targetted a subset of users but more of an interest developed during the production.
+The core library is provided alongside with a couple utilities or implementations that seemed interesting to strengthen again the knowledge in C++ and programming general. Not every utility is directly targetted a subset of users but more of an interest found during the production.
 
 ### Logging
 
@@ -3020,18 +3046,18 @@ private:
 
 Spending time on the internet learning about programming will cloud the point fo view for most users when dealing with C++. The standard library is a great set of functionality for a new user but at the same time is very convoluted and has a lot landmines that professionals know to avoid.
 
-I am not one of those and one of the big criticisms was the implementation of the basic structures. In order to understand a bit more as well as taking little step into understanding optimization and coding pitfalls, the followign structures have been implemented:
+I am not one of those and one of the big criticisms was the implementation of the basic structures. In order to understand a bit more as well as taking little step into understanding optimization and coding pitfalls, the following structures have been implemented:
 
  * **sque_vec<>** : Analogous to a std::vector<>. Not implemented to work with jagged arrays, because of lack of understanding on them.
- * **sque_dyn_arr<>** : Intention is to make an array that can just be increased in size, such implementation could be complementary to a XMacro system with plugins that add to them as they could query the entry amount and add an item and save for the locator.
+ * **sque_dyn_arr<>** : Intention is to make an array that can just be increased in size, such implementation could be complementary to a XMacro system with plugins that add to them as they could query the entry amount and add an item and save for the location to use as fake enum value.
  * **sque_free_vec<>** : A vector based on unknow location push, to allow freeing spaces of memory and filling them up. The idea is that of a vector that is a bit more memory conscious.
  * **sque_list<>** : Analogous to a std::list<>
 
-By no means it is claimed that these structures are better that the ones available on the standard library or on other vendors' implementations, the objective aws that of understanding such implementations and be comfortable with dealing with custom implementations in the future.
+By no means it is claimed that these structures are better that the ones available on the standard library or on other vendors' implementations, the objective is that of understanding such implementations and be comfortable with dealing with custom implementations in the future.
 
 ### Sorting Algorithms
 
-A thing that has faltered during these years as a programmer that around other areas seems to be common knowledge, is the understanding of complexity of an algorithm. The *O Notation* has not been properly introduced. Sorting algorithms felt like a great entry to such notation explanation and implementation seemd ideal for getting introduced to.
+A thing that has faltered during these years as a programmer that around other areas seems to be common knowledge, is the understanding of complexity of an algorithm. The *O Notation* has not been properly introduced. Sorting algorithms felt like a great entry to such notation explanation and implementation seemed ideal for getting introduced to.
 
 Under the `sque_sort.h` the following subset of templated sorting algorithms with a short explanation on how they work, are provided:
 
@@ -3043,7 +3069,7 @@ Under the `sque_sort.h` the following subset of templated sorting algorithms wit
 
 ### Dear ImGui Backend for SqueLib
 
-Dear ImGui does not have an official direct backend for Android, although there is one floting in the issues<sub>[#W58]</sub> which has been use to adapt the SqueLib one. A good way to make easily recognizable progress on Android was to make such a backend available as an OpenGL/GLFW user could not just simply use the existing samples given that SqueLib sets the access to those libraries as private.
+Dear ImGui does not have an official direct backend for Android, although there is one floting in the issues<sub>[#W58]</sub> which has been used to adapt the SqueLib one. A good way to make easily recognizable progress on Android was to make such a backend available as an OpenGL/GLFW user could not just simply use the existing samples given that SqueLib sets the access to those libraries as private.
 
 The following basic functions are provided and are to be used following the provided example with SqueLib:
 
