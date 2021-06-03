@@ -154,28 +154,28 @@ void SetInt4(const int32_t uniform_id, int4 value)
 }
 */
 
-void SetFloat(const int32_t uniform_id, float value)
+void SetFloat(const int32_t uniform_id, const float value)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform1f(uniform_id, value);
 #endif
 }
 
-void SetFloat2(const int32_t uniform_id, float value[2])
+void SetFloat2(const int32_t uniform_id, const float value[2])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform2f(uniform_id, value[0], value[1]);
 #endif
 }
 
-void SetFloat3(const int32_t uniform_id, float value[3])
+void SetFloat3(const int32_t uniform_id, const float value[3])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform3f(uniform_id, value[0], value[1], value[2]);
 #endif
 }
 
-void SetFloat4(const int32_t uniform_id, float value[4])
+void SetFloat4(const int32_t uniform_id, const float value[4])
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glUniform4f(uniform_id, value[0], value[1], value[2], value[3]);

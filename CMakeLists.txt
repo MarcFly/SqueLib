@@ -101,21 +101,25 @@ if(ToWindows OR ToLinux OR ToDesktop)
     option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" OFF)
     FetchContent_Declare(glfw
         GIT_REPOSITORY "https://github.com/glfw/glfw.git"
-        GIT_TAG "1adfbde4d7fb862bb36d4a20e05d16bf712170f3"
+        GIT_TAG 3.3.4
     )
+    message(STATUS "Error not here")
     FetchContent_GetProperties(glfw) # Generates glfw_SOURCE_DIR and glfw_BINARY_DIR
     set(glfw_include ${glfw_SOURCE_DIR}/include)
     set(glfw_lib_path ${glfw_BINARY_DIR}/src/${CMAKE_BUILD_TYPE})
     # -------------------------------------------------------------------------------------------
 
     # MAKEAVAILABLE------------------------------------------------------------------------------
+    message(STATUS "Error not here")
     FetchContent_MakeAvailable(glfw)
+    message(STATUS "Error not here")
     set_target_properties(glfw
         PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
             LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
             RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
     )
+    message(STATUS "Error not here")
     # All MakeAvailable together, first we declare so that they can start populating i belive
     # MakeAvailable should check completion/availability and finish/start downloading
     # -------------------------------------------------------------------------------------------

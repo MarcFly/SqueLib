@@ -366,7 +366,7 @@ SQ_API void SQUE_INPUT_SetMousePos(const float x, const float y);
 SQ_API void SQUE_INPUT_SetPointerActive(const uint16_t pointer, const bool active);
 
 // Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, const SQUE_KeyboardKeys key);
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetKey(const SQUE_KeyboardKeys key);
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(const uint32_t button);
 SQ_API void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, const uint16_t points = 1);
 SQ_API bool SQUE_INPUT_GetPointerPos(float* x, float* y, const uint16_t pointer = 0);
@@ -427,9 +427,9 @@ SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
 // Usage Functions
 SQ_API int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
 
-SQ_API void SetBool		(const int32_t uniform_id, const  bool value);
-SQ_API void SetInt		(const int32_t uniform_id, const  int32_t value);
-SQ_API void SetFloat	(const int32_t uniform_id ,const  float value);
+SQ_API void SetBool		(const int32_t uniform_id, const bool value);
+SQ_API void SetInt		(const int32_t uniform_id, const int32_t value);
+SQ_API void SetFloat	(const int32_t uniform_id ,const float value);
 SQ_API void SetFloat2	(const int32_t uniform_id, const float value[2]);
 SQ_API void SetFloat3	(const int32_t uniform_id, const float value[3]);
 SQ_API void SetFloat4	(const int32_t uniform_id, const float value[4]);

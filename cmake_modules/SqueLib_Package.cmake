@@ -2,7 +2,7 @@
 
 
 
-macro(SqueLib_PrepareBuild target orgName srcFiles)
+macro(SqueLib_PrepareBuild target orgName srcFiles includeDirs)
     #add_compile_definitions(${CMAKE_BUILD_TYPE}) #Release is a common word, should be names something else... MiniAudio has issue!
     execute_process(COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/builds)
     set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
@@ -18,7 +18,7 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         make_keystore_file("") # Generating the keystore file takes TOO MUCH TIME
         set_app_properties(${target} ${orgName})
         link_android_libc(${target} ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
-        squelib_add_targets(${target})        
+        squelib_add_targets(${target})
     elseif(ToWindows OR ToLinux)
         message(STATUS "${srcFiles}")
         add_executable(${target} "${srcFiles}")
@@ -28,6 +28,9 @@ macro(SqueLib_PrepareBuild target orgName srcFiles)
         endif(ToWindows)
     endif()
 
+    if(NOT ${includeDirs} STREQUAL "")
+        target_include_directories(${target} PUBLIC "${include_Dirs}")
+    endif()
     # SOLOUD ----- Has to be included directly to final project... I don't know how from lib and use soloud directly
     if(WITH_SOLOUD)
         target_compile_definitions(${target} PUBLIC WITH_MINIAUDIO)

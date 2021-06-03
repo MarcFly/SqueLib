@@ -29,7 +29,10 @@ set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but 
 # SETUP WITH SQUELIB - Generates a target and sets it up to work with SqueLib
 #------------------------------------------------------------------------------------------------
 
-SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+file(GLOB_RECURSE PONG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/code/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/code/*.h")
+
+
+SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${PONG_SRC}" "${CMAKE_CURRENT_SOURCE_DIR}/code")
 SqueLib_Package("${CMAKE_CURRENT_SOURCE_DIR}/Assets" "")
 
 #------------------------------------------------------------------------------------------------

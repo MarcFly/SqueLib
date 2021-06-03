@@ -381,7 +381,7 @@ void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active)
 // GETTERS ///////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key)
+SQUE_INPUT_Actions SQUE_INPUT_GetKey(const SQUE_KeyboardKeys key)
 {
     return (SQUE_INPUT_Actions)keyboard[key].state;
 }

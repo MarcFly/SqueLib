@@ -2185,7 +2185,6 @@ In the function there are some referencies to check if a motion has ended. A mot
 Each gestures is simply the tracking of a pointer from start position to end position, given a time frame. The current implementation only detects a `TAP` and a `SWIPE` motion:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
-
 struct SQUE_Gesture							
 {						
 	SQUE_Timer timer;
@@ -3095,11 +3094,96 @@ The following libraries can be built with SqueLib by defining their required opt
 
 # SqueLib Sample Projects
 
-## Performance Tests
+In order to get a kickstart on the library, a subset of very simple but complete example have to be provided. Documentation goes far for providing understanding of what parts do what, examples bring the user directly to the battlefield better prepared. 
+
+Because of time constraints, providing an example for each part of the library specifically is not feasible, instead couple examples that can be easily used by any user to understand little bits of the system seemed to be more ideal.
 
 ## SquePong
 
+SquePong is really just two paddles and a ball that bounces around, nothing more not even a score system. The theme shaerd between this and the following examples is being barebones. Under here are the parts that are intended to introduce the user with this example:
+
+### Multiplatform Input
+
+
+
+### Managing a loop with SqueLib
+
+A basic application loop with SqueLib is practically a 1to1 match of GLFW's basic loop. Check if the window is to be closed, poll the inputs, swap buffers and again until close time:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// - Init App -
+while(!SQUE_DISPLAY_ShouldWindowClose(0))
+{
+    SQUE_INPUT_Process(0);
+    
+    // - Do Application Your Loop -
+
+    SQUE_DISPLAY_MakeContextMain(0);    
+    SQUE_CHECK_RENDER_ERRORS();
+    SQUE_DISPLAY_SwapAllBuffers();
+}
+// - Close App - 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Background sate for Android
+
+When an application goes on background on Android, EGL and OpenGLES are closed and will be reinitialized on reopening. As such, memory allocations on GPU will be freed and have to be set again.
+
+Given that an Android application is still running on a background thread to keep it alive, one has to manage such state. SqueLib provides `SQUE_AddOnGoBackgroundCallback` and `SQUE_AddOnResumeCallback` callback setters that accept a `void()` function:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+bool on_background = false;
+void OnResume()
+{
+    InitParams();
+    InitShaders();
+    on_background = false;
+}
+void OnGoBackground()
+{
+    on_background = true;
+}
+
+// After SQUE_LIB_INIT()
+SQUE_AddOnGoBackgroundCallback(OnGoBackground);
+SQUE_AddOnResumeCallback(OnResume);
+
+// During Application Loop
+// Not the prettiest solution, but it works
+if(on_background)
+{
+    SQUE_Sleep(100); // Wait for 100 ms
+    continue; // Skip the loop and check again
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Basic SoLound and Audio Asset
+
+In order to have direct access to soloud with SqueLib, one can build it separately or pass the argument `-DWITH_SOLOUD=ON` or `set(WITH_SOLOUD ON)` in their CMakeLists.txt. After that the basics of Soloud are really simple:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+SoLoud::Soloud audio_master; // Soloud_engine - Singleton style
+SoLoud::Wav audio_source; // A source for playing wav loaded files
+
+void InitAudio()
+{
+    audio_master.init();
+    // SQUE_FS_LoadAssetRaw requires relative path that starts from ./Assets
+    // ./ or ../ will fail as full path will not be built correclt
+    SQUE_Asset* beep_sound = SQUE_FS_LoadAssetRaw("beep.wav");
+    // Give memory control to sound player
+    audio_source.loadMem((uchar*)beep_sound->raw_data, beep_sound->size);
+}
+
+// When you want to play a sound source at a given moment
+audio_master.play(audio_source);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the minimal example possible, for more about Soloud head to [#W47].
+
 ## Dear ImGui with SqueLib
+
+
 
 ## LearnOpenGL introduction with SqueLib
 
