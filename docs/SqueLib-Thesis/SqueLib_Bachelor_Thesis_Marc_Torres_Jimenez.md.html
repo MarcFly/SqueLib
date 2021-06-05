@@ -32,13 +32,13 @@ SqueLib<sub>[#W1]</sub> is a C++ library and framework for developing multiplatf
 
 A second focus on SqueLib is its ease of expansion and integration with other libraries, allowing users to integrate into their project as a wrapper or as a founding stones of their project.
 
-The result of the project provides SqueLib, examples on using SqueLib and SqueMaker<sub>[#W2]</sub>, a simple game engine which makes full use of the library. The process of implementation is also explained in this document. 
+The result of the project provides SqueLib, examples on using SqueLib, some sample projects and SqueMaker<sub>[#W2]</sub>, a simple engine type playground which makes full use of the library and will be used for extendign the personal knowledge in programming. The process of implementation is also explained in this document. 
 
 The SqueMaker game engine will be provided both as a source code package and an executable that can be executed in any Windows machine and Ubuntu based Linux distributions (tested under KDE<sub>[#W3]</sub>), with capabilities of building for said platforms as well as Android.
 
 The source code for the resulting projects will be open sourced under the BSD-3-Clause<sub>[#W4]</sub>, permitting redistribution of the source code providing the copyright notice, redistribution of the binary that reproduces the copyright notice for the project, without using such notice as an endorsement for the derived products.
 
-<span class="pagebreak"></span>
+
 
 (##) Keywords
 
@@ -50,8 +50,10 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 
 **W2 -** SqueMaker Github Repository<sub>[#W2]</sub>
 
+**W59 -** SqueLib Public Documentation<sub>[#w59]</sub>
+
 <!-- add links to resulting apps, games,... -->
-<span class="pagebreak"></span>
+
 
 (##) Glossary
 
@@ -82,7 +84,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | ADB<sub>[#W46]</sub> | Android Debug Bridge, tool for interfacing with Android physical devices |
 
 
-<span class="pagebreak"></span>
+
 
 # Introduction
 
@@ -114,7 +116,7 @@ On the other hand SqueMaker<sub>[#W2]</sub> primary mission is to provide a simp
 
 To summarize, SqueLib and SqueMaker are projects to introduce C++ desktop developers to multiplatform development. Alongside the results, documention and tools for testing the progression from building to getting an application running will be provided, focusing on game development.
 
-<span class="pagebreak"></span>
+
 
 ## General Objectives
 
@@ -143,7 +145,7 @@ Main objectives for the engine are:
 2. Make a flexible engine that can accomodate new features and technologies
 3. Be able to quickly iterate over the implemented technologies 
 
-<span class="pagebreak"></span>
+
 
 ## Specific Objectives
 
@@ -255,11 +257,11 @@ Instead of a full documentation and tutorials, there is a single test app that i
 
 From a user standpoint, public game engines are the most comfortable environments for making games. Development time is cut down drastically with available technologies and accessible, they enhance the creative experience while obfuscating part of the technologic requirements for an easier entry.
 
-There are also proprietary engines, which are used and own by specific studios, which benefit from more direct technologic development but they will not be covered here.
+There are also completely proprietary engines, which are used and own by specific studios, which benefit from more direct technologic development but none will not be covered here.
 
 Besides the following engines, there are more engines which have different features to offer for better or for worse. In this recollection, a brief introduction and basic strengths and weaknesses pertaining to initial development will be taken into account, as well as some developed games.
 
-### Unity
+(###) Unity
 
 Unity<sub>[#W6]</sub> is a cross-platform game engine, unveiled at the Wordwide Developers Conference 2005, built as an OS-X exclusive game engine. Over time, it has extended support to other desktop platform and emerging platforms. Nowadays supports most widely available platforms, be it console, mobile, desktop and IOT devices.
 
@@ -274,12 +276,12 @@ Unity<sub>[#W6]</sub> is a cross-platform game engine, unveiled at the Wordwide 
 | Tier based licensing with royalties | |
 | Vast knowledge base in tutorials, examples and documentation| |
 
-<span class="pagebreak"></span>
+
 
 !!! Tip: Game Examples
     Used in multiple indie games and solo production as well as big studios: Hearthstone (Blizzard-Activision, 2014), Fall Guys (Mediatonic, 2020), Ori and the Will of the Wisps (Moon Studios, 2020), Cuphead(Studio MDHR, 2017), Flappy Bird(Don Nguyen, 2013),...
 
-### Unreal Engine 4
+(###) Unreal Engine 4
 
 The fourth version coming from the Unreal Engine<sub>[W.7]</sub> series is a great high value production tool for smaller teams and some supported individuals. It started in 1998 as the engine for the first-person shooter game series Unreal Tournament, by Epic Games. The engine has slowly moved into film and TV productions and has been providing support for smaller creators all around.
 
@@ -296,7 +298,7 @@ The fourth version coming from the Unreal Engine<sub>[W.7]</sub> series is a gre
 !!! Tip: Game Examples
     Guilty Gears Strive (Arch Systems, 2021), Fortnite (Epic Games, 2017), A Way Out (Retro Yeti Games, 2018), Ark Survival Evolved (Studio Wildcard, 2017), Batman: Arkham Asylum (Rocksteady Studios, 2016),...
 
-### Godot
+(###) Godot
 
 The Godot<sub>[#W8]</sub> engine is an open-source cross-platform engine, released by Juan Linietsky and Ariel Manzur in 2014, with the latest release being on September 2020. It aims to be as accessible while maintaining the capabilities of a fully fledged commercial engine.
 
@@ -312,7 +314,7 @@ The Godot<sub>[#W8]</sub> engine is an open-source cross-platform engine, releas
 !!! Tip: Game Examples
     Human Diaspora (Leocesar3D, 2020), Kingdoms of the Dump (Roach Games, Kickstarter 2019), Ex Zodiac (Ben Hickling, 2021), Resolutiion (Monolith of Minds, 2020),...
 
-### Game Maker Studio 2
+(###) Game Maker Studio 2
 
 Created by Mark Overmars originally in 1999, later acquired by YoYo Games in 2007, the Game Maker<sub>[#W23]</sub> series of engines are cross-platform engines geared to introduce novice programmers to game making. Through an accessible visual programming language and an extensible scripting language, game maker accomplishes the task of easing the creation of 2D videogames. The latest available release as of this date, came in November 2020.
 
@@ -325,12 +327,12 @@ Created by Mark Overmars originally in 1999, later acquired by YoYo Games in 200
 | Support for major platforms | |
 | Strong tools for 2D game creation | |
 
-<span class="pagebreak"></span>
+
 
 !!! Tip: Game Examples
     Rivals of Aether (Dan Fornace LLC, 2015), Hyper Light Drifter (Heart Machine, 2016), Katana Zero (Askiisoft, 2019), Risk of Rain (Hopoo Games, 2013), VA-11 Hall-A (Sukeban Games, 2016), The Red Strings Club (Deconstructeam, 2018),...
 
-### GDevelop
+(###) GDevelop
 
 GDevelop<sub>[#W10]</sub> is an iniciative started by Florian Rival released in 2008, a game engine based on the web browser technology stack and capable of building for desktop and mobile platforms.
 
@@ -347,7 +349,7 @@ GDevelop<sub>[#W10]</sub> is an iniciative started by Florian Rival released in 
 !!! Tip: Game Examples
     Lil BUB's Hello Earth (Mike Bridavsky, 2019), Uphill Climb Racing Neon (Frolics2dio, 2021), Hyperspace Dogfights (Sleeper Games, 2018), Swamp(Afterapocalypse, 2019),...
 
-### Cocos Creator
+(###) Cocos Creator
 
 Cocos Creator<sub>[#W11]</sub> was originally the development environment for Cocos2d-x, was recently updated to support high performance 3D rendering pipelines (Vulkan and Metal), adding to their web based stack and native backends. Another fully open-source engine, initially published in 2010 by Zhe Wang, is a very accessible engine built upon Cocos2d by Ricardo Quesada, released in 2008.
 
@@ -364,7 +366,7 @@ Cocos Creator<sub>[#W11]</sub> was originally the development environment for Co
 !!! Tip: Game Examples
     Imperial Saga (Square Enix, 2015), Rolling Cats (KingWorks, 2018), King Of Fighters Ultimate Match Online (DURPALM, 2018), Idle Heroes (DHGAMES, 2016), Revenge of Sultans (ONEMT, 2016),...
 
-### Defold
+(###) Defold
 
 Developed by Ragnar Scensson and Christian Murray in 2007 as a lightweight 2D game engine, was acquired by King in 2013. Initially as a licensed engine, in 2016 was released for free for any user and was later ceded to the Defold<sub>[#W12]</sub> Foundation in 2020, making the engine completely open-source. Support and investment will be continued by King.
 
@@ -380,9 +382,9 @@ Developed by Ragnar Scensson and Christian Murray in 2007 as a lightweight 2D ga
 !!! Tip: Game Examples
     Travel Blast (MP Games, 2020), Zoom-Be (Flazm, TBA), Interrogation (Critique Gaming, 2019), Fates of Ort (8bitskull, 2020), Family Island (Melsoft, 2019),...
 
-<span class="pagebreak"></span>
 
-### Lumberyard
+
+(###) Lumberyard
 
 In 2015, Amazon licensed CryEngine from Crytek in order to create an engine with native support for the Amazon Web Services (AWS), allowing developers to build and host their games on Amazon's servers. With the acquisition of Twitch, Lumberyard<sub>[#W14]</sub> also has integration with the Twitch Livestreaming API, allowing interaction with the viewers natively. It was publicly launched in 2016 and later made source-available<sub>[#W9]</sub>.
 
@@ -399,7 +401,7 @@ In 2015, Amazon licensed CryEngine from Crytek in order to create an engine with
 !!! Tip: Game Examples
     Star Citizen (Cloud Imperium Games, Never...), The Grand Tour Game (Amazon Game Studios, 2019), New World (Amazon Game Studios, 2021+), Coffence (Sweet Bandits Studios, 2018),... mostly TBA or canceled projects.
 
-### Other Engines
+(###) Other Engines
 
 There is a vast amount of both open and proprietary game engines out 
 there, from fully featured to starting in the development process such as this thesis. As the reach for this project is limited it is not possible to delve into them, a list of engines and articles gathering and providing information about more engines is provided:
@@ -407,7 +409,7 @@ there, from fully featured to starting in the development process such as this t
  * CUSTOM GAME ENGINES: A Small Study. Ramon Santamaria. <https://gist.github.com/raysan5/909dc6cf33ed40223eb0dfe625c0de74>
  * Diligent Engine. Diligent Graphics. <https://github.com/DiligentGraphics/DiligentEngine>
 
-<span class="pagebreak"></span>
+
 
 ## SqueLib and SqueMaker as Resources
 
@@ -417,11 +419,11 @@ The described examples in competing markets provide vast amounts of features for
 
 Neither SDL nor Rawdraw are introduction level friendly by themselves when targeting multiplatform projects, they require a very finicky initial setup or less accessible tools for getting it running. RayLib has a great deal of supporting examples and documentation for getting things to work almost everywhere, it should be the immediate go-to for someone coming from being a user of SqueLib.
 
-SqueLib will not be a competitor or a replacement in the short run by any means, what it brings is a structured and educational approach to diversify a C++/Game Dev student programmer into a lower level and higher cost of entry programming environments.
+SqueLib will not be a competitor or a replacement in the short run by any means, what it brings is a structured and educational approach to diversify a low experience C++/Game Dev student programmer into a lower level and higher cost of entry programming environments.
 
 Game engines provide mostly all the tools required to get things running, what I find missing is quick access to iterating over the tools available and creation of new tools. Each project has its own demands, having the flexibility of fleshing out the desired tool and having access to it as soon as possible is a missing piece of every game engine compared to custom engines.
 
-SqueLib targets a quick and easy setup process to get a C++ graphic application running in Windows, Ubuntu Linux and Android. SqueMaker is both a testing environment for SqueLib as well as a simple tool for making simple cross-platform games and tools quickly.
+SqueLib targets a quick and easy setup process to get a C++ graphic application running in Windows, Ubuntu Linux and Android. SqueMaker intends to be both a more "real-world" testing environment for SqueLib as well as a simple tool for implementing and learning new things in the programming space.
 
 This project as a whole, also aims to provide an introductory approach to the subsystem programming and decisions made for the development of the library, the engine and the applications created with them: open sourcing the research and development process of making such tools.
 
@@ -444,10 +446,10 @@ The first layer of planification is based on having the main areas of developmen
 
 A Gantt chart feels ideal to decide on timestamps for these tasks and their dependencies, the tool used will be Gantt Project<sub>[#W24]</sub>. The development plan is specified under **Figure 3** and **Figure 4**: 
 
-![Figure [figures]: Library Development Plan](images/Gantt1.png)
-![Figure [figures]: Engine Development Plan](images/Gantt2.png)
+![Figure [figures]: Learning Phase](images/Gantt1.png)
+![Figure [figures]: TFG - Library Development Plan](images/Gantt2.png)
 
-<span class="pagebreak"></span>
+
 
 ### HacknPlan
 
@@ -468,7 +470,7 @@ Software projects are a sum of multiple blocks and constant iteration, during th
 
 Even more important is the fact that the project will be tested and developed on multiple platforms, as such the Gitkraken<sub>[#W22]</sub> git GUI client will be used as it has Linux compatibility and some great features for managing repository branchs.
 
-<span class="pagebreak"></span>
+
 
 ![Figure [figures]: Gitkraken Commit Form](images/GitKraken.png) 
 
@@ -514,7 +516,7 @@ As well as the iterative process of development, debug mode checks have been pla
 | Entry to multiplatform C++ development is not straight forward, accomplishing a good entry for developers | There are lots of fully feature frameworks and engines one can go to and get faster and better results, as there's more support and documentation available |
 | There's no financial risk as a student project | Time is extremely limited, the project will fall short on refinement for larger scale production |
 
-<span class="pagebreak"></span> 
+ 
 
 ## Risks and Contingencies
 
@@ -530,62 +532,57 @@ Given the scope of the project, the most sensible approach is to identify where 
 | Time Missplanning | Given the section below, tasks from the back will be cut in order, there is a planned month and 3/4 left for polish loop |
 | Library / Software issues | Issues on platform and library are planned in time as well as expected deviation, buffer time for planning is available for learning time but at most it will fall to modules already developed in other libraries |
 
-<span class="pagebreak"></span> 
+ 
 
 ### Planned Task Risks
 
 The development process takes part in OSs that have not been previously explored with C++, as well as a plethora of tools that will be new to use and even find out about. Given the initial uncertainty of the project, a strong buffer of the main expected tasks has to be prepared.
 
-| C++ On Linux | Expected Time (days) | Deviation Buffer |
+| CMake | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Development Environment | 5 | 0% |
-| Building | 4 | 25% |
-| Debugging | 1 | 100% |
+| Learning CMake Basics | 14 | 0% |
 
-| C++ On Android | Expected Time (days) | Deviation Buffer |
+| Linux | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Development Environment | 10 | 50% |
-| Building | 10 | 100% |
-| Debugging | 10 | 100% |
+| Environment | 7 | 50% |
+| Building | 7 | 100% |
+| Debugging | 7 | 100% |
 
-| Library Main Modules | Expected Time (days) | Deviation Buffer |
+| Android | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Display / Window Management | 10 | 10% |
-| User Input | 10 | 100% |
-| Graphics | 10 | 10% |
-| File Access System | 5 | 40% |
+| Environment | 7 | 50% |
+| Building | 14 | 30% |
+| Debugging | 21 | 20% |
+| Graphical App | 14 | 0% |
 
-| Main Library Examples | Expected Time (days) | Deviation Buffer |
+| SqueLib | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Performance Tests | 2 | 500% |
-| Pong | 2 | 50% |
-| LearnOpenGL on Library | 6 | 0% |
-| ImGui Example | 5 | 20% |
+| Display | 30 | 10% |
+| Graphics | 44 | 10% |
+| User Input | 30 | 20% |
+| File Access System | 30 | 10% |
 
-| Base Engine Development | Expected Time (days) | Deviation Buffer |
+| SqueLib Polish | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Engine UI System | 5 | 40% |
-| ECS Structure | 5 | 100% |
-| Render Pipeline | 10 | 50% |
+| Internal Documentation | 70 | 0% |
+| Examples | 70 | 0% |
+| Refactoring | 70 | 0% |
+| Feature Completion | 70 | 0% |
 
-| Project Documentation | Expected Time (days) | Deviation Buffer |
+| SqueMaker | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Initial Delivery | 10 | 0% |
+| Developing Toy Engine | 121 | 0% |
 
-| Feature Completing Engine | Expected Time (days) | Deviation Buffer | 
+| TFG Documentation | Expected Time (days) | Deviation Buffer |
 |---|---|---|
-| Resource Management | 10 | 0% |
-| Input System | 5 | 100% |
-| Scripting System | 15 | 33% |
+| Rubrica 1 | 14 | 0% |
+| Rubrica 2 | 7 | 0% |
+| Rubrica 3 | 7 | 0% |
+| Rubrica 4 | 30 | 0% |
 
-| Project Finalization | Expected Time (days) | Deviation Buffer |
-|---|---|---|
-| Game Jame Time | 15 | 0% |
-| Project Polish | 20 | 0% | 
+Given the amount of uncertainty in the project, the final steps of the project are aimed at providing a feedback loop on it rather than expand on it. As most initial tasks involve a high level of uncertainty given unfamiliarity with the systems, the later tasks regarding polish and documentation are setup to keep polishing the project rather than developing the core functionality.
 
-Given the amount of uncertainty in the project, the final steps of the project are aimed at providing a feedback loop on it rather than expand on it. As most tasks involve a high level of uncertainty given unfamiliarity with the systems, this time serves as a buffer for most other tasks. These close to 2 months of finishing development can be reallocated to finishing features and making sure it is as user-accessible as possible.
 
-<span class="pagebreak"></span>
 
 ## Cost Analysis
 
@@ -620,7 +617,7 @@ There are multiple methodologies that have been developed from the Agile princip
 ***************************************************************************
 [Figure [figures]: Simplification of the Agile Process]
 
-<span class="pagebreak"></span>
+
 
 ## Variable Sprint Agile
 
@@ -642,7 +639,7 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 **HnP.2. Task Types:** In order to facilitate navigation of task types, you can select which ones to have visible. In this project, 99% of the tasks are programming based so in my case organizing them becomes more cumbersome than useful. In other projects that involve bigger teams and disciplines, it is a must tool.
 
-<span class="pagebreak"></span>
+
 
 **HnP.3. Current Board Options:** First the Board Name, then the task creation and finally a button to the information pertaining the board.
 
@@ -652,7 +649,7 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 **HnP.5. Task Stats:** In order, displays the information added to the tasks, be it attachments, subtasks, comments, work logs,...
 
-<span class="pagebreak"></span>
+
 
 ![Figure [figures]: Add Menu](images/HacknPlan_AddMenu.png) **HnP.6. Addition Panel**: Under this panel appears the available options for adding information to each task.
 
@@ -682,7 +679,7 @@ In the context of multiplatform development, there is a ton of options of IDEs a
 
 Visual Studio supports CMake based projects, but for the sake of progressing as well learning new tools for the trade, starting first from CMake and then using Visual Studio for specifically Windows development seems the best fit. Further explanation on the usage of CMake is provided in the following chapter.
 
-<span class="pagebreak"></span>
+
 
 ## SDL, RayLib and Rawdraw
 
@@ -769,7 +766,7 @@ Being set up with the initial research on the project statement and values, the 
 
 It is very evident that having multiple code bases per platform and having to use wildly different environments for getting code to run on the target platforms is a big issue to tackle. The most sensible approach would be to have a way to just execute what is needed on a bunch of source files and get the resulting application ready to run, the less input from the user to get it working the better.
 
-<span class="pagebreak"></span>
+
 
 ## CMake: Building for multiplatform 
 
@@ -797,7 +794,7 @@ Under **Figure 13**, the base layout of the folder which will be expanded upon, 
 
 From unique previous knowledge of building C++ aplication through Microsoft Visual Studio, the best way to get into new ways is to learn from the simplest possible example required. With that virtue, the starting file to work on would be the following main which would only print out _Hello World!_ to a console to make sure everything is working as intended.
 
-<span class="pagebreak"></span>
+
 
 **_main.cpp_**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C++ linenumbers
@@ -849,7 +846,7 @@ set_target_properties(CMakeExample
         RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
+
 
 Then on Command Line we create a folder to execute from, then call cmake to build the parent directory:
 
@@ -874,7 +871,7 @@ In order to build Android application, the usual way would be to build them usin
 
 Parallel to the main tool, Google provides the Android SDK which has a suite of tools for compiling, packaging, debugging and many more things for Android projects with external toolchains such as CMake. With that in hand, one can provide their own way of compiling the source code as well as generating the necessary files required for a complete packaged app, then use the tools to finalize the process, install and run the application on the target Android device.
 
-<span class="pagebreak"></span>
+
 
 A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of using the tools I am used to or found in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics rendering and building framework for developing extremely portable applications written in C. 
 
@@ -943,7 +940,7 @@ function(subdirlist result currdir)
 endfunction()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Get the first directory that exists in a list of items
@@ -992,7 +989,7 @@ if(NOT ANDROIDSDK)
 endif()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Search for NDK inside SDK
@@ -1044,7 +1041,7 @@ endif()
 
 Finally a couple debug messages to make sure everything is working as intended, and then print the found locations. Should any directory be missing, the build process must stop.
 
-<span class="pagebreak"></span>
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~bash
 # Check that everything was found
@@ -1117,7 +1114,7 @@ In order to get access to the Android NDK, one has to link and include the Andro
 
 There are some variables that are of general use in other steps as well used in later custom targets for the packaging step, for this reaseon they are set during the build process as they depend on the target application.
 
-<span class="pagebreak"></span>
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(APPNAME '"${appName}"')
@@ -1167,7 +1164,7 @@ Linking directly to a specific library can be done using a similar function adap
 
 Given a target to build, include the directories where the Android library include files are as well as the native app library.
 
-<span class="pagebreak"></span>
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(NDKINCLUDE "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/include")
@@ -1212,7 +1209,7 @@ Each target will have a short explanation, a list of dependencies if there are a
 
 In order to describe the essential information of an Android application, each app requires an _AndroidManifest.xml_ file. Although the NDK provides samples for creating one, Rawdraw provides an already templated one to which close no changes were made.
 
-<span class="pagebreak"></span>
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~xml
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
@@ -1277,7 +1274,7 @@ COMMANDS
 
 Packs<sub>[#W42], [#W44]</sub> and signs<sub>[#W43], [#W45]</sub> the application into an Android recognized format (APK). During the process, some intermediate files are created and removed (_rm -rf_ command).
 
-<span class="pagebreak"></span>
+
 
 One specific thing that is not done in this step but part of the CMake build is packaging the resources. Because in desktop platforms, usually the relative path sits directly on the working directory but in Android there is a specific folder structure for the package, assets, resources and metadad.
 
@@ -1410,7 +1407,7 @@ The process of importing and debugging a CMake based project just requires the u
 
 The simplest way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which is pretty handy in the way that you do not require a fully fledged Android Studio project to debug it. Android Studio has a built in profiler/debugger for APKs that have been built with the debug symbols, only requiring access to the original debugging files which are either inside the apk itself and can be extracted from, or are already available on the system after building the project through external means.
 
-<span class="pagebreak"></span>
+
 
 Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer as the last developed x86 based Android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, on of the reasons why the final build process will only target 64bit ARM systems (less build time and less worries).
 
@@ -1422,7 +1419,7 @@ The solution is passthrough debugging. As long as you have a physical device in 
 
 <!-- Explanation of waht should the core workflow should be and what are the expected capailities -->
 
-When working with SqueLib, it is intended for the library to take control of the initialization process of the application, referring to the main window, render and input. At the same time facilities for interfacing with said module are to be provided in a simple and easy to implement manner. Under **Figure 18** the expected architecture of the library is shown:
+When working with SqueLib, it is intended for the library to take control of the initialization process of the application, referring to the main window, render and input. At the same time facilities for interfacing with said modules should always be provided in a simple and easy to implement form. Under **Figure 18** the expected architecture of the library is shown:
 
 ***************************************************************************
 * .----------------------------------------------------------------------.*
@@ -1443,7 +1440,7 @@ When working with SqueLib, it is intended for the library to take control of the
 
 Some modules' requirements can change as they are developed, there may be required extra modules or integration of other libraries for other tasks. For this reason it is expected for features or needs to grow the project requirements.
 
-Before delving into each part of the library provided, code will be provided in the document for elements that are specifically relevant to the subject at question such as multiplatform approaches or specific things for Android and Linux, given that during the coursing of the degree the apporach has focused on Windows.
+Before delving into each part of the library provided, code will be provided in the document for elements that are specifically relevant to the subject at question such as multiplatform approaches or specific things for Android and Linux, given that during the coursing of the degree the approach has been focused on Windows.
 
 ## SqueLib C++ Coding Conventions
 
@@ -2408,11 +2405,6 @@ SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
 SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<!--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--->
-
 #### Textures
 
 Textures accomplish the same objective as the Mesh class, hold the basic information regarding a texture buffer without taking control of the memory.
@@ -2493,8 +2485,7 @@ struct SQUE_Program
 	sque_vec<SQUE_Uniform> uniforms;
 	// IDs of the shaders // Order by execution stage
 	// 0 Vertex -> 1 Fragment 
-	// Geometry will not be implemented
-    // Tessellation and Compute require extensions of OpenGLES which will also fall out of scope
+	// Geometry, Tessellation and Compute will not be implemented
 };
 
 void SQUE_PROGRAM_AttachShader(SQUE_Program* program, const SQUE_Shader shader);
@@ -3098,13 +3089,13 @@ In order to get a kickstart on the library, a subset of very simple but complete
 
 Because of time constraints, providing an example for each part of the library specifically is not feasible, instead couple examples that can be easily used by any user to understand little bits of the system seemed to be more ideal.
 
+Functionality that is not explicitly detailed during the chapter on *SqueLib Development* will be briefly shown in the examples that require so.
+
 ## SquePong
 
-SquePong is really just two paddles and a ball that bounces around, nothing more not even a score system. The theme shaerd between this and the following examples is being barebones. Under here are the parts that are intended to introduce the user with this example:
+SquePong is really just two paddles and a ball that bounces around, nothing more not even a score system. The theme shaerd between this and the following examples is being barebones. Under here are the parts that are intended to introduce the user with this example, which is reduced to the following figure:
 
-### Multiplatform Input
-
-
+![Figure[figures]: SquePong being tested with MSVS 2019.](images/SquePong_example.png)
 
 ### Managing a loop with SqueLib
 
@@ -3125,7 +3116,7 @@ while(!SQUE_DISPLAY_ShouldWindowClose(0))
 // - Close App - 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Background sate for Android
+### Background state for Android
 
 When an application goes on background on Android, EGL and OpenGLES are closed and will be reinitialized on reopening. As such, memory allocations on GPU will be freed and have to be set again.
 
@@ -3157,7 +3148,7 @@ if(on_background)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Basic SoLound and Audio Asset
+### Basic SoLoud and Audio Asset
 
 In order to have direct access to soloud with SqueLib, one can build it separately or pass the argument `-DWITH_SOLOUD=ON` or `set(WITH_SOLOUD ON)` in their CMakeLists.txt. After that the basics of Soloud are really simple:
 
@@ -3183,25 +3174,34 @@ This is the minimal example possible, for more about Soloud head to [#W47].
 
 ## Dear ImGui with SqueLib
 
+As mentioned previously under *Utilities* for SqueLib, a backend implementation for Dear ImGui has been built as there were no official backends for native Android development. The following example works natively by passing through a mouse input through the first pointer available from the user.
+
+For implementing your own backend I recommend following the already available official examples as it is very dependant on the input system provided and the graphics backend, usually coming from separate libraries.
+
+![Figure [figures]: ]
 
 
 ## LearnOpenGL introduction with SqueLib
 
-# SqueMaker Development
+The LearnOpenGL tutorial series is one of the most widely used for introducing programmers from every langauge to OpenGL and graphics programming. The page is very well documented, lots of comments, tons of examples and great indepth explanations of advcanced techniques.
+
+One of the drawbacks of it is that it is a bit outdated in terms of contemporary standard graphics, where OpenGL is being left out. That is actually an advantage to SqueLib, which is based on a older pipeline based on OpenGL 3.3, in order also to introduce people but to a different context.
+
+As the introduction is quite small and very self explanatory, those steps have been recreated in SqueLib for any other user coming with little experience to be familiarized fast with SqueLib. Said example is prepared to be expanded with other steps of the tutorial but the focus is on the basics of rendering.
+
+![Figure [figures]: LearnOpenGL - Coordinate System, example written with SqueLib.](images/LearnOpenGL_example.jpeg)
+
+# SqueMaker
 
 <!-- Talk about testing what SqueLib can do in practice as well as taking steps into designing a competent tool for making games -->
 
 ## Entity Component System
 
-## Engine UI
+## Engine UI Prototype
 
 ## Render Pipeline
 
 ## Serialization
-
-## Scripting System
-
-# SqueMaker Sample Projects
 
 # Conclusions
 
@@ -3384,6 +3384,9 @@ This is the minimal example possible, for more about Soloud head to [#W47].
 
 [#58]: ImGui Android, Issues. stawrocek, 2017.
 <https://github.com/ocornut/imgui/issues/1200>
+
+[#59]: SqueLib Documentation. Marc Torres, 2021.
+<https://marcfly.github.io/SqueLib/>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>

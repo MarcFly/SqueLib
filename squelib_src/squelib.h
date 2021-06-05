@@ -379,63 +379,6 @@ SQ_API MouseFloatCallback* SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback* 
 SQ_API MouseFloatCallback* SQUE_INPUT_SetScrollCallback(MouseFloatCallback* scroll);
 SQ_API KeyCallback* SQUE_INPUT_SetMouseButtonCallback(const int button, KeyCallback* key_callback);												
 	
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct SQUE_Uniform
-{
-	int32_t id = -1;
-	uint32_t type = -1;
-	int32_t var_size = 0;
-	char name[52] = "";
-};
-
-struct SQUE_Shader
-{
-	int32_t id = 0;
-	int32_t type = NULL;
-};
-
-SQ_API void SQUE_SHADERS_GenerateID(SQUE_Shader* shader, const int32_t shader_type);
-SQ_API void SQUE_SHADERS_SetSource(const int32_t shader_id, const char* source_);
-SQ_API void SQUE_SHADERS_Compile(const int32_t shader_id);
-SQ_API void SQUE_SHADERS_FreeFromGPU(const int32_t shader_id);
-
-struct SQUE_Program
-{
-// Variables
-	uint32_t id = 0;
-	uint32_t shaders[2]; 
-	sque_vec<SQUE_Uniform> uniforms;
-	// IDs of the shaders // Order by execution stage
-	// 0 Vertex -> 1 Fragment 
-	// Geometry, Tesselation and Compute will be added later if I want to and have time to
-	// They require more setup and steps
-};
-
-SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program* program, const SQUE_Shader& shader);
-SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
-SQ_API void SQUE_PROGRAM_CacheUniforms(SQUE_Program* program);
-
-SQ_API void SQUE_PROGRAM_GenerateID(uint32_t* program_id);
-SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
-SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
-
-// Usage Functions
-SQ_API int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
-
-SQ_API void SetBool		(const int32_t uniform_id, const bool value);
-SQ_API void SetInt		(const int32_t uniform_id, const int32_t value);
-SQ_API void SetFloat	(const int32_t uniform_id ,const float value);
-SQ_API void SetFloat2	(const int32_t uniform_id, const float value[2]);
-SQ_API void SetFloat3	(const int32_t uniform_id, const float value[3]);
-SQ_API void SetFloat4	(const int32_t uniform_id, const float value[4]);
-// ... add a matrix/array passer...																									
-SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, const uint16_t number_of_matrices = 1, const bool transpose = false);
-	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MESH //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -551,6 +494,67 @@ SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_d
 SQ_API void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex);
 SQ_API void SQUE_TEXTURE_SetActiveUnit(const int32_t unit);
 SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, const int32_t mipmap_level = 0);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct SQUE_Uniform
+{
+	int32_t id = -1;
+	uint32_t type = -1;
+	int32_t var_size = 0;
+	char name[52] = "";
+};
+
+struct SQUE_Shader
+{
+	int32_t id = 0;
+	int32_t type = NULL;
+};
+
+SQ_API void SQUE_SHADERS_GenerateID(SQUE_Shader* shader, const int32_t shader_type);
+SQ_API void SQUE_SHADERS_SetSource(const int32_t shader_id, const char* source_);
+SQ_API void SQUE_SHADERS_Compile(const int32_t shader_id);
+SQ_API void SQUE_SHADERS_FreeFromGPU(const int32_t shader_id);
+
+struct SQUE_Program
+{
+	// Variables
+	uint32_t id = 0;
+	uint32_t shaders[2];
+	sque_vec<SQUE_Uniform> uniforms;
+	sque_vec<SQUE_VertAttrib> attributes;
+	// IDs of the shaders // Order by execution stage
+	// 0 Vertex -> 1 Fragment 
+	// Geometry, Tesselation and Compute will be added later if I want to and have time to
+	// They require more setup and steps
+};
+
+SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program* program, const SQUE_Shader& shader);
+SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
+SQ_API void SQUE_PROGRAM_CacheUniforms(SQUE_Program* program);
+
+SQ_API void SQUE_PROGRAM_GenerateID(uint32_t* program_id);
+SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
+SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
+
+// Usage Functions
+SQ_API int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
+
+SQ_API void SetBool(const int32_t uniform_id, const bool value);
+SQ_API void SetInt(const int32_t uniform_id, const int32_t value);
+SQ_API void SetFloat(const int32_t uniform_id, const float value);
+SQ_API void SetFloat2(const int32_t uniform_id, const float value[2]);
+SQ_API void SetFloat3(const int32_t uniform_id, const float value[3]);
+SQ_API void SetFloat4(const int32_t uniform_id, const float value[4]);
+// ... add a matrix/array passer...																									
+SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, const uint16_t number_of_matrices = 1, const bool transpose = false);
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

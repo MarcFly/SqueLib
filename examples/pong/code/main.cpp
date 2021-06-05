@@ -102,9 +102,7 @@ void MovePaddles(float dt)
     player1.y = (player1.y - player1.sizey/2. < 0) ? 0 + player1.sizey / 2. : player1.y;
     player1.y = (player1.y + player1.sizey / 2. > sy) ? sy - player1.sizey / 2. : player1.y;
     player2.y = (player2.y - player1.sizey / 2. < 0) ? 0 + player1.sizey / 2. : player2.y;
-    player2.y = (player2.y + player1.sizey / 2. > sy) ? sy - player1.sizey / 2. : player2.y;
-
-    
+    player2.y = (player2.y + player1.sizey / 2. > sy) ? sy - player1.sizey / 2. : player2.y;    
 }
 
 int main(int argc, char** argv)
