@@ -8,6 +8,7 @@ endif()
 #------------------------------------------------------------------------------------------------
 # ADD SUBPROJECTS # Add where SqueLib is
 #------------------------------------------------------------------------------------------------
+add_compile_definitions(NOT_GDB)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/SqueLib)
 # Binary dir will be changed to the expected binary dir to have together shared libraries
 #------------------------------------------------------------------------------------------------
@@ -30,4 +31,4 @@ file(GLOB_RECURSE ALL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/main.cpp")
 #------------------------------------------------------------------------------------------------
 
 SqueLib_PrepareBuild(ImGui_Example MarcTorresJimenez ${ALL_SRC} "")
-SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/EngineAssets ${CMAKE_CURRENT_SOURCE_DIR}/EngineResources)
+SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/EngineAssets ${SqueLib_defaults}/Resources)

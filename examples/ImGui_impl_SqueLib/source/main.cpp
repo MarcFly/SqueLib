@@ -1,4 +1,5 @@
 #include <iostream>
+#define NOT_GDB
 #include <squelib.h>
 
 enum main_states
@@ -105,7 +106,7 @@ void ImGuiImplSqueLibTest()
 int main(int argc, char**argv)
 {
     // Initialization with a Window name and Initialization Flags
-    SQUE_LIB_Init("Squelib Testing Grounds");
+    SQUE_LIB_Init("Squelib Testing Grounds", SQ_INIT_DEFAULTS | SQ_INIT_MAX_RENDER_VER);
 
     SQUE_AddOnGoBackgroundCallback(OnGoBackground);
     SQUE_AddOnResumeCallback(OnResume);

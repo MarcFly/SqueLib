@@ -301,8 +301,8 @@ void SQUE_ConsolePrint(int lt, const char* log)
     OutputDebugString("\n");
 #elif defined ANDROID
     __android_log_print(lt, "SqueLib", log);
-#elif defined LINUX && defined NOT_GDB
-    printf(log);
+#elif defined __linux__ && defined NOT_GDB
+    printf("%s\n",log);
 #endif
 
 }

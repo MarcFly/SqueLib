@@ -434,6 +434,13 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, uint32_t width, uint32_t hei
     next_window->width = (next_window->width != 0) ? next_window->width : w * .7;
     next_window->height = (next_window->height != 0) ? next_window->height : h * .7;
 
+    for(uint16_t i = 0; i < next_window->context_hints.size(); i+=2)
+        glfwWindowHint(next_window->context_hints[i], next_window->context_hints[i+1]);
+    for(uint16_t i = 0; i < next_window->window_hints.size(); i+=2)
+        glfwWindowHint(next_window->window_hints[i], next_window->window_hints[i+1]);
+    for(uint16_t i = 0; i < next_window->buffer_hints.size(); i+=2)
+        glfwWindowHint(next_window->buffer_hints[i], next_window->buffer_hints[i+1]);
+    
     GLFWwindow* glfw_window = glfwCreateWindow(next_window->width, next_window->height, next_window->title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
     if (!glfw_window)
     {
@@ -444,7 +451,7 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, uint32_t width, uint32_t hei
         {
             glfwWindowHint(SQUE_WINDOW_CONTEXT_MAJOR, major);
             glfwWindowHint(SQUE_WINDOW_CONTEXT_MINOR, minor);
-            glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
+            glfw_window = glfwCreateWindow(next_window->width, next_window->height, next_window->title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
         }
         if (!glfw_window)
         {
