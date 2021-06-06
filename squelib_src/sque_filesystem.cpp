@@ -299,15 +299,16 @@ void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dir
 
 SQUE_FW_NewAsset::SQUE_FW_NewAsset()
 {
-	str = new char[512];
+	//str = new char[512];
+	str[511] = '\0';
 }
 
 SQUE_FW_NewAsset::~SQUE_FW_NewAsset()
 {
-	delete str;
+	//delete[] str;
 }
 
-sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
+sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
 {
 	for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
 	{
@@ -315,7 +316,7 @@ sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const
 		if (!std::filesystem::exists(assets_in_dir[i]->location))
 			assets_in_dir[i]->status = 2;
 	}
-	sque_vec<SQUE_FW_NewAsset> new_items;
+	sque_vec<SQUE_FW_NewAsset*> new_items;
 	for (auto& file : std::filesystem::recursive_directory_iterator(path))
 	{
 		// string hashing for ids... the MD5 old one might be great for that, it was decently fast
@@ -337,8 +338,8 @@ sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const
 		}
 		else
 		{
-			new_items.push_back(SQUE_FW_NewAsset());
-			SQUE_FW_NewAsset* a = new_items.last();
+			new_items.push_back(new SQUE_FW_NewAsset());
+			SQUE_FW_NewAsset* a = *new_items.last();
 			memcpy(a->str, file.path().string().c_str(), 512);
 			a->str_len = file.path().string().length();
 		}

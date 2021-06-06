@@ -28,7 +28,7 @@ macro(SqueLib_PrepareBuild target orgName srcFiles includeDirs)
         endif(ToWindows)
     endif()
 
-    if(NOT ${includeDirs} STREQUAL "")
+    if(NOT "${includeDirs}" STREQUAL "")
         target_include_directories(${target} PUBLIC "${include_Dirs}")
     endif()
     # SOLOUD ----- Has to be included directly to final project... I don't know how from lib and use soloud directly

@@ -735,10 +735,10 @@ public:
 
 	double last_update = 0;
 	uint32_t str_len = 0;
-	char* str;
+	char str[512];
 };
 
-SQ_API sque_vec<SQUE_FW_NewAsset> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun);
+SQ_API sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun);
 
 // OpenDDL style Serialization
 enum class OPENDDL_IDS : uint8_t
