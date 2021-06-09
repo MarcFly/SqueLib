@@ -164,12 +164,34 @@ uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh)
     mesh->vertex_size = 0;
 
     for (uint32_t i = 0; i < v_attribs.size(); ++i)
-    {
-        v_attribs[i].offset = mesh->vertex_size;
         mesh->vertex_size += v_attribs[i].var_size * v_attribs[i].num_comp;
-    }
 
     return mesh->vertex_size;
+}
+
+void SQUE_MESH_InterleaveOffsets(SQUE_Mesh* mesh)
+{
+    SQUE_MESH_CalcVertSize(mesh);
+    sque_vec<SQUE_VertAttrib>& v_attribs = mesh->attributes;
+    uint32_t offset = 0;
+    for (uint16_t i = 0; i < v_attribs.size(); ++i)
+    {
+        v_attribs[i].offset = offset;
+        offset += v_attribs[i].num_comp * v_attribs[i].var_size;
+    }
+}
+
+void SQUE_MESH_BlockOffsets(SQUE_Mesh* mesh)
+{
+    SQUE_MESH_CalcVertSize(mesh);
+    sque_vec<SQUE_VertAttrib>& v_attribs = mesh->attributes;
+    SQUE_MESH_CalcVertSize(mesh);
+    uint32_t offset = 0;
+    for (uint16_t i = 0; i < v_attribs.size(); ++i)
+    {
+        v_attribs[i].offset = offset;
+        offset += v_attribs[i].num_comp * v_attribs[i].var_size * mesh->num_verts;
+    }
 }
 
 uint16_t SQUE_MESH_GetAttribSize(const SQUE_Mesh& mesh, const char* name)

@@ -155,6 +155,7 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	sque_dataHandle.attributes.push_back(SQUE_VertAttrib("UV", SQUE_FLOAT, false, 2));
 	sque_dataHandle.attributes.push_back(SQUE_VertAttrib("Color", SQUE_UBYTE, true, 4));
 	SQUE_MESH_BindBuffer(sque_dataHandle);
+	SQUE_MESH_InterleaveOffsets(&sque_dataHandle);
 	SQUE_MESH_SetLocations(&sque_dataHandle);
 
 	sque_backupState.SetUp();

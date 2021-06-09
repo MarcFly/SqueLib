@@ -438,6 +438,8 @@ SQ_API void SQUE_MESH_SetDataConfig(SQUE_Mesh* mesh, const uint32_t num_verts, c
 SQ_API void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_, const int32_t var_type, const bool normalize, const uint16_t num_components);
 
 SQ_API uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh);
+SQ_API void SQUE_MESH_InterleaveOffsets(SQUE_Mesh* mesh); // Vertex Format is: V1(Pos,Normal,UV,...), V2(...)...
+SQ_API void SQUE_MESH_BlockOffsets(SQUE_Mesh* mesh); // Vertex Format is: Positions(P1,P2,...), Normals(N1, N2,...), UV(...),...
 SQ_API uint16_t SQUE_MESH_GetAttribSize(const SQUE_Mesh& mesh, const char* name);
 
 SQ_API void SQUE_MESH_SetLocations(SQUE_Mesh* mesh);
@@ -685,6 +687,14 @@ typedef uint32_t(HandleNewAssetLocation)(const char* location);
 typedef void(ReadWriteAssetFun)(const char* location, SQUE_DataPack* datapack);
 typedef void(UnloadAssetFun)(SQUE_DataPack* datapack);
 
+enum AssetStatus
+{
+	SQ_AS_NEUTRAL = BITSET1,
+	SQ_AS_CHANGED = BITSET2,
+	SQ_AS_DELETED = BITSET3,
+	SQ_AS_LOADED = BITSET4,
+	//...
+};
 
 struct SQUE_CtrlAsset
 {
@@ -698,7 +708,7 @@ struct SQUE_CtrlAsset
 	// Runtime Updates
 	SQUE_Timer unused_timer;
 	uint32_t current_users = 0;
-	uint8_t status = 0; // 0 = not_changed, 1 = Changed, 2 = Deleted
+	uint8_t status_flags = NULL; // refer to AssetStatus
 	double last_update = 0;
 
 
@@ -717,7 +727,7 @@ SQ_API const char* SQUE_FS_GetExecPath();
 SQ_API bool SQUE_FS_CreateDirFullPath(const char* path);
 SQ_API bool SQUE_FS_CreateDirRelative(const char* path, const int32_t flags = NULL);
 SQ_API SQUE_Asset* SQUE_FS_LoadFileRaw(const char* path);
-SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data);
+SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data, const uint64_t size);
 
 // Permission safe functions
 SQ_API SQUE_Dir* SQUE_FS_CreateBaseDirTree();

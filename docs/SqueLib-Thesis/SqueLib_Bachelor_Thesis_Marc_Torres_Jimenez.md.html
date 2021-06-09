@@ -2269,6 +2269,7 @@ SQUE_MESH_SetDataConfig(&triangle, 3)
 SQUE_MESH_GenBuffer(&triangle);
 SQUE_MESH_BindBuffer(&triangle);
 SQUE_MESH_AddAttribute(&triangle, "aPos", SQUE_FLOAT, false, 3);
+SQUE_MESH_InterleaveOffset(&triangle);
 SQUE_MESH_SetLocations(&triangle);
 SQUE_MESH_SendToGPU(&triangle, vertices);
 
@@ -2393,6 +2394,8 @@ void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_ int32_t var_type,
 
 uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh);
 uint16_t SQUE_MESH_GetAttribSize(SQUE_Mesh* mesh, const char* name);
+void SQUE_MESH_InterleaveOffsets(SQUE_Mesh* mesh);
+void SQUE_MESH_BlockOffsets(SQUE_Mesh* mesh);
 void SQUE_MESH_SetLocations(SQUE_Mesh* mesh);
 
 SQ_API void SQUE_MESH_GenBufferIDs(const uint32_t num, uint32_t* ids);
@@ -2780,7 +2783,9 @@ bool SQUE_FS_CreateDirFullPath(const char* path)
         return false;
 	bool ret = true;
 #if defined(_WIN32)
-	ret = CreateDirectoryA(path, NULL);
+    char temp[512];
+    sprintf(temp, "mkdir -p  %s", path);
+    system(temp);
 #elif defined(ANDROID) || defined(__linux__)
 	ret = ret && mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #endif
@@ -2805,6 +2810,15 @@ To take care of asset, the following struct is provided:
 typedef void(ReadWriteAssetFun)(const char* location, SQUE_DataPack* datapack);
 typedef void(UnloadAssetFun)(SQUE_DataPack* datapack);
 
+enum AssetStatus
+{
+	SQ_AS_NEUTRAL = BITSET1,
+	SQ_AS_CHANGED = BITSET2,
+	SQ_AS_DELETED = BITSET3,
+	SQ_AS_LOADED = BITSET4,
+	//...
+};
+
 struct SQUE_CtrlAsset
 {
 	// Static Data - Generated or Loaded
@@ -2817,7 +2831,7 @@ struct SQUE_CtrlAsset
 	// Runtime Updates
 	SQUE_Timer unused_timer;
 	uint32_t current_users = 0;
-	uint8_t status = 0; // 0 = not_changed, 1 = Changed, 2 = Deleted
+	uint8_t status_flags = 0;
 	double last_update = 0;
 
 
@@ -2834,28 +2848,24 @@ struct SQUE_CtrlAsset
 Every base asset will requires a description of location, naming and status during runtime. As every asset might behave differently, a callback that the user can set for saving, loading and unloading from memory is provided.With this class the user can set the implementation of the asset-disk interaction and the system to handle them comfortably.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
-class SQUE_FW_NewAsset
+struct SQUE_FW_NewAsset
 {
-public:
-	SQ_API SQUE_FW_NewAsset() {str = new char[512];};
-	SQ_API ~SQUE_FW_NewAsset() {delete str;};
-
 	double last_update = 0;
 	uint32_t str_len = 0;
-	char* str;
+	char str[256];
 };
 
-sque_vec<SQUE_FW_NewAsset>* SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
+sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun)
 {
     // Check for deleted items in the passed vector of assets
     for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
 	{
 		assets_in_dir[i]->status = 0;
 		if (!std::filesystem::exists(assets_in_dir[i]->location))
-			assets_in_dir[i]->status = 2; // Asset does not exist in disk
+			SET_FLAG(assets_in_dir[i]->status_flags, SQ_AS_DELETED); // Asset does not exist in disk
 	}
     // Setup return vector of newly created items
-	sque_vec<SQUE_FW_NewAsset>* new_items = new sque_vec<SQUE_FW_NewAsset>();
+	sque_vec<SQUE_FW_NewAsset*> new_items;
     // Perform a search in each directory from the base directory provided
     // Check against existing items with the files found in the recursive search
 	for (auto& file : std::filesystem::recursive_directory_iterator(path))
@@ -2864,7 +2874,7 @@ sque_vec<SQUE_FW_NewAsset>* SQUE_FS_CheckDirectoryChanges(const char* path, cons
 		uint32_t i;
 		for (i = 0; i < assets_in_dir.size(); ++i)
 		{
-			if (assets_in_dir[i]->status == 2) continue;
+			if (CHK_FLAG(assets_in_dir[i]->status_flags, SQ_AS_DELETED)) continue;
 			if (strcmp(assets_in_dir[i]->location, file.path().string().c_str()) == 0)
 				break;
 		}
@@ -2874,12 +2884,12 @@ sque_vec<SQUE_FW_NewAsset>* SQUE_FS_CheckDirectoryChanges(const char* path, cons
 			if (last_update != assets_in_dir[i]->last_update)
 			{
 				assets_in_dir[i]->last_update;
-				assets_in_dir[i]->status = 1; // Set to Update
-			}
+				SET_FLAG(assets_in_dir[i]->status_flags, SQ_AS_CHANGED;
+            }
 		}
 		else // File is not in the list of assets, add it to vector of new locations
 		{
-			new_items->push_back(SQUE_FW_NewAsset());
+			new_items->push_back(new SQUE_FW_NewAsset());
 			SQUE_FW_NewAsset* a = new_items->last();
 			memcpy(a->str, file.path().string().c_str(), 512);
 			a->str_len = file.path().string().length();
@@ -2898,7 +2908,7 @@ void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dir
 {
 	dirs->push_back(SQUE_FS_GenDir(location));
 
-	for (auto& file : std::filesystem::recursive_directory_iterator((*dirs)[0].location))
+	for (auto& file : std::filesystem::recursive_directory_iterator(location))
 	{
 		if (file.is_directory())
 		{
@@ -2912,7 +2922,7 @@ void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dir
 These two helpers should allow every c++ low level user have a file watching system very quickly up and running. One thing I dislike currently is that the return value is a structure with allocated strings.
 To avoid issues with memory and not having to use heavy-weight classes, a simple wrapper for the vector return is provided.
 
-The user will access `str` and `str_len` for location and then `last_update` for the newly created asset. A copy return value on a probably heavy vector would be horrible, as such the vector holds pointer data not the whole stack adn the wrapper struct manages the deletion on delete call of the vector.
+The user will access `str` and `str_len` for location and then `last_update` for the newly created asset. A copy return value on a probably straight heap vector would be horrible, as such the return vector holds pointer data, which still makes the user delete each item after usage, not ideal but practical.
 
 #### Stream Read and Write
 
@@ -2925,6 +2935,9 @@ class SQUE_OutStream
 {
     //...
 template<class T>
+    uint64_t GetSize() const { return _size; }
+    void* GetData() const { return _data; }
+
 	void WriteBytesAt(const T* from, uint64_t at, uint32_t num_items = 1)
 	{
 		uint64_t end_write = at + sizeof(T) * num_items;

@@ -63,7 +63,11 @@ bool SQUE_FS_CreateDirFullPath(const char* path)
 	bool ret = SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE") && SQUE_AskPermissions("WRITE_MEDIA_STORAGE");
 	SQUE_PRINT(LT_INFO, "%d %d", SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE"), SQUE_AskPermissions("WRITE_MEDIA_STORAGE"));
 #if defined(_WIN32)
-	ret = CreateDirectoryA(path, NULL);
+	// System calls are dodgy, you would not like a console randomly popup...
+	char temp[512];
+	sprintf(temp, "mkdir -p %s", path);
+	system(temp);	
+	//ret = CreateDirectoryA(path, NULL);
 #elif defined(ANDROID) || defined(__linux__)
 	ret = (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) > 0);
 #endif
@@ -76,7 +80,6 @@ bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 	bool ret = true;
 	std::string exec_path = std::string(SQUE_FS_GetExecPath()) + FOLDER_ENDING + path;
 	
-
 	SQUE_FS_CreateDirFullPath(exec_path.c_str());
 
 #if defined(_WIN32)
@@ -286,8 +289,8 @@ uint32_t AddToParent(const uint32_t id, const char* location, sque_vec<SQUE_Dir>
 void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dirs)
 {
 	dirs->push_back(SQUE_FS_GenDir(location));
-
-	for (auto& file : std::filesystem::recursive_directory_iterator((*dirs)[0].location))
+	sque_vec<SQUE_Dir>& dirs_v = *dirs;
+	for (auto& file : std::filesystem::recursive_directory_iterator(location))
 	{
 		if (file.is_directory())
 		{
@@ -312,9 +315,9 @@ sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, cons
 {
 	for (uint32_t i = 0; i < assets_in_dir.size(); ++i)
 	{
-		assets_in_dir[i]->status = 0;
+		assets_in_dir[i]->status_flags = 0;
 		if (!std::filesystem::exists(assets_in_dir[i]->location))
-			assets_in_dir[i]->status = 2;
+			SET_FLAG(assets_in_dir[i]->status_flags, SQ_AS_DELETED);
 	}
 	sque_vec<SQUE_FW_NewAsset*> new_items;
 	for (auto& file : std::filesystem::recursive_directory_iterator(path))
@@ -323,7 +326,7 @@ sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, cons
 		uint32_t i;
 		for (i = 0; i < assets_in_dir.size(); ++i)
 		{
-			if (assets_in_dir[i]->status == 2) continue;
+			if (CHK_FLAG(assets_in_dir[i]->status_flags,SQ_AS_DELETED)) continue;
 			if (strcmp(assets_in_dir[i]->location, file.path().string().c_str()) == 0)
 				break;
 		}
@@ -333,7 +336,7 @@ sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, cons
 			if (last_update != assets_in_dir[i]->last_update)
 			{
 				assets_in_dir[i]->last_update;
-				assets_in_dir[i]->status = 1;
+				SET_FLAG(assets_in_dir[i]->status_flags, SQ_AS_CHANGED);
 			}
 		}
 		else
