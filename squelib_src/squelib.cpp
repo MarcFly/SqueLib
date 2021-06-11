@@ -229,6 +229,10 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
 
     // Rendering Lib
     SQUE_RENDER_Init();
+    if (CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER))
+    {
+        InitGLDebug();
+    }
 
     // Filesystem Lib
     SQUE_FS_Init();

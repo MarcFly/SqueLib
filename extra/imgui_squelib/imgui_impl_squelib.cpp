@@ -130,7 +130,7 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 				if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
 				{
 					SQUE_RENDER_Scissor((int32_t)clip_rect.x, (int32_t)(fb_height - clip_rect.w), (int32_t)(clip_rect.z - clip_rect.x), (int32_t)(clip_rect.w - clip_rect.y));
-					SQUE_TEXTURE_Bind((uint32_t)(intptr_t)pcmd->TextureId, SQUE_TEXTURE_2D);
+					SQUE_TEXTURE_Bind((uint32_t)pcmd->TextureId, SQUE_TEXTURE_2D);
 					SQUE_RENDER_DrawIndices(sque_dataHandle, pcmd->IdxOffset, pcmd->ElemCount);
 				}
 			}

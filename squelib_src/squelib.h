@@ -528,7 +528,7 @@ struct SQUE_Program
 	uint32_t id = 0;
 	uint32_t shaders[2];
 	sque_vec<SQUE_Uniform> uniforms;
-	sque_vec<SQUE_VertAttrib> attributes;
+	//sque_vec<SQUE_VertAttrib> attributes;
 	// IDs of the shaders // Order by execution stage
 	// 0 Vertex -> 1 Fragment 
 	// Geometry, Tesselation and Compute will be added later if I want to and have time to
@@ -587,7 +587,9 @@ public:
 																																																																																										
 	int32_t polygon_mode[2];																													
 	bool blend, cull_faces, depth_test, scissor_test;																					
-																																		
+						
+	int32_t draw_framebuffer, read_framebuffer;
+
 	SQ_API void SetUp();																												
 	SQ_API void BackUp();
 
@@ -651,8 +653,8 @@ SQ_API void SQUE_FRAMEBUFFER_BindRenderType(const uint32_t renderbuffer_id);
 SQ_API void SQUE_FRAMEBUFFER_SetRenderTypeInfo(const uint32_t type, const uint32_t width, const uint32_t height);
 SQ_API void SQUE_FRAMEBUFFER_AttachRenderType(const uint32_t attachment_type, const uint32_t attachment_id);
 SQ_API void SQUE_FRAMEBUFFER_AttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
-SQ_API void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
-SQ_API void SQUE_FRAMEBUFFER_CheckStatus();
+SQ_API void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t* attachments, const uint32_t size = 1);
+SQ_API uint32_t SQUE_FRAMEBUFFER_CheckStatus();
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

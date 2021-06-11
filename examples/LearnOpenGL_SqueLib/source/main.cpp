@@ -45,6 +45,12 @@ static float vertices1[] = {
      0.0f,  0.5f, 0.0f
 };
 
+static float vertices[] = {
+    -1, -1, 0.0f,
+     1, -1, 0.0f,
+     0.0f,  1, 0.0f
+};
+
 static bool loaded_ch1 = false; 
 static bool render_ch1 = true;
 SQUE_Mesh triangle1;
@@ -64,6 +70,7 @@ void LearnOpenGL_1_Vertices()
         SQUE_MESH_GenBuffer(&triangle1);
         SQUE_MESH_BindBuffer(triangle1);
         SQUE_MESH_AddAttribute(&triangle1, "aPos", SQUE_FLOAT, false, 3);
+        SQUE_MESH_InterleaveOffsets(&triangle1);
         SQUE_MESH_SetLocations(&triangle1);
         SQUE_MESH_SendToGPU(triangle1, vertices1);
 
@@ -1044,6 +1051,59 @@ void LearnOpenGL_6_2_CameraLook()
     }
 }
 
+// LearnOpenGL7_Framebuffers Render To Texture / Framebuffers
+static bool loaded_ch7 = false;
+static bool render_ch7 = true;
+SQUE_Framebuffer fb;
+SQUE_Texture fb_tex;
+void LearnOpenGL_7_Framebuffers()
+{
+
+    SQUE_RenderState t;
+    t.BackUp();
+    ImVec2 cr = ImVec2(100, 100); // ImGui::GetItemRectSize();
+    if (!loaded_ch7)
+    {
+        
+        SQUE_TEXTURE_GenBufferIDs(1, &fb_tex.id);
+        SQUE_TEXTURE_SetFormat(&fb_tex, SQUE_TEXTURE_2D, SQUE_RGB, SQUE_RGB, SQUE_UBYTE);
+        SQUE_TEXTURE_Bind(fb_tex.id, fb_tex.dim_format);
+        
+        fb_tex.w = cr.x;
+        fb_tex.h = cr.y;
+        SQUE_TEXTURE_AddAttribute(&fb_tex, "min_filter", SQUE_MIN_FILTER, SQUE_NEAREST);
+        SQUE_TEXTURE_AddAttribute(&fb_tex, "mag_filter", SQUE_MAG_FILTER, SQUE_LINEAR);
+        SQUE_TEXTURE_ApplyAttributes(fb_tex);
+        SQUE_TEXTURE_SendAs2DToGPU(texture_ch3, NULL);
+
+        SQUE_FRAMEBUFFER_GenerateID(&fb.id);
+        fb.type = SQUE_FBO;
+        fb.width = fb_tex.w;
+        fb.height = fb_tex.h;
+
+        SQUE_FRAMEBUFFER_Bind(fb.type, fb.id);
+        fb.textures.push_back(fb_tex);
+        SQUE_FRAMEBUFFER_AttachTexture(0, fb.textures[0].id);
+        uint32_t attach = SQUE_COLOR_ATTACHMENT0;
+        SQUE_FRAMEBUFFER_SetDrawBuffers(&attach, 1);
+        loaded_ch7 = true;
+    }
+    
+    SQUE_FRAMEBUFFER_Bind(fb.type, fb.id);
+    SQUE_TEXTURE_Bind(fb_tex.id, fb_tex.dim_format);
+    fb_tex.w = cr.x;
+    fb_tex.h = cr.y;
+    SQUE_TEXTURE_SendAs2DToGPU(fb_tex, NULL);
+    
+    SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+    SQUE_PROGRAM_Use(triangle_program1.id);
+    SQUE_RENDER_DrawVertices(triangle1);
+
+    ImGui::Image((void*)fb.textures[0].id, ImVec2(100, 100), ImVec2(0, 1), ImVec2(1, 0));
+
+    t.SetUp();
+}
+
 int main(int argc, char**argv)
 {
     bool ret = true;
@@ -1088,7 +1148,7 @@ int main(int argc, char**argv)
         {
             ImGui_ImplSqueLib_NewFrame();
             ImGui::NewFrame();
-            ImGui::Begin("Settings");
+            ImGui::Begin("Settings",NULL, ImGuiWindowFlags_HorizontalScrollbar);
             {
                 static int current_it = 0;
                 if (ImGui::BeginCombo("Example Selection", items[current_it]))
@@ -1106,8 +1166,7 @@ int main(int argc, char**argv)
                     ImGui::EndCombo();
                 }
             }
-            ImGui::End();
-            ImGui::Render();
+            
 
             // All LearnOpenGL chapters, each has functions per the steps shown
             // Hello Triangle
@@ -1132,6 +1191,12 @@ int main(int argc, char**argv)
             LearnOpenGL_6_Camera();
             LearnOpenGL_6_1_CameraMovement();
             LearnOpenGL_6_2_CameraLook();
+
+            // Framebuffers
+            LearnOpenGL_7_Framebuffers();
+            
+            ImGui::End();
+            ImGui::Render();
 
             ImGui_ImplSqueLib_Render(ImGui::GetDrawData());
         }

@@ -88,24 +88,24 @@ void SQUE_PROGRAM_Use(const uint32_t program_id)
 #endif
 }
 
-void SQUE_PROGRAM_CacheAttributes(SQUE_Program* program)
-{
-   int32_t count;
-   glGetProgramiv(program->id, GL_ACTIVE_ATTRIBUTES, &count);
-   program->attributes.clear();
-   int32_t l;
-   for(uint16_t i = 0; i < count; ++i)
-   {
-       program->attributes.push_back(SQUE_VertAttrib());
-       SQUE_VertAttrib* v = program->attributes.last();
-       v->id = i;
-       GLint v_size;
-       GLenum v_type;
-       glGetActiveAttrib(program->id, i, sizeof(v->name), &l, &v_size, &v_type, v->name);
-       v->var_size = v_size;
-       v->var_type = v_type;
-   } 
-}
+//void SQUE_PROGRAM_CacheAttributes(SQUE_Program* program)
+//{
+//   int32_t count;
+//   glGetProgramiv(program->id, GL_ACTIVE_ATTRIBUTES, &count);
+//   program->attributes.clear();
+//   int32_t l;
+//   for(uint16_t i = 0; i < count; ++i)
+//   {
+//       program->attributes.push_back(SQUE_VertAttrib());
+//       SQUE_VertAttrib* v = program->attributes.last();
+//       v->id = i;
+//       GLint v_size;
+//       GLenum v_type;
+//       glGetActiveAttrib(program->id, i, sizeof(v->name), &l, &v_size, &v_type, v->name);
+//       v->var_size = v_size;
+//       v->var_type = v_type;
+//   } 
+//}
 
 void SQUE_PROGRAM_CacheUniforms(SQUE_Program* program)
 {

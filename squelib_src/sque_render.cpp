@@ -46,6 +46,9 @@ void SQUE_RenderState::SetUp()
 #   ifdef USE_OPENGL
     glPolygonMode(SQUE_FRONT_AND_BACK, (GLenum)polygon_mode[0]);
 #   endif
+
+    glBindFramebuffer(SQUE_DRAW_FBO, draw_framebuffer);
+    glBindFramebuffer(SQUE_READ_FBO, read_framebuffer);
 #endif
 
     //SQUE_CHECK_RENDER_ERRORS();
@@ -73,6 +76,8 @@ void SQUE_RenderState::BackUp()
     glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
 #   endif
 
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_framebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_framebuffer);
 #endif
 
     //SQUE_CHECK_RENDER_ERRORS();
@@ -404,6 +409,7 @@ void InitGLDebug()
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glDebug, 0);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, false);
 }
 #else
 void InitGLDebug()
@@ -459,22 +465,32 @@ void SQUE_FRAMEBUFFER_AttachRenderType(const uint32_t attachment_type, const uin
 void SQUE_FRAMEBUFFER_AttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment, texture_id, mipmap_level);
+    glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, texture_id, mipmap_level);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, mipmap_level);
 #endif
 }
 
-void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t attachments[], const uint32_t size)
+void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t* attachments, const uint32_t size)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glDrawBuffers(size, attachments);
 #endif
 }
 
-void SQUE_FRAMEBUFFER_CheckStatus()
+uint32_t SQUE_FRAMEBUFFER_CheckStatus()
 {
     bool fb_status;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    fb_status = (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE);
+    return glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    //fb_status = (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE);
+
+    GL_FRAMEBUFFER_COMPLETE;
+    GL_FRAMEBUFFER_UNDEFINED; // 33305
+    GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT; // 36054
+    GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT; //+1
+    GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER; //+2
+    GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER; //36060
+    GL_FRAMEBUFFER_UNSUPPORTED; //+1
         
 #endif
     if(!fb_status) SQUE_CHECK_RENDER_ERRORS();
