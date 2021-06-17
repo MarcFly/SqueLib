@@ -80,11 +80,11 @@ class SQUE_InStream
 
 	char* _readpos;
 	uint64_t _readpos_n;
-
-
+public:
+	SQUE_InStream() {};
 	SQUE_InStream(SQUE_Asset* asset) : _data(asset), _readpos(asset->raw_data), _readpos_n(0) {};
 	~SQUE_InStream() { delete _data; _readpos = NULL; }
-public:
+
 	uint64_t GetSize() const { return _data->size; };
 	uint64_t GetReadPos() const { return _readpos_n; }
 
@@ -98,7 +98,7 @@ public:
 	}
 
 	template<class T>
-	void ReadBytes(T* to, uint32_t num_items)
+	void ReadBytes(T* to, uint32_t num_items = 1)
 	{
 		memcpy(to, &_data->raw_data[_readpos_n], num_items * sizeof(T));
 		_readpos_n += num_items * sizeof(T);

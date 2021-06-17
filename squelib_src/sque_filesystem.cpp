@@ -103,7 +103,7 @@ SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 	
 	char* data = NULL;
 	std::ifstream in;
-	in.open(file, std::ios::binary | std::ios::in);
+	in.open(file, std::ifstream::binary);
 	if(!in) return NULL;
 	in.seekg(0, std::ios::end);
 	int len = in.tellg();
@@ -126,7 +126,7 @@ bool SQUE_FS_WriteFileRaw(const char* path, char* data, const uint64_t size)
 		return false;
 
 	std::ofstream write_file;
-	write_file.open(path, std::fstream::out | std::fstream::binary);
+	write_file.open(path, std::ofstream::binary);
 	write_file.write(data, size);
 	write_file.close();
 

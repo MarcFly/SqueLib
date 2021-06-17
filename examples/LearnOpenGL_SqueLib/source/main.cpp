@@ -1056,15 +1056,17 @@ static bool loaded_ch7 = false;
 static bool render_ch7 = true;
 SQUE_Framebuffer fb;
 SQUE_Texture fb_tex;
+SQUE_Timer ch7_timer;
+
 void LearnOpenGL_7_Framebuffers()
 {
 
     SQUE_RenderState t;
     t.BackUp();
-    ImVec2 cr = ImVec2(100, 100); // ImGui::GetItemRectSize();
+    ImVec2 cr = ImGui::GetContentRegionAvail();
     if (!loaded_ch7)
     {
-        
+        ch7_timer.Start();
         SQUE_TEXTURE_GenBufferIDs(1, &fb_tex.id);
         SQUE_TEXTURE_SetFormat(&fb_tex, SQUE_TEXTURE_2D, SQUE_RGB, SQUE_RGB, SQUE_UBYTE);
         SQUE_TEXTURE_Bind(fb_tex.id, fb_tex.dim_format);
@@ -1091,15 +1093,17 @@ void LearnOpenGL_7_Framebuffers()
     
     SQUE_FRAMEBUFFER_Bind(fb.type, fb.id);
     SQUE_TEXTURE_Bind(fb_tex.id, fb_tex.dim_format);
-    fb_tex.w = cr.x;
+    uint32_t time = ch7_timer.ReadMilliSec() / 1000;
+    fb_tex.w = cr.x/2;
     fb_tex.h = cr.y;
     SQUE_TEXTURE_SendAs2DToGPU(fb_tex, NULL);
-    
-    SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f));
+    SQUE_RENDER_SetViewport(0, 0, cr.x, cr.y);
+
+    SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
     SQUE_PROGRAM_Use(triangle_program1.id);
     SQUE_RENDER_DrawVertices(triangle1);
 
-    ImGui::Image((void*)fb.textures[0].id, ImVec2(100, 100), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image((void*)fb.textures[0].id,ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 
     t.SetUp();
 }

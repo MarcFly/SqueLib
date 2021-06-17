@@ -453,6 +453,7 @@ SQ_API void SQUE_MESH_BindVertices(const uint32_t vert_id);
 SQ_API void SQUE_MESH_BindIndices(const uint32_t index_id);
 SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
 SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
+SQ_API void SQUE_MESH_FreeFromGPU(const SQUE_Mesh& mesh);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -491,6 +492,7 @@ SQ_API void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, i
 SQ_API void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, float value);
 
 SQ_API void SQUE_TEXTURE_GenBufferIDs(const uint32_t num, uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_FreeFromGPU(const uint32_t num, const uint32_t* tex_ids);
 SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
 SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
 SQ_API void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex);
@@ -589,6 +591,8 @@ public:
 	bool blend, cull_faces, depth_test, scissor_test;																					
 						
 	int32_t draw_framebuffer, read_framebuffer;
+
+	int32_t vp[4];
 
 	SQ_API void SetUp();																												
 	SQ_API void BackUp();

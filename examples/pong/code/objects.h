@@ -3,17 +3,7 @@
 
 #include <squelib.h>
 
-float quad[] = {
-    1,  1,
-    1, -1,
-    -1, -1,
-    -1,  1
-};
 
-uint32_t quad_indices[]{
-    0,1,3,
-    1,2,3
-};
 
 struct Paddle {
     float x, y;

@@ -16,8 +16,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
 
-project(SqueLifeApp    VERSION 2020.1
-                    DESCRIPTION "Test Life App for personal financial and health wellbeing"
+project(SqueArkanoid    VERSION 2020.1
+                    DESCRIPTION "Arkanoid Example for Squelib"
                     LANGUAGES C CXX)
 # C/CXX Requirements
 set(CMAKE_CXX_STANDARD 17) # Currently using <filesystem> for easy output and folder creation
@@ -28,10 +28,18 @@ set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but 
 #------------------------------------------------------------------------------------------------
 # SETUP WITH SQUELIB - Generates a target and sets it up to work with SqueLib
 #------------------------------------------------------------------------------------------------
-file(GLOB_RECURSE code "${CMAKE_CURRENT_SOURCE_DIR}/code/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/code/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/code/*.c")
-SqueLib_PrepareBuild(SqueLifeApp MarcTorresJimenez "${code}")
-SqueLib_Package("${CMAKE_CURRENT_SOURCE_DIR}/Assets" "")
+
+file(GLOB_RECURSE ARK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/code/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/code/*.h")
+
+
+SqueLib_PrepareBuild(SqueArkanoid MarcTorresJimenez "${ARK_SRC}" "${CMAKE_CURRENT_SOURCE_DIR}/code")
+SqueLib_Package("${CMAKE_CURRENT_SOURCE_DIR}/Assets" "${CMAKE_CURRENT_SOURCE_DIR}/Resources")
 
 #------------------------------------------------------------------------------------------------
 # CONTINUE SETUP
 #------------------------------------------------------------------------------------------------
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/code" 
+    PREFIX "code" 
+    FILES ${ARK_SRC}
+)

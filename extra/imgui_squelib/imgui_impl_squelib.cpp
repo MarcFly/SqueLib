@@ -72,9 +72,13 @@ static void*			sque_fontPixels;
 void ImGui_ImplSqueLib_VariableRenderState(ImDrawData* draw_data, int32_t  fb_width, int32_t fb_height)
 {
 	SQUE_RENDER_SetViewport(0, 0, fb_width, fb_height);
+	sque_renderState.vp[0] = sque_backupState.vp[0];
+	sque_renderState.vp[1] = sque_backupState.vp[1];
+	sque_renderState.vp[2] = sque_backupState.vp[2];
+	sque_renderState.vp[3] = sque_backupState.vp[3];
 	sque_renderState.SetUp();
 	SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE0);
-
+	SQUE_TEXTURE_Bind(sque_fontTexture.id, sque_fontTexture.dim_format);
 	float L = draw_data->DisplayPos.x;
 	float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
 	float T = draw_data->DisplayPos.y;
@@ -99,6 +103,8 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 
 	int32_t fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
 	int32_t fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
+	int32_t x, y, w, h;
+	SQUE_RENDER_GetViewport(&x, &y, &w, &h);
 	if (fb_width <= 0 || fb_height <= 0) return;
 
 	ImGui_ImplSqueLib_VariableRenderState(draw_data, fb_width, fb_height);
@@ -137,8 +143,6 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 		}
 
 	}
-	//sque_dataHandle.ChangeVertData(0, NULL);
-	//sque_dataHandle.ChangeIndexData(0, NULL);
 
 	sque_backupState.SetUp();
 }
@@ -148,7 +152,6 @@ void ImGui_ImplSqueLib_PrepareBuffers()
 	sque_backupState.BackUp();
 
 	SQUE_MESH_GenBuffer(&sque_dataHandle);
-	//SQUE_RENDER_GenerateMeshBuffer(&sque_dataHandle.vert_id, &sque_dataHandle.index_id, &sque_dataHandle.attribute_object);
 	SQUE_MESH_SetDrawConfig(&sque_dataHandle, SQUE_TRIANGLES, SQUE_STREAM_DRAW);
 
 	sque_dataHandle.attributes.push_back(SQUE_VertAttrib("Position", SQUE_FLOAT, false, 2));
@@ -180,10 +183,6 @@ void ImGui_ImplSqueLib_CreateShaderProgram()
 	SQUE_PROGRAM_Link(sque_shaderProgram.id);
 	
 	SQUE_PROGRAM_CacheUniforms(&sque_shaderProgram);
-
-	//SQUE_SHADERS_DeclareProgram(sque_shaderProgram.id, 2, sque_shaderProgram.uniform_ref);
-	//SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "Texture");
-	//SQUE_SHADERS_DeclareUniform(sque_shaderProgram.uniform_ref, "ProjMtx");
 
 	ImGui_ImplSqueLib_PrepareBuffers();
 

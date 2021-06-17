@@ -51,6 +51,8 @@ void SQUE_RenderState::SetUp()
     glBindFramebuffer(SQUE_READ_FBO, read_framebuffer);
 #endif
 
+    SQUE_RENDER_SetViewport(vp[0], vp[1], vp[2], vp[3]);
+
     //SQUE_CHECK_RENDER_ERRORS();
 }
 
@@ -79,6 +81,8 @@ void SQUE_RenderState::BackUp()
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_framebuffer);
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_framebuffer);
 #endif
+
+    SQUE_RENDER_GetViewport(&vp[0], &vp[1], &vp[2], &vp[3]);
 
     //SQUE_CHECK_RENDER_ERRORS();
 }
@@ -295,6 +299,14 @@ void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
     if (indices != NULL) SQUE_MESH_SendIndicesToGPU(mesh, indices);
 }
 
+void SQUE_MESH_FreeFromGPU(const SQUE_Mesh& mesh)
+{
+    glDeleteVertexArrays(1, &mesh.attribute_object);
+    glDeleteBuffers(1, &mesh.vert_id);
+    if (mesh.index_id != -1)
+        glDeleteBuffers(1, &mesh.index_id);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VERTEX ATTRIBUTE MANAGEMENT ///////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -465,7 +477,7 @@ void SQUE_FRAMEBUFFER_AttachRenderType(const uint32_t attachment_type, const uin
 void SQUE_FRAMEBUFFER_AttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, texture_id, mipmap_level);
+    //glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, texture_id, mipmap_level);
     glFramebufferTexture2D(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, mipmap_level);
 #endif
 }

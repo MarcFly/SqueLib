@@ -61,6 +61,11 @@ void SQUE_TEXTURE_GenBufferIDs(const uint32_t num, uint32_t* tex_ids)
 #endif
 }
 
+void SQUE_TEXTURE_FreeFromGPU(const uint32_t num, const uint32_t* tex_ids)
+{
+    glDeleteTextures(num, tex_ids);
+}
+
 void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
