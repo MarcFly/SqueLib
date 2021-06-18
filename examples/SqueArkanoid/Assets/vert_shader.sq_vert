@@ -5,10 +5,11 @@ uniform vec2 vp;
 out vec2 uv;
 void main()
 {
-    vec2 ndc_pos = 2.*((pos / vp) - vec2(.5));
-    vec2 ndc_max = 2.*((pos+size) / vp) - vec2(.5);
-    vec2 ndc_size = ( (vertPos-ndc_pos) / abs(vertPos-ndc_pos) ) * (size / vp);
     uv = (vertPos+vec2(1.,1.)) / 2.;
-    vec2 to1 = vertPos + 1 / 2;
-    gl_Position = vec4(ndc_pos+to1*ndc_max, 0,1);
+
+    vec2 pre_pos = pos + uv * size;
+    vec2 ndc_pos = 2.*((pre_pos / vp) - vec2(.5));
+    vec2 ndc_size = ((vertPos-ndc_pos) / abs(vertPos-ndc_pos) )  * (1 / vp);
+    
+    gl_Position = vec4(ndc_pos, 0,1);
 }

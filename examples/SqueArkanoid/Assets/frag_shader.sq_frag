@@ -4,5 +4,5 @@ uniform sampler2D atlas;
 in vec2 uv;
 void main()
 {
-    FragColor = vec4(texture2D(atlas, uv).rgba);
+    FragColor = vec4(texture2D(atlas, uv).rgba) * clamp(vec4(col, 1.), 0, 1);
 }
