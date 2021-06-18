@@ -27,6 +27,16 @@ void EntitiesUpdate(float dt)
 	for (uint32_t i = 0; i < sound_queue.size(); ++i)
 		audio_master.play(*sound_queue[i]);
 	sound_queue.clear();
+
+	for (uint32_t i = 0; i < entities.size(); ++i)
+	{
+		if (entities[i]->to_delete)
+		{
+			SQUE_Swap(&entities[i], entities.last());
+			entities.pop_back();
+			--i;
+		}
+	}
 }
 
 void EntitiesCleanUp()

@@ -14,6 +14,7 @@ Player::~Player()
 
 void Player::Init()
 {
+	paddle_timer.Start();
 	tex_handle = 0;
 	sound_handle = 0;
 
@@ -26,8 +27,26 @@ void Player::Init()
 	pos.y = wy / 10;
 }
 
+static float x, y;
+static int32_t wx, wy;
+
 void Player::Update(float dt)
 {
+	// Movement
+	SQUE_INPUT_GetPointerPos(&x, &y);
+	SQUE_DISPLAY_GetWindowSize(&wx, &wy);
+	if (x < pos.x - size.x/2)
+		pos.x -= wx * dt;
+	else if (x > pos.x + size.x/2)
+		pos.x += wx * dt;
+
+	// Correct if out of bounds
+	if (pos.x + size.x / 2 > wx)
+		pos.x -= pos.x + size.x / 2 - wx;
+	else if (pos.x - size.x / 2 < 0)
+		pos.x -= pos.x - size.x / 2;
+
+	// ?
 
 }
 
@@ -36,8 +55,13 @@ void Player::CleanUp()
 
 }
 
-glm::vec2 Player::OnCollision(glm::vec2 dir_speed, uint32_t ball_state)
+void Player::OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos)
 {
-	return dir_speed;
+	bool test = false;
+	if (c_pos.x < pos.x - size.x/3.)
+		dir_speed->x = -1. * abs(dir_speed->x);
+	if (c_pos.x > pos.x + size.x/3.)
+		dir_speed->x = abs(dir_speed->x);
+		
 }
 

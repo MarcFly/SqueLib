@@ -44,8 +44,9 @@ int main(int argc, char** arv)
 
     while(!SQUE_DISPLAY_ShouldWindowClose())
     {
-        dt = timer.ReadMilliSec();
+        dt = timer.ReadMilliSec() / 1000.;
         timer.Start();
+        dt = std::clamp(dt, 0.f, 1 / 30.f);
         SQUE_RENDER_Clear(clear_col, SQUE_DEPTH_BIT | SQUE_COLOR_BIT);
         SQUE_INPUT_Process(0);
 

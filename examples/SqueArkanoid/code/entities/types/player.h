@@ -9,11 +9,13 @@ public:
 	Player();
 	~Player();
 
-	void Init();
-	void Update(float dt);
-	void CleanUp();
+	SQUE_Timer paddle_timer;
 
-	glm::vec2 OnCollision(glm::vec2 dir_speed, uint32_t ball_state);
+	void Init() override;
+	void Update(float dt) override;
+	void CleanUp() override;
+
+	void OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos) override;
 };
 
 

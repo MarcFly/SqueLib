@@ -12,16 +12,18 @@ public:
     Entity() {};
     ~Entity() {};
 
-    glm::vec2 pos;
-    glm::vec2 size;
+    bool to_delete = false;
 
-    uint32_t tex_handle;
-    uint32_t sound_handle;
+    glm::vec2 pos = { 0,0 };
+    glm::vec2 size = { 10,10 };
+
+    uint32_t tex_handle = 0;
+    uint32_t sound_handle = 0;
 
     virtual void Init() {}
     virtual void Update(float dt) {}
     virtual void CleanUp() {}
-    virtual glm::vec2 OnCollision(glm::vec2 dir_speed, uint32_t ball_state) { return dir_speed; }
+    virtual void OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos) {}
     // Ball state is what color went before -> effects, bonus points,...
     // Vector returs depends on the block and interaction between colors
 

@@ -25,7 +25,7 @@ void RenderLoadTex(const char* asset)
     //SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE0 + render.textures.size() + 1);
     SQUE_TEXTURE_Bind(tex->id, tex->dim_format);
 
-    SQUE_TEXTURE_AddAttribute(tex, "min_filter", SQUE_MIN_FILTER, SQUE_NEAREST);
+    SQUE_TEXTURE_AddAttribute(tex, "min_filter", SQUE_MIN_FILTER, SQUE_LINEAR);
     SQUE_TEXTURE_AddAttribute(tex, "mag_filter", SQUE_MAG_FILTER, SQUE_LINEAR);
     SQUE_TEXTURE_ApplyAttributes(*tex);
 
@@ -81,7 +81,12 @@ void RenderInit()
     RenderLoadTex("2d/element_red_rectangle.png");
     RenderLoadTex("2d/element_purple_rectangle.png");
     
-      
+    // Render State...
+    render.state.BackUp();
+    render.state.blend = true;
+    render.state.blend_func_separate = false;
+    render.state.blend_func_dst_alpha = SQUE_ONE_MINUS_SRC_ALPHA;
+    render.state.blend_func_src_alpha = SQUE_SRC_ALPHA;
 }
 
 #include "../entities/entity.h"
@@ -89,7 +94,9 @@ void RenderInit()
 
 void RenderUpdate(float dt)
 {
-    render.state.BackUp();
+    SQUE_RenderState temp;
+    temp.BackUp();
+    render.state.SetUp();
 
     SQUE_PROGRAM_Use(render.program.id);
 
@@ -116,7 +123,7 @@ void RenderUpdate(float dt)
         SQUE_RENDER_DrawIndices(render.quad_descriptor);
     }
 
-    render.state.SetUp();
+    temp.SetUp();
 }
 
 void RenderCleanUp()

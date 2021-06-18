@@ -27,6 +27,10 @@ void PlayScene::Setup(uint32_t level)
 	// Load all the Blocks where they should
 	// Player will always be 0 and Ball 1 in vector position (for ease of use)
 	EntitiesAdd(new Player());
+	EntitiesAdd(new Ball());
+
+	EntitiesAdd(new Block(2, glm::vec2(0, 0)));
+	EntitiesAdd(new Block(1, glm::vec2(0, 0)));
 }
 
 void PlayScene::Update()
