@@ -87,6 +87,7 @@ void RenderInit()
     render.state.blend_func_separate = false;
     render.state.blend_func_dst_alpha = SQUE_ONE_MINUS_SRC_ALPHA;
     render.state.blend_func_src_alpha = SQUE_SRC_ALPHA;
+    render.state.scissor_test = false;
 }
 
 #include "../entities/entity.h"
@@ -105,7 +106,25 @@ void RenderUpdate(float dt)
     SQUE_RENDER_GetViewport(&n1, &n2, &vx, &vy);
     SetFloat2(SQUE_PROGRAM_GetUniformID(render.program, "vp"), glm::value_ptr(glm::vec2(vx,vy)));
     float red[3] = { 1,0,0 };
-    SetFloat3(SQUE_PROGRAM_GetUniformID(render.program, "col"), red);
+    
+    // Loop through background... it is bad
+    const sque_vec<Entity*>& bg_entities = EntitiesGetBg();
+    for (uint32_t i = 0; i < bg_entities.size(); ++i)
+    {
+        // How to bind textures properly?
+        const SQUE_Texture& tex = render.textures[bg_entities[i]->tex_handle];
+        uint32_t tex_unit = bg_entities[i]->tex_handle + 1; // Unit 0 is for ImGui
+        SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE0);// + bg_entities[i]->tex_handle+1);
+        SQUE_TEXTURE_Bind(tex.id, tex.dim_format);
+
+        SetInt(SQUE_PROGRAM_GetUniformID(render.program, "atlas"), 0);
+        SetFloat2(SQUE_PROGRAM_GetUniformID(render.program, "pos"), glm::value_ptr(bg_entities[i]->pos));
+        SetFloat2(SQUE_PROGRAM_GetUniformID(render.program, "size"), glm::value_ptr(bg_entities[i]->size));
+        SetFloat3(SQUE_PROGRAM_GetUniformID(render.program, "col"), glm::value_ptr(bg_entities[i]->col));
+
+        SQUE_RENDER_DrawIndices(render.quad_descriptor);
+    }
+
     //Loop through all entities and draw them all
     const sque_vec<Entity*>& entities = EntitiesGet();
     for (uint32_t i = 0; i < entities.size(); ++i)
@@ -117,9 +136,10 @@ void RenderUpdate(float dt)
         SQUE_TEXTURE_Bind(tex.id, tex.dim_format);
 
         SetInt(SQUE_PROGRAM_GetUniformID(render.program, "atlas"), 0);// entities[i]->tex_handle + 1);
-        SetFloat2(SQUE_PROGRAM_GetUniformID(render.program, "center"), glm::value_ptr(entities[i]->pos));
+        SetFloat2(SQUE_PROGRAM_GetUniformID(render.program, "pos"), glm::value_ptr(entities[i]->pos));
         SetFloat2(SQUE_PROGRAM_GetUniformID(render.program, "size"), glm::value_ptr(entities[i]->size));
-        
+        SetFloat3(SQUE_PROGRAM_GetUniformID(render.program, "col"), glm::value_ptr(entities[i]->col));
+
         SQUE_RENDER_DrawIndices(render.quad_descriptor);
     }
 

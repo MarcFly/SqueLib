@@ -55,8 +55,9 @@ void UiPreUpdate()
     // ImGui Begin an empty window in which to draw in...
     int32_t vpx, vpy;
     SQUE_DISPLAY_GetWindowSize(&vpx, &vpy);
-    ImGui::SetNextWindowSize(ImVec2(vpx,vpy));
-    ImGui::SetNextWindowPos(ImVec2(0, 0)); // Will be like 0, -20 in release...
+    
+    ImGui::SetNextWindowSize(ImVec2(vpx,vpy + 20));
+    ImGui::SetNextWindowPos(ImVec2(0, -20));
     ImGui::Begin("UI_Window", NULL, (items[1]->active * ImGuiWindowFlags_NoBackground) | ImGuiWindowFlags_NoDecoration);
 
 }

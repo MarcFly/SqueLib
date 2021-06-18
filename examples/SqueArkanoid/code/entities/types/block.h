@@ -7,7 +7,7 @@ class Block : public Entity
 {
 public:
 	Block();
-	Block(uint16_t _tier, glm::vec2 _pos);
+	Block(uint16_t _tier, glm::vec2 _pos, float size_mult = 1);
 	~Block();
 
 	uint16_t tier;

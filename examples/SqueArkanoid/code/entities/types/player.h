@@ -10,6 +10,7 @@ public:
 	~Player();
 
 	SQUE_Timer paddle_timer;
+	uint32_t hp = 3;
 
 	void Init() override;
 	void Update(float dt) override;

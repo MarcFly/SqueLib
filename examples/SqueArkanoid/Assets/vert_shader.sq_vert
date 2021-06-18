@@ -1,12 +1,14 @@
 layout (location = 0) in vec2 vertPos;
-uniform vec2 center;
+uniform vec2 pos;
 uniform vec2 size;
 uniform vec2 vp;
 out vec2 uv;
 void main()
 {
-    vec2 ndc_pos = 2.*((center / vp) - vec2(.5));
+    vec2 ndc_pos = 2.*((pos / vp) - vec2(.5));
+    vec2 ndc_max = 2.*((pos+size) / vp) - vec2(.5);
     vec2 ndc_size = ( (vertPos-ndc_pos) / abs(vertPos-ndc_pos) ) * (size / vp);
     uv = (vertPos+vec2(1.,1.)) / 2.;
-    gl_Position = vec4(ndc_pos+ndc_size, 0,1);
+    vec2 to1 = vertPos + 1 / 2;
+    gl_Position = vec4(ndc_pos+to1*ndc_max, 0,1);
 }

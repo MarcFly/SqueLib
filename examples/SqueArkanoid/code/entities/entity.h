@@ -13,7 +13,7 @@ public:
     ~Entity() {};
 
     bool to_delete = false;
-
+    glm::vec3 col = { 1,1,1 };
     glm::vec2 pos = { 0,0 };
     glm::vec2 size = { 10,10 };
 
@@ -36,7 +36,9 @@ void EntitiesUpdate(float dt);
 void EntitiesCleanUp();
 
 void EntitiesAdd(Entity* e);
+void EntitiesAddBackground(Entity* e);
 void EntitiesClear();
 const sque_vec<Entity*>& EntitiesGet();
+const sque_vec<Entity*>& EntitiesGetBg();
 
 #endif

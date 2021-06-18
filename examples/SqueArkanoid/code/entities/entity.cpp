@@ -1,5 +1,6 @@
 #include "entity.h"
 
+static sque_vec<Entity*> background;
 static sque_vec<Entity*> entities;
 
 // Separate audio into new module?
@@ -50,6 +51,11 @@ void EntitiesAdd(Entity* e)
 	entities.push_back(e);
 }
 
+void EntitiesAddBackground(Entity* e)
+{
+	background.push_back(e);
+}
+
 void EntitiesClear()
 {
 	for (uint32_t i = 0; i < entities.size(); ++i)
@@ -60,4 +66,9 @@ void EntitiesClear()
 const sque_vec<Entity*>& EntitiesGet()
 {
 	return entities;
+}
+
+const sque_vec<Entity*>& EntitiesGetBg()
+{
+	return background;
 }

@@ -23,7 +23,7 @@ void Player::Init()
 	size.x = wx / 10;
 	size.y = wy / 20;
 
-	pos.x = wx / 2;
+	pos.x = wx / 2 - size.x/2.;
 	pos.y = wy / 10;
 }
 
@@ -35,16 +35,16 @@ void Player::Update(float dt)
 	// Movement
 	SQUE_INPUT_GetPointerPos(&x, &y);
 	SQUE_DISPLAY_GetWindowSize(&wx, &wy);
-	if (x < pos.x - size.x/2)
+	if (x < pos.x)
 		pos.x -= wx * dt;
-	else if (x > pos.x + size.x/2)
+	else if (x > pos.x + size.x)
 		pos.x += wx * dt;
 
 	// Correct if out of bounds
-	if (pos.x + size.x / 2 > wx)
-		pos.x -= pos.x + size.x / 2 - wx;
-	else if (pos.x - size.x / 2 < 0)
-		pos.x -= pos.x - size.x / 2;
+	if (pos.x + size.x > wx)
+		pos.x = wx - size.x;
+	else if (pos.x < 0)
+		pos.x = 0;
 
 	// ?
 

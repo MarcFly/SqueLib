@@ -4,6 +4,8 @@
 #include "ball.h"
 #include "player.h"
 #include "block.h"
+#include "killzone.h"
+#include "bg_block.h"
 
 // Include subblock types...
 
