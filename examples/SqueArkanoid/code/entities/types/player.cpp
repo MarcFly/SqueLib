@@ -33,19 +33,20 @@ static int32_t wx, wy;
 void Player::Update(float dt)
 {
 	// Movement
-	SQUE_INPUT_GetPointerPos(&x, &y);
-	SQUE_DISPLAY_GetWindowSize(&wx, &wy);
-	if (x < pos.x)
-		pos.x -= wx * dt;
-	else if (x > pos.x + size.x)
-		pos.x += wx * dt;
+	if(SQUE_INPUT_GetPointerPos(&x, &y))
+	{
+		SQUE_DISPLAY_GetWindowSize(&wx, &wy);
+		if (x < wx/2.)
+			pos.x -= wx/2. * dt;
+		else if (x > wx/2.)
+			pos.x += wx/2. * dt;
 
-	// Correct if out of bounds
-	if (pos.x + size.x > wx)
-		pos.x = wx - size.x;
-	else if (pos.x < 0)
-		pos.x = 0;
-
+		// Correct if out of bounds
+		if (pos.x + size.x > wx)
+			pos.x = wx - size.x;
+		else if (pos.x < 0)
+			pos.x = 0;
+	}
 	// ?
 
 }
@@ -58,9 +59,9 @@ void Player::CleanUp()
 void Player::OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos)
 {
 	bool test = false;
-	if (c_pos.x < pos.x + size.x/3.)
+	if (c_pos.x < pos.x + size.x/4.)
 		dir_speed->x = -1. * abs(dir_speed->x);
-	if (c_pos.x > pos.x + 2* size.x/3.)
+	if (c_pos.x > pos.x + 3* size.x/4.)
 		dir_speed->x = abs(dir_speed->x);
 
 	*dir_speed *= glm::vec2(1.05);		

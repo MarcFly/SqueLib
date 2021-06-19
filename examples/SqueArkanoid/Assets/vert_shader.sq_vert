@@ -9,7 +9,5 @@ void main()
 
     vec2 pre_pos = pos + uv * size;
     vec2 ndc_pos = 2.*((pre_pos / vp) - vec2(.5));
-    vec2 ndc_size = ((vertPos-ndc_pos) / abs(vertPos-ndc_pos) )  * (1 / vp);
-    
     gl_Position = vec4(ndc_pos, 0,1);
 }

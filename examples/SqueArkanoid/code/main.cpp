@@ -29,13 +29,39 @@ static ColorRGBA clear_col;
 
 // -- 
 
+static bool on_background = false;
 
+static VoidFun* prev_bg;
+static VoidFun* prev_resume;
+
+void OnGoBackground()
+{
+    prev_bg();
+    on_background = true;
+    EntitiesCleanUp();
+    UiCleanUp();
+    RenderCleanUp();
+
+
+}
+
+void OnResume()
+{
+    prev_resume();
+    on_background = false;
+    EntitiesInit();
+    RenderInit();
+    UiInit();
+}
 
 int main(int argc, char** arv)
 {
     SQUE_LIB_Init("SqueArkanoid", SQ_INIT_DEFAULTS | SQ_INIT_DEBUG_RENDER);
     clear_col = ColorRGBA(0, 0, 0, 1);
     timer.Start();
+
+    prev_bg = SQUE_AddOnGoBackgroundCallback(OnGoBackground);
+    prev_resume = SQUE_AddOnResumeCallback(OnResume);
 
     // Init Submodules
     EntitiesInit();
@@ -44,6 +70,13 @@ int main(int argc, char** arv)
 
     while(!SQUE_DISPLAY_ShouldWindowClose())
     {
+        if(on_background)
+        {
+            SQUE_Sleep(100);
+            timer.Start();
+            continue;
+        }
+
         dt = timer.ReadMilliSec() / 1000.;
         timer.Start();
         dt = std::clamp(dt, 0.f, 1 / 30.f);

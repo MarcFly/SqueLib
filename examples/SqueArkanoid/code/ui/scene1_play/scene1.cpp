@@ -63,7 +63,7 @@ void PlayScene::SetupSurvival()
 	for (uint32_t i = 9; i < 18; ++i)
 	{
 		for (uint32_t j = 2; j < cap_top; ++j)
-			if (SQUE_RNG(2))
+			if (SQUE_RNG(4) == 0)
 				EntitiesAdd(new Block(1 + SQUE_RNG(4), glm::vec2(j, i)));
 	}
 
@@ -74,6 +74,8 @@ void PlayScene::Setup(uint32_t level)
 	surv_timer.Start();
 	EntitiesClear(); // Clear just to make sure
 	AddScore(-GetScore());
+	ModifyLives(-GetLives() + 3);
+
 	int32_t wx, wy;
 	SQUE_RENDER_GetFramebufferSize(&wx, &wy);
 	// Do the setup of a level

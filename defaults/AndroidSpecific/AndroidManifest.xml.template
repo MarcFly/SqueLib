@@ -27,7 +27,8 @@
         <!--android:theme="@mipmap/icon" This is how to change the splash theme (white screen at load), but seems to not work properly, look into better-->
         
         <activity 
-            android:configChanges="keyboardHidden|orientation" 
+            android:configChanges="keyboardHidden|orientation"
+            android:screenOrientation="landscape" 
             android:label="${LABEL}" 
             android:name="android.app.NativeActivity">
             

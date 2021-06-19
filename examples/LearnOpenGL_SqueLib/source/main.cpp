@@ -9,6 +9,7 @@ void OnResume()
 {
     on_background = false;
 }
+
 void OnGoBackground()
 {
     on_background = true;
