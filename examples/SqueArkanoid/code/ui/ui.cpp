@@ -82,3 +82,8 @@ void UiCleanUp()
     }
     items.clear();
 }
+
+float GetHiTime()
+{
+    return (items.size() >= 2) ? ((PlayScene*)items[1])->GetHiTime() : 0;
+}

@@ -12,6 +12,7 @@ public:
 
 	uint16_t tier;
 	uint16_t hp = 1;
+	uint32_t sound_destroy_handle;
 	
 	void OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos) override;
 };

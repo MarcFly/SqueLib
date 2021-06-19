@@ -26,7 +26,7 @@ void Ball::Init()
 	Entity* p = EntitiesGet()[0];
 	pos = p->pos + glm::vec2(0, size.y/2 + p->size.y/2.);
 
-	ball_state = 1;
+	ball_state = 0;
 }
 
 void Ball::Update(float dt)
@@ -83,8 +83,9 @@ void Ball::Update(float dt)
 				dir.x *= -1;
 
 			entities[i]->OnCollision(&dir, &ball_state, pos);
-
-			speed *= glm::length(dir);
+			entities[i]->PlaySound();
+			if(speed < 1000)
+				speed *= glm::length(dir);
 			glm::normalize(dir);
 		}		
 	}
@@ -92,8 +93,8 @@ void Ball::Update(float dt)
 	pos = next_pos - size / glm::vec2(2);
 
 	// Debug move
-	dir.x = -(SQUE_INPUT_GetKey(SQUE_KEY_ARROW_LEFT) > 0 ) + (SQUE_INPUT_GetKey(SQUE_KEY_ARROW_RIGHT) > 0);
-	dir.y = (SQUE_INPUT_GetKey(SQUE_KEY_ARROW_UP) > 0) + -(SQUE_INPUT_GetKey(SQUE_KEY_ARROW_DOWN) > 0);
+	//dir.x = -(SQUE_INPUT_GetKey(SQUE_KEY_ARROW_LEFT) > 0 ) + (SQUE_INPUT_GetKey(SQUE_KEY_ARROW_RIGHT) > 0);
+	//dir.y = (SQUE_INPUT_GetKey(SQUE_KEY_ARROW_UP) > 0) + -(SQUE_INPUT_GetKey(SQUE_KEY_ARROW_DOWN) > 0);
 }
 
 void Ball::CleanUp()

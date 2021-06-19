@@ -5,8 +5,8 @@ KillZone::KillZone()
 	int32_t wx, wy;
 	SQUE_DISPLAY_GetWindowSize(&wx, &wy);
 	
-	size = glm::vec2(wx, wy / 20.);
-	pos = glm::vec2(0, -size.y);
+	size = glm::vec2(wx*3, wy / 20.);
+	pos = glm::vec2(-wx, -size.y);
 }
 
 KillZone::~KillZone()
@@ -19,6 +19,5 @@ KillZone::~KillZone()
 void KillZone::OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos)
 {
 	EntitiesGet()[1]->Init();
-	Player* p = (Player*)EntitiesGet()[0];
-	--p->hp;
+	ModifyLives(-1);
 }

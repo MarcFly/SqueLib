@@ -41,4 +41,14 @@ void EntitiesClear();
 const sque_vec<Entity*>& EntitiesGet();
 const sque_vec<Entity*>& EntitiesGetBg();
 
+// Game things
+void AddScore(uint32_t score);
+uint32_t GetScore();
+void ModifyLives(int32_t change);
+uint32_t GetLives();
+uint32_t GetHiscore();
+uint32_t GetSHiscore();
+void ToggleSurvival();
+
+
 #endif

@@ -14,7 +14,7 @@ Block::Block(uint16_t _tier, glm::vec2 _pos, float size_mult)
 {
 	tier = hp = _tier;
 	tex_handle = tier + 2;
-	sound_handle = tier + 2;
+	sound_handle = 1;
 
 	// Calculate size for about 20 total vertical tiles
 	int32_t wx, wy;
@@ -35,7 +35,11 @@ Block::Block(uint16_t _tier, glm::vec2 _pos, float size_mult)
 void Block::OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos)
 {
 	if (hp == 1)
+	{
+		AddScore(tier * 100);
 		to_delete = true;
+		sound_handle = 2;
+	}
 	--hp;
 	if(tex_handle > 2)
 		--tex_handle;

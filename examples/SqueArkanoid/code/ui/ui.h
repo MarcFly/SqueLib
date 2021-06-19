@@ -29,5 +29,6 @@ void UiPreUpdate();
 void UiRender();
 void UiCleanUp();
 
+float GetHiTime();
 
 #endif

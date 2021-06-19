@@ -18,6 +18,22 @@ void EntitiesInit()
 {
 	audio_master.init();
 	// Load all sounds
+
+	SQUE_Asset* sound_load = SQUE_FS_LoadAssetRaw("sounds/paddle_bounce.wav");
+	sounds.push_back(SoLoud::Wav());
+	sounds.last()->loadMem((uchar*)sound_load->raw_data, sound_load->size);
+
+	sound_load = SQUE_FS_LoadAssetRaw("sounds/block_bounce.wav");
+	sounds.push_back(SoLoud::Wav());
+	sounds.last()->loadMem((uchar*)sound_load->raw_data, sound_load->size);
+
+	sound_load = SQUE_FS_LoadAssetRaw("sounds/block_destruct.wav");
+	sounds.push_back(SoLoud::Wav());
+	sounds.last()->loadMem((uchar*)sound_load->raw_data, sound_load->size);
+
+	sound_load = SQUE_FS_LoadAssetRaw("sounds/wall_bounce.wav");
+	sounds.push_back(SoLoud::Wav());
+	sounds.last()->loadMem((uchar*)sound_load->raw_data, sound_load->size);
 }
 
 void EntitiesUpdate(float dt)
@@ -71,4 +87,61 @@ const sque_vec<Entity*>& EntitiesGet()
 const sque_vec<Entity*>& EntitiesGetBg()
 {
 	return background;
+}
+
+// Game things
+static struct GameData
+{
+	uint32_t lives = 3;
+	uint32_t score = 0;
+	uint32_t hiscore = 0;
+
+	bool survival = false;
+	uint32_t s_hiscore = 0;
+} gamedata;
+
+void AddScore(uint32_t score)
+{
+	gamedata.score += score;
+
+	if (gamedata.survival)
+	{
+		if (gamedata.s_hiscore < gamedata.score)
+			gamedata.s_hiscore = gamedata.score;
+	}
+	else
+	{
+		if (gamedata.hiscore < gamedata.score)
+			gamedata.hiscore = gamedata.score;
+	}
+}
+
+uint32_t GetHiscore()
+{
+	return gamedata.hiscore;
+}
+
+uint32_t GetSHiscore()
+{
+	return gamedata.s_hiscore;
+}
+
+void ToggleSurvival()
+{
+	gamedata.survival = !gamedata.survival;
+}
+
+uint32_t GetScore()
+{
+	return gamedata.score;
+}
+
+uint32_t GetLives()
+{
+	return gamedata.lives;
+}
+
+void ModifyLives(int32_t change)
+{
+	gamedata.lives += change;
 }

@@ -14,6 +14,15 @@ public:
     void Update();
 
     void CleanUp();
+
+    float GetHiTime() { return high_time; }
+
+private:
+    void SetupDemo();
+    void SetupSurvival();
+    bool survival = false;
+    float high_time = 0;
+    SQUE_Timer surv_timer;
 };
 
 #endif

@@ -10,7 +10,7 @@ public:
 	BgBlock(uint16_t _tier, glm::vec2 _pos, float size_mult = 1)
 	{
 		tex_handle = _tier + 2;
-
+		sound_handle = 3;
 		// Calculate size for about 20 total vertical tiles
 		int32_t wx, wy;
 		SQUE_DISPLAY_GetWindowSize(&wx, &wy);
@@ -29,6 +29,8 @@ public:
 		col = { .3,.3,.3 };
 	};
 	~BgBlock() {};
+
+	
 };
 
 #endif

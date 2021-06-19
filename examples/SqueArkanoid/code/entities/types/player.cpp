@@ -58,10 +58,11 @@ void Player::CleanUp()
 void Player::OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos)
 {
 	bool test = false;
-	if (c_pos.x < pos.x - size.x/3.)
+	if (c_pos.x < pos.x + size.x/3.)
 		dir_speed->x = -1. * abs(dir_speed->x);
-	if (c_pos.x > pos.x + size.x/3.)
+	if (c_pos.x > pos.x + 2* size.x/3.)
 		dir_speed->x = abs(dir_speed->x);
-		
+
+	*dir_speed *= glm::vec2(1.05);		
 }
 
