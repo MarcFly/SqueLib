@@ -3204,17 +3204,232 @@ As the introduction is quite small and very self explanatory, those steps have b
 
 ![Figure [figures]: LearnOpenGL - Coordinate System, example written with SqueLib.](images/LearnOpenGL_example.jpeg)
 
-# SqueMaker
+## SqueMaker
 
-<!-- Talk about testing what SqueLib can do in practice as well as taking steps into designing a competent tool for making games -->
+While coursing the Bachelor's Degree in Desgin and Development of videogames, in each programming subject a completely new game engine has been built from scratch in order to leave behind bad practices gotten by the lack of knowledge, as well as ease in the new material learned.
 
-## Entity Component System
+A good approach to implementing new knowledge was to create an engine skeleton that was based around SqueLib for the subsystems provided, to try the actual functionality as well as provide a comfortable project in which to implement the things learned.
 
-## Engine UI Prototype
+The issue with such approach taking into account the learning process outside of what has been taught in the programming subjects, which differents vastly from industry standards and actual production focused code, has made the parallel advancement of the engine very slow as well as not focused on the library approach, as can be seen on the feature frozen **Figure XX**.
 
-## Render Pipeline
+![Figure [figures]: Barebones development of SqueMaker.](images/SqueMaker.png)
 
-## Serialization
+Development of this engine skeleton has proved very useful in making sure specific parts of the library are comfortable to use as well as adding unexpected parts of the library that make much more comfortable new cases, such as `SQUE_CtrlAsset` and filewatching.
+
+Nevertheless, the development continued until feature addition has been frozen. The following concepts that have not been part of the degree have been partially implemented as points of interest:
+
+(###) Data Oriented Entity Component System
+
+The concept of an ECS was introduced in an Object Oriented way, which is great to get on introduced to such concepts but the execution in real time is not ideal for both security and performance reasons:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// Example of Object Oriented ECS
+std::vector<Entity*> all_entities;
+void EntitiesUpdate()
+{
+    for(entity : all_entities)
+        entity->Update();
+}
+
+class Entity
+{
+    //...
+    virtual void Update() = 0;
+    //...
+}
+
+class EntityDoor : public Entity()
+{
+    //...
+    void Update() override
+    {
+        if(open)
+            //...
+        else
+            //...
+    }
+    //...
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The basis of an Object Oriented Design relies heavily on the use of the relations between the parent and the child classes to perform the calls to the main functions. That in itself is inefficient and requires the classes to be abstracted and allocated separatedly in memory which is not great when the number of entities increase.
+
+Although my implementation does not delve fully into the depths of Data Oriented Design, the basis relies more hevily on specialization of the funcion calls and keeping memory compact where needed.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// Example of Data Oriented ECS
+std::vector<UpdateFuns> all_update_groups;
+void EntitiesUpdate()
+{
+    for(update_fun : all_update_groups)
+        update_fun();
+}
+
+class Entity
+{
+    static std::vector<EntityRef> base_entity_refs;
+    //...
+    virtual void Update() = 0;
+    //...
+}
+
+
+class EntityDoor : public Entity
+{
+    static std::vector<EntityDoor> doors;
+    static void UpdateDoors()
+    {
+        for(door : doors)
+            door.Update();
+    }
+
+    //...
+    void Update() override
+    {
+        if(open)
+            //...
+        else
+            //...
+    }
+    //...
+}
+
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The basis of the implementation fixes the memory to a singleton that is managed per class. Each class has static memory and functions to manage their own type instead of spreading memory and calls around. The concept is that a door will only need to interact as a door, and when it requires different interactions of types that would be handled by its components in a similar fashion.
+
+An example would be a `ComponentCollider` that will only interact with other `ComponentCollider`, if it only requires memory from colliders then such memory should be packed and readily available.
+
+(###) Engine Messaging
+
+Direct interaction between modules is not great, it basically breaks the flow of an application to ask for non-trivial data. In a single threaded environment this becomes a none-issue as we can safely break when no known memory is being used in other parts of the program because there are no more parts running.
+
+Thinking on a long term as well as taking into account memory compactness, it is better to have a system that delays such actions to a specific point when non trivial, or that could excepcionally perform a request and wait for its approval.
+
+In the case of the UI for this skeleton, as well as multithreaded implementation being out of scope, the system has been kept for messaging simple actions between the UI and the ECS.
+
+~~~~~~~~~~~~~~~~~~~~~~~c++
+// Example Subclass
+class SQUE_Messager
+{
+    void RegisterSubscriber()
+    {
+        // Register own class as a potential subscriber of other subjects
+        sub_ref = SQUE_MSG_RegisterSubscriber(this);
+    }
+
+    void DeclareSubjects()
+    {
+        // Declare a subject that it may send to the manager and receive a handle for it
+        subjects.push_back(SQUE_MSG_DeclareSubject("NewUIEntity"));
+        //...
+    }
+
+    void SubscibreToSubjects()
+    {
+        // Tell the manager which subjects we want delivery of
+        SQUE_MSG_SubscribeToSubject(sub_ref, "NewEngineEntity");
+        //...
+    }
+}
+
+// To send messages
+SQUE_MSG_SendMessage(SQUE_EntityMessage);// Which will be delivered to inbox
+// Then when the user decides, it can check the inbox to act on the messages
+
+~~~~~~~~~~~~~~~~~~~~~~~
+
+(###) Execution System
+
+Most applications geared towards the public has a system to undo and redo things. Programatically, that is a bit of a difficult task to do, as a base function call is a one way system. An approach taken in previous projects were that of saving the state of the application and rever to previous or further states. THis is absurdly inefficient as well as extremely non-user friendly in the long run as the size of the states can be very costly in memory or amount to cost in serializing them back and forth.
+
+During the development of *Malita: Soul of a Warrior* the engine used such implementation that took about 4 to 10 seconds when saving and loading the state for testing the application in engine, even with minimal changes.
+
+An Execution System is basically a three way system for such functions that are part of a undo/redo workflow for the user:
+
+~~~~~~~~~~~~~~~~~~c++
+class SQUE_Executer
+{
+public:
+    const char* name = "Default Action Name";
+    virtual void Execute() {};
+    virtual void Redo() {};
+    virtual void Undo() {};
+};
+
+sque_vec<SQUE_Executer*> redo_list;
+sque_vec<SQUE_Executer*> undo_list;
+void EngineUI_ExecuteAction(SQUE_Executer* action);
+void EngineUI_RedoLastAction();
+void EngineUI_UndoLastAction();
+~~~~~~~~~~~~~~~~~~
+
+When creating said function, it is imperative that one creates the inverse action as well as a lightweight redo/do-again function that can be queued. Instead of performing an action we are queuing the complete pack of an action and preparing the base for the user the roll back and forward as desired.
+
+The memory footprint is much smaller than saving the full state of a program each time and there are no serialization costs, only the same execution cost that was originally planned for each action.
+
+(###) XMacro Implementations
+
+XMacros is one thing I have learned of during the project that I find very neat and interesting to add here as they are very practical.
+
+The premise is the use of the compiler to declare arrays in a way that are easily accessible through numbered accessors. In other words, instead of having to perform a runtime `if chain` or a `switch`, we can let the compiler generate a struct that will hold a certain amount of data in an order we want and be accessible programatically.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
+#define XMACRO_TABLE(ENTRY) \
+        ENTRY(ACCESSOR_VALUE0, value, ...) \
+        ...
+#define EXPAND_ACCESSORS(a,b,...) a
+#define EXPAND_VALUE(a,b,...) b
+// define and expand value per each after b...
+
+enum VectorEnum{
+    XMACRO_TABLE(EXPAND_ACCESSORS)
+}
+
+enum ArrayEnum
+{
+    XMACRO_TABLE(EXPAND_ACCESSORS)
+    ENUM_LAST_VALUE
+}
+
+std::vector<ValueType> value_vector = {EXPAND_VALUES};
+ValueType value_array[ENUM_LAST_VALUE];
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this technique we can declare each value with a location accessor as a default enum will declare its first value as `0` and the last one to the size depending on the amount of values added to the macro.
+
+A great example that can be easily used is for user specific data types for serialization. SqueMaker can load and unload a small set of base types. Each type comes with a subset of load, unload, import and export function pointers. A new type can be added by just registering it to the vector and definic a global static integer type variable that could access the vector.
+
+~~~~~~~~~~~~~~~~~~~~~~~c++
+// Engine
+static std::vector<ValueType> engine_values = {EXPAND_VALUES};
+static std::vector<RegisterFuns> init_customs;
+
+void InitEngine() { /* call all custom_inits*/ }
+int RetrieveAccessor();
+
+// Custom Type
+static int ACCESSOR_CUSTOM1 = 0;
+void CustomFun(){}
+
+void InitCustom1()
+{
+    ACCESSOR_CUSTOM1 = RetrieveAccessor();
+    engine_values.push_back(CustomFun);
+}
+~~~~~~~~~~~~~~~~~~~~~~~
+
+## SqueArkanoid
+
+SqueArkanoid is the final full featured example provided with SqueLib. The other examples lacked a lot of visual interest or catchiness, as such a new example hd to be provided that showed the ease of use of the library as well as be more spectator oriented rather than user oriented.
+
+SqueArkanoid is a very simple Arkanoid-type game as the name implies, involving a paddle that makes a ball bounce around destroying blocks. The core concept is very simple and execution is too but the prototype is fully featured with a demo level and an endless type level. 
+
+The *Survival* Game mode is shown under **Figure XX**:
+
+![Figure [figures]: SqueArkanoid Survival Mode.](images/SqueArkanoid.png)
+
+The visual assets are from the Puzzle Pack in Kenney Game Asset<sub>[#W60]</sub>, shared under CC0 1.0 Universal license<sub>[#W61]</sub>,  and the sounds have been made usgin rFXGen<sub>[#W62]</sub>.
 
 # Conclusions
 
@@ -3395,11 +3610,20 @@ As the introduction is quite small and very self explanatory, those steps have b
 [#W57]: GLAD. Dav1dde, 2013.
 <https://github.com/Dav1dde/glad>
 
-[#58]: ImGui Android, Issues. stawrocek, 2017.
+[#W58]: ImGui Android, Issues. stawrocek, 2017.
 <https://github.com/ocornut/imgui/issues/1200>
 
-[#59]: SqueLib Documentation. Marc Torres, 2021.
+[#W59]: SqueLib Documentation. Marc Torres, 2021.
 <https://marcfly.github.io/SqueLib/>
+
+[#W60] Kenney Game Assets. KenneyNL, 2021.
+<https://www.kenney.nl/assets>
+
+[#W61] CC0 1.0 Universal License. Creative Commons, 2021.
+<https://creativecommons.org/publicdomain/zero/1.0/>
+
+[#62] rFXGen. Ramon Santamaria, 2019.
+<https://raylibtech.itch.io/rfxgen>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>

@@ -372,7 +372,7 @@ void LearnOpenGL_3_Textures()
         SQUE_MESH_AddAttribute(&quad_textured_ch3, "aPos", SQUE_FLOAT, false, 3);
         SQUE_MESH_AddAttribute(&quad_textured_ch3, "aColor", SQUE_FLOAT, false, 3);
         SQUE_MESH_AddAttribute(&quad_textured_ch3, "aTexCoord", SQUE_FLOAT, true, 2);
-
+        SQUE_MESH_InterleaveOffsets(&quad_textured_ch3);
         SQUE_MESH_SetLocations(&quad_textured_ch3);
         SQUE_MESH_SendToGPU(quad_textured_ch3, vertices_ch3, indices1);
 
@@ -688,7 +688,7 @@ void LearnOpenGL_5_1_3DCubeRotating()
         // had MESH with a color attribute. So in this one that is mostly the same but without color attribute
         // I declare it anyways without components, so vertex calculations stay the same but now in shader it will not have data for color
         // so it can't be USED on that mesh!!!
-
+        SQUE_MESH_InterleaveOffsets(&cube_ch5_1);
         SQUE_MESH_SetLocations(&cube_ch5_1);
         SQUE_MESH_SendToGPU(cube_ch5_1, vertices_ch5_1);
 

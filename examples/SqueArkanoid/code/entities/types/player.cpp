@@ -33,20 +33,22 @@ static int32_t wx, wy;
 void Player::Update(float dt)
 {
 	// Movement
+	SQUE_DISPLAY_GetWindowSize(&wx, &wy);
+	float pix = wx/2. *dt;
 	if(SQUE_INPUT_GetPointerPos(&x, &y))
 	{
-		SQUE_DISPLAY_GetWindowSize(&wx, &wy);
 		if (x < wx/2.)
-			pos.x -= wx/2. * dt;
+			pos.x -= pix;
 		else if (x > wx/2.)
-			pos.x += wx/2. * dt;
-
-		// Correct if out of bounds
-		if (pos.x + size.x > wx)
-			pos.x = wx - size.x;
-		else if (pos.x < 0)
-			pos.x = 0;
+			pos.x += pix;
 	}
+	pos.x += -(SQUE_INPUT_GetKey(SQUE_KEY_ARROW_LEFT) > 0 )*pix + (SQUE_INPUT_GetKey(SQUE_KEY_ARROW_RIGHT) > 0)*pix; 
+	
+	// Correct out of bounds
+	if (pos.x + size.x > wx)
+		pos.x = wx - size.x;
+	else if (pos.x < 0)
+		pos.x = 0;
 	// ?
 
 }
