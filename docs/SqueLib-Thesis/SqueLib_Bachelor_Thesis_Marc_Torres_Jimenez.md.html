@@ -8,7 +8,7 @@ var titlePage = {
     , thesisTitle: "SqueLib"
     , thesisSubtitle: "An introduction to multiplatform C++ development"
     , thesisAuthor: "Marc Torres Jimenez"
-    , thesisDate: "March 2021"
+    , thesisDate: "June 2021"
     , reviewers: [
           `Jesús Díaz García
            Senior Graphics Programmer
@@ -36,20 +36,39 @@ The result of the project provides the library SqueLib, examples on using it, so
 
 The source code for the resulting projects will be open sourced under the BSD-3-Clause<sub>[#W4]</sub>, permitting redistribution of the source code providing the copyright notice, redistribution of the binary that reproduces the copyright notice for the project, without using such notice as an endorsement for the derived products.
 
+<span class="pagebreak"></span>
+
 (##) Keywords
 
 C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform
 
 (##) Project Links
 
-**W1 -** SqueLib Github Repository<sub>[#W1]</sub>
-
-**W2 -** SqueMaker Github Repository<sub>[#W2]</sub>
-
+**W1 -** SqueLib Github Repository<sub>[#W1]</sub> 
+**W2 -** SqueMaker Github Repository<sub>[#W2]</sub> 
 **W59 -** SqueLib Public Documentation<sub>[#w59]</sub>
+
+(##) Licensing
+
+The result product and source code of this project will be licensed under the BSD-3-license, this written form is part of the project and also bundled as part of the documentation with teh project.
+
+**3-Clause BSD License**
+
+Copyright 2021 Marc Torres Jiménez
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <!-- add links to resulting apps, games,... -->
 
+<span class="pagebreak"></span>
 
 (##) Glossary
 
@@ -79,6 +98,7 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform
 | APK | Android Package Kit, uncrompressed packet type used for denominating Android application |
 | ADB<sub>[#W46]</sub> | Android Debug Bridge, tool for interfacing with Android physical devices |
 
+<span class="pagebreak"></span>
 
 # Introduction
 
@@ -136,6 +156,8 @@ Main objectives for the engine are:
 1. Develop a toy engine to play with the provided subsystems and make simple games
 2. Make a flexible engine that can accomodate new features and technologies
 3. Be able to quickly iterate over the implemented technologies 
+
+<span class="pagebreak"></span>
 
 ## Specific Objectives
 
@@ -266,7 +288,7 @@ Unity<sub>[#W6]</sub> is a cross-platform game engine, unveiled at the Wordwide 
 | Tier based licensing with royalties | |
 | Vast knowledge base in tutorials, examples and documentation| |
 
-
+<span class="pagebreak"></span>
 
 !!! Tip: Game Examples
     Used in multiple indie games and solo production as well as big studios: Hearthstone (Blizzard-Activision, 2014), Fall Guys (Mediatonic, 2020), Ori and the Will of the Wisps (Moon Studios, 2020), Cuphead(Studio MDHR, 2017), Flappy Bird(Don Nguyen, 2013),...
@@ -301,6 +323,7 @@ The Godot<sub>[#W8]</sub> engine is an open-source cross-platform engine, releas
 | Flexible language support | Some platforms are only supported through dedicated porting studios |
 | Very Strong 2D tool supports | |
 
+
 !!! Tip: Game Examples
     Human Diaspora (Leocesar3D, 2020), Kingdoms of the Dump (Roach Games, Kickstarter 2019), Ex Zodiac (Ben Hickling, 2021), Resolutiion (Monolith of Minds, 2020),...
 
@@ -317,7 +340,7 @@ Created by Mark Overmars originally in 1999, later acquired by YoYo Games in 200
 | Support for major platforms | |
 | Strong tools for 2D game creation | |
 
-
+<span class="pagebreak"></span>
 
 !!! Tip: Game Examples
     Rivals of Aether (Dan Fornace LLC, 2015), Hyper Light Drifter (Heart Machine, 2016), Katana Zero (Askiisoft, 2019), Risk of Rain (Hopoo Games, 2013), VA-11 Hall-A (Sukeban Games, 2016), The Red Strings Club (Deconstructeam, 2018),...
@@ -372,7 +395,7 @@ Developed by Ragnar Scensson and Christian Murray in 2007 as a lightweight 2D ga
 !!! Tip: Game Examples
     Travel Blast (MP Games, 2020), Zoom-Be (Flazm, TBA), Interrogation (Critique Gaming, 2019), Fates of Ort (8bitskull, 2020), Family Island (Melsoft, 2019),...
 
-
+<span class="pagebreak"></span>
 
 (###) Lumberyard
 
@@ -399,7 +422,7 @@ there, from fully featured to starting in the development process such as this t
  * CUSTOM GAME ENGINES: A Small Study. Ramon Santamaria. <https://gist.github.com/raysan5/909dc6cf33ed40223eb0dfe625c0de74>
  * Diligent Engine. Diligent Graphics. <https://github.com/DiligentGraphics/DiligentEngine>
 
-
+<span class="pagebreak"></span>
 
 ## SqueLib and SqueMaker as Resources
 
@@ -432,14 +455,12 @@ The following section will provide information about the tools used for initiall
 
 ### Gantt Project
 
-The first layer of planification is based on having the main areas of development, defining the required subsystems, examples and documentation steps for accomplishing each task. Instead of primarily defining all the task and steps to be taken, which will vary as time goes on and research on the topics is completed, its best to outline the planned steps.
+The first layer of planification is based on defining the required subsystems, examples and documentation steps for accomplishing each objective. Instead of strictly setting the tasks, which will vary as research on the topics is completed, its best to outline the planned steps.
 
 A Gantt chart feels ideal to decide on timestamps for these tasks and their dependencies, the tool used will be Gantt Project<sub>[#W24]</sub>. The development plan is specified under **Figure 3** and **Figure 4**: 
 
 ![Figure [figures]: Learning Phase](images/Gantt1.png)
 ![Figure [figures]: TFG - Library Development Plan](images/Gantt2.png)
-
-
 
 ### HacknPlan
 
@@ -460,13 +481,9 @@ Software projects are a sum of multiple blocks and constant iteration, during th
 
 Even more important is the fact that the project will be tested and developed on multiple platforms, as such the Gitkraken<sub>[#W22]</sub> git GUI client will be used as it has Linux compatibility and some great features for managing repository branchs.
 
-
-
 ![Figure [figures]: Gitkraken Commit Form](images/GitKraken.png) 
 
 Gitkraken is very simple and provides great functionality for understanding changes and avoiding pushing changes before reviewed. By default, changes are not staged for commiting, shown in **Figure 6**, but you can select manually which changes to set up for the next commit and review them before commiting them.
-
-
 
 Repositories for the Library and Engine can be found under [#W1] and [#W2].
 
@@ -506,8 +523,6 @@ As well as the iterative process of development, debug mode checks have been pla
 | Entry to multiplatform C++ development is not straight forward, accomplishing a good entry for developers | There are lots of fully feature frameworks and engines one can go to and get faster and better results, as there's more support and documentation available |
 | There's no financial risk as a student project | Time is extremely limited, the project will fall short on refinement for larger scale production |
 
- 
-
 ## Risks and Contingencies
 
 Given the scope of the project, the most sensible approach is to identify where the principal choking points of the project lie and understand where to fall back from those possible stepbacks.
@@ -522,7 +537,7 @@ Given the scope of the project, the most sensible approach is to identify where 
 | Time Missplanning | Given the section below, tasks from the back will be cut in order, there is a planned month and 3/4 left for polish loop |
 | Library / Software issues | Issues on platform and library are planned in time as well as expected deviation, buffer time for planning is available for learning time but at most it will fall to modules already developed in other libraries |
 
- 
+<span class="pagebreak"></span>
 
 ### Planned Task Risks
 
@@ -607,7 +622,7 @@ There are multiple methodologies that have been developed from the Agile princip
 ***************************************************************************
 [Figure [figures]: Simplification of the Agile Process]
 
-
+<span class="pagebreak"></span>
 
 ## Variable Sprint Agile
 
@@ -629,7 +644,7 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 **HnP.2. Task Types:** In order to facilitate navigation of task types, you can select which ones to have visible. In this project, 99% of the tasks are programming based so in my case organizing them becomes more cumbersome than useful. In other projects that involve bigger teams and disciplines, it is a must tool.
 
-
+<span class="pagebreak"></span>
 
 **HnP.3. Current Board Options:** First the Board Name, then the task creation and finally a button to the information pertaining the board.
 
@@ -639,7 +654,7 @@ Under **Figures 9**, **10** and **11**, HacknPlans main user interface is detail
 
 **HnP.5. Task Stats:** In order, displays the information added to the tasks, be it attachments, subtasks, comments, work logs,...
 
-
+<span class="pagebreak"></span>
 
 ![Figure [figures]: Add Menu](images/HacknPlan_AddMenu.png) **HnP.6. Addition Panel**: Under this panel appears the available options for adding information to each task.
 
@@ -669,7 +684,7 @@ In the context of multiplatform development, there is a ton of options of IDEs a
 
 Visual Studio supports CMake based projects, but for the sake of progressing as well learning new tools for the trade, starting first from CMake and then using Visual Studio for specifically Windows development seems the best fit. Further explanation on the usage of CMake is provided in the following chapter.
 
-
+<span class="pagebreak"></span>
 
 ## SDL, RayLib and Rawdraw
 
@@ -756,11 +771,11 @@ Being set up with the initial research on the project statement and values, the 
 
 It is very evident that having multiple code bases per platform and having to use wildly different environments for getting code to run on the target platforms is a big issue to tackle. The most sensible approach would be to have a way to just execute what is needed on a bunch of source files and get the resulting application ready to run, the less input from the user to get it working the better.
 
-
-
 ## CMake: Building for multiplatform 
 
 CMake is a generator of build files, when you build a project with CMake you are first creating the files that the target building environment will use to create the final application. In that way you can create a environment agnostic step that will then be converted to the one needed for each platform you target.
+
+<span class="pagebreak"></span>
 
 ![Figure [figures]: CMake Simple Flowchart, from [How to Build a CMake based Project](https://preshing.com/20170511/how-to-build-a-cmake-based-project/) by Jeff Preshing.](images/cmake-simple-flowchart.png width="50%") Following **Figure 12**, CMake is invoked in a directory where a CMakeLists.txt script is, which will prepare a configuration for the desired outputs. Said configuration will be cached for later runs.
 
@@ -784,8 +799,6 @@ Under **Figure 13**, the base layout of the folder which will be expanded upon, 
 
 From unique previous knowledge of building C++ aplication through Microsoft Visual Studio, the best way to get into new ways is to learn from the simplest possible example required. With that virtue, the starting file to work on would be the following main which would only print out _Hello World!_ to a console to make sure everything is working as intended.
 
-
-
 **_main.cpp_**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C++ linenumbers
 #include <cstdio>
@@ -795,6 +808,8 @@ int main(char** argv, int argc)
     return 0;
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
 
 Following the main source code, the simplest way to build with CMake is:
  1. Specifying a version
@@ -836,7 +851,7 @@ set_target_properties(CMakeExample
         RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+<span class="pagebreak"></span>
 
 Then on Command Line we create a folder to execute from, then call cmake to build the parent directory:
 
@@ -861,7 +876,7 @@ In order to build Android application, the usual way would be to build them usin
 
 Parallel to the main tool, Google provides the Android SDK which has a suite of tools for compiling, packaging, debugging and many more things for Android projects with external toolchains such as CMake. With that in hand, one can provide their own way of compiling the source code as well as generating the necessary files required for a complete packaged app, then use the tools to finalize the process, install and run the application on the target Android device.
 
-
+<span class="pagebreak"></span>
 
 A big concern of mine was having to delve too deep into new ways of building a project, tools and even languages, while still maintaining the capability of using the tools I am used to or found in OSS. ***Rawdraw***<sub>[#W26]</sub> for Android is what drove me away from Visual Studio only development and more toward other options. Rawdraw is a graphics rendering and building framework for developing extremely portable applications written in C. 
 
@@ -930,7 +945,7 @@ function(subdirlist result currdir)
 endfunction()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Get the first directory that exists in a list of items
@@ -968,7 +983,7 @@ if(WIN32)
 endif()
 
 message(STATUS "Building from " ${OS_NAME})
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Then it is required to find the directory in which the SDK, NDK and Build Tools are placed. The helper functions are used when no Android arguments or Environment variables are set:
 
@@ -979,7 +994,7 @@ if(NOT ANDROIDSDK)
 endif()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 # Search for NDK inside SDK
@@ -1031,7 +1046,7 @@ endif()
 
 Finally a couple debug messages to make sure everything is working as intended, and then print the found locations. Should any directory be missing, the build process must stop.
 
-
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~bash
 # Check that everything was found
@@ -1050,7 +1065,7 @@ message(STATUS ${NDK})
 message(STATUS ${BUILD_TOOLS})
 message(STATUS)
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ##### Setting up the Compiler
 
@@ -1073,6 +1088,8 @@ RECOMMENDED
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These two last options are required for enabling garbage collection of unused data and functions, as well as possibly minimally increasing performance at the cost of minimally increasing binary size and compile times. For a better explanation of said options I refer to the posts [#W38] and [#W39] about these and other options.
+
+<span class="pagebreak"></span>
 
 ***Linker Flags [#W36]: CMAKE_EXE_LINKER_FLAGS / CMAKE_SHARED_LINKER_FLAGS***
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
@@ -1103,8 +1120,6 @@ In order to get access to the Android NDK, one has to link and include the Andro
 ##### set_app_properties(appName orgName androidVer)
 
 There are some variables that are of general use in other steps as well used in later custom targets for the packaging step, for this reaseon they are set during the build process as they depend on the target application.
-
-
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(APPNAME '"${appName}"')
@@ -1154,8 +1169,6 @@ Linking directly to a specific library can be done using a similar function adap
 
 Given a target to build, include the directories where the Android library include files are as well as the native app library.
 
-
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~bash
 set(NDKINCLUDE "${NDK_PATH}/toolchains/llvm/prebuilt/${OS_USED}/sysroot/usr/include")
 target_include_directories(${target} PUBLIC 
@@ -1199,7 +1212,7 @@ Each target will have a short explanation, a list of dependencies if there are a
 
 In order to describe the essential information of an Android application, each app requires an _AndroidManifest.xml_ file. Although the NDK provides samples for creating one, Rawdraw provides an already templated one to which close no changes were made.
 
-
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~xml
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
@@ -1262,11 +1275,9 @@ COMMANDS
 
 ##### makecapk.apk
 
-Packs<sub>[#W42], [#W44]</sub> and signs<sub>[#W43], [#W45]</sub> the application into an Android recognized format (APK). During the process, some intermediate files are created and removed (_rm -rf_ command).
+Packs<sub>[#W42], [#W44]</sub> and signs<sub>[#W43], [#W45]</sub> the application into an APK. During the process, some intermediate files are created and removed (_rm -rf_ command).
 
-
-
-One specific thing that is not done in this step but part of the CMake build is packaging the resources. Because in desktop platforms, usually the relative path sits directly on the working directory but in Android there is a specific folder structure for the package, assets, resources and metadad.
+One specific thing that is not done in this step but part of the CMake build is packaging the resources. In desktop platforms, usually the relative path sits directly on the working directory but in Android there is a strict structure for the package assets and resources.
 
 On Android, such directiories are _/assets_ and _/res_ (resources). Resources are data required by the package whereas Assets are custom data used by the application, which can be loaded but not modified or written to.
 
@@ -1312,6 +1323,8 @@ COMMANDS
     @echo "Installing " ${PACKAGENAME}
     ${ADB} install -r ${CMAKE_BINARY_DIR}/${APKFILE}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
 
 ##### cleanup
 
@@ -1395,21 +1408,17 @@ The process of importing and debugging a CMake based project just requires the u
 
 ### Android: APK Profiler
 
-The simplest way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which is pretty handy in the way that you do not require a fully fledged Android Studio project to debug it. Android Studio has a built in profiler/debugger for APKs that have been built with the debug symbols, only requiring access to the original debugging files which are either inside the apk itself and can be extracted from, or are already available on the system after building the project through external means.
+The simplest way to get the Android SDK and NDK is by performing the installation alongside Android Studio, which does not require a fully fledged Android Studio project to debug it. The installation comes with a profiler/debugger for debug type APKs, only requiring access to the binary debug files which can be extracted from the apk, or are already available on the system after building the project through external means.
 
+Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer, as the last developed x86 based Android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, one of the reasons why the final build process will only target 64bit ARM systems.
 
+The solution is passthrough debugging. As long as you have a physical device in which you can install your built application and a USB cable (or WIFI on Android 11 or higher), it is possible to link the process execution from the device to Android Studio and debug in realtime., shown in **Figure 18**:
 
-Android Studio also provides emulators and virtual devices, although they are tied to the host computer architecture. That is a big issue for me and developers without an ARM computer as the last developed x86 based Android device was released in March 2015<sub>[#W32]</sub> and the Intel Atom line was discontinued around 2016<sub>[#W33]</sub>. The same path is going for 32bit based ARM systems, on of the reasons why the final build process will only target 64bit ARM systems (less build time and less worries).
-
-The solution is passthrough debugging. As long as you have a physical device in which you can install your built application and a USB cable (or WIFI on Android 11 or higher), it is possible to link the process execution from the device to Android Studio and debug in realtime.
-
-<!-- Image of my phone and Android Debugging at the same time... -->
+![Figure [figures]: SqueArkanoid being debugged on Android phone and Android Studio in real time.](images/AndroidDebug.jpg width=90%)
 
 # SqueLib Development
 
-<!-- Explanation of waht should the core workflow should be and what are the expected capailities -->
-
-When working with SqueLib, it is intended for the library to take control of the initialization process of the application, referring to the main window, render and input. At the same time facilities for interfacing with said modules should always be provided in a simple and easy to implement form. Under **Figure 18** the expected architecture of the library is shown:
+When working with SqueLib, it is intended for the library to take control of the initialization process of the application, referring to the main window, render and input. At the same time facilities for interfacing with said modules should always be provided in a simple and easy to implement form. Under **Figure 19** the expected architecture of the library is shown:
 
 ***************************************************************************
 * .----------------------------------------------------------------------.*
@@ -1470,7 +1479,11 @@ struct ID1_IsCamelCase
 
     Class1 but_can_contain_classes_as_variables;
 };
+~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~c++
 class ID2_IsCamelCaseToo
 {
 public: // Recommend Public Constructors/Destructors first
@@ -1513,6 +1526,8 @@ These will be the main points that the library should accomplish, as well as bei
 ### Library Base
 
 Implementation details from external libraries should remain private towards the user, meaning that the user will not be able to call directly GLFW, EGL or OpenGL, they will have to go through the library in order to interact with the systems.
+
+<span class="pagebreak"></span>
 
 #### Exporting Symbols
 
@@ -1582,6 +1597,8 @@ void android_main(struct android_app* app)
 #endif // ANDROID
 ~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
 #### Printing to Console
 
 An abstraction that will allow the users to print to console regardless of the environment they are at, using a simple approach with a variadic list and a macro.
@@ -1625,7 +1642,11 @@ void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* f
     delete[] tmp;
     delete[] print;
 }
+~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~c++
 void SQUE_ConsolePrint(int lt, const char* log)
 {
 #if defined(_WIN32) //&& defined(_DEBUG)
@@ -1666,6 +1687,8 @@ Althought the solution is not pretty for the one that has to deal with the imple
 #### Library-wide Init and Close
 
 In order to make the library more usable, a single init and close point will be provided for those who prefer it. The details change depending on the implementation of each module but the template implementation of such a function should do something like this:
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~c++ linenumbers
 SQUE_LIB_INIT(const char* app_name, int32_t flags)
