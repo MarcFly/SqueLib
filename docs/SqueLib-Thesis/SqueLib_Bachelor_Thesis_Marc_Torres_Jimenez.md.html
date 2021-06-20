@@ -5,8 +5,8 @@ var titlePage = {
       institution: "Universitat Politécnica de Catalunya"
     , institutionExtra: `Centre de la Imatge i Tecnologia Multimèdia`
     , thesisKind: "Bachelor's Thesis in Game Development"
-    , thesisTitle: "C++ for multiplatform development"
-    , thesisSubtitle: "SqueLib and SqueMaker, introduction to cross-platform C++"
+    , thesisTitle: "SqueLib"
+    , thesisSubtitle: "An introduction to multiplatform C++ development"
     , thesisAuthor: "Marc Torres Jimenez"
     , thesisDate: "March 2021"
     , reviewers: [
@@ -32,17 +32,13 @@ SqueLib<sub>[#W1]</sub> is a C++ library and framework for developing multiplatf
 
 A second focus on SqueLib is its ease of expansion and integration with other libraries, allowing users to integrate into their project as a wrapper or as a founding stones of their project.
 
-The result of the project provides SqueLib, examples on using SqueLib, some sample projects and SqueMaker<sub>[#W2]</sub>, a simple engine type playground which makes full use of the library and will be used for extendign the personal knowledge in programming. The process of implementation is also explained in this document. 
-
-The SqueMaker game engine will be provided both as a source code package and an executable that can be executed in any Windows machine and Ubuntu based Linux distributions (tested under KDE<sub>[#W3]</sub>), with capabilities of building for said platforms as well as Android.
+The result of the project provides the library SqueLib, examples on using it, some sample projects and SqueMaker<sub>[#W2]</sub>, a simple engine skeleton which makes full use of the library and will be used for extendign the personal knowledge in programming. The process of implementation is also explained in this document. 
 
 The source code for the resulting projects will be open sourced under the BSD-3-Clause<sub>[#W4]</sub>, permitting redistribution of the source code providing the copyright notice, redistribution of the binary that reproduces the copyright notice for the project, without using such notice as an endorsement for the derived products.
 
-
-
 (##) Keywords
 
-C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engine
+C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform
 
 (##) Project Links
 
@@ -84,8 +80,6 @@ C++, CMake, OpenGL, GLFW, EGL, Android, NDK, Windows, Linux, Multiplatform, Engi
 | ADB<sub>[#W46]</sub> | Android Debug Bridge, tool for interfacing with Android physical devices |
 
 
-
-
 # Introduction
 
 Every creator wants to create, be it products, tools, works of art or the specifically desired object of creation. In the software development industry the tradition has shifted from producing from scratch to producing for the creators and these creators to make use of the available tools and products to make their creations.
@@ -98,7 +92,7 @@ Resulting from this thesis is an introduction to taking control on the process o
 
 ## Motivations
 
-During the coursing of the Bachelor's Degree in Videogame Design and Development, the introduction to other platforms came at the cost of being locked in specific environments. This experience mirrors closely what can be found easily as better practices,which create a higher entry cost to newer platforms, when working with C++.
+During the coursing of the Bachelor's Degree in Videogame Design and Development, the introduction to other platforms came at the cost of being locked in specific environments. This experience mirrors closely what can be found easily as better practices, which create a higher entry cost to newer platforms when working with C++.
 
 If you want to work in Android you will be introduced to languages and tools such as Java/Kotlin and Android Studio, Flutter or React Native. If you want to work in Web Development you will be mostly forced into one of the infinite variants of the Web Stack and generating infinite dependecies.
 
@@ -115,8 +109,6 @@ The resulting project can be easily modified and integrated according to the dev
 On the other hand SqueMaker<sub>[#W2]</sub> primary mission is to provide a simple game engine that can be toyed with, for understanding how the modules work and to allow the implementation of them in different ways.
 
 To summarize, SqueLib and SqueMaker are projects to introduce C++ desktop developers to multiplatform development. Alongside the results, documention and tools for testing the progression from building to getting an application running will be provided, focusing on game development.
-
-
 
 ## General Objectives
 
@@ -144,8 +136,6 @@ Main objectives for the engine are:
 1. Develop a toy engine to play with the provided subsystems and make simple games
 2. Make a flexible engine that can accomodate new features and technologies
 3. Be able to quickly iterate over the implemented technologies 
-
-
 
 ## Specific Objectives
 
@@ -3433,6 +3423,73 @@ The visual assets are from the Puzzle Pack in Kenney Game Asset<sub>[#W60]</sub>
 
 # Conclusions
 
+The development of a cross-platform framework is laborious task that is performed gradually over the span of multiple years and participation of people from different background and specializations. Such framework is intended to provide a complete package for a user to integrate quickly and easily in the intended platforms in a familiar fashion.
+
+The main objective that brought importance to this project is easing both a current C++ game development student with lesser low level knowledge to a state where they are able to path towards a more technical side of programming, and understanding tradeoffs and limitations of veering into other platforms.
+
+SqueLib as a framework is a great step for a student coming from a less technical background, introducing very practical tools and smaller concepts that are building blocks for moving towards industry standard programming. Getting an application up and running is extremely quick as the syntax is very descriptive of the use cases,providing a solid base to run a template single threaded application from as well as being relatively lightweight.
+
+Under the following snippets, a simple objective-result is provided to measure against the initial proposition and what has been achieved:
+
+!!! note: SqueLib Objective 1 - Multiplatform Library for C++
+    SqueLib provides a very comfortable application building and learning experience for building and getting a simple application up and running as well as continue its development on your preferred tools on: Windows, Debian based Linux and Android r24<
+
+!!! note: SqueLib Objective 2 - Open Source the project under BSD-3-Clause Lices[#W4]
+    The project will be always available on a public repository for anyone interested to take a look. Both online and offline documentation is available through the use of Markdeep<sub>[#W63]</sub>, even this currently written document is available thanks to Markdeep and MarkdeepThesis<sub>[#W64]</sub>.
+
+!!! note: SqueLib Objective 3 - Learning Experience for Multiplatform
+    The project eases the user into multiplatform C++, as well as provide direct public exmaples on how cross-platform issues are taken care of.
+
+!!! note: SqueLib Objective 4 - Examples and demonstration
+    SqueLib provides three examples dedicated to different implementation parts of the library and SqueArkanoid which is a fully featured simple project. SqueMaker is also treated as an example of the live usecase on a personal technical oriented learning tool.
+
+And here are the specific objectives for SqueLib<sub>[1.4.1](#toc1.4.1)</sub>: 
+
+!!! note: SqueLib Specific Objectives
+     * Display Management: No multi-window support, windows are fully customizable.
+     * Rendering Pipeline: Pipeline is complete, with descriptive classes for data but leaving memory management to the user.
+     * Input System: Seamless integration of mouse/pointer type input and keyboard control. Gesture framework is laid but only `tap` and `swipe` have barebones implementation.
+     * File Access: Completely agnostic and safe control of files, reading and writing of binary files and directories.
+
+On the other hand we have SqueMaker, which I am not even remotely close to being satisfied with regarding the original prospects but has proven critical for the personal learning purposes.
+
+The development process of the library, documenting it and refining it has proven to be a bigger and more intensive task than originally planned for and time dedicated to SqueMaker has been less than ideal. Originally SqueMaker was intended to become a simple game engine from which a user could build a similar game to the effects of library but providing a more user oriented interface to it.
+
+It was an objective to make it minimally complete at least with the provided subsystems from the library as well as implement new technologies and interests picked up during the research. This latter part has been the major pitfall of SqueMaker.
+
+During the development process, multiple inconveniences have ocurred that have made the process of expanding SqueMaker lag behind significantly. Having that in mind though, in retrospective the inclusion of the engine development is out of place in the scope of the thesis, it is more of a personal endeavour rather than part of a proper fully featured project.
+
+Down here are the proposed objectives for SqueMaker:
+
+!!! ERROR: SqueMaker Objective 1 - Develop a toy Engine to play with subsystems
+    The engine is barebones and implements for itself File Access, Inut and Displa. A very barebones implementation of a Render Graph is provided but is limited to direct shader usage and displaying compelted drawn framebuffers.
+
+!!! ERROR: SqueMaker Objective 2 - Make a flexible engine to accomodate new features
+    Development of the engine becomes increasingly slow because of the clanking of programming styles and features.
+
+!!! note: SqueMaker Objective 3 - Quickly iterate over implemented technologies
+    As SqueLib as a framework is very flexible, adding new features and testing them out is a very quick process. The engine is built in a barebones style so adding new features does not collide directly with new ones and in that sense, it is comfortable to test new things on but not being appropiate for delving deep and polishing them.
+
+And here the specific objectives for SqueMaker<sub>[1.4.2](#toc1.4.2)</sub>
+
+!!! note: SqueMaker Specific Objectives
+     * Rendering Pipeline: Barebones and limited to quad rendering and no inputs, backend is very easily swapped as it is very lightweight.
+     * Asset Management: Drag and drop and performant filewatching for files contained in the default SqueLib directories, as well as a tempalte for adding file importing and exporting.
+     * Entity Component System: Mixed Data Oriented ECS taht makes use of templating and XMacros for ease of use in both realtime and from serialization.
+     * Fast Login Implementation: The user can't provide new logic without delving deep in the srouce code of the engine. Internal implementation is easier but linking with other modules is not very accessible.
+
+Certainly, SqueLib is not the right path for new user or even experienced user to get an actual commercial application or fully featured project out there. There are far more mature and complete C/C++ frameworks that provide greater facilities for that.
+
+The goal of SqueLib is to bring a toolset for a user to understand what is behind making such frameworks as well as a framework for a user to grow from said point. If your goal aligns with that, delving deeper into the technical programming abyss that lies further down and trailing towards a low level programming experience down the road are your priorities, SqueLib is a great first step towards that.
+
+Personally I would encourage anyone in this same path to make a simple similar style backend to learn how to navigate the many, way too many pitfalls that lie there inconspicously when developing multiplatform and performance oriented applications.
+
+Looking towards a near future, this whole project will be of most personal importance to come back and revisit development practices and habits picked up in order to continue moving forward in this technical programming path. Most probably this revision will come in form of separate releases of the same name with completely new technology and approaches, making the link back with older versions the approach to learn more.
+
+# Acknowledgements
+
+
+
 # Webgraphy
 <!-- 
 [#WX]: Title: Description. Author, Year.
@@ -3624,6 +3681,12 @@ The visual assets are from the Puzzle Pack in Kenney Game Asset<sub>[#W60]</sub>
 
 [#62] rFXGen. Ramon Santamaria, 2019.
 <https://raylibtech.itch.io/rfxgen>
+
+[#W63] Markdeep. Morgan McGuire, 2015.
+<https://casual-effects.com/markdeep/>
+
+[#W64] Markdeep Thesis. Doersino, 2019.
+<https://github.com/doersino/markdeep-thesis>
 
 <script src="markdeep-thesis/lib/bindery/2.2.9/bindery.min.js"></script>
 <script>
