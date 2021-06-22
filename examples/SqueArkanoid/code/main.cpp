@@ -41,8 +41,6 @@ void OnGoBackground()
     EntitiesCleanUp();
     UiCleanUp();
     RenderCleanUp();
-
-
 }
 
 void OnResume()

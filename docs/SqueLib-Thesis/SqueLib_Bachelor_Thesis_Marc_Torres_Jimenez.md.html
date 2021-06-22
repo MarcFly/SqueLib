@@ -1454,7 +1454,7 @@ void FunctionsAreCamelCase()
     // And Brackets go in the line below
 }
 
-void variables_are_lowercase_separated_by_underscore;
+int variables_are_lowercase_separated_by_underscore;
 
 typedef variable_is_underscore int;
 
@@ -1519,9 +1519,9 @@ void NonModifying_ConstFundamentalTypes_AsCopy(const int fundamental_types){}
 
 ## Core Library
 
-The core implementation of the library should allow a low C++ experience level user create an application with a window, control the display inside the window, have access to the main inputs performed and finally, be able to load and write raw binary files.
+The core implementation of the library should allow a low C++ experience level user create an application with a window, control the display inside the window, have access to the main keyboard, mouse and touch inputs performed and finally, be able to load and write raw binary files.
 
-These will be the main points that the library should accomplish, as well as being able to perform these actions seamlessly across the target platforms. This process of making the required functionality work properly for the platforms as well as have them easy for the user to access, causes limitations to arise and circumvent.
+These will be the main points that the library should accomplish, as well as being able to perform these actions seamlessly across the target platforms. In the following chapter the functions exposed to the end user will be shown, alongside code snippets and explanations for abstractions to the platform dependencies from the user.
 
 ### Library Base
 
@@ -1534,6 +1534,10 @@ Implementation details from external libraries should remain private towards the
 A requirement in Windows is to set the visibility or how functions are exported and imported depending on the context of the library build. Maybe a user will import it and use it directly in their project, anohter will have it as a static library and a third one as a dynamic library.
 
 In all cases, there are some requirements on how to export the symbols<sub>[#W55]</sub>, which are not necessarily needed on other platforms but it would be good practice to do so:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~c++
 #ifndef SQ_API		
@@ -1559,9 +1563,12 @@ As seen previously with the **Android Minimal Example**, there needs to be a rer
 
 In this same `android_main` the basic steps for initializing other subsystems for Android should be taken care of. A specific case is the `HandleAndroidInput` which will be defined under the Input source file, we set it up as an extern to setup the callback:
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~~~~~~~~~~~~~~c++
 #ifdef ANDROID
-
 #include <android_native_app_glue.h>
 #include <android/log.h>
 
@@ -1572,7 +1579,10 @@ void HandleAndroidCMD(struct android_app* app, int32_t cmd)
         // Take care of Android Commands
     }
 }
+~~~~~~~~~~~~~~~~~
 
+
+~~~~~~~~~~~~~~~~~c++
 // Used in the Input Module
 extern int HandleAndroidInput(struct android_app* app, AInpuitEvent* ev);
 
@@ -1597,8 +1607,6 @@ void android_main(struct android_app* app)
 #endif // ANDROID
 ~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
-
 #### Printing to Console
 
 An abstraction that will allow the users to print to console regardless of the environment they are at, using a simple approach with a variadic list and a macro.
@@ -1606,6 +1614,10 @@ An abstraction that will allow the users to print to console regardless of the e
 The macro uses the `__FILE__` and `__LINE__` macros to pass to `SQUE_PrintVargs` where the call originates and accepts a string for formating as well as the variadic list of values. Said function will extract the filename, add the string with the specified format and then print it to console using the abstraction.
 
 For using priority levels, a simple logtype enum that matches Android's log values<sub>[#54]</sub> is setup.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~c++
 enum SQUE_LogType
@@ -1615,38 +1627,31 @@ enum SQUE_LogType
 	LT_ERROR,
 	LT_CRITICAL
 };
+~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~c++
 void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...)
 {
     const char* sttr = strrchr(file, FOLDER_ENDING);
     uint32_t sttr_len = strlen(sttr);
 
     static va_list ap;
-    char* tmp = new char[1];
+    static char tmp[1024];
     va_start(ap, format);
-    int len = vsnprintf(tmp, 1, format, ap) + 1;
-    va_end(ap);
-    delete[] tmp;
-
-    tmp = new char[len];
-    va_start(ap, format);
-    vsnprintf(tmp, len, format, ap);
+    int len = vsnprintf(tmp, sizeof(tmp), format, ap) + 1;
     va_end(ap);
 
     int print_len = len + (sttr_len + 4 + 4);
-    char* print = new char[print_len];
+    static char print[1024];
     sprintf(print, "%s(%d): %s", sttr, line, tmp);
 
+    if(print_len > sizeof(print))
+        SQUE_ConsolePrint(int(SQUE_LogType::LT_WARNING, "Log size exceeded, message will be cut..."));
     SQUE_ConsolePrint((int)lt, print);
-
-    delete[] tmp;
-    delete[] print;
 }
-~~~~~~~~~~~~~~~~~
 
-<span class="pagebreak"></span>
-
-~~~~~~~~~~~~~~~~~c++
 void SQUE_ConsolePrint(int lt, const char* log)
 {
 #if defined(_WIN32) //&& defined(_DEBUG)
@@ -1671,6 +1676,13 @@ GLFW, OpenGL and EGL are heavy users of enum and macros for configuration and ru
 
 Althought the solution is not pretty for the one that has to deal with the implementation, it translates into a seamless experience for the user when using the required types.
 
+<span class="pagebreak"></span>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_remap_macros.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~~~~~~~~~~~~~~~~~c++
 // Example: There are macros that don't map, so an invalid value is set that should throw silent errors
 #if defined(GLFW)
@@ -1688,7 +1700,9 @@ Althought the solution is not pretty for the one that has to deal with the imple
 
 In order to make the library more usable, a single init and close point will be provided for those who prefer it. The details change depending on the implementation of each module but the template implementation of such a function should do something like this:
 
-<span class="pagebreak"></span>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~c++ linenumbers
 SQUE_LIB_INIT(const char* app_name, int32_t flags)
@@ -1719,6 +1733,8 @@ SQUE_LIB_Close()
 }
 ~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
 ### Window Control
 
 The management of a window is basically the same as an application loop, given a configuration a window will be initialized in which you will update what is displayed until it is time to close the whole application, shown in **Figure 19**. What differs from a simple desktop application is that this process has to be adapted and limited to work seamlessly with a base Android device as well as the chosen libraries.
@@ -1737,9 +1753,13 @@ Both GLFW and EGL take care of generating the context in which the rendering API
 
 #### Configuration and Initialization
 
-Configuring both APIs is straightforward, a couple of functions for setting the next window hints are provided which will be used for the creation of the main window the application runs in. These hints are stored and later setup when performing either the initialization or, should it be supported, when opening another window.
+Configuring both EGL for Android and GLFW for Linux and Windows is pretty straightforward, a couple of functions for setting the next window hints are provided which will be used for the creation of the main window the application runs in. These hints are stored and later setup when performing either the initialization or, should it be supported, when opening another window.
 
 The `Hints` are passed down as an array of integer values, as both GLFW and EGL work through their own enum values that have been remapped by SqueLib to make it seamless. Both libraries ignore invalid hints and continue with their respective initialization steps.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 SQ_API void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size);
@@ -1749,9 +1769,18 @@ SQ_API void SQUE_DISPLAY_NextWindow_Title(const char* title);
 SQ_API void SQUE_DISPLAY_NextWindow_Size(const uint32_t width, const uint32_t height);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Then initialization steps comes and performs the initialization depending on the backend. The actual code changes a bit but the following pseudo-c++ code should show the requirements for getting it to work on both platforms:
+The format of declaring a window iherits from GLFW, while adding separation between types of configuration for EGL. When the actual window is opened the configuration is actually applied. I personally prefer this way as the user can set them up one by one or in bulk.
+
+The actual code changes a bit but the following pseudo-c++ code should show the requirements for getting it to work on both platforms:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_display.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+// These are global internal variables
+// not exposed in the headers
+
 #ifdef EGL
     extern struct android_app* my_app;
     extern int graphics_backend_started;
@@ -1795,7 +1824,11 @@ void SQUE_DISPLAY_Init()
     base_window->height = ANativeWindow_getHeight(egl_window);
     // Create a surface to draw on from the obtained window and a series of hints
     egl_surface = eglCreateWindowSurface(egl_display, config, egl_window, window_hints);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 #elif defined(GLFW)
     int glfw_major, glfw_minor, glfw_revision;
     glfwGetVersion(&glfw_major, &glfw_minor, &glfw_revision);
@@ -1823,11 +1856,15 @@ void SQUE_DISPLAY_Init()
 
 #### Updating Display
 
-The main functions to take care of the main display are really swapping back with front buffer to show the next drawn frame and making such buffer the one to write to. When interfacing with OpenGL, the user might be writting to different buffers which they will bind and unbind as they seem fit. 
+Assuming the user might be writing to their own framebuffers, it is necessary for a function to bind the one associated with the context to not make the user handle that association. Then, a function to swap between the back and front buffers. This pair of functions have to be called each frame in order to get things send to display. 
 
 In case that the user does not want to worry about handling the buffer swap state, this pair of functions can be called successively to perform that buffer swap properly:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_display.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 void SQUE_DISPLAY_MakeContextMain(uint16_t window)
 {
     SQ_ASSERT(window < sque_windows.size())
@@ -1842,6 +1879,11 @@ void SQUE_DISPLAY_MakeContextMain(uint16_t window)
 #endif
 }
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 void SQUE_DISPLAY_SwapBuffer(uint16_t window)
 {
     SQ_ASSERT(window < sque_windows.size())
@@ -1856,6 +1898,10 @@ void SQUE_DISPLAY_SwapBuffer(uint16_t window)
 As seen above, the functions receive a handle to the window, rather than the window itself. During the process of developing the library, the plan was to support multiple windows but the complexity of managing them was too much. Still a variable to pass which window to interact on is passed which makes sense in the long-run.
 
 Other functions that take care of managing the state of a window as well as callbacks are provided to get the user to manage it their own way, although the library will have a default functions set.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~c++
 // Setters
@@ -1890,14 +1936,14 @@ Following GLFW's structure for callbacks, each callback setter function will ret
 
 #### Closing Display
 
-Part of the previous update function set, were two setters for a window to close and a checker for a window to close.  `SQUE_DISPLAY_SetWindowClose` sets the intent to close the window, for `SQUE_DISPLAY_ShouldWindowClose` to poll, `SQUE_DSIPLAY_CloseWindow` actually closes the window.
+Part of the previous update function set, were two setters for a window to close and a checker for a window to close.  `SQUE_DISPLAY_SetWindowClose` sets the flag that it is requested to close the window, `SQUE_DISPLAY_ShouldWindowClose` polls such state, then `SQUE_DSIPLAY_CloseWindow` actually closes the window.
 
 Using these one should be able to decide where they want to decide to perform such actions. To actually cleanup the module teh function `void SQUE_DISPLAY_Close()` is provided, which actually performs the cleanup for GFLW and the proprietary window handles.
 EGL does not have such a closure, it is dealt by the Android NDK the moment the whole application shut downs or is thrown into background.
 
 ### Input Management
 
-The process of taking care of inputs strays a bit from the latter module. In **Figure XX** can be appreaciated that most abstractions to input systems work in two differents ways at the same time, all of the rooting in a poll function:
+The process of taking care of inputs strays a bit from the latter module. In **Figure 21** it is shown how two system work at the same time, the poll saves the state of inputs and sends the callbacks, then durign the update loop the user can poll again the saved states for whatever used needed:
 
 ***********************************************************************************************************
 * .------------.
@@ -1906,7 +1952,7 @@ The process of taking care of inputs strays a bit from the latter module. In **F
 *        |               .-------------------------------------------------.
 *        v               |                                                 |       .-------------.
 * .------+-------------. v  .--------------------.   .-----------------.   | App   | Close Input |
-* | Register Receivers +-+->| Poll System Inputs +-->| App Update Loop +---*------>|   System    |
+* | Register Receivers +-+->| Poll System Inputs +   | App Update Loop +---*------>|   System    |
 * '--------------------'    '----------+---------'   '------+-----+----'     Close '-------------'
 *                                      |                    ^     ^
 *                                      v                    |     |
@@ -1924,11 +1970,15 @@ The process of taking care of inputs strays a bit from the latter module. In **F
 
 Usually the user will register some receivers, which will as appropiately named receive the inputs that are polled by the input system. Another step is that the user might want to specifically poll for an input state to which it has not designated a receiver, setting up a second polling operation or a spontaneus check.
 
-The Android NDK does not really have a good support for the first kind, making the user setup its own loop for taking care of such things. GLFW on the other hands provides receivers for mostly every input imaginable for a Desktop platform, be it keyboard, mouse or joysticks.
+The Android NDK does not really have a good support for the first kind, making the user setup its own loop for taking care of such things. GLFW on the other hands provides receivers for the main used inputs for a Desktop platform, being keyboards, mice or joysticks.
 
 #### Initialization
 
-For the Android NDK, the input was setup previously at the initialization step for the library, by setting the callback `HandleAndroidInput` to the `android_app`. For GLFW there is not much more complications but GLFW ties input to each separate window, as such the initialization step for the library input will target he main window created. Here setup the first order dependency for initialization **Display -> Input -> ...**.
+For the Android NDK, the input was setup previously at the initialization step for the library, by setting the callback `HandleAndroidInput` to the `android_app`. For GLFW there is not much more complications but GLFW ties input to each separate window, as such the initialization step for the library input will target he main window created. Here it is setup the first order dependency for initializating the modules of the library: **Display -> Input**
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_input.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 void SQUE_INPUT_Init()
@@ -1962,6 +2012,12 @@ SqueLib provides the base GLFW callbacks that update the key state internally an
 
 In order to make the translation as seamless as possible between touch based and keyboard-mouse platforms, setting up a basic callback system seemed fit as it is very comfortable to use and quite an integral part of GLFW.
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 typedef void(KeyCallback)(int32_t code, int32_t state);
 
@@ -1991,13 +2047,17 @@ struct SQUE_Key
 };	
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In conjunction, every basic touch action as well as keyboard, mouse and joystick pressed can be summed in the following key states. A key holds previous state and the current polled state, as well as having a direct callback to setup should it be necessary for the user to have an interrupt on a key action with the identifier as well as the state.
+In conjunction, every basic touch action as well as keyboard, mouse and joystick pressed can be summed in the previous key states. A key holds previous state and the current polled state, as well as having a direct callback to setup should it be necessary for the user to have an interrupt on a key action with the identifier as well as the state.
 
 After the states, a couple default touch actions are set in the same enum to take care of the basic single touch gestures. Touch and Gestures will be explained in the **Touch Input and Gestures** chapter. 
 
 ##### Registering Receivers
 
-The process is pretty straightforwards, call the required functions and such action will be setup to the passed function. A specific takeaway, also present and mentioned in the **Display** chapter, these function return the previously setup character making it possible to chain these callbacks and not break previous implementations if the user is unsure.
+The process is pretty straightforwards, call the required functions and such action will be setup to the passed function. A specific takeaway, also present and mentioned in the **Display** chapter, these functions return the previously setup character making it possible to chain these callbacks and not break previous implementations if the user is unsure.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_simple_types.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~c++
 typedef void(MouseFloatCallback)(float x, float y);
@@ -2011,6 +2071,10 @@ KeyCallback* SQUE_INPUT_SetMouseButtonCallback(const int button, KeyCallback* ke
 #### Polling Inputs
 
 During the GLFW initialization we did already setup how our library will provide the inputs, what is left for GLFW is to call `glfwPollEvents()` somewhere and all inputs generated since the last poll will be setup. On the Android NDK we process all events in the app event queue, which will call the previously setup `HandleAndroidInput` callback on each found event.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_input.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 void SQUE_INPUT_Process(uint16_t window)
@@ -2055,7 +2119,13 @@ This function redirects to different types of events. In short, `AINPUT_EVENT_TY
 
 The point of interest is in `HandleAndroidMotion` which will be explained later on. For now, the polling loop is already setup and working as close as possible to GLFW.
 
+<span class="pagebreak"></span>
+
 Finally, for the user to poll the inputs, there are the following functions provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, const SQUE_KeyboardKeys key);
@@ -2067,9 +2137,13 @@ void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 
 #### Keyboard and Mouse
 
-The process of getting the inputs for both keyboard and mouse is setup through the provided callbacks for GLFW and `HandleAndroidKey` for keyboard on the Android NKD:
+The process of getting the inputs for both keyboard and mouse is setup through the provided callbacks for GLFW and `HandleAndroidKey` for keyboard on the Android NDK. Both groups of callbacks are setup with the call to `SQUE_INPUT_Init`:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~c++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_input.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 #if defined GLFW
 static void GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -2100,6 +2174,12 @@ static void GLFW_MouseScrollCallback(GLFWwindow* window, double xoffset, double 
     scroll_callback(scrollx, scrolly);
 }
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+
 #elif defined ANDROID
 
 int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
@@ -2123,13 +2203,19 @@ int32_t HandleAndroidKey(struct android_app* app, AInputEvent* ev)
 #endif
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the Android NDK implementation, mouse input is setup with a passthrough from the first touch input available.
+The GLFW callbacks are set internally for *SqueLib*, then the user can address them by setting their own callback through the functions shown under *Registering Receivers*. These callbacks are used per key and will also get triggered by Android keyboard, shown above, and touch input explained in the following step.
 
 #### Touch Input and Gestures
 
 The Android NDK provides touch inputs through touch motions, meaning that it actually resembles more a multi mouse setup which are called pointers. The process is very similar to polling the state of a key, iterate through the available ones and retrieve the state but at the same time obtain the position they are at that point. It is important to remark that a pointer will remain static until it is active again.
 
 The following is the barebones implementation of the `HandleAndroidMotion` function:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_input.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 #ifdef ANDROID
@@ -2192,7 +2278,11 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
 
 In the function there are some referencies to check if a motion has ended. A motion is active depending on the sum of activities of the pointers. If non are active, motion will be inactive and a gesture will be evaluated on a per pointer basis.
 
-Each gestures is simply the tracking of a pointer from start position to end position, given a time frame. The current implementation only detects a `TAP` and a `SWIPE` motion:
+Each gesture is simply the tracking of a pointer from start position to end position, given a time frame. The current implementation only detects a `TAP` and a `SWIPE` motion:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_input.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Gesture							
@@ -2238,11 +2328,13 @@ SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g)
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
 ### Render Pipeline
 
 The approach for rendering graphics in both OpenGL 3.3 and OpenGLES 3.2 are parctically the same, even the GLSL supported version mirror almost one to one. The implementation towards the user becomes very easy, just write passthrough functions on the parts that are being supported.
 
-In order to get a base case for working with a basic render pipeline, I decided to go through **LearnOpenGL[#W56]** and have the library perform effortlessly such part. The intent of the library is to ease the user into declaring and knowing the data they are working with first and then during realtime operations just have to worry about know which handles to use, seen below in **Figure 20**.
+In order to get a base case for working with a basic render pipeline, I decided to go through **LearnOpenGL[#W56]** and have the library perform effortlessly such part. The intent of the library is to ease the user into declaring and knowing the data they are working with first and then during realtime operations just have to worry about know which handles to use, seen below in **Figure 22**.
 
 *************************************************************
 * .-------------.    .----------------.    Close .--------.
@@ -2257,7 +2349,7 @@ In order to get a base case for working with a basic render pipeline, I decided 
 *                    | Update Handle |<--'
 *                    '---------------'
 *************************************************************
-[Figure [diagram]: Intended Render loop approach for SqueLib users.]
+[Figure [diagram]: Handles are links to the resources allocated on GPU that the user will use, some will be sent repeatedly each frame and some can change dynamically.]
 
 This mention of approach on the pipeline is followed in the next example:
 
@@ -2286,17 +2378,17 @@ SQUE_MESH_InterleaveOffset(&triangle);
 SQUE_MESH_SetLocations(&triangle);
 SQUE_MESH_SendToGPU(&triangle, vertices);
 
-SQUE_SHADERS_GenerateID(vert_shader, SQUE_VERTEX_SHADER);
+SQUE_SHADERS_GenerateID(&vert_shader, SQUE_VERTEX_SHADER);
 SQUE_SHADERS_SetSource(vert_shader.id, vert_source);
 SQUE_SHADERS_Compile(vert_shader.id);
 
-SQUE_SHADERS_GenerateID(frag_shader, SQUE_FRAGMENT_SHADER);
+SQUE_SHADERS_GenerateID(&frag_shader, SQUE_FRAGMENT_SHADER);
 SQUE_SHADERS_SetSource(frag_shader.id, frag_source);
 SQUE_SHADERS_Compile(frag_shader.id);
 
 SQUE_PROGRAM_GenerateID(&program.id);
-SQUE_PROGRAM_AttachShader(program, vert_shader);
-SQUE_PROGRAM_AttachShader(program, frag_shader);
+SQUE_PROGRAM_AttachShader(&program, vert_shader);
+SQUE_PROGRAM_AttachShader(&program, frag_shader);
 SQUE_PROGRAM_Link(program.id);
 
 SQUE_SHADERS_FreeFromGPU(vert_shader.id);
@@ -2317,19 +2409,21 @@ As mentioned in the example, the syntax early on focuses on declaring how the di
 
 Finally, all the classes provided have their members public for anyone to initialize directly in their own way, should any function be too simple to be worth calling. The objective of setting up everything in functions is to make any reader instantly understand what each line is doing.
 
-On the following sections, each helper item provided for SqueLib and finally a list of passthrough functions supported.
+On the following sections, each helper item is provided for *SqueLib* and finally a list of passthrough functions supported.
 
 #### Value Types
 
-OpenGL uses their own enum values for defining mostly anything, and as a system for remapping macros was already setup for GLFW and EGL, it has been used for the enum values that SqueLib would passthrough to the user.
+OpenGL uses their own enum values for defining mostly anything, and as a system for remapping macros was already setup for GLFW and EGL, it has been extended for the enum values that SqueLib would passthrough to the user from OpenGL.
 
 Such values can be found under `RENDER MACROS` sections in the *`sque_remap_macros.h`* file.
 
 #### Initialization
 
-Thanks to **GLAD [#W57]** and the fact that both GLFW and EGL provide the base context for OpenGL, the process of initializing OpenGL requires a single call by the library, as there won't be explicit use of extensions and keeping it as vanilla as possible makes it more approachable:
+Thanks to **GLAD [#W57]** and the fact that both GLFW and EGL provide the base context for OpenGL, the process of "initializing" OpenGL requires a single call by the library, as there won't be explicit use of extensions and keeping it as vanilla as possible makes it more approachable:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// "Initialized" is marked in quotes because Glad doesn't really initialize it,
+// Glad actually loads the functions from the installed OpenGL driver at runtime.
 #if defined OpenGL
     gladLoadGL();
 #elif defined OpenGLES
@@ -2337,8 +2431,11 @@ Thanks to **GLAD [#W57]** and the fact that both GLFW and EGL provide the base c
 #endif
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 What is a bit of a pain is merging shaders between `GLSL 320 es` and `core 330`, which really only differ in the header representation. For that, shaders loaded into SqueLib will have to explicitly not provide the header. Instead, during initialization a the header is written to a static string and when setting up the source code for compilation, that string is written as a header to the body provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_render.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 static char glsl_ver[64] = {'\0'};
@@ -2359,8 +2456,15 @@ static char glsl_ver[64] = {'\0'};
 
 #### Mesh Buffers
 
-SqueLib defines a mesh as a structure that holds for the information for a set of vertices and indices, the information in each vertex can be configured through attributes and then send to GPU and used to be passed to the render operation. 
-Spefifically, a SQUE_Mesh does not take ownership of the data but only the information about said data. it is task of the user to manage that CPU memory allocation.
+SqueLib defines a mesh as a structure that holds for the information for a set of vertices and indices, the information in each vertex can be configured through attributes and then sent to GPU and used to be passed to the render operation. 
+
+Specifically, a `SQUE_Mesh` does not take ownership of the data but only the information about said data. It is an obligation for the user to manage that CPU memory allocation.
+
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class SQUE_VertAttrib
@@ -2376,7 +2480,6 @@ public:
 	bool normalize = false;
 	uint16_t var_size = 4;
 	uint16_t offset = 0;
-
 	char name[89] = ""; // To align the class to 128 bytes
 };
 
@@ -2388,15 +2491,13 @@ public:
 
 	int32_t draw_config;
 	int32_t draw_mode = SQUE_STATIC_DRAW;
-	uint32_t attribute_object = 0;																													
+	uint32_t attribute_object = 0;								
 	uint32_t vert_id = 0;
-	uint32_t num_verts = 0;
-																											
+	uint32_t num_verts = 0;																			
 	uint32_t index_id = 0;
 	uint16_t num_index = 0;
 	uint32_t index_var = SQUE_UINT;							
 	uint16_t index_var_size = 0;
-
 	uint16_t vertex_size = 0;
     sque_vec<SQUE_VertAttrib> attributes;
 };
@@ -2404,7 +2505,6 @@ public:
 void SQUE_MESH_SetDrawConfig(SQUE_Mesh* mesh, int32_t draw_config, int32_t draw_mode);
 void SQUE_MESH_SetDataConfig(SQUE_Mesh* mesh, uint32_t num_verts, uint32_t num_index_ = 0, uint32_t index_var_ = SQUE_UINT);
 void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_ int32_t var_type, bool normalize, uint16_t num_components);
-
 uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh);
 uint16_t SQUE_MESH_GetAttribSize(SQUE_Mesh* mesh, const char* name);
 void SQUE_MESH_InterleaveOffsets(SQUE_Mesh* mesh);
@@ -2423,9 +2523,13 @@ SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, v
 
 #### Textures
 
-Textures accomplish the same objective as the Mesh class, hold the basic information regarding a texture buffer without taking control of the memory.
+Textures accomplish the same objective as the Mesh class, they hold the basic information regarding a texture buffer without taking control of the CPU memory, while attaching a handle to the GPU buffer allocation.
 
 The attributes behave a bit different. Texture parameters are descriptors on how to take care of different operations, as such some of these operations require multiple values of either integer or float values.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class SQUE_TexAttrib
@@ -2435,7 +2539,7 @@ public:
 	SQUE_TexAttrib(const char* name, int32_t attrib_id, int32_t value);
 	SQUE_TexAttrib(const char* name, int32_t attrib_id, float value);
 
-	char name[28] = ""; // Align to 64bytes
+	char name[36] = "";
 	uint32_t type = UINT32_MAX;
 	int32_t id = UINT32_MAX;
 	void* data = NULL;	
@@ -2468,10 +2572,16 @@ SQ_API void SQUE_TEXTURE_SetActiveUnit(int32_t unit);
 SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level = 0);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
 #### Shaders and Programs
 
 Shaders differ a bit form the other types, they only have to hold what type they are and the identifier. The actual file or code passed to compile is user dependant and as such they should take care of it.
-It is the Program that actually holds the information for execution, and as such it has a container for the shader is linked to as well as the uniforms.
+It is the Program that actually holds the information for execution, and as such it has a container for the shader that is linked to, as well as the uniforms.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Uniform
@@ -2513,6 +2623,12 @@ Instead of having to query OpenGL during runtime, each program can choose to cac
 
 During the render operation, the following uniforms are provided as a base as well as the function to retrieve the uniform id from the Program cached ones. The syntax uses a string and comparation to find the value, but should the user need it it could hold onto the ids after caching them and call use them directly.
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
 
@@ -2529,6 +2645,10 @@ void SetMatrix4(const int32_t uniform_id, const float* matrix, const uint16_t nu
 #### Framebuffers
 
 One thing that I have learned through the optional subject *Advanced Graphics Programming*, is that it was extremely important to provide a way to manage also multiple framebuffers for mostly every possible approach of contemporary rendering techniques (separate from Compute oriented).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Framebuffer
@@ -2558,6 +2678,8 @@ void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t attachments[], const uint32_
 void SQUE_FRAMEBUFFER_CheckStatus();
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
 By how OpenGL sets it up, a `Framebuffer` holds what draw data will be written to, and then used during the next render operation. A specific is that each type of draw buffer has to be set up separately in a traditional way. For that, generic `Renderbuffer` functions are setup although there are only provided a `depth_buffer` and a `stencil_buffer` in the struct.
 
 Additionally, a `SQUE_Framebuffer` holds the texture data for the textures it reads and writes to. That is by the rationale that is if you are using a framebuffer to write and read to multiple textures the user should always have access to it when binding such textures to in or out values for the render operations.
@@ -2565,6 +2687,10 @@ Additionally, a `SQUE_Framebuffer` holds the texture data for the textures it re
 #### State Control
 
 In OpenGL it is very important to keep track of how each step of rendering is setup. Some passes require reading depth values, some other need to blend with the previously written layers and more. In order to make the user's life easier this class is provided:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class SQUE_RenderState				
@@ -2591,11 +2717,47 @@ public:
 
 `BackUp` copies the currently setup state according to the provided state variables. `SetUp` updates the OpenGL state with the values the user either backed it up with or they provided individually.
 
-Good practice would be to back up once with the default pipeline state and then initialize the desired values.
+Good practice would be to back up once with the default pipeline state and then initialize the desired values. This option was not considered during development of the `Display` module, as such a change must be done to `SQUE_DISPLAY_SwapBuffer` as it will be the last function that should interact with the render pipeline after every frame, then init .
+
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_render.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+SQUE_RenderState sque_default_state;
+
+void SQUE_RENDER_Init()
+{
+    //...
+
+    // Gather OpenGL default state after initialization
+    sque_default_state.BackUp();
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<br>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_display.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+extern SQUE_RenderState sque_default_state;
+void SQUE_DISPLAY_SwapBuffer(uint16_t window)
+{
+    //...
+    // Setup default state after execution
+    sque_default_state.SetUp();
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### OpenGL Functionality
 
 As providing all of OpenGL's functionality is decidedly out of scope given the approach to perform the initialization library side instead of user side, thus making the user interface with SqueLib instead of OpenGL directly, a minimum valuable subset of functions are passed through for the user to interact with OpenGL as they would normally in an entry level environment.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 void SQUE_RENDER_ChangeFramebufferSize(int32_t width, int32_t height);		
@@ -2631,6 +2793,10 @@ Such cases would be: read files, write files, create directories and manage the 
 
 In order to interact with the filesystem, the following structs are provided:
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Dir
 {
@@ -2641,7 +2807,14 @@ struct SQUE_Dir
 	uint32_t parent_id = -1;
 	sque_vec<uint32_t> children_ids;
 };
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<br>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_filesystem.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+// And this generator function out of a location
 SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id = -1)
 {
 	SQUE_Dir d;
@@ -2664,6 +2837,10 @@ SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id = -1)
 
 A directory is setup to allow building directory trees easily, with a `uint32_t` handle for a parent and children and an own id for ease of traversal and discourage holding direct pointers to data.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_Asset
 {
@@ -2683,6 +2860,10 @@ Just because such a type is very popular for use, a `SQUE_DataPack` englobes two
 #### Initialization
 
 An easy to miss step to taking care of where to read and write files from is to setup a base directory from which to pivot. SqueLib will take the easiest available directory for reading and writing files from, which on desktop will be the working directory and on Android an external storage directory provided by the Android NDK:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_filesystem.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 extern struct android_app* my_app;
@@ -2711,17 +2892,19 @@ const char* SQUE_FS_GetExecPath()
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The variable and retrieval function is named after execution path, as on desktop platforms that the easiest available directory and on Android such directory is unavailable to read and write from. On Android the storage directory is minimally hidden from the user and setup for an application to perform their external storage operation, although access to the whole system is available given the permissions.
+The variable and retrieval function is named after execution path, as on desktop platforms that's the easiest available directory and on Android such directory is unavailable to read and write from. 
 
-Once that is set, Android behaves almost exactly as a Linux systems for the basic types of operations.
+On Android the storage directory is minimally hidden from the user and setup for an application to perform their external storage operation, although access to the whole system is available given the permissions. Once that is set, Android behaves almost exactly as a Linux systems for the basic types of operations.
 
 #### Android Assets
 
-When building an Android based application, the source code, manifest files, resources and `assets` are packed and then installed in a protected directory. In said directory one can't write but only read through the Android NDK.
+When building an Android based application, the source code, manifest files, resources and `assets` are packed and installed in a protected directory. In said directory one can't write but only read through the Android NDK. To circumvent that, the following asset specific function is provided:
 
-In order to not have an issue when reading and writting files a whole SqueLib application package is built with the expected *Asset* folder in the working directory with the structure set inside by the user. For that a generic read function and an *Asset* specialized functions are provided.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_filesystem.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 {
 	SQUE_Asset* ret = NULL;
@@ -2755,10 +2938,13 @@ SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file)
 	ret = SQUE_FS_LoadFileRaw(sprint_v);
 	delete sprint_v;
 #endif
-
 	return ret;
 }
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Then for generic files under an absolute path, a generic load function:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 {
 	
@@ -2783,13 +2969,17 @@ SQUE_Asset* SQUE_FS_LoadFileRaw(const char* file)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As can be seen, the `SQUE_FS_LoadFileRaw` perfoms a basic read operation and returns a basic struct with a generic pointer to the data and the size of it.
-`SQUE_FS_LoadAssetRaw` perfoms a similar operation but specializes the search of the file inside the *Asset* directory built with the application for desktop platforms, on Android it uses the Android NDK provided approach for reading a generic file from the installed package.
+`SQUE_FS_LoadAssetRaw` perfoms a similar operation, but specializes the search of the file inside the *Asset* directory built with the application for desktop platforms. On Android it uses the Android NDK's provided approach for reading a generic file from the installed package.
 
 #### Creating Directories
 
 As the user should not always know the full path to where it wants to read or write, two base functions are provided:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+sque_filesystem.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 bool SQUE_FS_CreateDirFullPath(const char* path)
 {
     if(!(SQUE_AskPermissions("WRITE_EXTERNAL_STORAGE") && SQUE_AskPermissions("WRITE_MEDIA_STORAGE")))
@@ -2804,7 +2994,11 @@ bool SQUE_FS_CreateDirFullPath(const char* path)
 #endif
 	return ret;
 }
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
 // Does not support navigating backwars "../~", relative to exec_path
 bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 {
@@ -2817,7 +3011,7 @@ bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags)
 
 Dealing with data at a large scale during runtime is very time consuming and annoying to do. Assuming that data inside the Android package will not change during runtime as write actions are not allowed and that external storage behaves very close or exactly to a Linux platform, we can use the C++17 `std::filesystem` library to perform such file-watch operations.
 
-To take care of asset, the following struct is provided:
+To take care of assets, the following struct is provided:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 typedef void(ReadWriteAssetFun)(const char* location, SQUE_DataPack* datapack);
@@ -2858,7 +3052,7 @@ struct SQUE_CtrlAsset
 };
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every base asset will requires a description of location, naming and status during runtime. As every asset might behave differently, a callback that the user can set for saving, loading and unloading from memory is provided.With this class the user can set the implementation of the asset-disk interaction and the system to handle them comfortably.
+Every base asset requires a description of location, naming and status during runtime. As every asset might behave differently, a callback that the user can set for saving, loading and unloading from memory is provided. With this class the user can set the implementation of the asset-disk interaction and the system to handle them comfortably.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 struct SQUE_FW_NewAsset
@@ -2959,6 +3153,7 @@ template<class T>
 		if (at + sizeof(T) * num_items > _size) _size = end_write;
 	}
 
+
 	template<class T>
 	void WriteBytes(const T* from, uint32_t num_items = 1)
 	{
@@ -2994,11 +3189,15 @@ class SQUE_InStream
 
 A `SQUE_OutStream` is used to write a buffer that will be then written to disk using the preffered function. `WriteBytes` will write bytes specifically at the end of the buffer and keep incrementing it, while `WriteBytesAt` allow the use to write where he pleases.
 
-A `SQUE_InStream` is attached to a `SQUE_Asset` that has been already read from disk. `ReadBytes` will read sequentially given the templated arguments and such data will be copied over to an out variable.`ReadBytesAt` will read where the user decides to, while making sure the user does not read memory outside of bounds.
+A `SQUE_InStream` is attached to a `SQUE_Asset` that has been already read from disk. `ReadBytes` will read sequentially given the templated arguments and such data will be copied over to an out variable. `ReadBytesAt` will read where the user decides to, while making sure the user does not read memory outside of bounds.
 
 ## Utilities
 
 The core library is provided alongside with a couple utilities or implementations that seemed interesting to strengthen again the knowledge in C++ and programming general. Not every utility is directly targetted a subset of users but more of an interest found during the production.
+
+Implementations that are not explicitly or used with the library directly will be glossed over.
+
+<span class="pagebreak"></span>
 
 ### Logging
 
@@ -3030,14 +3229,16 @@ static std::unordered_map<int, std::string*> Get_LogKeys;
 static sque_vec<PairLOG> logs;
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The implementation is based on an ID system from the file a log came from, similarly to the console printing, it makes use fo the `__FILE__` and `__LINE__` macro to know where the call originated from and extracts the filename to use as a key in a `std::unordered_map` to insert into groups of logs.
+The implementation is based on an ID system from the file a log came from, similarly to the console printing, it makes use of the `__FILE__` and `__LINE__` macro to know where the call originated from and extracts the filename to use as a key in a `std::unordered_map` to insert into groups of logs.
 The idea is that said map can be read on an ordered timeline and be filtered by the file it originated from to reduce the complexitiy of reading the logs either offline or during runtime.
 
 ### Timer
 
-During the coursing of the past programming subjects in the degree, it felt extremely important to have a very good in-engine tool for dealing with timings. Most tools and libraries for profiling will probably be external but for some quick usage a custom class felt a necessary.
+During the coursing of the past programming subjects in the degree, it felt extremely important to have a very good in-engine tool for dealing with timings. Most tools and libraries for profiling will probably be external but for some quick usage a custom class felt necessary.
 
 The current implementation is based on `std::chrono` for time reads and then translate to a timer style read at milliseconds, microseconds and nanoseconds, although the precision depends on the OS's implementation of reporting timings:
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class SQUE_Timer
@@ -3062,20 +3263,22 @@ private:
 
 Spending time on the internet learning about programming will cloud the point fo view for most users when dealing with C++. The standard library is a great set of functionality for a new user but at the same time is very convoluted and has a lot landmines that professionals know to avoid.
 
-I am not one of those and one of the big criticisms was the implementation of the basic structures. In order to understand a bit more as well as taking little step into understanding optimization and coding pitfalls, the following structures have been implemented:
+I am not one of those and one of the big criticisms was the implementation of the basic structures. In order to understand a bit more as well as taking a little step into understanding optimization and coding pitfalls, the following structures have been implemented:
 
  * **sque_vec<>** : Analogous to a std::vector<>. Not implemented to work with jagged arrays, because of lack of understanding on them.
- * **sque_dyn_arr<>** : Intention is to make an array that can just be increased in size, such implementation could be complementary to a XMacro system with plugins that add to them as they could query the entry amount and add an item and save for the location to use as fake enum value.
- * **sque_free_vec<>** : A vector based on unknow location push, to allow freeing spaces of memory and filling them up. The idea is that of a vector that is a bit more memory conscious.
+ * **sque_dyn_arr<>** : Intention is to make an array that can just be increased in size but not explicitly cleared or downsized, such implementation could be complementary to a XMacro system with plugins that add to them as they could query the entry amount and add an item and save for the location to use as fake enum value.
+ * **sque_free_vec<>** : A vector based on unknow location push, to allow freeing spaces of memory and filling them up. The idea is that of a vector that is a bit more memory conscious, for example for entity systems.
  * **sque_list<>** : Analogous to a std::list<>
 
-By no means it is claimed that these structures are better that the ones available on the standard library or on other vendors' implementations, the objective is that of understanding such implementations and be comfortable with dealing with custom implementations in the future.
+By no means it is claimed that these structures are better that the ones available on the standard library or on other vendors' implementations. The objective is that of understanding such implementations and be comfortable with dealing with custom implementations in the future.
+
+<span class="pagebreak"></span>
 
 ### Sorting Algorithms
 
 A thing that has faltered during these years as a programmer that around other areas seems to be common knowledge, is the understanding of complexity of an algorithm. The *O Notation* has not been properly introduced. Sorting algorithms felt like a great entry to such notation explanation and implementation seemed ideal for getting introduced to.
 
-Under the `sque_sort.h` the following subset of templated sorting algorithms with a short explanation on how they work, are provided:
+Under the `sque_sort.h` the following subset of templated sorting algorithms, as well as the full explanation on how they work, are provided:
 
  * Selection Sort
  * Bubble Sort
@@ -3098,6 +3301,8 @@ IMGUI_IMPL_API void ImGui_ImplSqueLib_Render(ImDrawData* draw_data); // After Im
 
 Full keyboard, software keyboard, touch and mouse functionality is provided for ImGui. Viewports are not supported as SqueLib does not provide multiwindows. The version of ImGui it is based on is v1.82.
 
+<span class="pagebreak"></span>
+
 ## Extra libraries
 
 The following libraries can be built with SqueLib by defining their required options, provided in the _/extra_ directory and will help with frequent uses for application development:
@@ -3111,15 +3316,15 @@ The following libraries can be built with SqueLib by defining their required opt
 
 # SqueLib Sample Projects
 
-In order to get a kickstart on the library, a subset of very simple but complete example have to be provided. Documentation goes far for providing understanding of what parts do what, examples bring the user directly to the battlefield better prepared. 
+In order to get a kickstart on the library, a subset of very simple but complete examples have to be provided. Documentation goes far for providing understanding of what parts do what, but examples bring the user directly to the battlefield better prepared. 
 
-Because of time constraints, providing an example for each part of the library specifically is not feasible, instead couple examples that can be easily used by any user to understand little bits of the system seemed to be more ideal.
+Because of time constraints, providing an example for each part of the library specifically is not feasible. Instead, a couple of examples that can be easily used by any user to understand little bits of the system seemed to be more ideal.
 
 Functionality that is not explicitly detailed during the chapter on *SqueLib Development* will be briefly shown in the examples that require so.
 
 ## SquePong
 
-SquePong is really just two paddles and a ball that bounces around, nothing more not even a score system. The theme shaerd between this and the following examples is being barebones. Under here are the parts that are intended to introduce the user with this example, which is reduced to the following figure:
+SquePong is really just two paddles and a ball that bounces around, nothing more not even a score system. The theme shared between this and the following examples is being barebones. Under here are the parts that are intended to introduce the user with this example, which is reduced to the following figure:
 
 ![Figure[figures]: SquePong being tested with MSVS 2019.](images/SquePong_example.png)
 
@@ -3147,6 +3352,8 @@ while(!SQUE_DISPLAY_ShouldWindowClose(0))
 When an application goes on background on Android, EGL and OpenGLES are closed and will be reinitialized on reopening. As such, memory allocations on GPU will be freed and have to be set again.
 
 Given that an Android application is still running on a background thread to keep it alive, one has to manage such state. SqueLib provides `SQUE_AddOnGoBackgroundCallback` and `SQUE_AddOnResumeCallback` callback setters that accept a `void()` function:
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 bool on_background = false;
@@ -3176,7 +3383,7 @@ if(on_background)
 
 ### Basic SoLoud and Audio Asset
 
-In order to have direct access to soloud with SqueLib, one can build it separately or pass the argument `-DWITH_SOLOUD=ON` or `set(WITH_SOLOUD ON)` in their CMakeLists.txt. After that the basics of Soloud are really simple:
+In order to have direct access to *SoLoud* with *SqueLib*, one can build it separately or pass the argument `-DWITH_SOLOUD=ON` or `set(WITH_SOLOUD ON)` in their CMakeLists.txt. After that the basics of Soloud are really simple:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
 SoLoud::Soloud audio_master; // Soloud_engine - Singleton style
@@ -3198,14 +3405,31 @@ audio_master.play(audio_source);
 
 This is the minimal example possible, for more about Soloud head to [#W47].
 
+<span class="pagebreak"></span>
+
 ## Dear ImGui with SqueLib
 
 As mentioned previously under *Utilities* for SqueLib, a backend implementation for Dear ImGui has been built as there were no official backends for native Android development. The following example works natively by passing through a mouse input through the first pointer available from the user.
 
 For implementing your own backend I recommend following the already available official examples as it is very dependant on the input system provided and the graphics backend, usually coming from separate libraries.
 
-![Figure [figures]: ImGui Example on Linux, Android and Windows](<!-- Insert photo here of 3 devices working... -->)
+![Figure [figures]: ImGui Example on Linux, Android and Windows](images/ImGui_example.jpg width=70%)
 
+The user has to perform the basic *ImGui* initialization, then call the following *SqueLib* implementation functions accordingly:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+imgui_impl_squelib.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~c++
+// Use This along the usual ImGui Structure, SqueLib Init After ImGui CreateContex
+IMGUI_IMPL_API void ImGui_ImplSqueLib_Init();        // After ImGui CreateContext
+IMGUI_IMPL_API void ImGui_ImplSqueLib_Shutdown();    // Before ImGui Shutdown if still using that
+IMGUI_IMPL_API void ImGui_ImplSqueLib_NewFrame();    // Before ImGui NewFrame(), It will not process inputs, just read, you have to process them
+IMGUI_IMPL_API void ImGui_ImplSqueLib_Render(ImDrawData* draw_data);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<span class="pagebreak"></span>
 
 ## LearnOpenGL introduction with SqueLib
 
@@ -3217,13 +3441,15 @@ As the introduction is quite small and very self explanatory, those steps have b
 
 ![Figure [figures]: LearnOpenGL - Coordinate System, example written with SqueLib.](images/LearnOpenGL_example.jpeg)
 
+<span class="pagebreak"></span>
+
 ## SqueMaker
 
 While coursing the Bachelor's Degree in Desgin and Development of videogames, in each programming subject a completely new game engine has been built from scratch in order to leave behind bad practices gotten by the lack of knowledge, as well as ease in the new material learned.
 
 A good approach to implementing new knowledge was to create an engine skeleton that was based around SqueLib for the subsystems provided, to try the actual functionality as well as provide a comfortable project in which to implement the things learned.
 
-The issue with such approach taking into account the learning process outside of what has been taught in the programming subjects, which differents vastly from industry standards and actual production focused code, has made the parallel advancement of the engine very slow as well as not focused on the library approach, as can be seen on the feature frozen **Figure XX**.
+The issue with such approach taking into account the learning process outside of what has been taught in the programming subjects, which differents vastly from industry standards and actual production focused code, has made the parallel advancement of the engine very slow as well as not focused on the library approach, as can be seen on the feature frozen **Figure 26**.
 
 ![Figure [figures]: Barebones development of SqueMaker.](images/SqueMaker.png)
 
@@ -3277,7 +3503,11 @@ void EntitiesUpdate()
     for(update_fun : all_update_groups)
         update_fun();
 }
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~c++
 class Entity
 {
     static std::vector<EntityRef> base_entity_refs;
@@ -3319,6 +3549,8 @@ Direct interaction between modules is not great, it basically breaks the flow of
 
 Thinking on a long term as well as taking into account memory compactness, it is better to have a system that delays such actions to a specific point when non trivial, or that could excepcionally perform a request and wait for its approval.
 
+<span class="pagebreak"></span>
+
 In the case of the UI for this skeleton, as well as multithreaded implementation being out of scope, the system has been kept for messaging simple actions between the UI and the ECS.
 
 ~~~~~~~~~~~~~~~~~~~~~~~c++
@@ -3354,11 +3586,13 @@ SQUE_MSG_SendMessage(SQUE_EntityMessage);// Which will be delivered to inbox
 
 (###) Execution System
 
-Most applications geared towards the public has a system to undo and redo things. Programatically, that is a bit of a difficult task to do, as a base function call is a one way system. An approach taken in previous projects were that of saving the state of the application and rever to previous or further states. THis is absurdly inefficient as well as extremely non-user friendly in the long run as the size of the states can be very costly in memory or amount to cost in serializing them back and forth.
+Most applications geared towards the public has a system to undo and redo things. Programatically, that is a bit of a difficult task to do, as a base function call is a one way system. An approach taken in previous projects were that of saving the state of the application and rever to previous or further states. This is absurdly inefficient as well as extremely non-user friendly in the long run as the size of the states can be very costly in memory or amount to cost in serializing them back and forth.
 
 During the development of *Malita: Soul of a Warrior* the engine used such implementation that took about 4 to 10 seconds when saving and loading the state for testing the application in engine, even with minimal changes.
 
 An Execution System is basically a three way system for such functions that are part of a undo/redo workflow for the user:
+
+<span class="pagebreak"></span>
 
 ~~~~~~~~~~~~~~~~~~c++
 class SQUE_Executer
@@ -3381,11 +3615,17 @@ When creating said function, it is imperative that one creates the inverse actio
 
 The memory footprint is much smaller than saving the full state of a program each time and there are no serialization costs, only the same execution cost that was originally planned for each action.
 
+On more complex function implementations, such as one that would be like building light or shadow maps, the user could decide to implement them as non back-trackable or that the implementation saves the current state of light/shadow maps and reload them. 
+
+What makes this system interesting is the flexibility between being totally controlled by the user as well as allowing distinct solutions for each problem.
+
+<span class="pagebreak"></span>
+
 (###) XMacro Implementations
 
 XMacros is one thing I have learned of during the project that I find very neat and interesting to add here as they are very practical.
 
-The premise is the use of the compiler to declare arrays in a way that are easily accessible through numbered accessors. In other words, instead of having to perform a runtime `if chain` or a `switch`, we can let the compiler generate a struct that will hold a certain amount of data in an order we want and be accessible programatically.
+The premise is the use of the preprocessor and compiler to declare arrays in a way that are easily accessible through numbered accessors. In other words, instead of having to perform a runtime `if chain` or a `switch`, we can let the compiler generate a struct that will hold a certain amount of data in an order that will be easily accessible programatically.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~c++
 #define XMACRO_TABLE(ENTRY) \
@@ -3423,7 +3663,7 @@ int RetrieveAccessor();
 
 // Custom Type
 static int ACCESSOR_CUSTOM1 = 0;
-void CustomFun(){}
+void CustomFun(){};
 
 void InitCustom1()
 {
@@ -3438,9 +3678,173 @@ SqueArkanoid is the final full featured example provided with SqueLib. The other
 
 SqueArkanoid is a very simple Arkanoid-type game as the name implies, involving a paddle that makes a ball bounce around destroying blocks. The core concept is very simple and execution is too but the prototype is fully featured with a demo level and an endless type level. 
 
-The *Survival* Game mode is shown under **Figure XX**:
+The *Survival* Game mode is shown under **Figure 26**:
 
 ![Figure [figures]: SqueArkanoid Survival Mode.](images/SqueArkanoid.png)
+
+The concept of making such example steamed from not being able to properly finish the engine, but a *flashy* final to the project was still needed. This final example has been completed in the span of three afternoons, using entirely *SqueLib* as a framework as well as the libraries provided.
+
+Following this introduction, how this application works will be explained briefly in the following points.
+
+### Main Loop
+
+The application follows the base loop intended, shown in the SquePong example, but adds proper initialization and destruction of data once the application goes and comes from background:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+ main.cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+static bool on_background = false;
+static VoidFun* prev_bg;
+static VoidFun* prev_resume;
+
+void OnGoBackground()
+{
+    prev_bg();
+    on_background = true;
+    // Close Application Modules
+}
+
+void OnResume()
+{
+    prev_resume();
+    on_background = false;
+    // Init application Modules;
+}
+
+int main(int argc, char** arv)
+{
+    SQUE_LIB_Init("SqueArkanoid", SQ_INIT_DEFAULTS | SQ_INIT_DEBUG_RENDER);
+    prev_bg = SQUE_AddOnGoBackgroundCallback(OnGoBackground);
+    prev_resume = SQUE_AddOnResumeCallback(OnResume);
+    // Init application modules...
+    while(!SQUE_DISPLAY_ShouldWindowClose())
+    {
+        if(on_background)
+        {
+            SQUE_Sleep(100);
+            timer.Start();
+            continue;
+        }
+        // Aplication loop...
+        SQUE_CHECK_RENDER_ERRORS();
+        SQUE_DISPLAY_SwapAllBuffers();
+    }
+    // CleanUp application modules...
+    SQUE_LIB_Close();
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Entity Management
+
+Entities are treated in a fully Object Oriented way, after all it is the way I am most comfortable with still. All types of entities derive from the following class:
+
+<span class="pagebreak"></span>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ filename
+ entity.h
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~c++ linenumbers
+class Entity
+{
+public:
+    Entity() {};
+    ~Entity() {};
+
+    bool to_delete = false;
+    glm::vec3 col = { 1,1,1 };
+    glm::vec2 pos = { 0,0 };
+    glm::vec2 size = { 10,10 };
+
+    uint32_t tex_handle = 0;
+    uint32_t sound_handle = 0;
+
+    virtual void Init() {}
+    virtual void Update(float dt) {}
+    virtual void CleanUp() {}
+    virtual void OnCollision(glm::vec2* dir_speed, uint32_t* ball_state, const glm::vec2 c_pos) {}
+
+    void PlaySound();
+};
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Then they are all updated in a row, each one having a define `OnCollision` method for when such occurrance happens. A quick and dirty way for the render and sounds to work with specific buffer handles is to set this data directly. On init, each entity is assigned a hardcoded handle which the function `PlaySound` to perform the self-describing action, and the render module use to bind to a specific texture when drawn.
+
+Entities in particular have nothing special to them programming-wise, for that reason they will be only shortly introduced:
+
+ * **`Ball:`** entity responsible for checking collisions with every other type of block.
+ * **`Player:`** entity that the user directly interacts through input, both keyboard and touch/mouse inputs are available.
+ * **`Block:`** entity with a determined amount of hp, placed in a grid that the ball has to break.
+ * **`BgBlock:`** exactly the same as a block, but without a defined `OnCollision` method. In a hardcoded manner, they are created in a separate list to be rendered before the entities and for them to not be checked for collision by the `Ball`. 
+ * **`KillZone:`** unique entity that when the ball contacts it, a life is substracted and ball respawns.
+
+### Render
+
+Render is also very straightforward. In order to save time and headaches, it is limited to rendering quads with a set size and assumed texture handle. During initialization, a single mesh buffer is generated that will be reused for every entity. To finish the init, all the texture are loaded in a hardcoded manner.
+
+The actual rendering part uses a custom shader, that as mentioned, is just prepared to work with quads with arbitrary positions and sizes:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~glsl filename
+ vert_shader.sq_vert
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~glsl linenumbers
+layout (location = 0) in vec2 vertPos;
+uniform vec2 pos;
+uniform vec2 size;
+uniform vec2 vp;
+out vec2 uv;
+void main()
+{
+    uv = (vertPos+vec2(1.,1.)) / 2.;
+
+    vec2 pre_pos = pos + uv * size;
+    vec2 ndc_pos = 2.*((pre_pos / vp) - vec2(.5));
+    gl_Position = vec4(ndc_pos, 0,1);
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The vertex shader takes in the expected vertices, which will always be either -1 or 1, and transforms them to uv coordinates to sample the texture with. Then uses that 0 to 1 value to transform the `entity` position into normalized device coordinates.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~glsl filename
+ frag_shader.sq_frag
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~glsl linenumbers
+out vec4 FragColor;
+uniform vec3 col;
+uniform sampler2D atlas;
+in vec2 uv;
+void main()
+{
+    FragColor = vec4(texture(atlas, uv).rgba) * clamp(vec4(col, 1.), vec4(0), vec4(1));
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The fragment shader then just samples the texture that is passed and then multiplies the color with a uniform value taht can be passed down. This color is currently only used with the backgroud tiles that get darkened.
+
+### User Interface
+
+As time constraints were incredibly limited, I decided to go use directly ImGui for the game UI. It is pretty much a necessity to keep track of the game progress as well as easing the user into the game.
+
+At the same time, it was necessary something to control which level or scene the user is playing, which doing so from the UI seemed pretty easy. In the end, both levels are set in a single UI scene that manages wich level is playing and the other scene is the main menu which shows the high-score of the session for each game mode.
+
+<span class="pagebreak"></span>
+
+#### Play Scene
+
+The play scene has two levels, an introductory one and a survival one whic his showed at the start of this explanation. Both levels are generated programatically rather than manually created, as an implementation of a serialization or level cretion tool would have been overkill for such a small project.
+
+The introductory level is setup with blocks of two tiles width, setup in rows with a single space between them, shown in the following figure:
+
+![Figure [figures]: Introductory level layout. The further the block is from the paddle, the more hp it has and harder to break is.](images/SqueArkanoid_demo.png)
+
+The survival level randomizes each size with a 25% chance of spawning a block with 1 to 4 hp.
+
+(####) Asset Notice
 
 The visual assets are from the Puzzle Pack in Kenney Game Asset<sub>[#W60]</sub>, shared under CC0 1.0 Universal license<sub>[#W61]</sub>,  and the sounds have been made usgin rFXGen<sub>[#W62]</sub>.
 
@@ -3450,7 +3854,7 @@ The development of a cross-platform framework is laborious task that is performe
 
 The main objective that brought importance to this project is easing both a current C++ game development student with lesser low level knowledge to a state where they are able to path towards a more technical side of programming, and understanding tradeoffs and limitations of veering into other platforms.
 
-SqueLib as a framework is a great step for a student coming from a less technical background, introducing very practical tools and smaller concepts that are building blocks for moving towards industry standard programming. Getting an application up and running is extremely quick as the syntax is very descriptive of the use cases,providing a solid base to run a template single threaded application from as well as being relatively lightweight.
+SqueLib as a framework is a great step for a student coming from a less technical background, introducing very practical tools and smaller concepts that are building blocks for moving towards industry standard programming. Getting an application up and running is extremely quick as the syntax is very descriptive of the use cases, providing a solid base to run a template single threaded application from as well as being relatively lightweight.
 
 Under the following snippets, a simple objective-result is provided to measure against the initial proposition and what has been achieved:
 
@@ -3461,7 +3865,7 @@ Under the following snippets, a simple objective-result is provided to measure a
     The project will be always available on a public repository for anyone interested to take a look. Both online and offline documentation is available through the use of Markdeep<sub>[#W63]</sub>, even this currently written document is available thanks to Markdeep and MarkdeepThesis<sub>[#W64]</sub>.
 
 !!! note: SqueLib Objective 3 - Learning Experience for Multiplatform
-    The project eases the user into multiplatform C++, as well as provide direct public exmaples on how cross-platform issues are taken care of.
+    The project eases the user into multiplatform C++, as well as provide direct public examples on how cross-platform issues are taken care of.
 
 !!! note: SqueLib Objective 4 - Examples and demonstration
     SqueLib provides three examples dedicated to different implementation parts of the library and SqueArkanoid which is a fully featured simple project. SqueMaker is also treated as an example of the live usecase on a personal technical oriented learning tool.
@@ -3485,7 +3889,7 @@ During the development process, multiple inconveniences have ocurred that have m
 Down here are the proposed objectives for SqueMaker:
 
 !!! ERROR: SqueMaker Objective 1 - Develop a toy Engine to play with subsystems
-    The engine is barebones and implements for itself File Access, Inut and Displa. A very barebones implementation of a Render Graph is provided but is limited to direct shader usage and displaying compelted drawn framebuffers.
+    The engine is barebones and implements for itself File Access, Init and Display. A very barebones implementation of a Render Graph is provided but is limited to direct shader usage and displaying completely drawn framebuffers.
 
 !!! ERROR: SqueMaker Objective 2 - Make a flexible engine to accomodate new features
     Development of the engine becomes increasingly slow because of the clanking of programming styles and features.
@@ -3499,7 +3903,9 @@ And here the specific objectives for SqueMaker<sub>[1.4.2](#toc1.4.2)</sub>
      * Rendering Pipeline: Barebones and limited to quad rendering and no inputs, backend is very easily swapped as it is very lightweight.
      * Asset Management: Drag and drop and performant filewatching for files contained in the default SqueLib directories, as well as a tempalte for adding file importing and exporting.
      * Entity Component System: Mixed Data Oriented ECS taht makes use of templating and XMacros for ease of use in both realtime and from serialization.
-     * Fast Login Implementation: The user can't provide new logic without delving deep in the srouce code of the engine. Internal implementation is easier but linking with other modules is not very accessible.
+     * Fast Login Implementation: The user can't provide new logic without delving deep in the source code of the engine. Internal implementation is easier but linking with other modules is not very accessible.
+
+<span class="pagebreak"></span>
 
 Certainly, SqueLib is not the right path for new user or even experienced user to get an actual commercial application or fully featured project out there. There are far more mature and complete C/C++ frameworks that provide greater facilities for that.
 
@@ -3702,7 +4108,7 @@ Looking towards a near future, this whole project will be of most personal impor
 [#W61] CC0 1.0 Universal License. Creative Commons, 2021.
 <https://creativecommons.org/publicdomain/zero/1.0/>
 
-[#62] rFXGen. Ramon Santamaria, 2019.
+[#W62] rFXGen. Ramon Santamaria, 2019.
 <https://raylibtech.itch.io/rfxgen>
 
 [#W63] Markdeep. Morgan McGuire, 2015.
