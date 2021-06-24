@@ -1,0 +1,13 @@
+layout (location = 0) in vec2 vertPos;
+uniform vec2 pos;
+uniform vec2 size;
+uniform vec2 vp;
+out vec2 uv;
+void main()
+{
+    uv = (vertPos+vec2(1.,1.)) / 2.;
+
+    vec2 pre_pos = pos + uv * size;
+    vec2 ndc_pos = 2.*((pre_pos / vp) - vec2(.5));
+    gl_Position = vec4(ndc_pos, 0,1);
+}

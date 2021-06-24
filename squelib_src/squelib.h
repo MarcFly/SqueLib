@@ -52,74 +52,89 @@
 
 
 #if defined(Debug) || defined(_DEBUG)
-#include <assert.h>
-#define SQ_ASSERT(_EXPR) assert(_EXPR)
+#	include <assert.h>
+#	define SQ_ASSERT(_EXPR) assert(_EXPR)
 #else
-#define SQ_ASSERT(_EXPR)
+#	define SQ_ASSERT(_EXPR)
 #endif
+
+// Includes from Standard Library
+// TODO : Eliminate what is not necessary or can be optimized
+// The incldues are all here because they interfere with mmgr -> included after so we don't mess with the stl
+#include <stdint.h> // i like detailed integer types
+#include <cstring> // most modules
+#include <string> // filesystem makes use of it for practicality
+#include <fstream> // filesystem
+#include <list> // char_buffer at input -> make my own
+#include <cstdarg> // Logger from declaration																						
+#include <cstddef>	// Logger from declaration
+#include <mutex> // someday this will be threadsafe...
+#include <ctime> // Logger
+#include <chrono> // Logger and Timer
+#include <algorithm> // Logger
+#include <unordered_map> // Logger
 
 // Includes from own libs for organization /////////////////////////////////////////////////////////////////////////////////////////////
 #include <sque_remap_macros.h>																											
 #include <sque_simple_types.h>
-#include <sque_vector.h>																											
-#include <stdint.h>
-#include <cstring>
-// Currently all math with go through glm, I don't like but I don't have an easy drop in replacement
-#include<glm.hpp>
+#include <sque_data_structures.h>	
+#include <sque_sort.h>
+
+
+
+
 // Initialization / State Control //////////////////////////////////////////////////////////////////////////////////////////////////////
 #define SQUE_VERSION_MAJOR 2021																											
 #define SQUE_VERSION_MINOR 1																												
 #define SQUE_VERSION ((SQUE_VERSION_MAJOR << 16) | SQUE_VERSION_MINOR)																		
 
-SQ_API void SQUE_LIB_Init(const char* app_name, int32_t flags = NULL);																									
+SQ_API void SQUE_LIB_Init(const char* app_name, int32_t flags = SQ_INIT_DEFAULTS);																									
 SQ_API void SQUE_LIB_Close();																									
 SQ_API unsigned int SQUE_LIB_GetVersion();																							
 SQ_API int SQUE_LIB_IsCompatibleDLL();		
+SQ_API void SQUE_LIB_InitRNG(uint64_t seed = NULL);
 
 SQ_API int SQUE_VarGetSize(int type_macro);
 SQ_API void SQUE_ConsolePrint(int lt, const char* log);
 SQ_API void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...);
 #define SQUE_PRINT(LogType, format,...) SQ_MACRO SQUE_PrintVargs(LogType, __FILE__, __LINE__, format, ##__VA_ARGS__)				
-SQ_API uint32_t SQUE_RNG();
+SQ_API uint32_t SQUE_RNG(uint32_t max = (UINT32_MAX-1)); // -1 To allow use of MACRO UINT32_MAX for invalid ids and such
 
 
 // Permissions /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API int SQUE_AskPermissions(const char* permission_name);
+SQ_API int16_t SQUE_AskPermissions(const char* permission_name);
 
 // Callback Setters - Flow Management //////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API VoidFun SQUE_AddOnResumeCallback(VoidFun fn);																				
-SQ_API VoidFun SQUE_AddOnGoBackgroundCallback(VoidFun fn);																			
+SQ_API VoidFun* SQUE_AddOnResumeCallback(VoidFun* fn);																				
+SQ_API VoidFun* SQUE_AddOnGoBackgroundCallback(VoidFun* fn);																			
 SQ_API void SQUE_Sleep(uint32_t ms);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOGGER //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <cstdarg>																														
-#include <cstddef>																														
-																																		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																
 // Types / Strucs //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define LOGSIZE 1024																													
-																														
-typedef struct SQUE_Log																													
-{																																		
-	int type = -1;																														
-	SQUE_LogType lt = LT_INFO;																											
-	char log[LOGSIZE] = {0};																											
-} SQUE_Log;																																
-																																		
+#define LOGSIZE 1024
+
+struct SQUE_Log
+{
+	int type = -1;
+	SQUE_LogType lt = LT_INFO;
+	char log[LOGSIZE] = { 0 };
+};
+typedef std::pair<int, SQUE_Log> PairLOG;
+
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API bool SQUE_LOGGER_Init(bool dumpdata);																								
-SQ_API void SQUE_LOGGER_Close();																											
-																																																														
-// Function Usage //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_ConsolePrint(int lt, const char* log);																																														
-SQ_API void SQUE_LOGGER_Log(SQUE_LogType lt, const char file[], int line, const char* format, ...);																		
+SQ_API bool SQUE_LOGGER_Init(bool dumpdata);
+SQ_API void SQUE_LOGGER_Close();
 SQ_API void SQUE_LOGGER_DumpData();
 
-// EASY Usage //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function Usage //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																												
+SQ_API void SQUE_LOGGER_Log(SQUE_LogType lt, const char file[], int line, const char* format, ...);																		
 #define SQUE_LOG(LogType,format,...) SQ_MACRO SQUE_LOGGER_Log(LogType,__FILE__,__LINE__, format, ##__VA_ARGS__)								
-																																		
-																																		
+
+const std::unordered_map<int, std::string*>& SQUE_LOGGER_GetKeys();
+const sque_vec<PairLOG>& SQUE_LOGGER_GetLogs();
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TIMER ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,40 +181,44 @@ enum SQUE_WindowFlags
 	SQUE_WINDOW_DEBUG = BITSET6,
 };																																	
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_DISPLAY_Init();
+SQ_API void SQUE_DISPLAY_Init(const char* title = NULL, const uint32_t width = 0, const uint32_t height = 0);
 SQ_API void SQUE_DISPLAY_Close();		
-SQ_API void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size);
-SQ_API void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size);
-SQ_API void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size);
-SQ_API uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width = 0, int32_t height = 0, uint16_t monitor = 0);
+SQ_API void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, const int32_t size);
+SQ_API void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, const int32_t size);
+SQ_API void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, const int32_t size);
+SQ_API void SQUE_DISPLAY_NextWindow_Title(const char* title);
+SQ_API void SQUE_DISPLAY_NextWindow_Size(const uint32_t width, const uint32_t height);
+SQ_API uint16_t SQUE_DISPLAY_OpenWindow(const char* title = NULL, const uint32_t width = 0, const uint32_t height = 0, const uint16_t monitor = 0);
 																														
 // Setters
-SQ_API void SQUE_DISPLAY_SetVSYNC(int16_t vsync_val);
-SQ_API bool SQUE_DISPLAY_ShouldWindowClose(uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_SetWindowClose(uint16_t window = 0);																																									
-SQ_API uint16_t SQUE_DISPLAY_CloseWindow(uint16_t window = 0);																																											
-SQ_API void SQUE_DISPLAY_ResizeWindow(const uint16_t w, const uint16_t h, uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_UpdateNativeWindowSize(uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_SetMouseMode(const int32_t value, uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SetVSYNC(const int16_t vsync_val);
+SQ_API void SQUE_DISPLAY_SetWindowClose(const uint16_t window = 0);																																									
+SQ_API uint16_t SQUE_DISPLAY_CloseWindow(const uint16_t window = 0);																																											
+SQ_API void SQUE_DISPLAY_ResizeWindow(const uint16_t w, const uint16_t h,const uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_UpdateNativeWindowSize(const uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SetWindowIcon(const int32_t width, const int32_t height, void* pixels, const uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SetMouseMode(const int32_t value, const uint16_t window = 0);
+
 // Getters
+SQ_API bool SQUE_DISPLAY_ShouldWindowClose(const uint16_t window = 0);
 SQ_API uint16_t SQUE_DISPLAY_GetAmountWindows();
-SQ_API void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_GetWindowSize(int32_t* w, int32_t* h, uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, uint16_t window = 0);
-SQ_API void* SQUE_DISPLAY_GetPlatformWindowHandle(uint16_t window = 0);
-SQ_API int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window = 0);
-SQ_API void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h);
+SQ_API void SQUE_DISPLAY_GetWindowPos(int32_t* x, int32_t* y, const uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_GetWindowSize(int32_t* w, int32_t* h, const uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_GetViewportSize(int32_t* w, int32_t* h, const uint16_t window = 0);
+SQ_API void* SQUE_DISPLAY_GetPlatformWindowHandle(const uint16_t window = 0);
+SQ_API int32_t SQUE_DISPLAY_GetDPIDensity(const uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_GetMainDisplaySize(uint16_t* w, uint16_t* h);
 
 // TODO: Android Notifications + GLFW Attention Request
 
 // Controlling Contexts ////////////////////////////////////////////////////////////////////////////////////////////////////////////////																										
-SQ_API void SQUE_DISPLAY_SwapBuffer(uint16_t window = 0);
+SQ_API void SQUE_DISPLAY_SwapBuffer(const uint16_t window = 0);
 SQ_API void SQUE_DISPLAY_SwapAllBuffers();																								
-SQ_API void SQUE_DISPLAY_MakeContextMain(uint16_t window = 0);
-SQ_API ResizeCallback SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb);
-SQ_API ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb);
-																																		
+SQ_API void SQUE_DISPLAY_MakeContextMain(const uint16_t window = 0);
+SQ_API ResizeCallback* SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback* viewport_cb);
+SQ_API ViewportGetSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb);
+SQ_API HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INPUT ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -265,10 +284,10 @@ enum SQUE_KeyboardKeys
 #define MAX_MOUSE_BUTTONS 16																											
 enum SQUE_MOUSE_BUTTONS
 {
-	SQUE_MOUSE_LEFT = 0,	SQUE_MOUSE_RIGHT,	SQUE_MOUSE_CENTER,	SQUE_MOUSE_THUMB_1,
-	SQUE_MOUSE_THUMB_2,		SQUE_MOUSE_THUMB_3, SQUE_MOUSE_THUMB_4, SQUE_MOUSE_THUMB_5,
-	SQUE_MOUSE_THUMB_6,		SQUE_MOUSE_THUMB_7, SQUE_MOUSE_THUMB_8, SQUE_MOUSE_THUMB_9,
-	SQUE_MOUSE_THUMB_10,	SQUE_MOUSE_THUMB_11, SQUE_MOUSE_THUMB_12, SQUE_MOUSE_THUMB_13,
+	SQUE_MOUSE_LEFT = 0,	SQUE_MOUSE_RIGHT,	SQUE_MOUSE_CENTER,	SQUE_MOUSE_1,
+	SQUE_MOUSE_2,	SQUE_MOUSE_3, SQUE_MOUSE_4, SQUE_MOUSE_5,
+	SQUE_MOUSE_6,	SQUE_MOUSE_7, SQUE_MOUSE_8, SQUE_MOUSE_9,
+	SQUE_MOUSE_10,	SQUE_MOUSE_11, SQUE_MOUSE_12, SQUE_MOUSE_13,
 };
 #define MAX_POINTERS 10																													
 #define GESTURE_REFRESH 10 // in ms																										
@@ -286,10 +305,8 @@ enum SQUE_INPUT_Actions
 	SQUE_ACTION_PRESS,																													
 	SQUE_ACTION_REPEAT,																													
 																																		
-	// Touch Controls																													
-	SQUE_ACTION_TAP,																														
-	SQUE_ACTION_CLICK,																													
-	SQUE_ACTION_DOUBLE_CLICK,																											
+	// Single Touch Controls
+	SQUE_ACTION_TAP,																																																									
 	SQUE_ACTION_SWIPE_UP,																												
 	SQUE_ACTION_SWIPE_DOWN,																												
 	SQUE_ACTION_SWIPE_LEFT,																												
@@ -300,179 +317,104 @@ enum SQUE_INPUT_Actions
 	SQUE_ACTION_MAX																														
 };																																		
 																																		
-void DebugKey(int32_t code, int32_t state);																									
-typedef struct SQUE_Key																													
+void DebugKey(const int32_t code, const int32_t state);																									
+struct SQUE_Key																													
 {																																		
 	//int key;																															
 	int prev_state = -1;																												
 	int state = -1;																														
-	KeyCallback callback = DebugKey;																									
-} SQUE_Key;																																
+	KeyCallback* callback = DebugKey;																									
+};																																
 																																		
 																																		
 void DebugMouseFloatCallback(float x, float y);																							
 																																		
 // Touch Display Oriented - But will implement mouse based gestures and callback based key gestures	////////////////////////////////////
-typedef struct SQUE_Gesture																												
+struct SQUE_Gesture																												
 {																																		
 	SQUE_Timer timer;																													
 																																		
-	float start_x, start_y;																												
+	float start_x = INT32_MAX, start_y = INT32_MAX;																												
 	float midpoints[MAX_MIDPOINTS][2];																									
-	float end_x, end_y;																													
+	float end_x = INT32_MAX, end_y = INT32_MAX;																													
 																																		
-	float refresh_bucket;																												
-} SQUE_Gesture;																															
+	float refresh_bucket = 0;																												
+};																															
 																																		
-typedef struct SQUE_Pointer																												
+struct SQUE_Pointer																												
 {																																		
 	bool active = false;																												
 	int32_t id;	
 																							
 	float x = -1, y = -1;																									
-	MouseFloatCallback pos_callback = DebugMouseFloatCallback;
-} SQUE_Pointer;																															
+	MouseFloatCallback* pos_callback = DebugMouseFloatCallback;
+};																															
 																																		
 // Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_INPUT_Init();
-SQ_API void SQUE_INPUT_InitForWindow(uint16_t window);
+SQ_API void SQUE_INPUT_InitForWindow(const uint16_t window);
 SQ_API bool SQUE_INPUT_Close();																											
-SQ_API void SQUE_INPUT_Process(uint16_t window);																							
-SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(bool show);																				
+SQ_API void SQUE_INPUT_Process(const uint16_t window);																																											
 															
 // Usage / Utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(bool show);
+SQ_API void SQUE_INPUT_DisplaySoftwareKeyboard(const bool show);
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_DetectGesture(const SQUE_Gesture& g);
 SQ_API SQUE_INPUT_Actions SQUE_INPUT_EvalGesture();
 
 // Setters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_INPUT_SetMousePos(float x, float y);																						
-SQ_API void SQUE_INPUT_SetPointerActive(uint16_t pointer, bool active);
+SQ_API void SQUE_INPUT_SetMousePos(const float x, const float y);																						
+SQ_API void SQUE_INPUT_SetPointerActive(const uint16_t pointer, const bool active);
 
 // Getters /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetKey(const uint16_t window, SQUE_KeyboardKeys key);
-SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(int button);
-SQ_API void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, uint16_t points = 1);
-SQ_API bool SQUE_INPUT_GetPointerPos(float* x, float* y, uint16_t pointer = 0);
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetKey(const SQUE_KeyboardKeys key);
+SQ_API SQUE_INPUT_Actions SQUE_INPUT_GetMouseButton(const uint32_t button);
+SQ_API void SQUE_INPUT_GetPointerAvgPos(float* x, float* y, const uint16_t points = 1);
+SQ_API bool SQUE_INPUT_GetPointerPos(float* x, float* y, const uint16_t pointer = 0);
 SQ_API void SQUE_INPUT_GetScroll(float* v = NULL, float* h = NULL);
 SQ_API int SQUE_INPUT_GetCharFromBuffer();
 
 // Callback Setters ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API KeyCallback SQUE_INPUT_SetKeyCallback(KeyCallback sque_key_fn);																		
-SQ_API MouseFloatCallback SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback position, uint16_t pointer);
-SQ_API MouseFloatCallback SQUE_INPUT_SetScrollCallback(MouseFloatCallback scroll);
-SQ_API KeyCallback SQUE_INPUT_SetMouseButtonCallback(int button, KeyCallback key_callback);												
-	
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct SQUE_Shader
-{
-	int32_t id = 0;
-	int32_t type = NULL;
-} SQUE_Shader;
-
-SQ_API void SQUE_SHADERS_Generate(SQUE_Shader& shader, const int32_t shader_type);
-SQ_API void SQUE_SHADERS_SetSource(int32_t shader_id, const char* source_);
-SQ_API void SQUE_SHADERS_Compile(int32_t shader_id);
-SQ_API void SQUE_SHADERS_FreeFromGPU(int32_t shader_id);
-
-typedef struct SQUE_Uniform
-{
-	int32_t id = INT32_MAX;
-	char name[124] = "";
-} SQUE_Uniform;
-
-typedef struct SQUE_ProgramUniforms
-{
-	SQUE_ProgramUniforms() {};
-	SQUE_ProgramUniforms(int32_t id_) :id(id_) {};
-
-	uint32_t id = -1;
-	uint32_t start_uniform = -1;
-	uint32_t end_uniform = -1;
-	uint16_t last = 0;
-} SQUE_ProgramUniforms;
-
-SQ_API void SQUE_SHADERS_DeclareProgram(const int32_t program_id, const uint16_t num_uniforms, uint32_t& uniform_ref);
-SQ_API int32_t SQUE_SHADERS_DeclareUniform(const uint32_t uniform_ref, const char* uniform_name);
-SQ_API int32_t SQUE_SHADERS_GetUniformID(const uint32_t uniform_ref, const char* name);
-
-typedef struct SQUE_Program
-{
-// Variables
-	uint32_t id = 0;
-	uint32_t shaders[3]; // IDs of the shaders // Order by execution stage
-	// 0 Vertex -> 1 Geometry -> 2 Fragment 
-	// Tesselation and Compute will be added later if I want to and have time to
-	// They require more setup and steps
-	uint32_t uniform_ref;
-} SQUE_Program;
-
-SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program& program, const SQUE_Shader shader);
-SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
-//SQ_API void SQUE_PROGRAM_FreeFromGPU(uint32_t program_id);
-
-// Usage Functions
-SQ_API int32_t SQUE_PROGRAM_GetUniformLocation(const uint32_t uniform_ref, const char* name);
-
-SQ_API void SetBool		(const int32_t uniform_id, bool value);
-SQ_API void SetInt		(const int32_t uniform_id, int32_t value);
-SQ_API void SetFloat	(const int32_t uniform_id, float value);
-SQ_API void SetFloat2	(const int32_t uniform_id, glm::vec2 value);
-SQ_API void SetFloat3	(const int32_t uniform_id, glm::vec3 value);
-SQ_API void SetFloat4	(const int32_t uniform_id, glm::vec4 value);
-// ... add a matrix/array passer...																									
-SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, uint16_t number_of_matrices = 1, bool transpose = false);
+SQ_API KeyCallback* SQUE_INPUT_SetKeyCallback(KeyCallback* sque_key_fn);																		
+SQ_API MouseFloatCallback* SQUE_INPUT_SetPointerPosCallback(MouseFloatCallback* position, const uint16_t pointer);
+SQ_API MouseFloatCallback* SQUE_INPUT_SetScrollCallback(MouseFloatCallback* scroll);
+SQ_API KeyCallback* SQUE_INPUT_SetMouseButtonCallback(const int button, KeyCallback* key_callback);												
 	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MESH //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct SQUE_VertAttrib
+class SQUE_VertAttrib
 {
+public:
 	// Constructors / Destructors
 	SQ_API SQUE_VertAttrib();
-	SQ_API SQUE_VertAttrib(const char* name_, int32_t var_type, bool normalize, uint16_t num_components);
+	SQ_API SQUE_VertAttrib(const char* name_, const int32_t var_type, const bool normalize, const uint16_t num_components);
+	SQ_API ~SQUE_VertAttrib();
 
 	// Variables
-	int32_t id;
-	int32_t var_type;
-	uint16_t num_comp;
-	bool normalize;
-	uint16_t var_size;
-	uint16_t offset;
+	int32_t id = 0;
+	int32_t var_type = SQUE_FLOAT;
+	uint16_t num_comp = 0;
+	bool normalize = false;
+	uint16_t var_size = 4;
+	uint16_t offset = 0;
 
-	char name[111] = "";
-
-} SQUE_VertAttrib;
-
-SQ_API uint16_t SQUE_VERTEX_ATTRIBUTE_GetSize(uint16_t vertex_size, uint16_t num_components);
-
-typedef struct SQUE_VertAttribIndex
-{
-	uint32_t id = -1;
-	uint32_t start_attrib = -1;
-	uint32_t end_attrib = -1;
-	uint16_t last = 0;
-	uint16_t vert_size;
+	char name[89] = "";
 };
 
 // Maybe Swap to a custom array handler for specific sizes																				
 // I want to have afast search on less than 100 objects, probably a full array is good enough	
-typedef struct SQUE_Mesh
+class SQUE_Mesh
 {
+public:
 // Constructors / Destructors
 	SQ_API SQUE_Mesh();
-	//SQ_API ~SQUE_Mesh();
+	SQ_API ~SQUE_Mesh();
 
 // Variables
 	int32_t draw_config;
 	int32_t draw_mode = SQUE_STATIC_DRAW;
 	uint32_t attribute_object = 0;
-	int32_t attrib_ref = -1;
 
 	// Vertex Data																														
 	uint32_t vert_id = 0;
@@ -486,108 +428,21 @@ typedef struct SQUE_Mesh
 	uint16_t num_index = 0;
 	uint32_t index_var = SQUE_UINT; // Default 4 because generally used uint, but ImGui Uses 2 Byte indices								
 	uint16_t index_var_size = 0;
-} SQUE_Mesh;
+
+	sque_vec<SQUE_VertAttrib> attributes;
+	uint16_t vertex_size = 0;
+};
 // Usage Functions
-SQ_API void SQUE_MESH_SetDrawConfig(SQUE_Mesh& mesh, int32_t draw_config, int32_t draw_mode);
-SQ_API void SQUE_MESH_SetVertData(SQUE_Mesh& mesh, uint32_t num_verts);
-SQ_API void SQUE_MESH_SetIndexData(SQUE_Mesh& mesh, uint32_t num_index_, uint32_t index_var_ = SQUE_UINT);
+SQ_API void SQUE_MESH_SetDrawConfig(SQUE_Mesh* mesh, const int32_t draw_config, const int32_t draw_mode);
+SQ_API void SQUE_MESH_SetDataConfig(SQUE_Mesh* mesh, const uint32_t num_verts, const uint32_t num_index_ = 0, const uint32_t index_var_ = SQUE_UINT);
+SQ_API void SQUE_MESH_AddAttribute(SQUE_Mesh* mesh, const char* name_, const int32_t var_type, const bool normalize, const uint16_t num_components);
 
+SQ_API uint16_t SQUE_MESH_CalcVertSize(SQUE_Mesh* mesh);
+SQ_API void SQUE_MESH_InterleaveOffsets(SQUE_Mesh* mesh); // Vertex Format is: V1(Pos,Normal,UV,...), V2(...)...
+SQ_API void SQUE_MESH_BlockOffsets(SQUE_Mesh* mesh); // Vertex Format is: Positions(P1,P2,...), Normals(N1, N2,...), UV(...),...
+SQ_API uint16_t SQUE_MESH_GetAttribSize(const SQUE_Mesh& mesh, const char* name);
 
-SQ_API uint16_t SQUE_MESH_CalcVertSize(const uint32_t attrib_ref);
-SQ_API uint16_t SQUE_MESH_GetVertSize(const uint32_t attrib_ref);
-SQ_API uint16_t SQUE_MESH_GetAttribSize(const uint32_t attrib_ref, const char* name);
-
-SQ_API void SQUE_MESH_DeclareAttributes(const int32_t vert_id, const uint16_t num_attributes, int32_t& attrib_ref);
-SQ_API SQUE_VertAttrib* SQUE_MESH_AddAttribute(const int32_t attrib_ref, SQUE_VertAttrib& attrib);
-SQ_API void SQUE_MESH_SetLocations(const int32_t attrib_ref);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																		
-typedef struct SQUE_TexAttrib
-{
-	int32_t id;
-	void* data;	
-} SQUE_TexAttrib;
-
-typedef struct SQUE_TexAttribIndex
-{
-	uint32_t id = -1;
-
-	uint32_t int_start = 0;
-	uint32_t int_end = 0;
-	uint16_t int_last = 0;
-
-	uint32_t float_start = 0;
-	uint32_t float_end = 0;
-	uint16_t float_last = 0;
-
-} SQUE_TexAttribIndex;
-typedef struct SQUE_Texture
-{
-	uint32_t id;
-	int32_t dim_format;
-	int32_t use_format;
-	int32_t data_format;
-	int32_t var_type;
-	uint16_t var_size;
-	int32_t w, h;
-	int32_t channel_num;
-	uint32_t attrib_ref;
-} SQUE_Texture;
-
-SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
-SQ_API void SQUE_TEXTURE_DeclareAttributes(const uint32_t tex_id, const uint16_t num_ints, const uint16_t num_floats, uint32_t* attrib_ref);
-
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddInt(const uint32_t attrib_ref, const int32_t attribute_id, const int32_t value);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddIntVs(const uint32_t attrib_ref, const int32_t attribute_id, void* data_, const uint16_t num_ints);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddFloat(const uint32_t attrib_ref, const int32_t attribute_id, const float value);
-SQ_API SQUE_TexAttrib* SQUE_TEXTURE_AddFloatVs(const uint32_t attrib_ref, const int32_t attribute_id, void* data_, const uint16_t num_floats);
-
-SQ_API void SQUE_TEXTURE_FreeAttributes();
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-																																		
-// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct ColorRGBA {																												
-	ColorRGBA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}													
-	float r, g, b, a;																													
-} ColorRGBA;																															
-																																		
-typedef struct SQUE_RenderState																											
-{																																		
-	bool backed_up = false;	
-	// Have to change into a vector similar to attributes...																												
-	int32_t blend_equation_rgb, blend_equation_alpha;																						
-																																		
-	bool blend_func_separate = false;																									
-	int32_t blend_func_src_rgb, blend_func_dst_rgb;																						
-	int32_t blend_func_src_alpha, blend_func_dst_alpha;																					
-																																																																																										
-	int32_t polygon_mode[2];																													
-	bool blend, cull_faces, depth_test, scissor_test;																					
-																																		
-	SQ_API void SetUp();																												
-	SQ_API void BackUp();																												
-} SQUE_RenderState;																														
-																																		
-// Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API bool SQUE_RENDER_Init();																											
-SQ_API void SQUE_RENDER_Close();																											
-																																		
-SQ_API void SQUE_RENDER_ChangeFramebufferSize(int32_t width, int32_t height);		
-SQ_API void SQUE_RENDER_GetFramebufferSize(int32_t* width, int32_t* height);
-SQ_API void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, int clear_flags = SQUE_COLOR_BIT);
-SQ_API const char* SQUE_RENDER_GetShaderHeader();																								
-																																		
-// Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_Scissor(int x, int y, int w, int h);
-SQ_API void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h);
-SQ_API void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value);
-SQ_API void SQUE_RENDER_SetViewport(int x, int y, int w, int h);
-SQ_API void SQUE_RENDER_SetPolyMode(int32_t faces, int32_t mode);	
+SQ_API void SQUE_MESH_SetLocations(SQUE_Mesh* mesh);
 
 // Data Management /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_MESH_GenBufferIDs(const uint32_t num, uint32_t* ids);
@@ -598,38 +453,183 @@ SQ_API void SQUE_MESH_BindVertices(const uint32_t vert_id);
 SQ_API void SQUE_MESH_BindIndices(const uint32_t index_id);
 SQ_API void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object);
 SQ_API void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vert_data = NULL, void* index_data = NULL);
+SQ_API void SQUE_MESH_FreeFromGPU(const SQUE_Mesh& mesh);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TEXTURES ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////																																		
+class SQUE_TexAttrib
+{
+public:
+	SQ_API SQUE_TexAttrib();
+	SQ_API SQUE_TexAttrib(const char* name, const int32_t attrib_id, const int32_t value);
+	SQ_API SQUE_TexAttrib(const char* name, const int32_t attrib_id, const float value);
+
+	char name[32] = "";
+	uint32_t type = UINT32_MAX;
+	int32_t id = UINT32_MAX;
+	void* data = NULL;	
+};
+
+struct SQUE_Texture
+{
+	uint32_t id = 0;
+	int32_t dim_format = -1;
+	int32_t use_format = -1;
+	int32_t data_format = -1;
+	int32_t var_type = SQUE_UBYTE;
+	uint16_t var_size = 1;
+
+	int32_t w = 0, h = 0;
+	int32_t channel_num = 4;
+
+	sque_vec<SQUE_TexAttrib> attributes;
+};
+
+SQ_API void SQUE_TEXTURE_SetFormat(SQUE_Texture* texture, const int32_t dimentions_format, const int32_t use_f, const int32_t data_f, const int32_t var_type);
+SQ_API void SQUE_TEXTURE_SetDimentions(SQUE_Texture* texture, const int32_t width, const int32_t height, const int32_t num_channels);
+SQ_API void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, int32_t value);
+SQ_API void SQUE_TEXTURE_AddAttribute(SQUE_Texture* texture, const char* name, int32_t attrib_id, float value);
+
+SQ_API void SQUE_TEXTURE_GenBufferIDs(const uint32_t num, uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_FreeFromGPU(const uint32_t num, const uint32_t* tex_ids);
+SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
+SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
+SQ_API void SQUE_TEXTURE_ApplyAttributes(const SQUE_Texture& tex);
+SQ_API void SQUE_TEXTURE_SetActiveUnit(const int32_t unit);
+SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, const int32_t mipmap_level = 0);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SHADERS /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct SQUE_Uniform
+{
+	int32_t id = -1;
+	uint32_t type = -1;
+	int32_t var_size = 0;
+	char name[52] = "";
+};
+
+struct SQUE_Shader
+{
+	int32_t id = 0;
+	int32_t type = NULL;
+};
+
+SQ_API void SQUE_SHADERS_GenerateID(SQUE_Shader* shader, const int32_t shader_type);
+SQ_API void SQUE_SHADERS_SetSource(const int32_t shader_id, const char* source_);
+SQ_API void SQUE_SHADERS_Compile(const int32_t shader_id);
+SQ_API void SQUE_SHADERS_FreeFromGPU(const int32_t shader_id);
+
+struct SQUE_Program
+{
+	// Variables
+	uint32_t id = 0;
+	uint32_t shaders[2];
+	sque_vec<SQUE_Uniform> uniforms;
+	//sque_vec<SQUE_VertAttrib> attributes;
+	// IDs of the shaders // Order by execution stage
+	// 0 Vertex -> 1 Fragment 
+	// Geometry, Tesselation and Compute will be added later if I want to and have time to
+	// They require more setup and steps
+};
+
+SQ_API void SQUE_PROGRAM_AttachShader(SQUE_Program* program, const SQUE_Shader& shader);
+SQ_API void SQUE_PROGRAM_FreeShadersFromGPU(int32_t shaders[]); // Not required, but saves space after linking
+SQ_API void SQUE_PROGRAM_CacheUniforms(SQUE_Program* program);
+
+SQ_API void SQUE_PROGRAM_GenerateID(uint32_t* program_id);
+SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
+SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
+
+// Usage Functions
+SQ_API int32_t SQUE_PROGRAM_GetUniformID(const SQUE_Program& program, const char* uniform_name);
+
+SQ_API void SetBool(const int32_t uniform_id, const bool value);
+SQ_API void SetInt(const int32_t uniform_id, const int32_t value);
+SQ_API void SetFloat(const int32_t uniform_id, const float value);
+SQ_API void SetFloat2(const int32_t uniform_id, const float value[2]);
+SQ_API void SetFloat3(const int32_t uniform_id, const float value[3]);
+SQ_API void SetFloat4(const int32_t uniform_id, const float value[4]);
+// ... add a matrix/array passer...																									
+SQ_API void SetMatrix4(const int32_t uniform_id, const float* matrix, const uint16_t number_of_matrices = 1, const bool transpose = false);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+																																		
+// Types / Structs /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ColorRGBA 
+{																												
+public:
+	SQ_API ColorRGBA();
+	SQ_API ColorRGBA(float _r, float _g, float _b, float _a);													
+	SQ_API ~ColorRGBA();
+
+	float r, g, b, a;																													
+};																															
+																																		
+class SQUE_RenderState																											
+{	
+public:
+	SQ_API SQUE_RenderState();
+	SQ_API ~SQUE_RenderState();
+	
+																													
+	int32_t blend_equation_rgb, blend_equation_alpha;																						
+																																		
+	bool blend_func_separate = false;																									
+	int32_t blend_func_src_rgb, blend_func_dst_rgb;																						
+	int32_t blend_func_src_alpha, blend_func_dst_alpha;																					
+																																																																																										
+	int32_t polygon_mode[2];																													
+	bool blend, cull_faces, depth_test, scissor_test;																					
+						
+	int32_t draw_framebuffer, read_framebuffer;
+
+	int32_t vp[4];
+
+	SQ_API void SetUp();																												
+	SQ_API void BackUp();
+
+	private:
+	bool backed_up = false;	
+};																														
+																																		
+// Initialization / State Management ///////////////////////////////////////////////////////////////////////////////////////////////////
+SQ_API bool SQUE_RENDER_Init();																											
+SQ_API void SQUE_RENDER_Close();																											
+																																		
+SQ_API void SQUE_RENDER_ChangeFramebufferSize(const int32_t width, const int32_t height);		
+SQ_API void SQUE_RENDER_GetFramebufferSize(int32_t* width, int32_t* height);
+SQ_API void SQUE_RENDER_Clear(const ColorRGBA& color_rgba, const int clear_flags = SQUE_COLOR_BIT);
+SQ_API const char* SQUE_RENDER_GetShaderHeader();																								
+																																		
+// Function Passthrough/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SQ_API void SQUE_RENDER_Scissor(const int x, const int y, const int w, const int h);
+SQ_API void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h);
+SQ_API void SQUE_RENDER_GetIntV(const int32_t value_id, int32_t* value);
+SQ_API void SQUE_RENDER_SetViewport(const int x, const int y, const int w, const int h);
+SQ_API void SQUE_RENDER_SetPolyMode(const int32_t faces, const int32_t mode);	
+SQ_API void SQUE_RENDER_BindSampler(const int32_t texture_locator, const int32_t sampler_id);
+
 // Vertex Attribute Management /////////////////////////////////////////////////////////////////////////////////////////////////////////
 SQ_API void SQUE_PROGRAM_EnableAttribute(const SQUE_Program& prog, const uint16_t vert_size, SQUE_VertAttrib* attr);
 SQ_API void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& attr);
 
-// Texture Attribute Management ////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref);
-// Overload for Texture3D or at some point try to go back to C?
-
-// Texture Management //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids);
-SQ_API void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type);
-SQ_API void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims);
-SQ_API void SQUE_TEXTURE_SetActiveUnit(int32_t unit);
-SQ_API void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level = 0);
-
-SQ_API void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id);
-
-// Shader Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Shader Program Management ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_PROGRAM_GenID(uint32_t* program_id);
-SQ_API void SQUE_PROGRAM_Link(const uint32_t program_id);
-SQ_API void SQUE_PROGRAM_Use(const uint32_t program_id);
-
 // RENDERING ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, const int32_t offset_indices = 0, int32_t count = -1);
+SQ_API void SQUE_RENDER_DrawIndices(const SQUE_Mesh& mesh, const int32_t offset_indices = 0, const int32_t count = -1);
 SQ_API void SQUE_RENDER_DrawVertices(const SQUE_Mesh& mesh, const int32_t count = 0);
 
 // Debugging
 SQ_API void SQUE_SHADERS_CheckCompileLog(const int32_t shader_id);
 SQ_API void SQUE_PROGRAM_CheckLinkLog(const uint32_t program_id);
-SQ_API void CheckForRenderErrors(const char* file, int line);
+SQ_API void CheckForRenderErrors(const char* file, const int line);
 SQ_API void InitGLDebug();
 #define SQUE_CHECK_RENDER_ERRORS() SQ_MACRO CheckForRenderErrors(__FILE__, __LINE__)														
 
@@ -650,51 +650,111 @@ struct SQUE_Framebuffer
 	sque_vec<SQUE_Texture> textures;
 };
 
-SQ_API void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id);
-SQ_API void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id);
-SQ_API void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id);
-SQ_API void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id);
-SQ_API void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height);
-SQ_API void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id);
-SQ_API void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
-SQ_API void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size = 1);
-SQ_API void SQUE_RENDER_FramebufferCheckStatus();
+SQ_API void SQUE_FRAMEBUFFER_GenerateID(uint32_t* framebuffer_id);
+SQ_API void SQUE_FRAMEBUFFER_Bind(const int32_t type, const uint32_t id);
+SQ_API void SQUE_FRAMEBUFFER_GenRenderTypeID(uint32_t* renderbuffer_id);
+SQ_API void SQUE_FRAMEBUFFER_BindRenderType(const uint32_t renderbuffer_id);
+SQ_API void SQUE_FRAMEBUFFER_SetRenderTypeInfo(const uint32_t type, const uint32_t width, const uint32_t height);
+SQ_API void SQUE_FRAMEBUFFER_AttachRenderType(const uint32_t attachment_type, const uint32_t attachment_id);
+SQ_API void SQUE_FRAMEBUFFER_AttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level = 0);
+SQ_API void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t* attachments, const uint32_t size = 1);
+SQ_API uint32_t SQUE_FRAMEBUFFER_CheckStatus();
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FILESYSTEM //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//  i don't like having to inlcude std::stirng..........
-#include <string>
-
-typedef struct SQUE_Dir
+struct SQUE_Dir
 {
-	SQUE_Dir* parent;
-	sque_vec<SQUE_Dir*> children;
+	uint32_t id = UINT32_MAX;
+	char name[64];
+	char location[512];
 
-	char name[256];
-	char* native_dir_data;
+	uint32_t parent_id = -1;
+	sque_vec<uint32_t> children_ids;
+};
 
-} SQUE_Dir;
+SQUE_Dir SQUE_FS_GenDir(const char* location, const uint32_t parent_id = -1);
 
-typedef struct SQUE_Asset
+struct SQUE_Asset
 {
-	int64_t size;
+	uint64_t size;
 	char* raw_data;
-}	SQUE_Asset;
+};
+
+struct SQUE_DataPack
+{
+	SQUE_Asset data;
+	SQUE_Asset metadata;
+};
+
+typedef uint32_t(HandleNewAssetLocation)(const char* location);
+typedef void(ReadWriteAssetFun)(const char* location, SQUE_DataPack* datapack);
+typedef void(UnloadAssetFun)(SQUE_DataPack* datapack);
+
+enum AssetStatus
+{
+	SQ_AS_NEUTRAL = BITSET1,
+	SQ_AS_CHANGED = BITSET2,
+	SQ_AS_DELETED = BITSET3,
+	SQ_AS_LOADED = BITSET4,
+	//...
+};
+
+struct SQUE_CtrlAsset
+{
+	// Static Data - Generated or Loaded
+	uint32_t id = -1;
+	char name[64] = "";
+	char location[512] = "";
+	uint32_t dir_id = UINT32_MAX;
+	uint32_t type = -1; //?
+	
+	// Runtime Updates
+	SQUE_Timer unused_timer;
+	uint32_t current_users = 0;
+	uint8_t status_flags = NULL; // refer to AssetStatus
+	double last_update = 0;
+
+
+	// Type Based functions  
+	ReadWriteAssetFun* Save;
+	ReadWriteAssetFun* Load;
+	UnloadAssetFun* Unload;
+
+	// Actual Data
+	SQUE_DataPack datapack;
+};
 
 SQ_API void SQUE_FS_Init();
 SQ_API const char* SQUE_FS_GetExecPath();
 // On Android, all these functions require permissions
 SQ_API bool SQUE_FS_CreateDirFullPath(const char* path);
-SQ_API bool SQUE_FS_CreateDirRelative(const char* path, int32_t flags = NULL);
+SQ_API bool SQUE_FS_CreateDirRelative(const char* path, const int32_t flags = NULL);
 SQ_API SQUE_Asset* SQUE_FS_LoadFileRaw(const char* path);
-SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data);
+SQ_API bool SQUE_FS_WriteFileRaw(const char* path, char* data, const uint64_t size);
 
 // Permission safe functions
 SQ_API SQUE_Dir* SQUE_FS_CreateBaseDirTree();
 SQ_API SQUE_Asset* SQUE_FS_LoadAssetRaw(const char* file);
+SQ_API const char* SQUE_FS_GetFileName(const char* file);
+SQ_API uint32_t SQUE_FS_GetParentDir(const char* path);
+// Filewatcher - std::filesystem based, requires c++17
+SQ_API void SQUE_FS_GenDirectoryStructure(const char* location, sque_vec<SQUE_Dir>* dirs);
+
+class SQUE_FW_NewAsset
+{
+public:
+	SQ_API SQUE_FW_NewAsset();
+	SQ_API ~SQUE_FW_NewAsset();
+
+	double last_update = 0;
+	uint32_t str_len = 0;
+	char str[512];
+};
+
+SQ_API sque_vec<SQUE_FW_NewAsset*> SQUE_FS_CheckDirectoryChanges(const char* path, const sque_vec<SQUE_CtrlAsset*>& assets_in_dir, HandleNewAssetLocation* handle_fun);
 
 // OpenDDL style Serialization
 enum class OPENDDL_IDS : uint8_t

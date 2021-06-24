@@ -30,7 +30,10 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 # REQUIRED PLATFORM SPECIFICS
 #------------------------------------------------------------------------------------------------
 
-SqueLib_PrepareBuild(SquePerf MarcTorresJimenez "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+file(GLOB_RECURSE tests_src "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.h")
+list(APPEND tests_src "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+
+SqueLib_PrepareBuild(SquePerf MarcTorresJimenez "${tests_src}")
 SqueLib_Package("" "")
 
 #------------------------------------------------------------------------------------------------

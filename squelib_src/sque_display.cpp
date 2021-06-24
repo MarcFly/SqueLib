@@ -8,42 +8,46 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <mutex>
 
 struct SQUE_Window
 {
     // Main attributes
     char title[256] = "";
-    int32_t width = 0, height = 0;
+    uint32_t width = 0, height = 0;
 
-    // Flags for workign with squelib
+    // Flags for working with squelib
     uint16_t working_flags;
+    sque_vec<int32_t> context_hints;
+    sque_vec<int32_t> buffer_hints;
+    sque_vec<int32_t> window_hints;
 };
 
 static std::mutex display_mtx;
 sque_vec<SQUE_Window> sque_windows;
 SQUE_Window* next_window = NULL;
 static uint16_t main_window_context = UINT16_MAX;
-int monitor_count;
+static int monitor_count;
 
 void DebugResizeCallback(int32_t width, int32_t height) { SQUE_PRINT(LT_INFO, "ViewportResize Callback Not Set, tried: %d,%d!", width, height); }
-ResizeCallback viewport_resize_callback = DebugResizeCallback;
+ResizeCallback* viewport_resize_callback = DebugResizeCallback;
 
-void DebugViewportSizeCallback(int32_t* width, int32_t* height) { SQUE_PRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
-ViewportSizeCallback viewport_size_callback = DebugViewportSizeCallback;
+void DebugViewportGetSizeCallback(int32_t* width, int32_t* height) { SQUE_PRINT(LT_INFO, "Get Viewport Size Callback not Set!"); }
+ViewportGetSizeCallback* viewport_size_callback = DebugViewportGetSizeCallback;
 
-static int32_t def_window_options[] =
+void DebugHandleDropFileFun(const char* location) { SQUE_PRINT(LT_INFO, "Dropped file from: %s", location); }
+HandleDropFileFun* drop_file_callback = DebugHandleDropFileFun;
+
+static int32_t def_window_hints[] =
 {
-    SQUE_DISPLAY_END
+    SQUE_DISPLAY_END, SQUE_DISPLAY_END
 };
 
-static int32_t const def_context_options[] =
+static int32_t def_context_hints[] =
 {
     SQUE_WINDOW_CONTEXT_MAJOR, SQUE_CONTEXT_MAJOR_MIN,
-    SQUE_DISPLAY_END
 };
 
-static int32_t const def_buffer_options[] =
+static int32_t def_buffer_hints[] =
 {
     SQUE_RED_BITS, 8,
     SQUE_GREEN_BITS, 8,
@@ -53,7 +57,6 @@ static int32_t const def_buffer_options[] =
     SQUE_STENCIL_BITS, 0,
     SQUE_DEPTH_BITS, 24,
     SQUE_RENDERABLE_TYPE, SQUE_MIN_RENDERABLE,
-    SQUE_DISPLAY_END
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +85,7 @@ static int32_t const def_buffer_options[] =
 #   include <GLFW/glfw3.h>
 #   include <GLFW/glfw3native.h>
     GLFWmonitor** glfw_monitors;
-    sque_vec<GLFWwindow*> glfw_windows;
+    sque_vec<GLFWwindow*> glfw_windows; //  TODO: Check GLFW documentation if I have to free them or GLFW takes care Valgrind 125/235
     
     void GLFW_ErrorCallback(int error_code, const char* description)
     {
@@ -129,6 +132,16 @@ static int32_t const def_buffer_options[] =
             }
     }
 
+    static void GLFW_DropFileCallback(GLFWwindow* window, int count, const char** paths)
+    {
+        for (uint16_t j = 0; j < glfw_windows.size(); ++j)
+        {
+            if (glfw_windows[j] == window)
+                for (uint16_t i = 0; i < count; ++i)
+                    drop_file_callback(paths[i]);
+        }
+    }
+
 #endif
 
 
@@ -137,7 +150,7 @@ static int32_t const def_buffer_options[] =
 // INITIALIZING & STATE MANAGEMENT ///////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_DISPLAY_Init()
+void SQUE_DISPLAY_Init(const char* title, const uint32_t width, const uint32_t height)
 {
     // What if some dipshit calls an Init 2 times?
     // SHould I have a callback that is dereferenced?
@@ -145,11 +158,37 @@ void SQUE_DISPLAY_Init()
     // But some things and modules require to be reinitialized after coming back...
     // Should I have a bool?
     // think about it.
-    if (!next_window)
+    if(!next_window)
     {
         SQUE_PRINT(SQUE_LogType::LT_WARNING, "No window hints set, creating with defaults...");
         next_window = new SQUE_Window();
     }
+    
+    if(next_window->window_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
+    if(next_window->buffer_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
+    if(next_window->context_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
+
+#ifdef USE_EGL
+    next_window->window_hints.clear();
+    next_window->buffer_hints.clear();
+    next_window->context_hints.clear();
+    if(next_window->window_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_WindowHints(def_window_hints, sizeof(def_window_hints)/sizeof(int32_t));
+    if(next_window->buffer_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_BufferHints(def_buffer_hints, sizeof(def_buffer_hints)/sizeof(int32_t));
+    if(next_window->context_hints.size() == 0)
+        SQUE_DISPLAY_NextWindow_ContextHints(def_context_hints, sizeof(def_context_hints)/sizeof(int32_t));
+
+    next_window->window_hints.push_back(SQUE_DISPLAY_END);
+    next_window->buffer_hints.push_back(SQUE_DISPLAY_END);
+    next_window->context_hints.push_back(SQUE_DISPLAY_END);
+#endif
+
+    SQUE_DISPLAY_NextWindow_Size(width, height);
+    SQUE_DISPLAY_NextWindow_Title(title);
 
     SQUE_PRINT(LT_INFO, "Declaring Backed Specific Variables...");
 
@@ -201,12 +240,15 @@ void SQUE_DISPLAY_Init()
     EGLint num_config;
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Preparing Config...");
-    eglChooseConfig(egl_display, def_buffer_options, &config, 1, &num_config);
+    eglChooseConfig(egl_display, next_window->buffer_hints.begin(), &config, 1, &num_config);
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Using EGL Config %d", num_config);
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Creating EGL Context...");
 
-    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, def_context_options);
+    for(uint16_t i = 0;i < next_window->context_hints.size(); ++i)
+        SQUE_PRINT(SQUE_LogType::LT_INFO, "%d == %d", next_window->context_hints[i], def_context_hints[i]);
+
+    egl_context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT, next_window->context_hints.begin());
     if (egl_context == EGL_NO_CONTEXT)
     {
         SQUE_PRINT(SQUE_LogType::LT_ERROR, "Could not create EGL Context!");
@@ -235,12 +277,12 @@ void SQUE_DISPLAY_Init()
     }
 
 #if defined(ANDROID)
-    int32_t width = ANativeWindow_getWidth(egl_window);
-    int32_t height = ANativeWindow_getHeight(egl_window);
-    next_window->width = width;
-    next_window->height = height;
-    EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, def_window_options);
-    SQUE_PRINT(SQUE_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width, height);
+    int32_t width_t = ANativeWindow_getWidth(egl_window);
+    int32_t height_t = ANativeWindow_getHeight(egl_window);
+    next_window->width = width_t;
+    next_window->height = height_t;
+    EGLSurface test = eglCreateWindowSurface(egl_display, config, egl_window, next_window->window_hints.begin());
+    SQUE_PRINT(SQUE_LogType::LT_INFO, "ANDROID - Surface Size: %d %d", width_t, height_t);
 #else // Other EGL based backends?
 #endif
     
@@ -272,6 +314,8 @@ void SQUE_DISPLAY_Init()
     //glfwSetMonitorCallback( _send_monitor_change_event_ );
 #endif
 
+    SQUE_DISPLAY_OpenWindow();
+
 }
 
 void SQUE_DISPLAY_Close()
@@ -297,12 +341,18 @@ void SQUE_DISPLAY_NextWindow_WindowHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
+    for(uint16_t pairs = 0; pairs < size; pairs+=2)
+    {
+        next_window->window_hints.push_back(options[pairs]);
+        next_window->window_hints.push_back(options[pairs+1]);
+    }
+/*    
 #ifdef USE_GLFW
     for (uint16_t i = 0; i < size; i + 2)
         glfwWindowHint(options[i], options[i + 1]);
 #elif defined(USE_EGL)
 
-#endif
+#endif*/
 }
 
 void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
@@ -313,12 +363,11 @@ void SQUE_DISPLAY_NextWindow_ContextHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-#ifdef USE_GLFW
-    for (uint16_t i = 0; i < size; i += 2)
-        glfwWindowHint(options[i], options[i + 1]);
-#elif defined(USE_EGL)
-
-#endif
+    for(uint16_t pairs = 0; pairs < size; pairs+=2)
+    {
+        next_window->context_hints.push_back(options[pairs]);
+        next_window->context_hints.push_back(options[pairs+1]);
+    }
 }
 
 void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
@@ -329,15 +378,35 @@ void SQUE_DISPLAY_NextWindow_BufferHints(int32_t* options, int32_t size)
         next_window = new SQUE_Window();
     }
 
-#ifdef USE_GLFW
-    for (uint16_t i = 0; i < size; i + 2)
-        glfwWindowHint(options[i], options[i + 1]);
-#elif defined(USE_EGL)
-
-#endif
+    for(uint16_t pairs=0; pairs < size; pairs+=2)
+    {
+        next_window->buffer_hints.push_back(options[pairs]);
+        next_window->buffer_hints.push_back(options[pairs+1]);
+    }
 }
 
-uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t height, uint16_t monitor)
+void SQUE_DISPLAY_NextWindow_Title(const char* title)
+{
+    if (next_window == NULL)
+    {
+        next_window = new SQUE_Window();
+    }
+
+    memcpy(next_window->title, title, strlen(title));
+}
+
+void SQUE_DISPLAY_NextWindow_Size(const uint32_t width, const uint32_t height)
+{
+    if (next_window == NULL)
+    {
+        next_window = new SQUE_Window();
+    }
+
+    next_window->width = width;
+    next_window->height = height;
+}
+
+uint16_t SQUE_DISPLAY_OpenWindow(const char* title, uint32_t width, uint32_t height, uint16_t monitor)
 {
     if (sque_windows.size() > 0)
     {
@@ -352,17 +421,27 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t heigh
         next_window = new SQUE_Window();
     }
 
-    memcpy(next_window->title, title, strlen(title));
+    if (title != NULL)
+        SQUE_DISPLAY_NextWindow_Title(title);
+    if (width != 0)
+        SQUE_DISPLAY_NextWindow_Size(width, height);
     next_window->working_flags = NULL;
 
     int x = 0, y = 0, w = 0, h = 0;
 
 #if defined(USE_GLFW)
     glfwGetMonitorWorkarea(glfw_monitors[monitor], &x, &y, &w, &h);
-    width = (width != 0) ? width : w * .7;
-    height = (height != 0) ? height : h * .7;
+    next_window->width = (next_window->width != 0) ? next_window->width : w * .7;
+    next_window->height = (next_window->height != 0) ? next_window->height : h * .7;
 
-    GLFWwindow* glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
+    for(uint16_t i = 0; i < next_window->context_hints.size(); i+=2)
+        glfwWindowHint(next_window->context_hints[i], next_window->context_hints[i+1]);
+    for(uint16_t i = 0; i < next_window->window_hints.size(); i+=2)
+        glfwWindowHint(next_window->window_hints[i], next_window->window_hints[i+1]);
+    for(uint16_t i = 0; i < next_window->buffer_hints.size(); i+=2)
+        glfwWindowHint(next_window->buffer_hints[i], next_window->buffer_hints[i+1]);
+    
+    GLFWwindow* glfw_window = glfwCreateWindow(next_window->width, next_window->height, next_window->title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
     if (!glfw_window)
     {
         SQUE_PRINT(LT_WARNING, "Unable to create GLFW window...");
@@ -372,7 +451,7 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t heigh
         {
             glfwWindowHint(SQUE_WINDOW_CONTEXT_MAJOR, major);
             glfwWindowHint(SQUE_WINDOW_CONTEXT_MINOR, minor);
-            glfw_window = glfwCreateWindow(width, height, title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
+            glfw_window = glfwCreateWindow(next_window->width, next_window->height, next_window->title, NULL, (glfw_windows.size() > 0) ? glfw_windows[0] : NULL);
         }
         if (!glfw_window)
         {
@@ -386,14 +465,15 @@ uint16_t SQUE_DISPLAY_OpenWindow(const char* title, int32_t width, int32_t heigh
     glfwSetWindowCloseCallback(glfw_window, GLFW_CloseCallback);
     glfwSetFramebufferSizeCallback(glfw_window, GLFW_FramebufferResizeCallback);
     glfwSetCursorEnterCallback(glfw_window, GLFW_MouseEnterLeaveCallback);
+    glfwSetDropCallback(glfw_window, GLFW_DropFileCallback);
     SQUE_PRINT(SQUE_LogType::LT_INFO, "GLFW Window Created!");
 #endif
 
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Window \"%s\" opened correctly", title);
-#ifndef ANDROID // Quick and dirty, will look into initing properly
-    next_window->width = width;
-    next_window->height = height;
-#endif
+//#ifndef ANDROID // Quick and dirty, will look into initing properly
+//    next_window->width = width;
+//    next_window->height = height;
+//#endif
     sque_windows.push_back(*next_window);
     SQUE_DISPLAY_MakeContextMain(sque_windows.size() - 1);
     delete next_window;
@@ -452,15 +532,15 @@ int32_t SQUE_DISPLAY_GetDPIDensity(uint16_t window)
 
 }
 
-void SQUE_DISPLAY_GetMainDisplaySize(uint16_t& w, uint16_t& h)
+void SQUE_DISPLAY_GetMainDisplaySize(uint16_t* w, uint16_t* h)
 {
 #if defined(USE_GLFW)
     const GLFWvidmode* mode = glfwGetVideoMode(glfw_monitors[0]);
-    w = mode->width;
-    h = mode->height;
+    *w = mode->width;
+    *h = mode->height;
 #elif defined(USE_EGL)
-    w = sque_windows[0].width;
-    h = sque_windows[0].height;
+    *w = sque_windows[0].width;
+    *h = sque_windows[0].height;
 #endif
 }
 
@@ -653,16 +733,23 @@ void SQUE_DISPLAY_MakeContextMain(uint16_t window)
     main_window_context = window;
 }
 
-ResizeCallback SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback viewport_cb)
+ResizeCallback* SQUE_DISPLAY_SetViewportResizeCallback(ResizeCallback* viewport_cb)
 {
-    ResizeCallback ret = viewport_resize_callback;
+    ResizeCallback* ret = viewport_resize_callback;
     viewport_resize_callback = viewport_cb;
     return ret;
 }
 
-ViewportSizeCallback SQUE_DISPLAY_SetViewportSizeCallback(ViewportSizeCallback viewport_size_cb)
+ViewportGetSizeCallback* SQUE_DISPLAY_SetViewportGetSizeCallback(ViewportGetSizeCallback* viewport_size_cb)
 {
-    ViewportSizeCallback ret = viewport_size_callback;
+    ViewportGetSizeCallback* ret = viewport_size_callback;
     viewport_size_callback = viewport_size_cb;
+    return ret;
+}
+
+HandleDropFileFun* SQUE_DISPLAY_SetDropFileCallback(HandleDropFileFun* drop_file_cb)
+{
+    HandleDropFileFun* ret = drop_file_callback;
+    drop_file_callback = drop_file_cb;
     return ret;
 }

@@ -5,13 +5,17 @@ if(${CMAKE_VERSION} VERSION_LESS 3.18)
 else()
     cmake_policy(VERSION 3.18)
 endif()
+
 #------------------------------------------------------------------------------------------------
 # ADD SUBPROJECTS # Add where SqueLib is
 #------------------------------------------------------------------------------------------------
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/SqueLib)
+
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
+
 project(SquePong    VERSION 2020.1
                     DESCRIPTION "Multiplatform C++ Engine"
                     LANGUAGES C CXX)
@@ -22,32 +26,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON) # Android Turns it off (i still don't know why but it should)
 
 #------------------------------------------------------------------------------------------------
-# SETUP BUILD PATHS
-#------------------------------------------------------------------------------------------------
-execute_process(COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/builds)
-set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
-#------------------------------------------------------------------------------------------------
-# REQUIRED PLATFORM SPECIFICS
+# SETUP WITH SQUELIB - Generates a target and sets it up to work with SqueLib
 #------------------------------------------------------------------------------------------------
 
-SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
-SqueLib_Package("" "")
+file(GLOB_RECURSE PONG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/code/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/code/*.h")
+
+
+SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${PONG_SRC}" "${CMAKE_CURRENT_SOURCE_DIR}/code")
+SqueLib_Package("${CMAKE_CURRENT_SOURCE_DIR}/Assets" "")
 
 #------------------------------------------------------------------------------------------------
-# SETTING FINAL PROPERTIES FOR THE PROJECT
+# CONTINUE SETUP
 #------------------------------------------------------------------------------------------------
-target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
-set_target_properties(SquePong
-    PROPERTIES 
-        ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
-        RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
-)
-# INCLUDE AND LINK TO SQUELIB
-target_link_libraries(SquePong 
-    PUBLIC 
-        SqueLib)
-message(STATUS ${SqueLib_Output})
-target_include_directories(SquePong 
-    PUBLIC 
-        ${SqueLib_include})

@@ -9,16 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <ctime>
-#include <chrono>
-#include <fstream>
-#include <algorithm>
-#include <cstring>
 
-#include <mutex>
-#include <unordered_map>
-
-typedef std::pair<int, SQUE_Log> PairLOG;
 static std::mutex _mtx;
 static std::unordered_map<std::string, int> Push_LogKeys;
 static std::unordered_map<int, std::string*> Get_LogKeys;
@@ -44,6 +35,15 @@ void SQUE_LOGGER_Close()
     Push_LogKeys.clear();
     Get_LogKeys.clear();
     logs.clear();
+}
+
+const std::unordered_map<int, std::string*>& SQUE_LOGGER_GetKeys()
+{
+    return Get_LogKeys;
+}
+const sque_vec<PairLOG>& SQUE_LOGGER_GetLogs()
+{
+    return logs;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

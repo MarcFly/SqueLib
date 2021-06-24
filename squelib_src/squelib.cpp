@@ -1,8 +1,6 @@
 #include "squelib.h"
 
 // really want to stop using these includes,.... will do my own simplified string and types?
-#include <string>
-#include <cstring>
 
 #if defined(ANDROID) || defined(__linux__)
 #   include <unistd.h>
@@ -16,8 +14,8 @@
 // VARIABLE DEFINITION ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VoidFun on_resume_callback = NULL;
-VoidFun on_go_background_callback = NULL;
+VoidFun* on_resume_callback = NULL;
+VoidFun* on_go_background_callback = NULL;
 
 int SQUE_VarGetSize(int type_macro)
 {
@@ -157,7 +155,7 @@ void AndroidSendToBack(int param)
     jnii->DetachCurrentThread();
 }
 
-#endif
+#endif // ANDROID
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION AND STATE CONTROL ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -174,9 +172,15 @@ static int32_t default_context_options[] =
     SQUE_DEBUG_CONTEXT, 1
 };
 
+void SQUE_LIB_InitRNG(uint64_t seed)
+{
+    // basic init for RNG
+    pcg32_srandom_r(&random_t, seed, (intptr_t)&random_t);
+}
+
 void SQUE_LIB_Init(const char* app_name, int32_t flags)
 {
-    pcg32_srandom_r(&random_t, time(NULL), (intptr_t)&random_t);
+    SQUE_LIB_InitRNG(time(NULL));
 
     // Call Init for all loaded modules and with required flags
     // Logger Lib
@@ -184,35 +188,37 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
     
     // Display Lib
     SQUE_DISPLAY_SetViewportResizeCallback(SQUE_RENDER_ChangeFramebufferSize);
-    SQUE_DISPLAY_SetViewportSizeCallback(SQUE_RENDER_GetFramebufferSize);
-    SQUE_DISPLAY_Init();
-
+    SQUE_DISPLAY_SetViewportGetSizeCallback(SQUE_RENDER_GetFramebufferSize);
+    
     if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_OPENWINDOW))
     {
-        sque_vec<int32_t> options;
-        
+        sque_vec<int32_t> window_options;
+        sque_vec<int32_t> context_options;
+        sque_vec<int32_t> buffer_options;
+
         if (CHK_FLAG(flags, SQ_INIT_MAX_RENDER_VER))
         {
-            options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
-            options.push_back(SQUE_CONTEXT_MAJOR_MAX);
-            options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
-            options.push_back(SQUE_CONTEXT_MINOR_MAX);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
+            context_options.push_back(SQUE_CONTEXT_MAJOR_MAX);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
+            context_options.push_back(SQUE_CONTEXT_MINOR_MAX);
         }
         else if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_MIN_RENDER_VER))
         {
-            options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
-            options.push_back(SQUE_CONTEXT_MAJOR_MIN);
-            options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
-            options.push_back(SQUE_CONTEXT_MINOR_MIN);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MAJOR);
+            context_options.push_back(SQUE_CONTEXT_MAJOR_MIN);
+            context_options.push_back(SQUE_WINDOW_CONTEXT_MINOR);
+            context_options.push_back(SQUE_CONTEXT_MINOR_MIN);
         }
-        if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER) )
+        if (CHK_FLAG(flags, SQ_INIT_DEFAULTS) || CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER))
         {
-            options.push_back(SQUE_DEBUG_CONTEXT);
-            options.push_back(1);
+            context_options.push_back(SQUE_DEBUG_CONTEXT);
+            context_options.push_back(1);
         }
 
-        SQUE_DISPLAY_NextWindow_ContextHints(options.begin(), options.size());
-        SQUE_DISPLAY_OpenWindow(app_name);
+        SQUE_DISPLAY_NextWindow_ContextHints(context_options.begin(), context_options.size());
+        
+        SQUE_DISPLAY_Init(app_name);
     }
 
     // For testing
@@ -223,6 +229,10 @@ void SQUE_LIB_Init(const char* app_name, int32_t flags)
 
     // Rendering Lib
     SQUE_RENDER_Init();
+    if (CHK_FLAG(flags, SQ_INIT_DEBUG_RENDER))
+    {
+        InitGLDebug();
+    }
 
     // Filesystem Lib
     SQUE_FS_Init();
@@ -263,7 +273,8 @@ int SQUE_IsCompatibleDLL(void)
 
 void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* format, ...)
 {
-    std::string sttr(strrchr(file, FOLDER_ENDING));
+    const char* sttr = strrchr(file, FOLDER_ENDING);
+    uint32_t sttr_len = strlen(sttr);
 
     static va_list ap;
     char* tmp = new char[1];
@@ -277,9 +288,9 @@ void SQUE_PrintVargs(SQUE_LogType lt, const char file[], int line, const char* f
     vsnprintf(tmp, len, format, ap);
     va_end(ap);
 
-    int print_len = len + (sttr.length() + 4 + 4);
+    int print_len = len + (sttr_len + 4 + 4);
     char* print = new char[print_len];
-    sprintf(print, "%s(%d): %s", sttr.c_str(), line, tmp);
+    sprintf(print, "%s(%d): %s", sttr, line, tmp);
 
     SQUE_ConsolePrint((int)lt, print);
 
@@ -294,8 +305,8 @@ void SQUE_ConsolePrint(int lt, const char* log)
     OutputDebugString("\n");
 #elif defined ANDROID
     __android_log_print(lt, "SqueLib", log);
-#elif defined LINUX
-
+#elif defined __linux__ && defined NOT_GDB
+    printf("%s\n",log);
 #endif
 
 }
@@ -304,9 +315,9 @@ void SQUE_ConsolePrint(int lt, const char* log)
 // RANDOM NUMBER ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t SQUE_RNG()
+uint32_t SQUE_RNG(uint32_t max)
 {
-    return pcg32_random();
+    return ((double)pcg32_random_r(&random_t) / (UINT32_MAX / (double)max));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -382,7 +393,7 @@ void AndroidRequestAppPermissions(const char* perm)
 
 #endif
 
-int SQUE_AskPermissions(const char* permission_name)
+int16_t SQUE_AskPermissions(const char* permission_name)
 {
     int ret = 1;
 #ifdef ANDROID
@@ -400,16 +411,16 @@ int SQUE_AskPermissions(const char* permission_name)
 // CALLBACKS / FLOW MANAGEMENT /////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VoidFun SQUE_AddOnResumeCallback(VoidFun fun)
+VoidFun* SQUE_AddOnResumeCallback(VoidFun* fun)
 {
-    VoidFun ret = on_resume_callback;
+    VoidFun* ret = on_resume_callback;
     on_resume_callback = fun;
     return ret;
 
 }
-VoidFun SQUE_AddOnGoBackgroundCallback(VoidFun fun)
+VoidFun* SQUE_AddOnGoBackgroundCallback(VoidFun* fun)
 {
-    VoidFun ret = on_go_background_callback;
+    VoidFun* ret = on_go_background_callback;
     on_go_background_callback = fun;
     return ret;
 }

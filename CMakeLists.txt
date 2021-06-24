@@ -12,12 +12,12 @@ endif()
 # That way we don't overwrite other projects' CMAKE_MODULE_PATH and keep it cleaner to read
 set(SQUE_cmake  ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 set(SQUE_cmake_par ${SQUE_cmake} PARENT_SCOPE)
-include(${SQUE_cmake}/Helpers.cmake)
+#include(${SQUE_cmake}/Helpers.cmake)
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
 project(SqueLib     VERSION 2021.1
-                    DESCRIPTION "Multiplatform C++ Library for making apps and games easily"
+                    DESCRIPTION "C++ Library for getting introduced to multiplatform C++ development."
                     LANGUAGES C CXX)
 
 # C/CXX Requirements
@@ -72,22 +72,14 @@ set_target_properties(glad
         LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
         RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
 )
-# GL Math ------------------------------------------------------------------------------------
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm")
-set(glm_include "${CMAKE_CURRENT_SOURCE_DIR}/external/glm/glm")
-# GLM is interface library by default, does not have output, its added to project
+
 # STB ----------------------------------------------------------------------------------------
 set(stb_include "${CMAKE_CURRENT_SOURCE_DIR}/external/stb")
 # PCG ----------------------------------------------------------------------------------------
 set(pcg_include "${CMAKE_CURRENT_SOURCE_DIR}/external/pcg")
 set(pcg_src ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.c ${CMAKE_CURRENT_SOURCE_DIR}/external/pcg/pcg_basic.h)
+# SOLOUD - MINIAUDIO BACKEND ONLY -------------------------------------------------------------------------------------
 
-# DEBUG ONLY
-if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
-    # MMGR ----------------------------------------------------------------------------------------
-    set(mmgr_include "${CMAKE_CURRENT_SOURCE_DIR}/external/mmgr")
-    set(mmgr_src ${mmgr_include}/mmgr.cpp ${mmgr_include}/mmgr.h ${mmgr_include}/nommgr.h)
-endif()
 #------------------------------------------------------------------------------------------------
 # FETCH SUBPROJECTS
 #------------------------------------------------------------------------------------------------
@@ -98,7 +90,7 @@ set(FETCHCONTENT_BASE_DIR ${EXTERNAL})
 message(STATUS "Pulling Dependencies to build along")
 
 # DESKTOP DEPENDENCIES---------------------------------------------------------------------------
-if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop) 
+if(ToWindows OR ToLinux OR ToDesktop) 
     message(STATUS "Pulling DESKTOP Dependencies")
     # GLFW---------------------------------------------------------------------------------------
     option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -109,21 +101,25 @@ if(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
     option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" OFF)
     FetchContent_Declare(glfw
         GIT_REPOSITORY "https://github.com/glfw/glfw.git"
-        GIT_TAG "1adfbde4d7fb862bb36d4a20e05d16bf712170f3"
+        GIT_TAG 3.3.4
     )
+    message(STATUS "Error not here")
     FetchContent_GetProperties(glfw) # Generates glfw_SOURCE_DIR and glfw_BINARY_DIR
     set(glfw_include ${glfw_SOURCE_DIR}/include)
     set(glfw_lib_path ${glfw_BINARY_DIR}/src/${CMAKE_BUILD_TYPE})
     # -------------------------------------------------------------------------------------------
 
     # MAKEAVAILABLE------------------------------------------------------------------------------
+    message(STATUS "Error not here")
     FetchContent_MakeAvailable(glfw)
+    message(STATUS "Error not here")
     set_target_properties(glfw
         PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
             LIBRARY_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
             RUNTIME_OUTPUT_DIRECTORY "${SQUE_OutputFolder}"
     )
+    message(STATUS "Error not here")
     # All MakeAvailable together, first we declare so that they can start populating i belive
     # MakeAvailable should check completion/availability and finish/start downloading
     # -------------------------------------------------------------------------------------------
@@ -134,21 +130,16 @@ endif()
 set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 if(ToAndroid)
     add_compile_definitions(ANDROID)
-    include(${SQUE_cmake}/FindAndroidSDKVars.cmake)
 
     set(app_glue "${NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     target_sources(SqueLib PUBLIC ${app_glue}) # Add Android Files required 
 
     include(${SQUE_cmake}/SetupAndroidEnv.cmake)
-    set_android_link_flags()
-    set_android_compile_flags()
-    if(NOT ANDROIDVERSION)
-        set(ANDROIDVERSION 29)
-    endif()
-    set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})
-    link_android_all_libs(SqueLib ${NDK} ${OS_NAME} ${ANDROIDVERSION})
-    include_android(SqueLib ${NDK} ${OS_NAME})
-elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
+    link_android_libc(SqueLib ${SQUE_OutputFolder})
+    link_android_all_libs(SqueLib)
+    include_android(SqueLib)
+
+elseif(ToWindows OR ToLinux OR ToDesktop)
     #---------------------------------------------------------------------------------------------
     # SET MINIMAL C/CXX FLAGS
     #---------------------------------------------------------------------------------------------
@@ -178,47 +169,28 @@ elseif(ToWindows OR ToLinux OR ToDarwin OR ToMacOS OR ToDesktop)
             ${CMAKE_DL_LIBS}
         )
     elseif(ToWindows)
-
-    elseif(ToDarwin OR ToMacOS)
-        target_link_libraries(SqueLib PUBLIC
-            "-framework Cocoa"
-            "-framework IOKit"
-            "-framework CoreVideo"
-        )
     endif()
 endif()
 #------------------------------------------------------------------------------------------------
 # LINKING / ADDING INCLUDE AND SOURCE FILES FROM SUBPROJECTS
 #------------------------------------------------------------------------------------------------
 target_include_directories(SqueLib PUBLIC
-    ${glm_include}
     ${stb_include}
     ${pcg_include}
-    
 )
 target_link_libraries(SqueLib PUBLIC
     glad
-    glm
 )
 target_sources(SqueLib PRIVATE
     "${pcg_src}"
-    
 )
-
-# DEBUG ONLY
-if("${CAMKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_sources(SqueLib PRIVATE
-        "${mmgr_src}"
-    )
-    target_include_directories(SqueLib PUBLIC
-        ${mmgr_include}
-    )
-endif()
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
 target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
+target_compile_definitions(SqueLib PUBLIC WITH_MINIAUDIO)
+
 set_target_properties(SqueLib
     PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
@@ -227,6 +199,7 @@ set_target_properties(SqueLib
         POSITION_INDEPENDENT_CODE ON
         PUBLIC_HEADER "squelib.h"
 )
+
 target_compile_options(glad PUBLIC
     -fPIC
 )
@@ -238,11 +211,11 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/squelib_src"
     PREFIX "SqueLib"
     FILES ${SQUELIB_SRC})
 source_group(/pcg FILES ${pcg_src})
-source_group(/mmgr FILES ${mmgr_src})
 
 set(SqueLib_include ${CMAKE_CURRENT_SOURCE_DIR}/squelib_src PARENT_SCOPE)
 set(SqueLib_Output ${SQUE_OutputFolder} PARENT_SCOPE) 
 set(SqueLib_defaults ${CMAKE_CURRENT_SOURCE_DIR}/defaults PARENT_SCOPE)
 set(SqueLib_extra ${CMAKE_CURRENT_SOURCE_DIR}/extra PARENT_SCOPE)
+set(SqueLib_external ${CMAKE_CURRENT_SOURCE_DIR}/external PARENT_SCOPE)
 
 include(${SQUE_cmake}/SqueLib_Package.cmake PARENT_SCOPE)

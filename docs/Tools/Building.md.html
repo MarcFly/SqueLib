@@ -1,0 +1,260 @@
+<style class="fallback">@media screen{body{background:#0F0F0F;color:#ccc}}</style>
+<link rel="stylesheet" href="../libs/markdeep_slate.css">
+<script src="https://kit.fontawesome.com/ed883494f6.js" crossorigin="anonymous"></script>
+
+*[Back to INDEX]("../doc_index.md.html")*
+
+(#) Building with SqueLib
+
+This introduction to building is directed to people like me who come from lesser programming oriented backgrounds, such as ironically game development from a design perspective. During the coursing of the degree there have been little to no introduction to other build systems apart from building with already existing game engines such as Unity or using mainly IDEs (MSVS and Android Studio).
+
+The following points will serve as a brief and absolutely surface level to the main things really needed to start building: Command Line and CMake.
+
+
+# Build Scripts
+
+The build scripts will be explained first on Linux as I believe the syntax provided makes the most sense and provides a better introduction to command line basics and then the changes in Windows.
+
+If syntax between platforms does not differ, it will not be repeatedly explained.
+
+## From Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+   mkdir cmake_files_platformY
+   cd cmake_files_platformY
+   open_console --no_close -execute cmake "dir" -DToPlatformY=1 -DCMAKE_BUILD_TYPE=Debug
+   open_console --no_close -execute> cmake --build .
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The most basic build script will consist in some form of this pseudocode:
+
+**Lines 1-2:** Create a folder and navigate there in order to contain the CMake generated files and not pollute the repository:
+
+ * `mkdir "relative_path/foldername`: create directory at relative path to execution directory and specified final name. There are a lot of options, look it up on google.
+ * `cd`: Navigate to specified directory, can be full or relative path.
+
+**Line 3:** Generate the build files for compilation
+ 
+ * `open_console`: call to your preferred console instance to open and then execute a command
+ * `--no_close`: console option to avoid closing and be able to read output
+ * `-execute`: call function to execute a command. -e on Konsole and 
+ * `cmake "dir"`: call cmake under a specified directory (CMAKE_SOURCE_DIR variable). I personally store scripts in the same folder as CMakeList.txt, because we navigated one folder up, i leave it as "**../**".
+ * `-DToPlatform=1`: SqueLib option for platform, i use defines for this, currently supporting ToWindows/ToLinux/ToAndroid.
+ * `-DCMAKE_BUILD_TYPE=[Debug / Release]`: Select type of build. On MSVS it does not matter much.
+
+ **Line 4:** Build the project executable and binaries:
+
+  * `--build`: cmake option to build the project
+  * `"dir"`: directory used for wirting binary files (CMAKE_BINARY_DIR variable).
+
+## From Windows
+
+On windows it is similar but you don't have to specifically call to a console, just save with a .bat extension and you're good to go.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+    mkdir cmake_files_platformY 
+    cd cmake_files_platformY
+    cmake ../ -UToAndroid -UToLinux -DToWindows=1 -DCMAKE_BUILD_TYPE=Release
+    cmake --build . 
+    cmd /k
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  * `cmd/k`: as we are not explecitly opening a CLI for each call, to keep them open you call cmd to open the execution in command prompt with option `/keep` to make it not close automatically.
+
+# Command Line Basics
+
+Throughout the use of CMake, you will encounter multiplatform pitfalls in which the fastest way will be to create some platform/CLI specific command calls. Below I will point out some specifics that will help in the basic things I used in this project:
+
+ * `@echo "Message"`: Write log to console 
+ * `mkdir -p`: option to create parent directories if the specified are not found, thus creating a folder structure.
+ * `cp -options "source" "destination"`: copy files/directories in Linux, [fast documentation](https://www.rapidtables.com/code/linux/cp.html).
+ * `robocopy "source" "destination" /Options`: copy files/directories in Windows, [fast documentation](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy).
+ * `rm -options "path"`: remove files/directories.
+ * `VARIABLE="Value"`: Declare a local variable for using in following calls
+ * `envsubst '$$Local_Variables' < path_to/text_file_with_Variables.extension > path_to/final_file_with_name.extension`: Great funcion to define a template file and then substitute with defined variables preceded by 2 dollar signs(`$$`). Examples are **Android.xml.template** and **squelib_add_targets** macro in **AndroidInstallTargets.cmake**.
+ * `ls -options "directory/file"`: list the contents in a directory or file.
+
+Command Line Interfaces are one hell of a powerful tool anyone into programming has to master. I don't think I even get to beginner, I just use these usual commands and go by looking up what I am told to do to understand it, more commands will be introduced explaining the CMake Android Modules as there are specific commands required for the build.
+
+# CMake in SqueLib
+
+First of all, if you want a truly great introduction, go to Jeff Preshing's [Learn CMake's scripting language in 15 miunutes](https://preshing.com/20170522/learn-cmakes-scripting-language-in-15-minutes/) and [How to build CMake Projects](https://preshing.com/20170511/how-to-build-a-cmake-based-project/). I started off of these two and I am glad I found them.
+
+SqueLib is not a heavy CMake project as some experienced users might easily discern, there are a couple not recommended to say the least uses and ugly things, but they work just as intended.
+
+CMake's documentation is extensive but straight to the point with examples of usage in complicated function calls. Always keep it near but to make it easier to read, here are the most basic things you will find:
+
+ * `set(VARIABLE_NAME VALUE)`: Declare/Define a Variable
+ * `${VARIABLE_NAME}`: Access the value of a variable
+ * `function(VARIABLE value_input ...)`: Most functions have a string that declare which variable they target as function might have a plethora of unordered variable to set. As an example: `project(SqueLib VERSION 2021.1)`, the project function has a lot of variables or options to set, we are specifying that VERSION is set to 2021.1, these variable setting can be concatenated with more like `... DESCRIPTION "Something" LANGUAGES C ...)`.
+ * `macros` substitute the call with the code itself, thus making all variables accessible to the local space.
+ * `functions` don't make the variables declared inside available unless specified
+ * `file(...)`: command for gathering files or searching for files, look up examples but it is not recommended to use if you have low source file count or know exactly which files to use (I use it because it is fast and compact to write).
+ * A CMake variable can be a list, by means that you can `set(LIST_NAME var1 var2 var3 ..)` or `set(LIST_NAME "var1;var2;var3;...")`. There is a `list()` command to interact easily with them, and when you want to pass the whole list as a variable you usually pass as `"${LIST_NAME}"` which will convert the list into a string list rather than a variable list.
+
+ With these simple directives set, let's get through the following example:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bash linenumbers
+    cmake_minimum_required(VERSION 3.1)
+    
+    # Project Settings
+    project(SquePong VERSION 2021.1 LANGUAGES C CXX)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS ON)
+    
+    # Add source directory where SqueLib's CMakeList.txt is, and where to write files
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/SqueLib ${CMAKE_CURRENT_BINARY_DIR}/SqueLib)
+
+    # Setup the Build paths
+    execute_process(COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+    set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+
+    # SqueLib Required Functions
+    SqueLib_PrepareBuild(SquePong MarcTorresJimenez "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+    SqueLib_Package("" "")
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First of all you setup the minimum version of CMake to use, you don't want to use functions that a user might not support, rather throw an error.
+
+Then you setup your basic project settings, I recommend taking a look at documentation on which language and project options are. Then we target C/C++ (CXX in CMake) and make sure we compile with C++17 standard,currently needed for `std::filesystem` but will be dropped in later releases to C++11 for `unordered_map`.
+
+To add a subproject, it is usual to add the subdirectory where the CMakeList.txt is, then specifying where CMake should write the generated files.
+
+I personally setup the build paths under a build folder and then point the CMAKE_BINARY_DIR to write files at that directory.
+
+Finally, we call the preparation calls for SqueLib, which can be explored under Squelib_Package.cmake:
+ * `SqueLib_PrepareBuild(target OrganizationName "${List_of_files_to_build_with}")`: A simple function to help setting specific compiler an dlinker flags for the target platforms. Requires the project you are building, organization name (personal, nickname,...) that corresponds to your developer/publisher account for a platform and the source files in a list.
+ * `SqueLib_Package("Path_To_App_Assets" "Path_to_Base_Resources")`: Simple function that will copy the assets and resources used to the final application. It is not the best way but necessary specially for Android as it requires a specific folder structure that SqueLib will take care of it. The distinction between assets and resources are given because Android separates between loadable data and static resources for app information such as an Icon or a Manifest file.
+
+ With this introduction, you can write your own `CMakeList.txt` and build your source files into full SqueLib based applications!
+
+# CMake Modules
+
+To specify, all of these modules are not to be included in your base CMakeList.txt. They are helper modules to facilitate building of an Android based App and organize the CMake code in different files and have the important bits in a more readable state. The focus of opening this up is for other to have an introduction and make their own project should something not sit well with how it is made.
+
+## SqueLib_Package.cmake
+
+### macro `SqueLib_PrepareBuild(target orgName srcFiles)`
+
+ * `target` : CMake project name as string.
+ * `orgName` : Name of the organization/developer as string.
+ * `srcFiles` : List of source files to compile with SqueLib.
+
+Defines preprocessor macros `DEBUG / RELEASE`, sets up compile/link flags required for the executable or runtime library depending on platform. Makes calls to `FindAndroidSDKVars.cmake`, `SetupAndroidEnv.cmake` and `AndroidInstallTargets.cmake` when building for Android.
+
+### macro `SqueLib_Package(assetFolder resourceFolder)`
+
+* `asset_folder` : Full path to directory to where the app assets such as Texture, Models,..., are stored.
+* `resource_folder` : Full path to directory where the app resources such as Icon, Descriptions, Config Files, Manifest File,.. are stored.
+
+Copies asset and resource data to the build folder as required by the platform. On Windows and Linux it is assumed working directory where the executable is build, on Android there is a specific folder setup separated for app bundling resources and app assets hence the distinction. Resources are Icons, Text Descriptions, Manifest Files and similar, explained in [Android App Bundling](test).
+
+## Helpers.cmake
+
+### function `subdirlist(result currdir)`
+
+ * `result` : Out variable to which the list will be written to.
+ * `currdir` : Full path to the directory to get subdirectories from.
+
+Create a list of subdirectories present in a directory.
+
+### function `first_exists(result list)`
+
+ * `result` : Out variable to which the existing directory will be written to, should it not find anything the variable is returned empty.
+ * `list` : List of full paths to directories to evaluate.
+
+Return the first directory that exists from a list of directories.
+
+## FindAndroidSDKVars.cmake
+
+A direct piece of code inserted to define global variables required. Because setting the path manually to the Android NDK is a bit of a pain in the ass and the default installation folders are quite decent, this module performs a search and throws direct errors should the installation of the Android NDK or tools were not to be found.
+
+## SetupAndroidEnv.cmake
+
+Functions that streamline setting up the android build environment.
+
+### macro `set_app_properties(appName orgName androidVer)`
+
+ * `appName` : Name of the application as string.
+ * `orgName` : Name of the developer/company as string.
+ * `androidVer` : Android Version as an integer, `24<` (Nougat - Android 7) is on paper the minimum supported but currently tested on `29` (Android 10).
+ 
+ Sets in global space the following variables required for building an Android application:
+ 
+ * `APPNAME` : Name of the application surrounded in single quotes `'`, uses `appName` string provided.
+ * `ORG_NAME` : Name of the organization, uses `orgName` string provided.
+ * `LABEL` : Name of the application, uses `appName` string provided.
+ * `APKFILE` : Generates name of the `.apk` package, uses `appName` string provided.
+ * `PACKAGENAME` : Android standard package name `org.orgName.appName`.
+ * `ANDROIDVERSION` & `ANDROIDTARGET` : Android Version used, use `androidVer` integer provided.
+
+### macro set_android_link_flags()
+
+Add the minimum required linker flags for Android:
+
+ * `-shared` : Compile as a shared/dynamic library.
+ * `-uANativeActivity_onCreate` : Undefine the named function to allow our own starting point for the application.
+ * `-Wl` : Pass the next linker options.
+ * `--gc-sections` : Enable garbage collection of data/code not used.
+ * `-s`: Literally no idea but without it it does not work :)
+
+If the user provides linker flag arguments, they will be added at the back of `CMAKE_EXE_LINKER_FLAGS`, see `ARGN`.
+
+### macro set_android_compile_flags()
+
+Add the minimum required compiler flags for Android:
+ * `-O0 / -Ofast` : Optimization level on Debug / Release.
+ * `-ffunction-sections / -fdata-sections` : Allow the linker optimize code locality (how to store functions and data in executable) instead of respecting specified code locality on files.
+ * `-v` : Verbose output, great for making sure you are compiling everythng as intended and go little by little when you start from scratch.
+ * `-m64` : Target arm64 architecture.
+ * `-fPIC` : Allow position independent code, creating something like a global lookup table for functions and optimize space and speed on dynamic libraries.
+
+Generate the following definitions:
+ * `ANDROID`, `APPNAME` (from set_app_properties), `ANDROID_FULLSCREEN=y` (Only supporting fullscreen apps) and `ANDROIDVERSION` (from set_app_properties).
+
+If the user provides compiler flag arguments, they will be added at the back of `CMAKE_CXX_FLAGS`, see `ARGN`.
+
+### macro `set_android_compiler(NDK_PATH OS_USED ANDR_V)`
+ * `NDK_PATH` : Full path to the where the Android NDK is stored.
+ * `OS_USED` : Name of the OS in the compatible formats - linux-x86_64 / windows-x86-64 / darwin-x86-64.
+ * `ANDR_V` : Andoir Version provided as Integer.
+
+Setup paths to the android compiler toolchains for C/C++.
+
+### macro `link_android_libc(target NDK_PATH OS_USED ANDR_V)
+
+ * `target` : Name of the CMake project as string.
+ * `NDK_PATH` : Full path to directory where the Android NDK is stored, as string.
+ * `OS_USED` : Name of the OS in the compatible formats - linux-x86_64 / windows-x86-64 / darwin-x86-64, as string.
+ * `ANDR_V` : Andoir Version provided as Integer.
+
+ Link to LLVM's libc++, required for C++14 and C++17 support.
+
+### macro `link_android_all_libs(target NDK_PATH OS_USED ANDR_V)
+
+ * `target` : Name of the CMake project as string.
+ * `NDK_PATH` : Full path to directory where the Android NDK is stored, as string.
+ * `OS_USED` : Name of the OS in the compatible formats - linux-x86_64 / windows-x86-64 / darwin-x86-64, as string.
+ * `ANDR_V` : Andoir Version provided as Integer.
+
+Link to all required libraries for SqueLib: `M`, `LibC++`, `Native Window`, `Android`, `EGL`, `OpenGLESv3`, `Log`.
+
+### macro `include_android(target NDK_PATH OS_USED)
+
+ * `target` : Name of the CMake project as string.
+ * `NDK_PATH` : Full path to directory where the Android NDK is stored, as string.
+ * `OS_USED` : Name of the OS in the compatible formats - linux-x86_64 / windows-x86-64 / darwin-x86-64, as string.
+
+Inlcude the headers for android specific libraries.
+
+## AndroidInstallTargets.cmake
+
+*Under Revision - Requires significant changes for end user.*
+
+<!-- -------------------------------------------------------------------------------------------- -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+<!-- Markdeep: -->
+<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style>
+<script>markdeepOptions={tocStyle:'long',inlineCodeLang: 'Bash'};</script>
+<script src="../libs/markdeep.min.js" charset="utf-8"></script>
+<script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
