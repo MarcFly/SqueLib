@@ -706,7 +706,7 @@ void LearnOpenGL_5_1_3DCubeRotating()
         render_state_ch5_1.SetUp();
 
         int32_t vpx, vpy;
-        SQUE_DISPLAY_GetWindo   wSize(&vpx, &vpy);
+        SQUE_DISPLAY_GetWindowSize(&vpx, &vpy);
         proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
 
         SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
