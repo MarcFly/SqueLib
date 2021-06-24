@@ -33,6 +33,13 @@ enum SQUE_BitFlags
 #define TGL_FLAG(n, f) ((n) ^= (f)) 
 #define CHK_FLAG(n, f) (((n) & (f)) > 0)
 
+#define EXPAND_AS_ENUM(a,b) a,
+#define EXPAND_AS_VALUE(a,b) b,
+// In corner cases need more than 2 values, it is pushing a bit really but it should work
+#define X3_EXPAND_1(a,b,c) a,
+#define X3_EXPAND_2(a,b,c) b,
+#define X3_EXPAND_3(a,b,c) c,
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DEFAULT ENUMS /////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,13 +71,18 @@ typedef unsigned char uchar;
 // FUNCTION TYPES ////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Core
-typedef void(*VoidFun)();
+typedef void(VoidFun)();
+#define VoidFun_Empty [](){}
 
 // Display
-typedef void(*ResizeCallback)(int32_t width, int height);
-typedef void(*ViewportSizeCallback)(int32_t* width, int32_t* height);
+typedef void(ResizeCallback)(int32_t width, int height);
+typedef void(ViewportGetSizeCallback)(int32_t* width, int32_t* height);
+typedef void(HandleDropFileFun)(const char* location);
+
 // Input
-typedef void(*KeyCallback)(int32_t code, int32_t state);
-typedef void(*MouseFloatCallback)(float x, float y);
+typedef void(KeyCallback)(int32_t code, int32_t state);
+typedef void(MouseFloatCallback)(float x, float y);
+
+
 
 #endif

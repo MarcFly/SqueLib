@@ -2,6 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 //#define STBI_FAILURE_USERMSG
+
 #include <stb_image.h>
 
 
@@ -12,7 +13,6 @@ bool SQUE_LOAD_Texture(SQUE_Asset* tex_bytes, SQUE_Texture* texture)
     delete tex_bytes->raw_data;
     tex_bytes->raw_data = data;
     tex_bytes->size = texture->w * texture->h * texture->channel_num * texture->var_size;
-    // TODO: Variable Size texture channels (R3G3B2 for example..._)
     return true;
 }
 

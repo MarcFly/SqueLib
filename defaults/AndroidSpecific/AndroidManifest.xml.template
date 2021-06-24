@@ -9,7 +9,10 @@
         android:targetSdkVersion="${ANDROIDTARGET}"/>
     
     <uses-permission android:name="android.permission.SET_RELEASE_APP"/>
-    <!-- permissions will be asked during runtime always -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <!-- permissions will be asked during runtime always but have to be added in the manifest -->
+    <!-- skptr.met/list_of_permissions.html -->
 
     
     <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
@@ -24,7 +27,8 @@
         <!--android:theme="@mipmap/icon" This is how to change the splash theme (white screen at load), but seems to not work properly, look into better-->
         
         <activity 
-            android:configChanges="keyboardHidden|orientation" 
+            android:configChanges="keyboardHidden|orientation"
+            android:screenOrientation="landscape" 
             android:label="${LABEL}" 
             android:name="android.app.NativeActivity">
             

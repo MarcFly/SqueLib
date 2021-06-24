@@ -1,27 +1,88 @@
-macro(SqueLib_PrepareBuild target OrgName SrcFiles)
-    add_compile_definitions(${CMAKE_BUILD_TYPE})
+# Proper Includes, now with macros so they don't auto execute!
+
+
+
+macro(SqueLib_PrepareBuild target orgName srcFiles includeDirs)
+    #add_compile_definitions(${CMAKE_BUILD_TYPE}) #Release is a common word, should be names something else... MiniAudio has issue!
+    execute_process(COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+    set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
+
+    include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
+    include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
+
     if(ToAndroid)
         add_compile_definitions(ANDROID)
-        add_library(${target} SHARED "${SrcFiles}")
+        add_library(${target} SHARED "${srcFiles}")
 
-        include(${SQUE_cmake_par}/FindAndroidSDKVars.cmake)
-        include(${SQUE_cmake_par}/SetupAndroidEnv.cmake)
-        set_app_properties(${target} ${OrgName})
-        set_android_link_flags()
-        set_android_compile_flags()    
-        set_android_compiler(${NDK} ${OS_NAME} ${ANDROIDVERSION})    
-        link_android_libc(${target} ${NDK} ${OS_NAME} ${ANDROIDVERSION})
-        message(STATUS "Slow 3")
-        include(${SQUE_cmake_par}/AndroidInstallTargets.cmake)
+        #setup_android_sdk_vars()
+        make_keystore_file("") # Generating the keystore file takes TOO MUCH TIME
+        set_app_properties(${target} ${orgName})
+        link_android_libc(${target} ${CMAKE_BINARY_DIR}/makecapk/lib/arm64-v8a)
         squelib_add_targets(${target})
-        message(STATUS "Slow 4")        
     elseif(ToWindows OR ToLinux)
-        add_executable(${target} "${SrcFiles}")
+        message(STATUS "${srcFiles}")
+        add_executable(${target} "${srcFiles}")
         if(ToWindows)
             set_target_properties(${target} PROPERTIES
                 LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") # Hide Console Always
         endif(ToWindows)
     endif()
+
+    if(NOT "${includeDirs}" STREQUAL "")
+        target_include_directories(${target} PUBLIC "${include_Dirs}")
+    endif()
+    # SOLOUD ----- Has to be included directly to final project... I don't know how from lib and use soloud directly
+    if(WITH_SOLOUD)
+        target_compile_definitions(${target} PUBLIC WITH_MINIAUDIO)
+        set(soloud_base "${SqueLib_extra}/soloud")
+        file(GLOB_RECURSE soloud_src "${soloud_base}/src/*.cpp" "${soloud_base}/src/*.c" "${soloud_base}/*.h")
+        set(soloud_include "${soloud_base}/include")
+        target_sources(${target} PUBLIC "${soloud_src}")
+        target_include_directories(${target} PUBLIC ${soloud_include})
+        source_group(/soloud FILES ${soloud_src})
+    endif()
+
+    if(WITH_GLMATH)
+        add_subdirectory("${SqueLib_extra}/glm" ${CMAKE_CURRENT_BINARY_DIR}/GLMath_CMake)
+        set(glm_include "${SqueLib_extra}/glm/glm")
+        target_include_directories(${target} PUBLIC ${glm_include})
+        target_link_libraries(${target} PUBLIC glm)
+    endif()
+
+    if(WITH_IMGUI)
+        set(imgui_base "${SqueLib_extra}/imgui")
+        target_sources(${target} PUBLIC 
+            ${imgui_base}/imgui_demo.cpp
+            ${imgui_base}/imgui_draw.cpp
+            ${imgui_base}/imgui_widgets.cpp
+            ${imgui_base}/imgui_tables.cpp
+            ${imgui_base}/imgui.cpp
+            ${SqueLib_extra}/imgui_squelib/imgui_impl_squelib.cpp
+            # keep adding and includes too...
+        )
+        target_include_directories(${target} PUBLIC ${imgui_base} ${SqueLib_extra}/imgui_squelib)
+        source_group(/imgui FILES ${imgui_src})
+    endif()
+
+
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND WITH_MMGR)
+        target_compile_options(${target} BEFORE PUBLIC -g)
+        set(mmgr_include "${SqueLib_extra}/mmgr")
+        set(mmgr_src ${mmgr_include}/mmgr.cpp ${mmgr_include}/mmgr.h ${mmgr_include}/nommgr.h)
+        target_sources(${target} PRIVATE "${mmgr_src}")
+        target_include_directories(${target} PUBLIC ${mmgr_include})
+        source_group(/mmgr FILES ${mmgr_src})
+    endif()
+    
+    set_target_properties(${target}
+        PROPERTIES 
+            ARCHIVE_OUTPUT_DIRECTORY "${SQUE_OutputFolder}/archive"
+            LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
+            RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
+    )
+    target_link_libraries(${target} PUBLIC SqueLib)
+    target_include_directories(${target} PUBLIC ${SqueLib_include})
+
 endmacro()
 
 macro(SqueLib_Package asset_folder resource_folder)
@@ -30,7 +91,6 @@ macro(SqueLib_Package asset_folder resource_folder)
     message(STATUS ${asset_folder} ${resource_folder} ${SqueLib_defaults})
     if("${resource_folder}" STREQUAL "")
             set(own_resource "${SqueLib_defaults}/Resources")
-            
             message(STATUS ${own_resource})
     endif()
     if("${asset_folder}" STREQUAL "")

@@ -11,6 +11,7 @@ game/
 debug/
 cmake_bloat*/
 *_deps/
+*.kdev*
 
 ### CMake ###
 CMakeLists.txt.user

@@ -17,6 +17,13 @@ static char glsl_ver[64] = {'\0'};
 // INITIALIZATION AND STATE CONTROL //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+ColorRGBA::ColorRGBA() {}
+ColorRGBA::ColorRGBA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
+ColorRGBA::~ColorRGBA() {}
+
+SQUE_RenderState::SQUE_RenderState() {}
+SQUE_RenderState::~SQUE_RenderState() {}
+
 void SQUE_RenderState::SetUp()
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
@@ -39,7 +46,12 @@ void SQUE_RenderState::SetUp()
 #   ifdef USE_OPENGL
     glPolygonMode(SQUE_FRONT_AND_BACK, (GLenum)polygon_mode[0]);
 #   endif
+
+    glBindFramebuffer(SQUE_DRAW_FBO, draw_framebuffer);
+    glBindFramebuffer(SQUE_READ_FBO, read_framebuffer);
 #endif
+
+    SQUE_RENDER_SetViewport(vp[0], vp[1], vp[2], vp[3]);
 
     //SQUE_CHECK_RENDER_ERRORS();
 }
@@ -66,7 +78,11 @@ void SQUE_RenderState::BackUp()
     glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
 #   endif
 
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_framebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_framebuffer);
 #endif
+
+    SQUE_RENDER_GetViewport(&vp[0], &vp[1], &vp[2], &vp[3]);
 
     //SQUE_CHECK_RENDER_ERRORS();
 }
@@ -126,9 +142,7 @@ bool SQUE_RENDER_Init()
 #else 
     term = " core\n";
 #endif
-    memcpy(glsl_ver, "#version ", 9); // Count directly
-    memcpy(&glsl_ver[9], std::to_string(ver).c_str(), 3); // 3 digit number always / TODO: Find something better than std::to_string
-    memcpy(&glsl_ver[12], term, strlen(term)); // Version termination, variable so quick strlen   
+    sprintf(glsl_ver, "#version %d %s", ver, term);  
 #endif
     SQUE_PRINT(LT_INFO, "%s", glsl_ver);
     SQUE_PRINT(SQUE_LogType::LT_INFO, "Main Viewport init...");
@@ -172,16 +186,16 @@ void SQUE_RENDER_Scissor(int x, int y, int w, int h)
 #endif
 }
 
-void SQUE_RENDER_GetViewport(glm::vec4* vec)
+void SQUE_RENDER_GetViewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h)
 {
     int vint[4];
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glGetIntegerv(GL_VIEWPORT, vint);
 #endif
-    vec->x = vint[0];
-    vec->y = vint[1];
-    vec->z = vint[2];
-    vec->w = vint[3];
+    *x = vint[0];
+    *y = vint[1];
+    *w = vint[2];
+    *h = vint[3];
 }
 void SQUE_RENDER_GetIntV(int32_t value_id, int32_t* value)
 {
@@ -267,7 +281,7 @@ void SQUE_MESH_BindAttributeObject(const uint32_t attribute_object)
 
 void SQUE_MESH_SendVertsToGPU(const SQUE_Mesh& mesh, void* vertices)
 {
-    int buffer_size = SQUE_MESH_GetVertSize(mesh.attrib_ref) * mesh.num_verts;
+    int buffer_size = mesh.vertex_size * mesh.num_verts;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, mesh.draw_mode);
 #endif
@@ -283,6 +297,14 @@ void SQUE_MESH_SendToGPU(const SQUE_Mesh& mesh, void* vertices, void* indices)
 {
     SQUE_MESH_SendVertsToGPU(mesh, vertices);
     if (indices != NULL) SQUE_MESH_SendIndicesToGPU(mesh, indices);
+}
+
+void SQUE_MESH_FreeFromGPU(const SQUE_Mesh& mesh)
+{
+    glDeleteVertexArrays(1, &mesh.attribute_object);
+    glDeleteBuffers(1, &mesh.vert_id);
+    if (mesh.index_id != -1)
+        glDeleteBuffers(1, &mesh.index_id);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -316,68 +338,7 @@ void SQUE_MESH_EnableAttribute(const uint16_t vert_size, const SQUE_VertAttrib& 
 #endif
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TEXTURE ATTRIBUT MANAGEMENT ///////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-extern sque_vec<SQUE_TexAttrib> int_attributes;
-extern sque_vec<SQUE_TexAttrib> float_attributes;
-extern sque_vec<SQUE_TexAttribIndex> tex_attributes_index;
 
-void SQUE_RENDER_SetTextureAttributes(const uint32_t tex_attrib_ref)
-{
-    // Have to bind previously the texture
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    SQUE_TexAttribIndex& ind = tex_attributes_index[tex_attrib_ref-1];
-    uint32_t int_s = ind.int_start + ind.int_last;
-    uint32_t float_s = ind.float_start + ind.float_last;
-    for (uint32_t i = ind.int_start; i < int_s; ++i)
-        glTexParameteriv(SQUE_TEXTURE_2D, int_attributes[i].id, (const int32_t*)int_attributes[i].data);
-    for (uint32_t i = ind.float_start; i < float_s; ++i)
-        glTexParameterfv(SQUE_TEXTURE_2D, float_attributes[i].id, (const float*)float_attributes[i].data);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TEXTURE MANAGEMENT ////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SQUE_TEXTURE_GenIDs(const uint32_t num, uint32_t* tex_ids)
-{
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenTextures(num, tex_ids);
-#endif
-}
-
-void SQUE_TEXTURE_GenMipmaps(const uint32_t texture_type)
-{
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenerateMipmap(texture_type);
-#endif
-}
-
-void SQUE_TEXTURE_Bind(const uint32_t texture_id, const int32_t texture_dims)
-{
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glBindTexture(texture_dims, texture_id);
-#endif
-}
-
-void SQUE_TEXTURE_SetActiveUnit(int32_t unit)
-{
-#if defined(USE_OPENGL) | defined(USE_OPENGLES)
-    glActiveTexture(unit);
-#endif
-}
-
-// Why as 2D
-// glTexImage1D and glTexImage3D are separate and use different types of texture inputs
-// i will not deal with them but they have different 
-void SQUE_TEXTURE_SendAs2DToGPU(const SQUE_Texture& tex, void* pixels, int32_t mipmap_level)
-{
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    // TODO: read about texture border, uses...
-    glTexImage2D(tex.dim_format, mipmap_level, tex.use_format, tex.w, tex.h, 0, tex.data_format, tex.var_type, pixels);
-#endif
-}
 
 void SQUE_RENDER_BindExternalTexture(int tex_type, uint32_t id)
 {
@@ -393,36 +354,6 @@ void SQUE_RENDER_BindSampler(int32_t texture_locator, int32_t sampler_id)
         glBindSampler(texture_locator, sampler_id);
 #elif defined(USE_OPENGLES)
     // ?
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SHADER MANAGEMENT /////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SHADER PROGRAM MANAGEMENT /////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void SQUE_PROGRAM_GenID(uint32_t* program_id)
-{
-#if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    *program_id = glCreateProgram();
-#endif
-}
-
-void SQUE_PROGRAM_Link(const uint32_t program_id)
-{
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glLinkProgram(program_id);
-#endif
-    SQUE_PROGRAM_CheckLinkLog(program_id);
-}
-
-void SQUE_PROGRAM_Use(const uint32_t program_id)
-{
-#if defined(USE_OPENGL)  || defined(USE_OPENGLES)
-    glUseProgram(program_id);
 #endif
 }
 
@@ -490,6 +421,7 @@ void InitGLDebug()
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glDebug, 0);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, false);
 }
 #else
 void InitGLDebug()
@@ -500,67 +432,77 @@ void InitGLDebug()
 // FRAMEBUFFER ///////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SQUE_RENDER_GenFramebuffer(uint32_t& framebuffer_id)
+void SQUE_FRAMEBUFFER_GenerateID(uint32_t* framebuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glGenFramebuffers(1, &framebuffer_id);
+    glGenFramebuffers(1, framebuffer_id);
 #endif
 }
 
-void SQUE_RENDER_BindFramebuffer(const int32_t& type, const uint32_t& id)
+void SQUE_FRAMEBUFFER_Bind(const int32_t type, const uint32_t id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindFramebuffer(type, id);
 #endif
 }
 
-void SQUE_RENDER_GenRenderbuffer(uint32_t& renderbuffer_id)
+void SQUE_FRAMEBUFFER_GenRenderTypeID(uint32_t* renderbuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGL)
-    glGenRenderbuffers(1, &renderbuffer_id);    
+    glGenRenderbuffers(1, renderbuffer_id);    
 #endif
 }
 
-void SQUE_RENDER_BindRenderbuffer(const uint32_t& renderbuffer_id)
+void SQUE_FRAMEBUFFER_BindRenderType(const uint32_t renderbuffer_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_id);
 #endif
 }
 
-void SQUE_RENDER_RenderbufferStorage(const uint32_t type, const uint32_t width, const uint32_t height)
+void SQUE_FRAMEBUFFER_SetRenderTypeInfo(const uint32_t type, const uint32_t width, const uint32_t height)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glRenderbufferStorage(GL_RENDERBUFFER, type, width, height);
 #endif
 }
 
-void SQUE_RENDER_FramebufferAttachRenderbuffer(const uint32_t attachment_type, const uint32_t attachment_id)
+void SQUE_FRAMEBUFFER_AttachRenderType(const uint32_t attachment_type, const uint32_t attachment_id)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_type, GL_RENDERBUFFER, attachment_id);
 #endif
 }
 
-void SQUE_RENDER_FramebufferAttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level)
+void SQUE_FRAMEBUFFER_AttachTexture(const uint32_t dest_attachment, const uint32_t texture_id, const uint32_t mipmap_level)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment, texture_id, mipmap_level);
+    //glFramebufferTexture(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, texture_id, mipmap_level);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, dest_attachment + GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, mipmap_level);
 #endif
 }
 
-void SQUE_RENDER_FramebufferSetDrawBuffers(const uint32_t attachments[], const uint32_t size)
+void SQUE_FRAMEBUFFER_SetDrawBuffers(const uint32_t* attachments, const uint32_t size)
 {
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
     glDrawBuffers(size, attachments);
 #endif
 }
 
-void SQUE_RENDER_FramebufferCheckStatus()
+uint32_t SQUE_FRAMEBUFFER_CheckStatus()
 {
     bool fb_status;
 #if defined(USE_OPENGL) || defined(USE_OPENGLES)
-    fb_status = (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE);
+    return glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    //fb_status = (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE);
+
+    GL_FRAMEBUFFER_COMPLETE;
+    GL_FRAMEBUFFER_UNDEFINED; // 33305
+    GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT; // 36054
+    GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT; //+1
+    GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER; //+2
+    GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER; //36060
+    GL_FRAMEBUFFER_UNSUPPORTED; //+1
         
 #endif
     if(!fb_status) SQUE_CHECK_RENDER_ERRORS();
