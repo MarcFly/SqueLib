@@ -33,6 +33,7 @@ file(GLOB_RECURSE ARK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/code/*.cpp" "${CMAKE_CURR
 
 
 SqueLib_PrepareBuild(InputViz MarcTorresJimenez "${ARK_SRC}" "${CMAKE_CURRENT_SOURCE_DIR}/code")
+SqueLib_Package("" ${SqueLib_defaults}/Resources)
 
 #------------------------------------------------------------------------------------------------
 # CONTINUE SETUP

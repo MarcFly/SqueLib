@@ -102,6 +102,7 @@ static ColorRGBA clear_col = { 0, .3, 1., 1};
 
 static SQUE_Timer timer;
 static sque_vec<char> test_vec;
+static bool software_keyboard = false;
 void RenderKeys()
 {
     ImGui_ImplSqueLib_NewFrame();
@@ -119,15 +120,8 @@ void RenderKeys()
         }
 
         ImGuiIO& io = ImGui::GetIO();
-        char get = (io.InputQueueCharacters.size() > 0) ? io.InputQueueCharacters.front() : -1;
-        if(get != -1) 
-            test.push_back(get);
-        ImGui::Text(test.c_str());
-
-        static bool software_keyboard = false;
-        software_keyboard = ImGui::Button("Android Software Keyboard");
-        SQUE_INPUT_DisplaySoftwareKeyboard(software_keyboard);
-        
+        static char text[1024 * 16] = {0};
+        ImGui::InputTextMultiline("##testkeys", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight()*16));
     }
     ImGui::End();
     ImGui::Render();

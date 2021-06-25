@@ -420,9 +420,11 @@ void ImGui_ImplSqueLib_NewFrame()
 	io.KeyAlt   = io.KeysDown[SQUE_KEY_LEFT_ALT] || io.KeysDown[SQUE_KEY_RIGHT_ALT];
 	io.KeySuper = io.KeysDown[SQUE_KEY_LEFT_SUPER] || io.KeysDown[SQUE_KEY_RIGHT_SUPER];;
 
-	int code;
-	while((code = SQUE_INPUT_GetCharFromBuffer()) != -1)
+	int code = SQUE_INPUT_GetCharFromBuffer();
+	while(code > -1)
+	{
 		io.AddInputCharacter(code);
-
+		code = SQUE_INPUT_GetCharFromBuffer();
+	}
     // More Input Updates? ...
 }

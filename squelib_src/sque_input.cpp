@@ -520,7 +520,7 @@ int32_t HandleAndroidMotion(struct android_app* app, AInputEvent* ev)
         y = AMotionEvent_getY(ev, i);
         SQUE_Pointer& p = pointers[pointer];
         SQUE_Gesture& g = gestures[pointer];
-        if(whichsource != p.id) continue;
+        //if(whichsource != p.id) continue;
         switch (action)
         {
         case AMOTION_EVENT_ACTION_DOWN:
