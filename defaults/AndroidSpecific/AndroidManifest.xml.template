@@ -28,7 +28,6 @@
         
         <activity 
             android:configChanges="keyboardHidden|orientation"
-            android:screenOrientation="landscape" 
             android:label="${LABEL}" 
             android:name="android.app.NativeActivity">
             
@@ -45,3 +44,10 @@
     </application>
 
 </manifest>
+
+<!--
+    Add this to activity if want to set orientation 
+    android:screenOrientation="landscape"
+    android:screenOrientation="portrait" 
+-->
+

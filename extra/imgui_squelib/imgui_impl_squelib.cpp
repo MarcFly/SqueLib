@@ -107,7 +107,7 @@ void ImGui_ImplSqueLib_Render(ImDrawData* draw_data)
 	SQUE_RENDER_GetViewport(&x, &y, &w, &h);
 	if (fb_width <= 0 || fb_height <= 0) return;
 
-	ImGui_ImplSqueLib_VariableRenderState(draw_data, fb_width, fb_height);
+	ImGui_ImplSqueLib_VariableRenderState(draw_data, w, h);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
