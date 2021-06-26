@@ -14,7 +14,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ ${CMAKE_CURRENT_BINARY_DIR}/
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
-project(ImGui_Example     VERSION 2020.1
+project(ImGui_Example     VERSION 2021.1
                         DESCRIPTION "Multiplatform C++ Engine"
                         LANGUAGES C CXX)
 # C/CXX Requirements
