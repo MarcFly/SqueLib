@@ -1109,6 +1109,122 @@ void LearnOpenGL_7_Framebuffers()
     t.SetUp();
 }
 
+static bool loaded_e8 = false;
+static bool render_e8 = false;
+
+SQUE_Program textured_program_e8;
+SQUE_Asset* vert_texture_s_e8_file;
+SQUE_Asset* frag_texture_e8_file;
+SQUE_Shader vert_texture_s_e8;
+SQUE_Shader frag_texture_e8;
+
+int32_t view_uniform_e8;
+int32_t proj_uniform_e8;
+int32_t model_uniform_e8;
+int32_t texture1_uniform_e8;
+int32_t texture2_uniform_e8;
+
+void Example8_AffineUVMapping() {
+    if (!loaded_e8)
+    {
+        vert_texture_s_e8_file = SQUE_FS_LoadAssetRaw("shaders/vert_s8_affine.vert");
+        frag_texture_e8_file = SQUE_FS_LoadAssetRaw("shaders/frag_s8_affine.frag");
+
+        SQUE_SHADERS_GenerateID(&vert_texture_s_e8, SQUE_VERTEX_SHADER);
+        SQUE_SHADERS_SetSource(vert_texture_s_e8.id, vert_texture_s_e8_file->raw_data);
+        SQUE_SHADERS_Compile(vert_texture_s_e8.id);
+
+        SQUE_SHADERS_GenerateID(&frag_texture_e8, SQUE_FRAGMENT_SHADER);
+        SQUE_SHADERS_SetSource(frag_texture_e8.id, frag_texture_e8_file->raw_data);
+        SQUE_SHADERS_Compile(frag_texture_e8.id);
+
+        SQUE_PROGRAM_GenerateID(&textured_program_e8.id);
+        SQUE_PROGRAM_AttachShader(&textured_program_e8, vert_texture_s_e8);
+        SQUE_PROGRAM_AttachShader(&textured_program_e8, frag_texture_e8);
+        SQUE_PROGRAM_Link(textured_program_e8.id);
+
+        SQUE_PROGRAM_CacheUniforms(&textured_program_e8);
+        view_uniform_e8 = SQUE_PROGRAM_GetUniformID(textured_program_e8, "view");
+        proj_uniform_e8 = SQUE_PROGRAM_GetUniformID(textured_program_e8, "projection");
+        model_uniform_e8 = SQUE_PROGRAM_GetUniformID(textured_program_e8, "model");
+        texture1_uniform_e8 = SQUE_PROGRAM_GetUniformID(textured_program_e8, "texture1");
+        texture2_uniform_e8 = SQUE_PROGRAM_GetUniformID(textured_program_e8, "texture2");
+
+        last_time_ch6_2 = 0;
+        yaw = -90.f;
+        pitch = 0.f;
+        lx = ly = -1;
+
+        loaded_e8 = true;
+    }
+    double curr_time = timer1.ReadMilliSec();
+    if(render_e8){
+        float mx = -1, my = -1;
+        SQUE_INPUT_GetPointerAvgPos(&mx, &my,10);
+        SQUE_INPUT_Actions action = SQUE_INPUT_GetMouseButton(SQUE_MOUSE_LEFT);
+
+        if ((action == SQUE_ACTION_PRESS || action == SQUE_ACTION_REPEAT) && !ImGui::IsAnyItemHovered()) // !ImGui::IsAnyWindowHovered() &&
+        {
+            yaw += (mx - ((lx == -1) ? mx : lx)) * .1f;
+            pitch += (((ly == -1)?my : ly) - my) * .1f;
+            
+        }
+
+        lx = mx;
+        ly = my;
+
+
+        direction_ch6_2.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction_ch6_2.y = sin(glm::radians(pitch));
+        direction_ch6_2.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        camera_front = glm::normalize(direction_ch6_2);
+    }
+    if (render_e8)
+    {
+        SQUE_RenderState last;
+        last.BackUp();
+
+        render_state_ch5_1.SetUp();
+
+        int32_t vpx, vpy;
+        SQUE_DISPLAY_GetWindowSize(&vpx, &vpy);
+        proj_mat_ch5 = glm::perspective(glm::radians(45.f), (float)vpx / float(vpy), 0.1f, 100.f);
+
+        SQUE_RENDER_Clear(ColorRGBA(0.2f, 0.3f, 0.3f, 1.0f), SQUE_COLOR_BIT | SQUE_DEPTH_BIT);
+        SQUE_PROGRAM_Use(textured_program_e8.id);
+
+        SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE0);
+        SQUE_TEXTURE_Bind(texture_ch3.id, texture_ch3.dim_format);
+
+        SQUE_TEXTURE_SetActiveUnit(SQUE_TEXTURE1);
+        SQUE_TEXTURE_Bind(texture_ch3_1.id, texture_ch3_1.dim_format);
+
+        SetInt(texture1_uniform_ch5, 0);
+        SetInt(texture1_uniform_ch5, 1);
+
+
+        SetMatrix4(proj_uniform_ch5, glm::value_ptr(proj_mat_ch5));
+
+        // Changes from previous are to th view matrix
+
+
+        view_mat_ch6 = glm::lookAt(camera_pos_ch6_1, camera_pos_ch6_1 + camera_front, camera_up_ch6_1);
+        SetMatrix4(view_uniform_ch5, glm::value_ptr(view_mat_ch6));
+
+        for (uint16_t i = 0; i < 10; ++i)
+        {
+            model_mat_ch5 = glm::translate(glm::mat4(1.f), cubePositions[i]);
+            float angle = (i * (curr_time)) / 100.f;
+            model_mat_ch5 = glm::rotate(model_mat_ch5, glm::radians(angle), glm::vec3(1.f, .3f, .5f));
+            SetMatrix4(model_uniform_ch5, glm::value_ptr(model_mat_ch5));
+
+            SQUE_RENDER_DrawVertices(cube_ch5_1);
+        }
+
+        last.SetUp();
+    }
+}
+
 int main(int argc, char**argv)
 {
     bool ret = true;
@@ -1132,12 +1248,12 @@ int main(int argc, char**argv)
         "1-Vertices", "1.1-Indices", "2-Shaders", "2.1-Uniforms", "2.2-Attributes",
         "3-Textures", "3.1-Mix Textures", "4-Transformations", "5-Coordinate Systems",
         "5.1-3D Cube Rotating", "5.2-More 3D Cubes", "6-Camera", "6.1-Camera Movement",
-        "6.2-Camera Look"
+        "6.2-Camera Look", "8-Affine UV Map"
     };
     bool* renders[] = { 
         &render_ch1, &render_ch1_1,& render_ch2,& render_ch2_1,& render_ch2_2,
         & render_ch3,& render_ch3_1,& render_ch4,& render_ch5,& render_ch5_1,
-        & render_ch5_2,& render_ch6,& render_ch6_1,& render_ch6_2
+        & render_ch5_2,& render_ch6,& render_ch6_1,& render_ch6_2, & render_e8
     };
     while(!SQUE_DISPLAY_ShouldWindowClose(0))
     {
@@ -1200,6 +1316,9 @@ int main(int argc, char**argv)
             // Framebuffers
             LearnOpenGL_7_Framebuffers();
             
+            // Affine Texture Mapping
+            Example8_AffineUVMapping();
+
             ImGui::End();
             ImGui::Render();
 
